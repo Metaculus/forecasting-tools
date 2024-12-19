@@ -4,8 +4,11 @@ from forecasting_tools.forecasting.helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
 )
-from forecasting_tools.forecasting.questions_and_reports.binary_report import (
-    BinaryReport,
+from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
+    ForecastReport,
+)
+from forecasting_tools.forecasting.questions_and_reports.report_organizer import (
+    ReportOrganizer,
 )
 from forecasting_tools.forecasting.sub_question_researchers.base_rate_researcher import (
     BaseRateReport,
@@ -57,9 +60,9 @@ async def test_base_rate_report_can_be_added_to_coda() -> None:
     # No assert, make sure it doesn't error
 
 
-def get_forecast_example_reports() -> list[BinaryReport]:
+def get_forecast_example_reports() -> list[ForecastReport]:
     metaculus_data_path = "code_tests/unit_tests/test_forecasting/forecasting_test_data/metaculus_forecast_report_examples.json"
-    metaculus_reports = BinaryReport.convert_project_file_path_to_object_list(
+    metaculus_reports = ReportOrganizer.load_reports_from_file_path(
         metaculus_data_path
     )
     return metaculus_reports

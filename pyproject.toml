@@ -6,6 +6,7 @@ authors = ["Benjamin Wilson <mokoresearch@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 keywords = ["ai", "forecasting", "research", "metaculus", "prediction"]
+repository = "https://github.com/Metaculus/forecasting-tools"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
