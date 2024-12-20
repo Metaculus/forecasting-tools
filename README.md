@@ -31,6 +31,7 @@ Join the [discord](https://discord.gg/Dtq4JNdXnw) for updates and to give feedba
 
 Note: This package is still in a experimental phase. The goal is to keep the API fairly stable, though no guarantees are given at this phase. There will be special effort to keep the ForecastBot and TemplateBot APIs consistent.
 
+
 # Forecasting Bot Building
 
 ## Using the Preexisting Bots
@@ -43,6 +44,7 @@ They both have roughly the same parameters. See below on how to use the Template
 
 ### Forecasting on a Tournament
 
+
 ```python
 from forecasting_tools import TemplateBot, MetaculusApi
 
@@ -51,8 +53,8 @@ bot = TemplateBot(
     research_reports_per_question=3,  # Number of separate research attempts per question
     predictions_per_research_report=5,  # Number of predictions to make per research report
     publish_reports_to_metaculus=True,  # Whether to post the forecasts to Metaculus
-    folder_to_save_reports_to="logs/forecasts/",  # Where to save detailed reports
-    skip_previously_forecasted_questions=True
+    folder_to_save_reports_to="logs/forecasts/",  # Where to save detailed reports (file saving environment variable must be set)
+    skip_previously_forecasted_questions=False
 )
 
 # Run forecasts on Q4 2024 AI Tournament
@@ -66,6 +68,7 @@ for report in reports:
 ```
 
 ### Forecasting a Single Question
+
 
 ```python
 from forecasting_tools import TemplateBot, BinaryQuestion, QuestionState
@@ -86,8 +89,8 @@ question2 = BinaryQuestion(
     background_info="...", # Or 'None'
     resolution_criteria="...", # Or 'None'
     fine_print="...", # Or 'None'
-    id_of_question=0, # The ID and state only matters if using Metaculus API calls
-    question_state=QuestionState.OPEN
+    id_of_post=0, # The ID and state only matters if using Metaculus API calls
+    state=QuestionState.OPEN
 )
 
 reports = await bot.forecast_questions([question1, question2])
@@ -109,7 +112,6 @@ The bot will:
 
 Note: You'll need to have your environment variables set up (see the section below)
 
-
 ## Running your own bot
 
 ### Join the tournament quick-start
@@ -128,6 +130,7 @@ See the 'Local Development' section later in this README.
 
 ### Customizing the Bot
 Generally all you have to do to make your own bot is inherit from the TemplateBot and override any combination of the 3 forecasting methods and the 1 research method. This saves you the headache of parsing the outputs, interacting with the Metaculus API, etc. Here is an example. It may also be helpful to look at the TemplateBot code (forecasting_tools/forecasting/forecast_bots/template_bot.py) for a more complete example.
+
 
 ```python
 from forecasting_tools import (
@@ -174,7 +177,7 @@ class MyCustomBot(TemplateBot):
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
         prompt = f"Please make a prediction on the following question: {question.question_text}. The last thing you write is your final answer as: 'Probability: ZZ%', 0-100"
-        reasoning = await Gpt4oMetaculusProxy.invoke(prompt)
+        reasoning = await Gpt4oMetaculusProxy(temperature=0).invoke(prompt)
         prediction = self._extract_forecast_from_binary_rationale(
             reasoning, max_prediction=1, min_prediction=0
         )
@@ -193,10 +196,8 @@ class MyCustomBot(TemplateBot):
         ...
 ```
 
-
 ## Setting Environment Variables
 Whether running locally or through Github actions, you will need to set environment variables. All environment variables you might want are in `.env.template`. Generally you only need the METACULUS_TOKEN if running the Template. Having an EXA_API_KEY (see www.exa.ai) or PERPLEXITY_API_KEY (see www.perplexity.ai) is needed for searching the web. Make sure to put these variables in your `.env` file if running locally and in the Github actions secrets if running on Github actions. Remember to set 'FILE_WRITING_ALLOWED' to true if you want to save results.
-
 
 # Forecasting Tools Examples
 
@@ -207,6 +208,7 @@ The Smart Searcher acts like an LLM with internet access. It works a lot like Pe
 - There are options for structured output (Pydantic objects, lists, dict, list\[dict\], etc.)
 - Concurrent search execution for faster results
 - Optional detailed works cited list
+
 
 ```python
 from forecasting_tools import SmartSearcher
@@ -235,6 +237,7 @@ Example output:
 > ... etc ...
 
 You can also use structured outputs by providing a Pydantic model (or any other simpler type hint) and using the schema formatting helper:
+
 
 ```python
 from pydantic import BaseModel, Field
@@ -270,8 +273,9 @@ The schema instructions will format the Pydantic model into clear instructions f
 ## Key Factors Researcher
 The Key Factors Researcher helps identify and analyze key factors that should be considered for a forecasting question. As of last update, this is the most reliable of the tools, and gives something useful and accurate almost every time. It asks a lot of questions, turns search results into a long list of bullet points, rates each bullet point on ~8 criteria, and returns the top results.
 
+
 ```python
-from forecasting_tools import KeyFactorsResearcher, BinaryQuestion, QuestionState
+from forecasting_tools import KeyFactorsResearcher, BinaryQuestion, QuestionState, ScoredKeyFactor
 
 # Consider using MetaculusApi.get_question_by_id or MetaculusApi.get_question_by_url instead
 question = BinaryQuestion(
@@ -279,12 +283,12 @@ question = BinaryQuestion(
     background_info="...", # Or 'None'
     resolution_criteria="...", # Or 'None'
     fine_print="...", # Or 'None'
-    id_of_question=0, # The ID and state only matters if using Metaculus API calls
-    question_state=QuestionState.OPEN
+    id_of_post=0, # The ID and state only matters if using Metaculus API calls
+    state=QuestionState.OPEN
 )
 
 # Find key factors
-key_factors = await KeyFactorsResearcher.find_key_factors(
+key_factors = await KeyFactorsResearcher.find_and_sort_key_factors(
     metaculus_question=question,
     num_key_factors_to_return=5,  # Number of final factors to return
     num_questions_to_research_with=26  # Number of research questions to generate
@@ -317,6 +321,7 @@ class ScoredKeyFactor():
 ## Base Rate Researcher
 The Base Rate Researcher helps calculate historical base rates for events. As of last update, it gives decent results around 50% of the time. It orchestrates the Niche List Researcher and the Fermi Estimator to find base rate.
 
+
 ```python
 from forecasting_tools import BaseRateResearcher
 
@@ -338,6 +343,7 @@ The Niche List Researcher helps analyze specific lists of events or items. The r
 2. Remove duplicates
 3. Fact check each item against multiple criteria
 4. Return only validated items (unless include_incorrect_items=True)
+
 
 ```python
 from forecasting_tools import NicheListResearcher
@@ -383,6 +389,8 @@ class CriteriaAssessment():
 ## Fermi Estimator
 The Fermi Estimator helps break down numerical estimates using Fermi estimation techniques.
 
+
+
 ```python
 from forecasting_tools import Estimator
 
@@ -418,10 +426,11 @@ Example output (Fake data with links not added):
 ## Metaculus API
 The Metaculus API wrapper helps interact with Metaculus questions and tournaments. Grabbing questions returns a pydantic object, and supports important information for Binary, Multiple Choice, Numeric,and Date questions.
 
+
 ```python
 from forecasting_tools import MetaculusApi
 
-question = MetaculusApi.get_question_by_id(11245)  # US 2024 Election
+question = MetaculusApi.get_question_by_post_id(11245)  # US 2024 Election
 question = MetaculusApi.get_question_by_url("https://www.metaculus.com/questions/11245/...")
 questions = MetaculusApi.get_all_open_questions_from_tournament(
     tournament_id=3672,  # Q4 2024 Quarterly Cup
@@ -431,7 +440,7 @@ MetaculusApi.post_binary_question_prediction(
     prediction_in_decimal=0.75  # Must be between 0.01 and 0.99
 )
 MetaculusApi.post_question_comment(
-    question_id=11245,
+    post_id=11245,
     comment_text="Here's my reasoning..."
 )
 benchmark_questions = MetaculusApi.get_benchmark_questions(
@@ -442,16 +451,29 @@ benchmark_questions = MetaculusApi.get_benchmark_questions(
 ## Monetary Cost Manager
 The Monetary Cost Manager helps to track AI and API costs. It tracks expenses and errors if it goes over the limit. Leave the limit empty to disable the limit. It shouldn't be trusted as an exact expense, but a good estimate of costs. See `forecasting_tools/ai_models/README.md` for more details, and some flaws it has.
 
+
 ```python
 from forecasting_tools import MonetaryCostManager
+from forecasting_tools import (
+    ExaSearcher, Gpt4oMetaculusProxy, Gpt4o, SmartSearcher, Claude35Sonnet, Perplexity
+)
 
 max_cost = 5.00
 
 with MonetaryCostManager(max_cost) as cost_manager:
-    results = await any_tool_that_uses_ai()
+    prompt = "What is the weather in Tokyo?"
+    result = await Perplexity().invoke(prompt)
+    result = await Gpt4oMetaculusProxy().invoke(prompt)
+    result = await Gpt4o().invoke(prompt)
+    result = await SmartSearcher().invoke(prompt)
+    result = await Claude35Sonnet().invoke(prompt)
+    result = await ExaSearcher().invoke(prompt)
+    # ... etc ...
+
     current_cost = cost_manager.current_usage
     print(f"Current cost: ${current_cost:.2f}")
 ```
+
 
 # Local Development
 

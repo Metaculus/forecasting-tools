@@ -175,7 +175,7 @@ class ExaSearcher(
 
         payload = {
             "query": search.web_search_query,
-            "type": "neural",
+            "type": "auto",
             "useAutoprompt": True,
             "numResults": self.num_results,
             "includeDomains": search.include_domains,
@@ -308,10 +308,10 @@ class ExaSearcher(
     ):
         return [
             ExaSource(
-                original_query="Moko Research Website",
-                auto_prompt_string="Here is a link to the Moko Research website:",
-                title="MokoResearch",
-                url="https://www.mokoresearch.com",
+                original_query="Latest news on AI Research Tools",
+                auto_prompt_string="Here is a link to the latest news:",
+                title="Latest news on AI Research Tools",
+                url="https://www.example.com",
                 text="Fake text",
                 author=None,
                 published_date=None,
@@ -323,7 +323,7 @@ class ExaSearcher(
 
     @classmethod
     def _get_cheap_input_for_invoke(cls) -> SearchInput:
-        search_query = "Moko Research Website"
+        search_query = "Latest news on AI Research Tools"
         return cls.__get_default_search_strategy(search_query)
 
 

@@ -30,7 +30,8 @@
 				"donjayamanne.githistory",
 				"mhutchie.git-graph",
 				"mechatroner.rainbow-csv",
-				"tamasfe.even-better-toml"
+				"tamasfe.even-better-toml",
+				"ms-toolsai.jupyter"
 			]
 		}
 	}
