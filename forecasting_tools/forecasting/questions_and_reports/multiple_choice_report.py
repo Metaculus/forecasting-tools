@@ -22,6 +22,25 @@ class MultipleChoiceReport(ForecastReport):
     question: MultipleChoiceQuestion
     prediction: PredictedOptionList
 
+    @property
+    def inversed_expected_log_score(self) -> float | None:
+        """
+        Expected log score is evaluated to correlate closest to the baseline score
+        when assuming the community prediction is the true probability.
+        (see scripts/simulate_a_tournament.ipynb).
+        We invert the expected log score so it behaves like a brier score
+        (where it is positive and lower is better).
+        """
+        raise NotImplementedError("Not implemented")
+
+    @property
+    def deviation_points(self) -> float | None:
+        raise NotImplementedError("Not implemented")
+
+    @property
+    def community_prediction(self) -> PredictedOptionList | None:
+        raise NotImplementedError("Not implemented")
+
     async def publish_report_to_metaculus(self) -> None:
         if self.question.id_of_question is None:
             raise ValueError("Question ID is None")

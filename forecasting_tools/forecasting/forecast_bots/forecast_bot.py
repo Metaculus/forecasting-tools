@@ -1,3 +1,5 @@
+import asyncio
+import inspect
 import logging
 import time
 from abc import ABC, abstractmethod
@@ -46,6 +48,7 @@ class ForecastBot(ABC):
         publish_reports_to_metaculus: bool = False,
         folder_to_save_reports_to: str | None = None,
         skip_previously_forecasted_questions: bool = False,
+        skip_questions_that_error: bool = True,
     ) -> None:
         assert (
             research_reports_per_question > 0
@@ -63,6 +66,15 @@ class ForecastBot(ABC):
         self.skip_previously_forecasted_questions = (
             skip_previously_forecasted_questions
         )
+        self.skip_questions_that_error = skip_questions_that_error
+
+    def get_config(self) -> dict[str, str]:
+        params = inspect.signature(self.__init__).parameters
+        return {
+            name: str(getattr(self, name))
+            for name in params.keys()
+            if name != "self"
+        }
 
     async def forecast_on_tournament(
         self,
@@ -103,18 +115,13 @@ class ForecastBot(ABC):
                 )
             questions = unforecasted_questions
         reports: list[ForecastReport] = []
-        reports, _ = (
-            async_batching.run_coroutines_while_removing_and_logging_exceptions(
-                [
-                    self._run_individual_question(question)
-                    for question in questions
-                ]
-            )
+        reports = await self._run_coroutines_and_error_if_configured(
+            [self._run_individual_question(question) for question in questions]
         )
         if self.folder_to_save_reports_to:
             file_path = self.__create_file_path_to_save_to(questions)
             ForecastReport.save_object_list_to_file_path(reports, file_path)
-        async_batching.run_coroutines_while_removing_and_logging_exceptions(
+        await self._run_coroutines_and_error_if_configured(
             [report.publish_report_to_metaculus() for report in reports]
         )
         return reports
@@ -140,8 +147,8 @@ class ForecastBot(ABC):
                 self._research_and_make_predictions(question)
                 for _ in range(self.research_reports_per_question)
             ]
-            research_with_predictions_units, _ = (
-                async_batching.run_coroutines_while_removing_and_logging_exceptions(
+            research_with_predictions_units = (
+                await self._run_coroutines_and_error_if_configured(
                     prediction_tasks
                 )
             )
@@ -224,6 +231,19 @@ class ForecastBot(ABC):
             summary_report=summary_report,
             predictions=reasoned_predictions,
         )
+
+    async def _run_coroutines_and_error_if_configured(
+        self, coroutines: list[Coroutine[Any, Any, Any]]
+    ) -> list[Any]:
+        if self.skip_questions_that_error:
+            outputs, _ = (
+                async_batching.run_coroutines_while_removing_and_logging_exceptions(
+                    coroutines
+                )
+            )
+            return outputs
+        else:
+            return await asyncio.gather(*coroutines)
 
     @abstractmethod
     async def _run_forecast_on_binary(

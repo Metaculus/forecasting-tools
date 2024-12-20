@@ -1,5 +1,4 @@
 import os
-from typing import Literal
 from unittest.mock import Mock
 
 import pytest
@@ -34,7 +33,7 @@ async def test_file_is_made_for_benchmark(mocker: Mock) -> None:
         if os.path.isfile(os.path.join(absolute_path, f))
     )
 
-    await Benchmarker.benchmark_forecast_bot(bot, "shallow")
+    await Benchmarker.run_benchmark([bot], 10)
 
     files_after = set(
         f
@@ -62,14 +61,10 @@ async def test_each_benchmark_mode_calls_forecaster_more_time(
         bot_type, mocker
     )
 
-    modes: list[Literal["shallow", "medium", "deep"]] = [
-        "shallow",
-        "medium",
-        "deep",
-    ]
+    modes: list[int] = [1, 5, 10]
     num_calls_for_modes = []
     for mode in modes:
-        score = await Benchmarker.benchmark_forecast_bot(bot, mode)
+        score = await Benchmarker.run_benchmark([bot], mode)
         assert isinstance(score, float), "The score should be a float"
 
         previous_calls = num_calls_for_modes[-1] if num_calls_for_modes else 0

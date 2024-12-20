@@ -19,6 +19,9 @@ class Jsonable(ABC):
     An interface that allows a class to be converted to and from json
     """
 
+    def __dict__(self) -> dict:
+        return self.to_json()
+
     def to_json(self) -> dict:
         if isinstance(self, BaseModel):
             return self._pydantic_model_to_dict(self)

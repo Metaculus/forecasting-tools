@@ -106,7 +106,9 @@ def test_calculate_average_expected_log_score() -> None:
         ),
     ]
 
-    average_score = BinaryReport.calculate_average_expected_log_score(reports)
+    average_score = BinaryReport.calculate_average_inverse_expected_log_score(
+        reports
+    )
     assert isinstance(average_score, float)
 
     # Test with None community prediction
@@ -116,7 +118,9 @@ def test_calculate_average_expected_log_score() -> None:
         )
     ]
     with pytest.raises(AssertionError):
-        BinaryReport.calculate_average_expected_log_score(reports_with_none)
+        BinaryReport.calculate_average_inverse_expected_log_score(
+            reports_with_none
+        )
 
 
 def test_calculate_average_deviation_points() -> None:

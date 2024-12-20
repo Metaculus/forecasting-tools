@@ -62,10 +62,52 @@ class ForecastReport(BaseModel, Jsonable, ABC):
     def forecast_rationales(self) -> str:
         return self._get_section_content(index=2, expected_word="forecast")
 
-    @abstractmethod
-    async def publish_report_to_metaculus(self) -> None:
-        raise NotImplementedError(
-            "Subclass must implement this abstract method"
+    @property
+    def inversed_expected_log_score(self) -> float | None:
+        """
+        Expected log score is evaluated to correlate closest to the baseline score
+        when assuming the community prediction is the true probability.
+        (see scripts/simulate_a_tournament.ipynb).
+        We invert the expected log score so it behaves like a brier score
+        (where it is positive and lower is better).
+        """
+        raise NotImplementedError("Not implemented")
+
+    @property
+    def deviation_points(self) -> float | None:
+        raise NotImplementedError("Not implemented")
+
+    @property
+    def community_prediction(self) -> Any | None:
+        raise NotImplementedError("Not implemented")
+
+    @staticmethod
+    def calculate_average_inverse_expected_log_score(
+        reports: list[ForecastReport],
+    ) -> float:
+        deviation_scores: list[float | None] = [
+            report.inversed_expected_log_score for report in reports
+        ]
+        validated_deviation_scores: list[float] = []
+        for score in deviation_scores:
+            assert score is not None
+            validated_deviation_scores.append(score)
+        average_deviation_score = sum(validated_deviation_scores) / len(
+            validated_deviation_scores
+        )
+        return average_deviation_score
+
+    @staticmethod
+    def calculate_average_deviation_points(
+        reports: list[ForecastReport],
+    ) -> float:
+        validated_deviation_points: list[float] = []
+        for report in reports:
+            assert report.deviation_points is not None
+            validated_deviation_points.append(report.deviation_points)
+        assert validated_deviation_points
+        return sum(validated_deviation_points) / len(
+            validated_deviation_points
         )
 
     @classmethod
@@ -80,6 +122,12 @@ class ForecastReport(BaseModel, Jsonable, ABC):
     @classmethod
     @abstractmethod
     def make_readable_prediction(cls, prediction: Any) -> str:
+        raise NotImplementedError(
+            "Subclass must implement this abstract method"
+        )
+
+    @abstractmethod
+    async def publish_report_to_metaculus(self) -> None:
         raise NotImplementedError(
             "Subclass must implement this abstract method"
         )

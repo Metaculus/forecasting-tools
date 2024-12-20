@@ -84,7 +84,7 @@ class BenchmarkPage(AppPage):
         cls, reports: list[BinaryReport], title: str
     ) -> None:
         average_expected_log_score = (
-            BinaryReport.calculate_average_expected_log_score(reports)
+            BinaryReport.calculate_average_inverse_expected_log_score(reports)
         )
         average_deviation = BinaryReport.calculate_average_deviation_points(
             reports

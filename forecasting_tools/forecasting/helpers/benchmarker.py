@@ -1,9 +1,13 @@
 import subprocess
+import time
 from datetime import datetime
-from typing import Literal
 
 import typeguard
+from pydantic import BaseModel
 
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
     ForecastBot,
 )
@@ -11,85 +15,132 @@ from forecasting_tools.forecasting.helpers.metaculus_api import MetaculusApi
 from forecasting_tools.forecasting.questions_and_reports.binary_report import (
     BinaryReport,
 )
+from forecasting_tools.forecasting.questions_and_reports.multiple_choice_report import (
+    MultipleChoiceReport,
+)
+from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
+    NumericReport,
+)
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     MetaculusQuestion,
 )
+from forecasting_tools.util.jsonable import Jsonable
+
+
+class BenchmarkForBot(BaseModel, Jsonable):
+    name: str
+    description: str
+    timestamp: datetime = datetime.now()
+    time_taken_in_minutes: float | None
+    total_cost: float | None
+    git_commit_hash: str
+    forecast_bot_config: dict[str, str]
+    forecast_reports: list[BinaryReport | NumericReport | MultipleChoiceReport]
+
+    @property
+    def average_expected_log_score(self) -> float:
+        raise NotImplementedError("Not implemented")
 
 
 class Benchmarker:
+    """
+    For an idea of how many questions are 'enough' to test with read:
+    https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world
+    Also see the results of a rough (and probably flawed) simulation here:
+    https://chatgpt.com/share/3fbc8106-829d-4fb3-a9e6-af0badf266df
 
-    @classmethod
-    async def benchmark_forecast_bot(
-        cls,
-        forecast_bot: ForecastBot,
-        number_of_questions_to_test: (
-            Literal["shallow", "medium", "deep"] | int
-        ),
-        file_path_to_save_reports: str = "logs/forecasts/benchmarks/",
-    ) -> float:
-        """
-        Below are the conclusions of a rough (and potentially flawed) simulation of tournaments and skill levels
-        to help with choosing sample sizes. See https://chatgpt.com/share/3fbc8106-829d-4fb3-a9e6-af0badf266df
+    TLDR: 100-200 questions is a decent starting point, but 500+ would be ideal.
+    Lower than 100 can differentiate between bots of large skill differences,
+    but not between bots of small skill differences. But even with 100 there is
+    ~30% of the 'worse bot' winning if there are not large skill differences.
+    """
 
-        lower = decent but lower quality = 50% of my deviation values (prediction - community vote) is above ~0.25
-        higher = decent but higher quality = 50% of my devaiation values (predition - community vote) is above ~0.17
+    def __init__(
+        self,
+        forecast_bots: list[ForecastBot],
+        number_of_questions_to_use: int,
+        file_path_to_save_reports: str | None = None,
+    ) -> None:
+        self.forecast_bots = forecast_bots
+        self.number_of_questions_to_use = number_of_questions_to_use
+        if (
+            file_path_to_save_reports is not None
+            and not file_path_to_save_reports.endswith("/")
+        ):
+            file_path_to_save_reports += "/"
+        self.file_path_to_save_reports = file_path_to_save_reports
 
-        At 10 samples
-        - 20% of being lower, but seeming higher
-        - 40% chance of being lower but seeming higher
-
-        At 20 samples
-        - 5% of being lower, but seeming higher
-        - 20% being higher, but seeming lower
-
-        At 30 samples
-        - 3% of being lower, but seeming higher
-        - 10% of being higher, but seeming lower
-
-        The chances for misidentification decreases as the bot gains a deviation distribution that leans more towards 0. The chances get higher as it leans more towards 1.
-        TODO: Incorporate the following analysis which is more rigorous. TLDR the numbers above are probably wrong: https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world
-        """
-
-        if isinstance(number_of_questions_to_test, int):
-            num_questions_to_benchmark_on = number_of_questions_to_test
-        elif number_of_questions_to_test == "shallow":
-            num_questions_to_benchmark_on = 10
-        elif number_of_questions_to_test == "medium":
-            num_questions_to_benchmark_on = 30
-        elif number_of_questions_to_test == "deep":
-            num_questions_to_benchmark_on = 100
+    async def run_benchmark(self) -> list[BenchmarkForBot]:
 
         questions = MetaculusApi.get_benchmark_questions(
-            num_questions_to_benchmark_on,
+            self.number_of_questions_to_use,
             random_seed=42,
             # Choose a random seed so all benchmarks in a similar time period use the same questions
         )
-        assert len(questions) == num_questions_to_benchmark_on
         questions = typeguard.check_type(questions, list[MetaculusQuestion])
-        reports = await forecast_bot.forecast_questions(questions)
-        reports = typeguard.check_type(reports, list[BinaryReport])
-        average_deviation_score = (
-            BinaryReport.calculate_average_expected_log_score(reports)
-        )
-        rounded_score = round(average_deviation_score, 4)
+        assert len(questions) == self.number_of_questions_to_use
+        benchmarks = [
+            BenchmarkForBot(
+                forecast_reports=[],
+                forecast_bot_config=bot.get_config(),
+                description=f"This benchmark ran the {bot.__class__.__name__} bot on {self.number_of_questions_to_use} questions.",
+                name=f"Benchmark for {bot.__class__.__name__}",
+                time_taken_in_minutes=None,
+                total_cost=None,
+                git_commit_hash=self._get_git_commit_hash(),
+            )
+            for bot in self.forecast_bots
+        ]
 
-        git_hash = cls.__get_git_commit_hash()
-        if not file_path_to_save_reports.endswith("/"):
-            file_path_to_save_reports += "/"
-        file_path_to_save_reports = (
-            f"{file_path_to_save_reports}"
-            f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}__"
-            f"score_{rounded_score}__"
-            f"git_{git_hash}__"
-            f".json"
-        )
-        BinaryReport.save_object_list_to_file_path(
-            reports, file_path_to_save_reports
-        )
-        return average_deviation_score
+        question_batch_size = 10
+        for bot, benchmark in zip(self.forecast_bots, benchmarks):
+            with MonetaryCostManager() as cost_manager:
+                start_time = time.time()
+                for batch in self._batch_questions(
+                    questions, question_batch_size
+                ):
+                    reports = await bot.forecast_questions(batch)
+                    reports = typeguard.check_type(
+                        reports,
+                        list[
+                            BinaryReport | MultipleChoiceReport | NumericReport
+                        ],
+                    )
+                    benchmark.forecast_reports.extend(reports)
+                    if self.file_path_to_save_reports is not None:
+                        self._save_benchmarks_to_file(
+                            benchmarks, self.file_path_to_save_reports
+                        )
+                end_time = time.time()
+                benchmark.time_taken_in_minutes = (end_time - start_time) / 60
+                benchmark.total_cost = cost_manager.current_usage
+        return benchmarks
 
     @classmethod
-    def __get_git_commit_hash(cls) -> str:
+    def _batch_questions(
+        cls, questions: list[MetaculusQuestion], batch_size: int
+    ) -> list[list[MetaculusQuestion]]:
+        return [
+            questions[i : i + batch_size]
+            for i in range(0, len(questions), batch_size)
+        ]
+
+    @classmethod
+    def _save_benchmarks_to_file(
+        cls, benchmarks: list[BenchmarkForBot], file_path_to_save_reports: str
+    ) -> None:
+        file_path_to_save_reports = (
+            f"{file_path_to_save_reports}"
+            f"benchmarks_"
+            f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+            f".json"
+        )
+        BenchmarkForBot.save_object_list_to_file_path(
+            benchmarks, file_path_to_save_reports
+        )
+
+    @classmethod
+    def _get_git_commit_hash(cls) -> str:
         try:
             return (
                 subprocess.check_output(

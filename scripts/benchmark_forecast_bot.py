@@ -16,12 +16,13 @@ logger = logging.getLogger(__name__)
 async def benchmark_forecast_bot() -> None:
     with MonetaryCostManager() as cost_manager:
         bot = MainBot()
-        score = await Benchmarker().benchmark_forecast_bot(
-            number_of_questions_to_test=100,
-            forecast_bot=bot,
+        benchmark = await Benchmarker().run_benchmark(
+            number_of_questions_to_use=100,
+            forecast_bots=[bot],
+            file_path_to_save_reports="logs/forecasts/benchmarks/",
         )
         logger.info(f"Total Cost: {cost_manager.current_usage}")
-        logger.info(f"Final Score: {score}")
+        logger.info(f"Final Score: {benchmark.average_expected_log_score}")
 
 
 if __name__ == "__main__":
