@@ -37,7 +37,7 @@ Note: This package is still in a experimental phase. The goal is to keep the API
 ## Using the Preexisting Bots
 
 The package comes with two major pre-built bots:
-- **MainBot**: The more sophisticated bot that uses multiple research strategies and carefully structured prompts
+- **MainBot**: The more sophisticated and expensive bot that does deeper research.
 - **TemplateBot**: A simpler bot that models the Metaculus templates that's cheaper, easier to start with, and faster to run.
 
 They both have roughly the same parameters. See below on how to use the TemplateBot to make forecasts.
@@ -112,7 +112,7 @@ The bot will:
 
 Note: You'll need to have your environment variables set up (see the section below)
 
-## Running your own bot
+## Making your own bot for Metaculus AI Tournament
 
 ### Join the tournament quick-start
 The quickest way to join the Metaculus Benchmarking Tournament (or any other tournament) is to fork this repo, enable Github workflow/actions, and then set repository secrets. Ideally this takes less than 15min, and then you have a bot in the tournament! Later you can develop locally and then merge in changes to your fork.
@@ -129,7 +129,7 @@ The bot should just work as is at this point. You can disable the workflow by cl
 See the 'Local Development' section later in this README.
 
 ### Customizing the Bot
-Generally all you have to do to make your own bot is inherit from the TemplateBot and override any combination of the 3 forecasting methods and the 1 research method. This saves you the headache of parsing the outputs, interacting with the Metaculus API, etc. Here is an example. It may also be helpful to look at the TemplateBot code (forecasting_tools/forecasting/forecast_bots/template_bot.py) for a more complete example.
+Generally all you have to do to make your own bot is inherit from the TemplateBot and override any combination of the 3 forecasting methods and the 1 research method. This saves you the headache of parsing the outputs, interacting with the Metaculus API, etc. Here is an example. It may also be helpful to look at the TemplateBot code (forecasting_tools/forecasting/forecast_bots/template_bot.py) for a more complete example. If you forked, make sure to change the code in `scripts/run_forecasts_for_ai_tournament` to call your bot to take advantage of the github actions.
 
 
 ```python
@@ -211,7 +211,6 @@ The Smart Searcher acts like an LLM with internet access. It works a lot like Pe
 
 
 ```python
-from forecasting_tools import SmartSearcher
 
 searcher = SmartSearcher(
     temperature=0,
@@ -455,7 +454,7 @@ The Monetary Cost Manager helps to track AI and API costs. It tracks expenses an
 ```python
 from forecasting_tools import MonetaryCostManager
 from forecasting_tools import (
-    ExaSearcher, Gpt4oMetaculusProxy, Gpt4o, SmartSearcher, Claude35Sonnet, Perplexity
+    ExaSearcher, Gpt4o, SmartSearcher, Claude35Sonnet, Perplexity
 )
 
 max_cost = 5.00
@@ -513,6 +512,41 @@ If you choose not to run Docker, you can use poetry to set up a local virtual en
 You can run any front end folder in the front_end directory by executing `streamlit run front_end/Home.py`. This will start a development server for you that you can run.
 
 ## Testing
-This repository uses pytest and pytest-xdist. xdist spreads out all the tests between multiple threads that are each run on a separate CPU in order to speed up execution. Currently its setup to create a thread per CPU. Configuration for this is in `pytest.ini`. The tests are gathered afresh from each thread, so any initialization done in imports, globals, or class variables are done for each thread.
+This repository uses pytest tests are subdivided into folders 'unit_tests', 'low_cost_or_live_api', 'expensive'. Unit tests should always pass, while the other tests are for sanity checking. The low cost folder should be able to be run on mass without a huge cost to you. Do not run `pytest` without specifying which folder you want or else you will incur some large expenses from the 'expensive' folder.
 
-Tests are subdivided into folders based on cost and reliability, so do not run `pytest` without specifying which folder you want  or else you will incur some large expenses from OpenAI. The more expensive tests run the tools all the way through, and on many example cases, and are not expected to get 100% success rates.
+
+# Contributing
+
+## Getting Started
+
+1. **Fork the Repository**: Fork the repository on GitHub. Clone your fork locally: `git clone git@github.com:your-username/forecasting-tools.git`
+2. **Set Up Development Environment**: Follow the "Local Development" section in the README to set up your environment
+3. **Come up with an improvement**: Decide on something worth changing. Perhaps, you want to add your own custom bot to the forecasting_bots folder. Perhaps you want to add a tool that you think others could benefit from. Most every contribution will be accepted, though if you are worried about adoption, feel free to chat on our discord or create an issue.
+4. **Make a pull request**:
+   - Make changes
+   - Push your changes to your fork
+   - Make sure you rebase with the upstream main branch before doing a PR (`git fetch upstream` and `git rebase upstream/main`)
+   - Go to your fork in github, and choose the branch that you have that has your changes
+   - You should see a 'Contribute' button. Click this and make a pull request.
+   - Fill out the pull request template with a  description of what changed and why and Url for related issues
+   - Request review from maintainers
+   - Respond to any feedback and make requested changes
+
+## Development Guidelines
+
+1. **Code Style**
+   - Code is automatically formatted using Black
+   - Use type hints for all function parameters and return values
+   - Use descriptive variable names over comments
+   - Follow existing patterns in the codebase
+
+2. **Testing**
+   - Add tests where appropriate for new functionality. We aren't shooting for full code coverage, but you shouldn't make none.
+   - Run unit tests locally before merging to check if you broke anything. See the 'Testing' section.
+
+## Questions or Issues?
+
+- Join our [Discord](https://discord.gg/Dtq4JNdXnw) for questions
+- Open an issue for bugs or feature requests
+
+Thank you for helping improve forecasting-tools!
