@@ -1,3 +1,9 @@
+```python
+# To keep the notebook and readme in sync, run this, then delete this code from the top
+!jupyter nbconvert --to markdown README.ipynb --output README.md
+!pypistats recent forecasting-tools
+```
+
 ![PyPI version](https://badge.fury.io/py/forecasting-tools.svg)
 ![Python Versions](https://img.shields.io/pypi/pyversions/forecasting-tools.svg)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)

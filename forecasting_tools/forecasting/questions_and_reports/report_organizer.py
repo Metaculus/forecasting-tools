@@ -25,7 +25,7 @@ from forecasting_tools.util import file_manipulation
 class TypeMapping(BaseModel):
     question_type: type[MetaculusQuestion]
     test_post_id: int
-    report_type: type[ForecastReport] | None
+    report_type: type[ForecastReport]
 
 
 class ReportOrganizer:

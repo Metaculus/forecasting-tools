@@ -54,6 +54,7 @@ pytest = "^8.3.2"
 pytest-xdist = "^3.3.1"
 pytest-mock = "^3.14.0"
 pytest-asyncio = "^0.25.0"
+pypistats = "^1.7.0"
 
 [build-system]
 requires = ["poetry-core"]

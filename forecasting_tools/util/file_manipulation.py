@@ -82,7 +82,7 @@ def skip_if_file_writing_not_allowed(func: Callable) -> Callable:
             return func(*args, **kwargs)
         else:
             print(
-                "WARNING: Skipping function execution as file writing is not allowed."
+                "WARNING: Skipping file writing as it is set or defaults to FALSE"
             )
             return None
 

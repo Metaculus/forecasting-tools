@@ -204,6 +204,9 @@ class TemplateBot(ForecastBot):
             {lower_bound_message}
             {upper_bound_message}
 
+            Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1m).
+            Never use scientific notation.
+
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The outcome if nothing changed.
@@ -323,13 +326,16 @@ class TemplateBot(ForecastBot):
         self, reasoning: str, question: NumericQuestion
     ) -> NumericDistribution:
         pattern = r"^.*(?:P|p)ercentile.*$"
-        number_pattern = r"-?\d+(?:,\d{3})*(?:\.\d+)?"
+        number_pattern = r"-\s*(?:[^\d\-]*\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)|(\d+(?:,\d{3})*(?:\.\d+)?)"
         results = []
 
         for line in reasoning.split("\n"):
             if re.match(pattern, line):
                 numbers = re.findall(number_pattern, line)
-                numbers_no_commas = [num.replace(",", "") for num in numbers]
+                numbers_no_commas = [
+                    next(num for num in match if num).replace(",", "")
+                    for match in numbers
+                ]
                 numbers = [
                     float(num) if "." in num else int(num)
                     for num in numbers_no_commas
@@ -337,6 +343,9 @@ class TemplateBot(ForecastBot):
                 if len(numbers) > 1:
                     first_number = numbers[0]
                     last_number = numbers[-1]
+                    # Check if the original line had a negative sign before the last number
+                    if "-" in line.split(":")[-1]:
+                        last_number = -abs(last_number)
                     results.append((first_number, last_number))
 
         percentiles = [
