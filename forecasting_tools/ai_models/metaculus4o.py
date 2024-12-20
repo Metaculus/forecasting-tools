@@ -15,7 +15,7 @@ class Gpt4oMetaculusProxy(OpenAiTextToTextModel):
 
     METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
     _OPENAI_ASYNC_CLIENT = AsyncOpenAI(
-        base_url="https://www.metaculus.com/proxy/openai/v1",
+        base_url="https://llm-proxy.metaculus.com/proxy/openai/v1",
         default_headers={
             "Content-Type": "application/json",
             "Authorization": f"Token {METACULUS_TOKEN}",

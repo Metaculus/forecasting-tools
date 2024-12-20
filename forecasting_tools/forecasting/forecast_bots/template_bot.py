@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.claude35sonnet import Claude35Sonnet
 from forecasting_tools.ai_models.gpt4o import Gpt4o
 from forecasting_tools.ai_models.metaculus4o import Gpt4oMetaculusProxy
 from forecasting_tools.ai_models.perplexity import Perplexity
@@ -34,9 +35,17 @@ logger = logging.getLogger(__name__)
 
 class TemplateBot(ForecastBot):
     FINAL_DECISION_LLM = (
-        Gpt4oMetaculusProxy(temperature=0.7)
-        if os.getenv("METACULUS_TOKEN")
-        else Gpt4o(temperature=0.7)
+        Gpt4o(temperature=0.7)
+        if os.getenv("OPENAI_API_KEY")
+        else (
+            Gpt4oMetaculusProxy(temperature=0.7)
+            if os.getenv("METACULUS_TOKEN")
+            else (
+                Claude35Sonnet(temperature=0.7)
+                if os.getenv("ANTHROPIC_API_KEY")
+                else Gpt4o(temperature=0.7)
+            )
+        )
     )
 
     async def run_research(self, question: MetaculusQuestion) -> str:
