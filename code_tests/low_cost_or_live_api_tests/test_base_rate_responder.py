@@ -16,6 +16,7 @@ from forecasting_tools.forecasting.sub_question_researchers.base_rate_researcher
 )
 def test_responder_initializes_with_good_question(question: str) -> None:
     BaseRateResearcher(question)
+    # Test Question is not rejected on initialization
 
 
 @pytest.mark.parametrize(

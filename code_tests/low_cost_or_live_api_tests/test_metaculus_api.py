@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_get_binary_question_type_from_id() -> None:
-    question_id = ReportOrganizer.get_example_question_id_for_question_type(
+    question_id = ReportOrganizer.get_example_post_id_for_question_type(
         BinaryQuestion
     )
     question = MetaculusApi.get_question_by_post_id(question_id)
@@ -41,7 +41,7 @@ def test_get_binary_question_type_from_id() -> None:
 
 
 def test_get_numeric_question_type_from_id() -> None:
-    question_id = ReportOrganizer.get_example_question_id_for_question_type(
+    question_id = ReportOrganizer.get_example_post_id_for_question_type(
         NumericQuestion
     )
     question = MetaculusApi.get_question_by_post_id(question_id)
@@ -56,7 +56,7 @@ def test_get_numeric_question_type_from_id() -> None:
 
 @pytest.mark.skip(reason="Date questions are not fully supported yet")
 def test_get_date_question_type_from_id() -> None:
-    question_id = ReportOrganizer.get_example_question_id_for_question_type(
+    question_id = ReportOrganizer.get_example_post_id_for_question_type(
         DateQuestion
     )
     question = MetaculusApi.get_question_by_post_id(question_id)
@@ -70,7 +70,7 @@ def test_get_date_question_type_from_id() -> None:
 
 
 def test_get_multiple_choice_question_type_from_id() -> None:
-    post_id = ReportOrganizer.get_example_question_id_for_question_type(
+    post_id = ReportOrganizer.get_example_post_id_for_question_type(
         MultipleChoiceQuestion
     )
     question = MetaculusApi.get_question_by_post_id(post_id)
@@ -87,7 +87,10 @@ def test_get_multiple_choice_question_type_from_id() -> None:
 
 
 def test_post_comment_on_question() -> None:
-    question = ForecastingTestManager.get_question_safe_to_pull_and_push_to()
+    post_id = ReportOrganizer.get_example_post_id_for_question_type(
+        BinaryQuestion
+    )
+    question = MetaculusApi.get_question_by_post_id(post_id)
     MetaculusApi.post_question_comment(
         question.id_of_post, "This is a test comment"
     )
@@ -96,7 +99,7 @@ def test_post_comment_on_question() -> None:
 
 @pytest.mark.skip(reason="There are no safe questions to post predictions on")
 def test_post_binary_prediction_on_question() -> None:
-    question = ForecastingTestManager.get_question_safe_to_pull_and_push_to()
+    question = ForecastingTestManager.get_fake_binary_questions()
     assert isinstance(question, BinaryQuestion)
     question_id = question.id_of_post
     MetaculusApi.post_binary_question_prediction(question_id, 0.01)
@@ -104,7 +107,7 @@ def test_post_binary_prediction_on_question() -> None:
 
 
 def test_post_binary_prediction_error_when_out_of_range() -> None:
-    question = ForecastingTestManager.get_question_safe_to_pull_and_push_to()
+    question = ForecastingTestManager.get_fake_binary_questions()
     question_id = question.id_of_post
     with pytest.raises(ValueError):
         MetaculusApi.post_binary_question_prediction(question_id, 0)

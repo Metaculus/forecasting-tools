@@ -18,6 +18,8 @@ concurrency:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
+    env:
+      FILE_WRITING_ALLOWED: true
     steps:
       - name: Check out repository
         uses: actions/checkout@v4

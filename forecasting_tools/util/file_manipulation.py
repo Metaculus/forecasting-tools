@@ -111,6 +111,7 @@ def load_text_file(file_path_in_package: str) -> str:
         return file.read()
 
 
+@skip_if_file_writing_not_allowed
 def write_json_file(file_path_in_package: str, input: list[dict]) -> None:
     json_string = json.dumps(input, indent=4)
     create_or_overwrite_file(file_path_in_package, json_string)

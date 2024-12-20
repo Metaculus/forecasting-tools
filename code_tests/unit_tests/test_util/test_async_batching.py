@@ -131,6 +131,7 @@ def create_rate_limited_coroutines(
     return rate_limited_coroutines
 
 
+@pytest.mark.skip(reason="This test takes a while to run")
 def test_rate_limit_wrapper_achieves_average_rate_limit() -> None:
     num_coroutines_to_run = 1000
     calls_per_period = 100

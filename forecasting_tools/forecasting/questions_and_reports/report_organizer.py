@@ -53,7 +53,7 @@ class ReportOrganizer:
     ]
 
     @classmethod
-    def get_example_question_id_for_question_type(
+    def get_example_post_id_for_question_type(
         cls, question_type: type[MetaculusQuestion]
     ) -> int:
         assert issubclass(question_type, MetaculusQuestion)
@@ -81,9 +81,7 @@ class ReportOrganizer:
         cls, question_type: type[MetaculusQuestion]
     ) -> MetaculusQuestion:
         assert issubclass(question_type, MetaculusQuestion)
-        question_id = cls.get_example_question_id_for_question_type(
-            question_type
-        )
+        question_id = cls.get_example_post_id_for_question_type(question_type)
         question = MetaculusApi.get_question_by_post_id(question_id)
         assert isinstance(question, question_type)
         return question

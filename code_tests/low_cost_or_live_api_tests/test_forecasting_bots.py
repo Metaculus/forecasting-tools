@@ -82,9 +82,7 @@ async def test_no_reports_when_questions_already_forecasted(
     bot_type = TemplateBot
     bot = bot_type(skip_previously_forecasted_questions=True)
     ForecastingTestManager.mock_forecast_bot_run_forecast(bot_type, mocker)
-    questions = [
-        ForecastingTestManager.get_question_safe_to_pull_and_push_to()
-    ]
+    questions = [ForecastingTestManager.get_fake_binary_questions()]
     questions = typeguard.check_type(questions, list[MetaculusQuestion])
 
     for question in questions:

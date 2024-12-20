@@ -16,6 +16,7 @@ from forecasting_tools.forecasting.questions_and_reports.binary_report import (
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     BinaryQuestion,
     MetaculusQuestion,
+    QuestionState,
 )
 
 T = TypeVar("T", bound=MetaculusQuestion)
@@ -32,19 +33,26 @@ class ForecastingTestManager:
     )
 
     @classmethod
-    def get_question_safe_to_pull_and_push_to(cls) -> BinaryQuestion:
-        question = MetaculusApi.get_question_by_post_id(25769)
-        assert isinstance(question, BinaryQuestion)
-        question.community_prediction_at_access_time = (
-            0  # Some tests need a value to manipulate
+    def get_fake_binary_questions(
+        cls, community_prediction: float | None = 0.7
+    ) -> BinaryQuestion:
+        question = BinaryQuestion(
+            question_text="Will TikTok be banned in the US?",
+            id_of_post=0,
+            state=QuestionState.OPEN,
+            community_prediction_at_access_time=community_prediction,
         )
         return question
 
     @staticmethod
-    def get_fake_forecast_report() -> BinaryReport:
+    def get_fake_forecast_report(
+        community_prediction: float | None = 0.7, prediction: float = 0.5
+    ) -> BinaryReport:
         return BinaryReport(
-            question=ForecastingTestManager.get_question_safe_to_pull_and_push_to(),
-            prediction=0.5,
+            question=ForecastingTestManager.get_fake_binary_questions(
+                community_prediction
+            ),
+            prediction=prediction,
             explanation=textwrap.dedent(
                 """
                 # Summary
@@ -77,7 +85,7 @@ class ForecastingTestManager:
         subclass: type[ForecastBot], mocker: Mock
     ) -> Mock:
         test_binary_question = (
-            ForecastingTestManager.get_question_safe_to_pull_and_push_to()
+            ForecastingTestManager.get_fake_binary_questions()
         )
         mock_function = mocker.patch(
             f"{subclass._run_individual_question.__module__}.{subclass._run_individual_question.__qualname__}"
@@ -113,6 +121,6 @@ class ForecastingTestManager:
             f"{MetaculusApi.get_benchmark_questions.__module__}.{MetaculusApi.get_benchmark_questions.__qualname__}"
         )
         mock_function.return_value = [
-            ForecastingTestManager.get_question_safe_to_pull_and_push_to()
+            ForecastingTestManager.get_fake_binary_questions()
         ]
         return mock_function

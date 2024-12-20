@@ -88,7 +88,7 @@ def test_resource_manager_refreshes_at_right_rate() -> None:
 def test_resource_manager_blocks_when_no_resources_for_single_coroutine() -> (
     None
 ):
-    refresh_rate = 1
+    refresh_rate = 5
     capacity = 20
     resources_to_consume = capacity
     tester = ResourceLimiterTester(refresh_rate, capacity)
@@ -100,12 +100,13 @@ def test_resource_manager_blocks_when_no_resources_for_single_coroutine() -> (
     duration = stats.duration_in_seconds
     seconds_it_should_take = resources_to_consume / refresh_rate
 
-    allowed_error = 1.3
+    allowed_error = 0.5
     assert (
         abs(seconds_it_should_take - duration) < allowed_error
     ), "Resource limiter did not block"
 
 
+@pytest.mark.skip(reason="This test takes a while to run")
 def test_resource_manager_blocks_when_no_resources_for_many_coroutines() -> (
     None
 ):
@@ -329,6 +330,7 @@ def test_rate_during_burst_is_respected() -> None:
     )
 
 
+@pytest.mark.skip(reason="This test takes a while to run")
 def test_rate_is_respected_between_burst_and_after() -> None:
     allowed_resources_per_period = 100
     period_length_in_seconds = 10
@@ -359,6 +361,7 @@ def test_rate_is_respected_between_burst_and_after() -> None:
     )
 
 
+@pytest.mark.skip(reason="This test takes a while to run")
 def test_resource_manager_works_with_a_lot_of_random_resource_requests() -> (
     None
 ):

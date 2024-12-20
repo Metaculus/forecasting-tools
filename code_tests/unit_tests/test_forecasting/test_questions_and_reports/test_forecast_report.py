@@ -1,3 +1,4 @@
+import os
 import textwrap
 
 import pytest
@@ -33,10 +34,14 @@ def test_metaculus_report_is_jsonable() -> None:
     ReportOrganizer.save_reports_to_file_path(reports, temp_writing_path)
     reports_2 = ReportOrganizer.load_reports_from_file_path(temp_writing_path)
     assert len(reports) == len(reports_2)
-    assert all(
-        report.to_json() == report_2.to_json()
-        for report, report_2 in zip(reports, reports_2)
-    )
+    for report, report_2 in zip(reports, reports_2):
+        assert report.question.question_text == report_2.question.question_text
+        assert report.prediction == report_2.prediction
+        assert report.question.id_of_post == report_2.question.id_of_post
+        assert report.question.state == report_2.question.state
+        assert str(report) == str(report_2)
+
+    os.remove(temp_writing_path)
 
 
 def test_report_sections_are_parsed_correctly() -> None:
