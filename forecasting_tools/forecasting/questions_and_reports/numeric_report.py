@@ -35,6 +35,14 @@ class NumericDistribution(BaseModel):
     lower_bound: float
     zero_point: float | None
 
+    @property
+    def inversed_expected_log_score(self) -> float | None:
+        raise NotImplementedError("Not implemented")
+
+    @property
+    def community_prediction(self) -> NumericDistribution | None:
+        raise NotImplementedError("Not implemented")
+
     @field_validator("declared_percentiles")
     def validate_percentiles_order(
         cls: NumericDistribution, percentiles: list[Percentile]

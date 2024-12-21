@@ -54,9 +54,7 @@ async def gather_reports_for_date_range(
     all_reports: list[BinaryReport] = []
     for file_name in target_files:
         file_path = os.path.join(absolute_forecast_path, file_name)
-        reports = BinaryReport.convert_project_file_path_to_object_list(
-            file_path
-        )
+        reports = BinaryReport.load_json_from_file_path(file_path)
         all_reports.extend(reports)
     return all_reports
 

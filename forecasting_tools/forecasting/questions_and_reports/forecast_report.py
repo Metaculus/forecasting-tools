@@ -74,10 +74,6 @@ class ForecastReport(BaseModel, Jsonable, ABC):
         raise NotImplementedError("Not implemented")
 
     @property
-    def deviation_points(self) -> float | None:
-        raise NotImplementedError("Not implemented")
-
-    @property
     def community_prediction(self) -> Any | None:
         raise NotImplementedError("Not implemented")
 
@@ -96,19 +92,6 @@ class ForecastReport(BaseModel, Jsonable, ABC):
             validated_deviation_scores
         )
         return average_deviation_score
-
-    @staticmethod
-    def calculate_average_deviation_points(
-        reports: list[ForecastReport],
-    ) -> float:
-        validated_deviation_points: list[float] = []
-        for report in reports:
-            assert report.deviation_points is not None
-            validated_deviation_points.append(report.deviation_points)
-        assert validated_deviation_points
-        return sum(validated_deviation_points) / len(
-            validated_deviation_points
-        )
 
     @classmethod
     @abstractmethod

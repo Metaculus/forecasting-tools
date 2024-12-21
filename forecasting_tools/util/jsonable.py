@@ -40,7 +40,7 @@ class Jsonable(ABC):
             )
 
     @classmethod
-    def convert_project_file_path_to_object_list(
+    def load_json_from_file_path(
         cls: type[T], project_file_path: str
     ) -> list[T]:
         return (

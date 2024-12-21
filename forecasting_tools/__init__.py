@@ -14,6 +14,9 @@ from forecasting_tools.ai_models.perplexity import Perplexity as Perplexity
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager as MonetaryCostManager,
 )
+from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
+    ForecastBot as ForecastBot,
+)
 from forecasting_tools.forecasting.forecast_bots.main_bot import (
     MainBot as MainBot,
 )
@@ -28,6 +31,9 @@ from forecasting_tools.forecasting.helpers.metaculus_api import (
 )
 from forecasting_tools.forecasting.helpers.smart_searcher import (
     SmartSearcher as SmartSearcher,
+)
+from forecasting_tools.forecasting.questions_and_reports.benchmark_for_bot import (
+    BenchmarkForBot as BenchmarkForBot,
 )
 from forecasting_tools.forecasting.questions_and_reports.binary_report import (
     BinaryReport as BinaryReport,

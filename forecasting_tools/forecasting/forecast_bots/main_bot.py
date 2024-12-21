@@ -28,9 +28,11 @@ class MainBot(TemplateBot):
         publish_reports_to_metaculus: bool = False,
         folder_to_save_reports_to: str | None = None,
         skip_previously_forecasted_questions: bool = False,
+        skip_questions_that_error: bool = True,
         number_of_background_questions_to_ask: int = 5,
         number_of_base_rate_questions_to_ask: int = 5,
         number_of_base_rates_to_do_deep_research_on: int = 0,
+        **kwargs,
     ) -> None:
         super().__init__(
             research_reports_per_question=research_reports_per_question,
@@ -38,7 +40,9 @@ class MainBot(TemplateBot):
             use_research_summary_to_forecast=use_research_summary_to_forecast,
             publish_reports_to_metaculus=publish_reports_to_metaculus,
             folder_to_save_reports_to=folder_to_save_reports_to,
+            skip_questions_that_error=skip_questions_that_error,
             skip_previously_forecasted_questions=skip_previously_forecasted_questions,
+            **kwargs,
         )
         self.number_of_background_questions_to_ask = (
             number_of_background_questions_to_ask

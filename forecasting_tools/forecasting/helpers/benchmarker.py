@@ -3,7 +3,6 @@ import time
 from datetime import datetime
 
 import typeguard
-from pydantic import BaseModel
 
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -12,6 +11,9 @@ from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
     ForecastBot,
 )
 from forecasting_tools.forecasting.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.forecasting.questions_and_reports.benchmark_for_bot import (
+    BenchmarkForBot,
+)
 from forecasting_tools.forecasting.questions_and_reports.binary_report import (
     BinaryReport,
 )
@@ -24,22 +26,6 @@ from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     MetaculusQuestion,
 )
-from forecasting_tools.util.jsonable import Jsonable
-
-
-class BenchmarkForBot(BaseModel, Jsonable):
-    name: str
-    description: str
-    timestamp: datetime = datetime.now()
-    time_taken_in_minutes: float | None
-    total_cost: float | None
-    git_commit_hash: str
-    forecast_bot_config: dict[str, str]
-    forecast_reports: list[BinaryReport | NumericReport | MultipleChoiceReport]
-
-    @property
-    def average_expected_log_score(self) -> float:
-        raise NotImplementedError("Not implemented")
 
 
 class Benchmarker:
@@ -69,6 +55,7 @@ class Benchmarker:
         ):
             file_path_to_save_reports += "/"
         self.file_path_to_save_reports = file_path_to_save_reports
+        self.initialization_timestamp = datetime.now()
 
     async def run_benchmark(self) -> list[BenchmarkForBot]:
 
@@ -107,13 +94,11 @@ class Benchmarker:
                         ],
                     )
                     benchmark.forecast_reports.extend(reports)
-                    if self.file_path_to_save_reports is not None:
-                        self._save_benchmarks_to_file(
-                            benchmarks, self.file_path_to_save_reports
-                        )
+                    self._save_benchmarks_to_file_if_configured(benchmarks)
                 end_time = time.time()
                 benchmark.time_taken_in_minutes = (end_time - start_time) / 60
                 benchmark.total_cost = cost_manager.current_usage
+        self._save_benchmarks_to_file_if_configured(benchmarks)
         return benchmarks
 
     @classmethod
@@ -125,14 +110,15 @@ class Benchmarker:
             for i in range(0, len(questions), batch_size)
         ]
 
-    @classmethod
-    def _save_benchmarks_to_file(
-        cls, benchmarks: list[BenchmarkForBot], file_path_to_save_reports: str
+    def _save_benchmarks_to_file_if_configured(
+        self, benchmarks: list[BenchmarkForBot]
     ) -> None:
+        if self.file_path_to_save_reports is None:
+            return
         file_path_to_save_reports = (
-            f"{file_path_to_save_reports}"
+            f"{self.file_path_to_save_reports}"
             f"benchmarks_"
-            f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+            f"{self.initialization_timestamp.strftime('%Y-%m-%d_%H-%M-%S')}"
             f".json"
         )
         BenchmarkForBot.save_object_list_to_file_path(

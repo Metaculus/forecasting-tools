@@ -3,6 +3,7 @@ import os
 from abc import ABC
 
 from langchain_community.callbacks.openai_info import (
+    TokenType,
     get_openai_token_cost_for_model,
 )
 from openai import AsyncOpenAI
@@ -143,10 +144,10 @@ class OpenAiTextToTextModel(TraditionalOnlineLlm, ABC):
         self, prompt_tkns: int, completion_tkns: int
     ) -> float:
         prompt_cost = get_openai_token_cost_for_model(
-            self.MODEL_NAME, prompt_tkns, is_completion=False
+            self.MODEL_NAME, prompt_tkns, token_type=TokenType.PROMPT
         )
         completion_cost = get_openai_token_cost_for_model(
-            self.MODEL_NAME, completion_tkns, is_completion=True
+            self.MODEL_NAME, completion_tkns, token_type=TokenType.COMPLETION
         )
         cost = prompt_cost + completion_cost
         return cost

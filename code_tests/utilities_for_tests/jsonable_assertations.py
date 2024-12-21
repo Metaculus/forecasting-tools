@@ -17,9 +17,7 @@ def assert_reading_and_printing_from_file_works(
     # Read the data_type from the file
     try:
         objects_from_file: list[Jsonable] = (
-            jsonable_class_to_test.convert_project_file_path_to_object_list(
-                read_path
-            )
+            jsonable_class_to_test.load_json_from_file_path(read_path)
         )
     except Exception as e:
         raise RuntimeError(
@@ -46,9 +44,7 @@ def assert_reading_and_printing_from_file_works(
     # Read the data_type from the file
     try:
         objects_from_file: list[Jsonable] = (
-            jsonable_class_to_test.convert_project_file_path_to_object_list(
-                temp_write_path
-            )
+            jsonable_class_to_test.load_json_from_file_path(temp_write_path)
         )
     except Exception as e:
         raise RuntimeError(

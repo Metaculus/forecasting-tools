@@ -17,9 +17,7 @@ def main() -> None:
     if file_path:
         st.divider()
         st.subheader("Reports:")
-        reports = BinaryReport.convert_project_file_path_to_object_list(
-            file_path
-        )
+        reports = BinaryReport.load_json_from_file_path(file_path)
         ReportDisplayer.display_report_list(reports)
 
 

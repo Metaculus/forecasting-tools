@@ -68,3 +68,16 @@ class BinaryReport(ForecastReport):
         if self.community_prediction is None:
             return None
         return abs(self.prediction - self.community_prediction)
+
+    @staticmethod
+    def calculate_average_deviation_points(
+        reports: list[BinaryReport],
+    ) -> float:
+        validated_deviation_points: list[float] = []
+        for report in reports:
+            assert report.deviation_points is not None
+            validated_deviation_points.append(report.deviation_points)
+        assert validated_deviation_points
+        return sum(validated_deviation_points) / len(
+            validated_deviation_points
+        )

@@ -40,7 +40,7 @@ class BenchmarkPage(AppPage):
 
         if selected_file:
             corresponding_file_path = f"{cls.BENCHMARK_FOLDER}/{cls.BENCHMARK_FILES_TO_SHOW[selected_file]}"
-            reports = BinaryReport.convert_project_file_path_to_object_list(
+            reports = BinaryReport.load_json_from_file_path(
                 corresponding_file_path
             )
             cls.__display_deviation_scores(reports)

@@ -39,6 +39,7 @@ class ForecastingTestManager:
         question = BinaryQuestion(
             question_text="Will TikTok be banned in the US?",
             id_of_post=0,
+            id_of_question=0,
             state=QuestionState.OPEN,
             community_prediction_at_access_time=community_prediction,
         )

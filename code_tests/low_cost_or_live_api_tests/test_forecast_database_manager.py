@@ -70,9 +70,7 @@ def get_forecast_example_reports() -> list[ForecastReport]:
 
 def get_base_rate_example_reports() -> list[BaseRateReport]:
     base_rate_data_path = "code_tests/unit_tests/test_forecasting/forecasting_test_data/base_rate_reports.json"
-    base_rate_reports = (
-        BaseRateReport.convert_project_file_path_to_object_list(
-            base_rate_data_path
-        )
+    base_rate_reports = BaseRateReport.load_json_from_file_path(
+        base_rate_data_path
     )
     return base_rate_reports

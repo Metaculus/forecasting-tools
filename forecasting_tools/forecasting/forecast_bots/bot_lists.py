@@ -13,7 +13,7 @@ from forecasting_tools.forecasting.questions_and_reports.report_organizer import
 )
 
 
-def get_all_bots() -> list[type[ForecastBot]]:
+def get_all_bot_classes() -> list[type[ForecastBot]]:
     return [
         MainBot,
         TemplateBot,

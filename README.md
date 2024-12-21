@@ -1,9 +1,3 @@
-```python
-# To keep the notebook and readme in sync, run this, then delete this code from the top
-!jupyter nbconvert --to markdown README.ipynb --output README.md
-!pypistats recent forecasting-tools
-```
-
 ![PyPI version](https://badge.fury.io/py/forecasting-tools.svg)
 ![Python Versions](https://img.shields.io/pypi/pyversions/forecasting-tools.svg)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
@@ -22,7 +16,8 @@ This repository contains forecasting and research tools built with Python and St
 
 Here are the tools most likely to be useful to you:
 - 🎯 **Forecasting Bot:** General Forecaster that integrates with the Metaculus AI benchmarking competition. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the API code, etc)
-- 🔍 **Perplexity++ Smart Searcher:** An AI-powered internet-informed llm powered by Exa.ai. Its a better (but more expensive) alternative to Perplexity.ai that is configurable, more accurate, able to decide on filters, able to link to exact paragraphs, etc.
+- 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run you bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected log scores.
+- 🔍 **Perplexity++ Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and Gpt. Its a better (but slightly more expensive) alternative to Perplexity.ai that is configurable, more accurate, able to decide on filters, able to link to exact paragraphs, etc.
 - 🔑 **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
 
 
@@ -33,9 +28,9 @@ Here are some other cool components and features of the project:
 - **Metaculus API Wrapper:** for interacting with questions and tournaments
 - **Monetary Cost Manager:** for tracking AI and API expenses
 
-Join the [discord](https://discord.gg/Dtq4JNdXnw) for updates and to give feedback (btw feedback is very appreciated, even just a quick 'I did/didn't decide to use the tool for reason X' is helpful to know)
+Join the [discord](https://discord.gg/Dtq4JNdXnw) for updates and to give feedback (btw feedback is very appreciated, even just a quick "I did/didn't decide to use tool X for reason Y, though am busy and don't have time to elaborate" is helpful to know)
 
-Note: This package is still in a experimental phase. The goal is to keep the API fairly stable, though no guarantees are given at this phase. There will be special effort to keep the ForecastBot and TemplateBot APIs consistent.
+Note: This package is still in an experimental phase. The goal is to keep the package API fairly stable, though no guarantees are given at this phase. There will be special effort to keep the ForecastBot and TemplateBot APIs consistent.
 
 
 # Forecasting Bot Building
@@ -206,6 +201,79 @@ class MyCustomBot(TemplateBot):
 Whether running locally or through Github actions, you will need to set environment variables. All environment variables you might want are in `.env.template`. Generally you only need the METACULUS_TOKEN if running the Template. Having an EXA_API_KEY (see www.exa.ai) or PERPLEXITY_API_KEY (see www.perplexity.ai) is needed for searching the web. Make sure to put these variables in your `.env` file if running locally and in the Github actions secrets if running on Github actions. Remember to set 'FILE_WRITING_ALLOWED' to true if you want to save results.
 
 # Forecasting Tools Examples
+
+## Benchmarking
+Below is an example of how to run the benchmarker
+
+
+```python
+from forecasting_tools import Benchmarker, TemplateBot, BenchmarkForBot
+
+class MyCustomBot(TemplateBot):
+    ...
+
+# Run benchmark on multiple bots
+bots = [TemplateBot(), MyCustomBot()]  # Add your custom bots here
+benchmarker = Benchmarker(
+    forecast_bots=bots,
+    number_of_questions_to_use=2,  # Recommended 100+ for meaningful results
+    file_path_to_save_reports="benchmarks/"
+)
+benchmarks: list[BenchmarkForBot] = await benchmarker.run_benchmark()
+
+# View results
+for benchmark in benchmarks:
+    print(f"Bot: {benchmark.name}")
+    print(f"Score: {benchmark.average_inverse_expected_log_score}") # Lower is better
+    print(f"Num Forecasts: {len(benchmark.forecast_reports)}")
+    print(f"Time: {benchmark.time_taken_in_minutes}min")
+    print(f"Cost: ${benchmark.total_cost}")
+```
+
+The ideal number of questions to get a good sense of whether one bot is better than another can vary. 100+ should tell your something decent. See [this analysis](https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world) for exploration of the numbers.
+
+As of Dec 20, 2024 the benchmarker automatically selects a random set of questions from Metaculus that:
+- Are binary questions (yes/no)
+- Are currently open
+- Will resolve within 3 months
+- Have at least 40 forecasters
+- Have a community prediction
+- Are not notebook/group/conditional questions
+
+As of last edit there are plans to expand this to numeric and multiple choice, but right now it just benchmarks binary questions.
+
+You can grab these questions without using the Benchmarker by running the below
+
+
+
+```python
+from forecasting_tools import MetaculusApi
+
+questions = MetaculusApi.get_benchmark_questions(
+    num_of_questions_to_return=100,
+)
+```
+
+You can also save/load benchmarks to/from json
+
+
+```python
+from forecasting_tools import BenchmarkForBot
+
+# Load
+file_path = "benchmarks/benchmark.json"
+benchmarks: list[BenchmarkForBot] = BenchmarkForBot.load_json_from_file_path(file_path)
+
+# Save
+new_benchmarks: list[BenchmarkForBot] = benchmarks
+BenchmarkForBot.save_object_list_to_file_path(new_benchmarks, file_path)
+
+# To/From Json String
+single_benchmark = benchmarks[0]
+json_object: dict = single_benchmark.to_json()
+new_benchmark: BenchmarkForBot = BenchmarkForBot.from_json(json_object)
+
+```
 
 ## Smart Searcher
 The Smart Searcher acts like an LLM with internet access. It works a lot like Perplexity.ai API, except:

@@ -73,7 +73,7 @@ class ForecastBot(ABC):
         return {
             name: str(getattr(self, name))
             for name in params.keys()
-            if name != "self"
+            if name != "self" and name != "kwargs" and name != "args"
         }
 
     async def forecast_on_tournament(
