@@ -14,8 +14,8 @@ from forecasting_tools.forecasting.forecast_bots.experiments.exa_bot import (
 from forecasting_tools.forecasting.forecast_bots.experiments.exa_q4_binary import (
     ExaQ4BinaryBot,
 )
-from forecasting_tools.forecasting.forecast_bots.experiments.exa_q4_binary_o1 import (
-    ExaQ4BinaryO1Bot,
+from forecasting_tools.forecasting.forecast_bots.experiments.exa_q4_binary_o1_preview import (
+    ExaQ4BinaryO1PreviewBot,
 )
 from forecasting_tools.forecasting.forecast_bots.experiments.q4_main_binary_bot import (
     Q4MainBinaryBot,
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 async def benchmark_forecast_bot() -> None:
-    questions_to_use = 2
+    questions_to_use = 1
     with MonetaryCostManager() as cost_manager:
         bots = [
             ExaBot(),
@@ -48,7 +48,7 @@ async def benchmark_forecast_bot() -> None:
                 research_reports_per_question=3,
                 predictions_per_research_report=3,
             ),
-            ExaQ4BinaryO1Bot(),
+            ExaQ4BinaryO1PreviewBot(),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
         benchmarks = await Benchmarker(

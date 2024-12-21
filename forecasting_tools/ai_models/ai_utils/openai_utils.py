@@ -1,7 +1,5 @@
-import logging
-
-logger = logging.getLogger(__name__)
 import base64
+import logging
 import math
 import re
 from io import BytesIO
@@ -20,6 +18,8 @@ from openai.types.chat.chat_completion_content_part_image_param import ImageURL
 from PIL import Image
 from pydantic import BaseModel
 from tiktoken import Encoding
+
+logger = logging.getLogger(__name__)
 
 
 class VisionMessageData(BaseModel):
