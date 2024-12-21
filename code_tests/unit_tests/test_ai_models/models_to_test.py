@@ -34,6 +34,7 @@ class ModelsToTest:
         Gpt4o,
         Gpt4oMetaculusProxy,
         Gpt4oVision,
+        # GptO1Preview,
         GptO1,
         Claude35Sonnet,
         Perplexity,

@@ -11,17 +11,17 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 from forecasting_tools.forecasting.forecast_bots.experiments.exa_bot import (
     ExaBot,
 )
-from forecasting_tools.forecasting.forecast_bots.experiments.q3_template_bot import (
-    Q3TemplateBot,
+from forecasting_tools.forecasting.forecast_bots.experiments.exa_q4_binary import (
+    ExaQ4BinaryBot,
+)
+from forecasting_tools.forecasting.forecast_bots.experiments.exa_q4_binary_o1 import (
+    ExaQ4BinaryO1Bot,
 )
 from forecasting_tools.forecasting.forecast_bots.experiments.q4_main_binary_bot import (
     Q4MainBinaryBot,
 )
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
     ForecastBot,
-)
-from forecasting_tools.forecasting.forecast_bots.template_bot import (
-    TemplateBot,
 )
 from forecasting_tools.forecasting.helpers.benchmarker import Benchmarker
 from forecasting_tools.util.custom_logger import CustomLogger
@@ -30,26 +30,37 @@ logger = logging.getLogger(__name__)
 
 
 async def benchmark_forecast_bot() -> None:
-    questions_to_use = 120
+    questions_to_use = 2
     with MonetaryCostManager() as cost_manager:
         bots = [
             ExaBot(),
             Q4MainBinaryBot(),
-            Q3TemplateBot(),
-            TemplateBot(),
-            Q3TemplateBot(
+            ExaBot(
                 research_reports_per_question=3,
                 predictions_per_research_report=3,
             ),
+            Q4MainBinaryBot(
+                research_reports_per_question=3,
+                predictions_per_research_report=3,
+            ),
+            ExaQ4BinaryBot(),
+            ExaQ4BinaryBot(
+                research_reports_per_question=3,
+                predictions_per_research_report=3,
+            ),
+            ExaQ4BinaryO1Bot(),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
         benchmarks = await Benchmarker(
             number_of_questions_to_use=questions_to_use,
             forecast_bots=bots,
             file_path_to_save_reports="logs/forecasts/benchmarks/",
+            concurrent_question_batch_size=50,
         ).run_benchmark()
         for i, benchmark in enumerate(benchmarks):
-            logger.info(f"Benchmark {i+1} of {len(benchmarks)}")
+            logger.info(
+                f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}"
+            )
             logger.info(
                 f"- Final Score: {benchmark.average_inverse_expected_log_score}"
             )

@@ -26,6 +26,7 @@ class BenchmarkForBot(BaseModel, Jsonable):
     total_cost: float | None
     git_commit_hash: str
     forecast_bot_config: dict[str, str]
+    code: str | None = None
     forecast_reports: list[BinaryReport | NumericReport | MultipleChoiceReport]
 
     @property

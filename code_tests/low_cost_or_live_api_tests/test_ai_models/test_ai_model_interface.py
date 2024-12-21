@@ -13,7 +13,7 @@ from code_tests.utilities_for_tests import coroutine_testing
 from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.claude35sonnet import Claude35Sonnet
 from forecasting_tools.ai_models.exa_searcher import ExaSearcher
-from forecasting_tools.ai_models.gpto1 import GptO1
+from forecasting_tools.ai_models.gpto1preview import GptO1Preview
 from forecasting_tools.ai_models.metaculus4o import Gpt4oMetaculusProxy
 from forecasting_tools.ai_models.perplexity import Perplexity
 
@@ -34,7 +34,7 @@ async def test_response_from_a_direct_call_is_same_ask_mock_value(
             "As of Aug 18 2024 Exasearcher doesn't depend on exact mock return values to validate other steps"
         )
 
-    if issubclass(subclass, GptO1):
+    if issubclass(subclass, GptO1Preview):
         pytest.skip("GptO1 has inconsistent reasoning token count.")
 
     if issubclass(subclass, Claude35Sonnet):
@@ -90,7 +90,7 @@ def test_ai_model_async_is_not_blocking(subclass: type[AiModel]) -> None:
     number_of_coroutines_to_run = 5
     list_should_run_under_x_times_first_coroutine = 3
 
-    if issubclass(subclass, GptO1):
+    if issubclass(subclass, GptO1Preview):
         pytest.skip(
             "GptO1 is around 2c per call, so this test would be too expensive"
         )

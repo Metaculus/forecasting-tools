@@ -13,7 +13,7 @@ from forecasting_tools.ai_models.basic_model_interfaces.priced_per_request impor
 from forecasting_tools.ai_models.basic_model_interfaces.tokens_incur_cost import (
     TokensIncurCost,
 )
-from forecasting_tools.ai_models.gpto1 import GptO1
+from forecasting_tools.ai_models.gpto1preview import GptO1Preview
 from forecasting_tools.ai_models.model_archetypes.traditional_online_llm import (
     TraditionalOnlineLlm,
 )
@@ -23,7 +23,7 @@ from forecasting_tools.ai_models.model_archetypes.traditional_online_llm import 
 def test_predicted_cost_and_tokens_correct_for_cheap_input(
     subclass: type[TokensIncurCost],
 ) -> None:
-    if issubclass(subclass, GptO1):
+    if issubclass(subclass, GptO1Preview):
         pytest.skip(
             "GptO1 has a weird tokenization scheme that doesn't allow for predicting tokens, and is sometimes 1 token off on small prompts. This is after following official instructions"
         )
@@ -36,7 +36,7 @@ def test_system_prompt_cost_and_tokens_correct_for_cheap_input(
     subclass: type[TokensIncurCost],
 ) -> None:
     if not issubclass(subclass, TraditionalOnlineLlm) or issubclass(
-        subclass, GptO1
+        subclass, GptO1Preview
     ):
         pytest.skip("Model doesn't have a system prompt")
 

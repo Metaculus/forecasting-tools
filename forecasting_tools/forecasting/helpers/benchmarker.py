@@ -1,3 +1,5 @@
+import inspect
+import logging
 import subprocess
 import time
 from datetime import datetime
@@ -27,6 +29,8 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
     MetaculusQuestion,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class Benchmarker:
     """
@@ -46,6 +50,7 @@ class Benchmarker:
         forecast_bots: list[ForecastBot],
         number_of_questions_to_use: int,
         file_path_to_save_reports: str | None = None,
+        concurrent_question_batch_size: int = 10,
     ) -> None:
         self.forecast_bots = forecast_bots
         self.number_of_questions_to_use = number_of_questions_to_use
@@ -56,18 +61,28 @@ class Benchmarker:
             file_path_to_save_reports += "/"
         self.file_path_to_save_reports = file_path_to_save_reports
         self.initialization_timestamp = datetime.now()
+        self.concurrent_question_batch_size = concurrent_question_batch_size
 
     async def run_benchmark(self) -> list[BenchmarkForBot]:
-
         questions = MetaculusApi.get_benchmark_questions(
             self.number_of_questions_to_use,
             random_seed=42,
             # Choose a random seed so all benchmarks in a similar time period use the same questions
         )
+
         questions = typeguard.check_type(questions, list[MetaculusQuestion])
         assert len(questions) == self.number_of_questions_to_use
-        benchmarks = [
-            BenchmarkForBot(
+
+        benchmarks = []
+        for bot in self.forecast_bots:
+            try:
+                source_code = inspect.getsource(bot.__class__)
+            except Exception:
+                logger.warning(
+                    f"Could not get source code for {bot.__class__.__name__}"
+                )
+                source_code = None
+            benchmark = BenchmarkForBot(
                 forecast_reports=[],
                 forecast_bot_config=bot.get_config(),
                 description=f"This benchmark ran the {bot.__class__.__name__} bot on {self.number_of_questions_to_use} questions.",
@@ -75,16 +90,15 @@ class Benchmarker:
                 time_taken_in_minutes=None,
                 total_cost=None,
                 git_commit_hash=self._get_git_commit_hash(),
+                code=source_code,
             )
-            for bot in self.forecast_bots
-        ]
+            benchmarks.append(benchmark)
 
-        question_batch_size = 10
         for bot, benchmark in zip(self.forecast_bots, benchmarks):
             with MonetaryCostManager() as cost_manager:
                 start_time = time.time()
                 for batch in self._batch_questions(
-                    questions, question_batch_size
+                    questions, self.concurrent_question_batch_size
                 ):
                     reports = await bot.forecast_questions(batch)
                     reports = typeguard.check_type(
