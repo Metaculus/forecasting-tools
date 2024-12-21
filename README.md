@@ -209,11 +209,11 @@ Below is an example of how to run the benchmarker
 ```python
 from forecasting_tools import Benchmarker, TemplateBot, BenchmarkForBot
 
-class MyCustomBot(TemplateBot):
+class CustomBot(TemplateBot):
     ...
 
 # Run benchmark on multiple bots
-bots = [TemplateBot(), MyCustomBot()]  # Add your custom bots here
+bots = [TemplateBot(), CustomBot()]  # Add your custom bots here
 benchmarker = Benchmarker(
     forecast_bots=bots,
     number_of_questions_to_use=2,  # Recommended 100+ for meaningful results
@@ -272,6 +272,8 @@ BenchmarkForBot.save_object_list_to_file_path(new_benchmarks, file_path)
 single_benchmark = benchmarks[0]
 json_object: dict = single_benchmark.to_json()
 new_benchmark: BenchmarkForBot = BenchmarkForBot.from_json(json_object)
+
+# Note: Make sure to set the 'FILE_WRITING_ALLOWED' environment variable to true if you want to save the benchmarks to a file
 
 ```
 
