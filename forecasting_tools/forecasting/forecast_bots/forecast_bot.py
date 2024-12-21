@@ -121,9 +121,10 @@ class ForecastBot(ABC):
         if self.folder_to_save_reports_to:
             file_path = self.__create_file_path_to_save_to(questions)
             ForecastReport.save_object_list_to_file_path(reports, file_path)
-        await self._run_coroutines_and_error_if_configured(
-            [report.publish_report_to_metaculus() for report in reports]
-        )
+        if self.publish_reports_to_metaculus:
+            await self._run_coroutines_and_error_if_configured(
+                [report.publish_report_to_metaculus() for report in reports]
+            )
         return reports
 
     @abstractmethod
