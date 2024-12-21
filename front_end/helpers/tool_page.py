@@ -14,7 +14,7 @@ from front_end.helpers.app_page import AppPage
 logger = logging.getLogger(__name__)
 
 
-class Example(Jsonable, BaseModel):
+class Example(BaseModel, Jsonable):
     short_name: str | None = None
     notes: str | None = None
     input: dict[str, Any]
