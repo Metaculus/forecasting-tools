@@ -33,7 +33,8 @@ class Jsonable(ABC):
     @classmethod
     def from_json(cls: type[T], json: dict) -> T:
         if issubclass(cls, BaseModel):
-            return cls._pydantic_model_from_dict(cls, json)
+            pydantic_object = cls._pydantic_model_from_dict(cls, json)
+            return pydantic_object
         else:
             raise NotImplementedError(
                 f"Class {cls.__name__} does not have a from_json method. This should be implemented in the subclass."
@@ -80,4 +81,5 @@ class Jsonable(ABC):
         cls_type: type[BaseModel], json_dict: dict
     ) -> Any:
         json_string: str = json.dumps(json_dict)
-        return cls_type.model_validate_json(json_string)
+        pydantic_object = cls_type.model_validate_json(json_string)
+        return pydantic_object
