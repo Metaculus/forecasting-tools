@@ -30,24 +30,12 @@ logger = logging.getLogger(__name__)
 
 
 async def benchmark_forecast_bot() -> None:
-    questions_to_use = 1
+    questions_to_use = 120
     with MonetaryCostManager() as cost_manager:
         bots = [
             ExaBot(),
             Q4MainBinaryBot(),
-            ExaBot(
-                research_reports_per_question=3,
-                predictions_per_research_report=3,
-            ),
-            Q4MainBinaryBot(
-                research_reports_per_question=3,
-                predictions_per_research_report=3,
-            ),
             ExaQ4BinaryBot(),
-            ExaQ4BinaryBot(
-                research_reports_per_question=3,
-                predictions_per_research_report=3,
-            ),
             ExaQ4BinaryO1PreviewBot(),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
@@ -55,7 +43,7 @@ async def benchmark_forecast_bot() -> None:
             number_of_questions_to_use=questions_to_use,
             forecast_bots=bots,
             file_path_to_save_reports="logs/forecasts/benchmarks/",
-            concurrent_question_batch_size=50,
+            concurrent_question_batch_size=20,
         ).run_benchmark()
         for i, benchmark in enumerate(benchmarks):
             logger.info(
