@@ -24,7 +24,7 @@ from forecasting_tools.ai_models.claude35sonnet import Claude35Sonnet
 from forecasting_tools.ai_models.exa_searcher import ExaSearcher
 from forecasting_tools.ai_models.gpt4o import Gpt4o
 from forecasting_tools.ai_models.gpt4ovision import Gpt4oVision
-from forecasting_tools.ai_models.gpto1 import GptO1
+from forecasting_tools.ai_models.gpto1preview import GptO1Preview
 from forecasting_tools.ai_models.metaculus4o import Gpt4oMetaculusProxy
 from forecasting_tools.ai_models.perplexity import Perplexity
 
@@ -34,8 +34,8 @@ class ModelsToTest:
         Gpt4o,
         Gpt4oMetaculusProxy,
         Gpt4oVision,
-        # GptO1Preview,
-        GptO1,
+        GptO1Preview,
+        # GptO1, # TODO: dependencies do not yet support this
         Claude35Sonnet,
         Perplexity,
         ExaSearcher,
