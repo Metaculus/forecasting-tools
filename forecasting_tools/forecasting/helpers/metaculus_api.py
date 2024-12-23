@@ -373,45 +373,17 @@ class MetaculusApi:
     async def get_questions_matching_filter(
         cls,
         num_questions: int,
+        api_filter: ApiFilter,
         randomly_sample: bool = False,
-        num_forecasters_greater_than: int | None = None,
-        allowed_types: (
-            list[Literal["binary", "numeric", "multiple_choice", "date"]]
-            | None
-        ) = None,
-        allowed_states: (
-            list[Literal["open", "upcoming", "resolved", "closed"]] | None
-        ) = None,
-        scheduled_resolve_time_gt: datetime | None = None,
-        scheduled_resolve_time_lt: datetime | None = None,
-        publish_time_gt: datetime | None = None,
-        publish_time_lt: datetime | None = None,
-        close_time_gt: datetime | None = None,
-        close_time_lt: datetime | None = None,
-        open_time_gt: datetime | None = None,
-        open_time_lt: datetime | None = None,
-        allowed_tournament_slugs: list[str] | None = None,
     ) -> list[MetaculusQuestion]:
-        api_filter = ApiFilter(
-            num_forecasters_greater_than=num_forecasters_greater_than,
-            allowed_types=allowed_types,
-            allowed_states=allowed_states,
-            scheduled_resolve_time_gt=scheduled_resolve_time_gt,
-            scheduled_resolve_time_lt=scheduled_resolve_time_lt,
-            publish_time_gt=publish_time_gt,
-            publish_time_lt=publish_time_lt,
-            close_time_gt=close_time_gt,
-            close_time_lt=close_time_lt,
-            open_time_gt=open_time_gt,
-            open_time_lt=open_time_lt,
-            allowed_tournament_slugs=allowed_tournament_slugs,
-        )
         if randomly_sample:
             return await cls._filter_using_randomized_strategy(
                 num_questions, api_filter
             )
         else:
-            return await cls._filter_sequentially(num_questions, api_filter)
+            return await cls._filter_sequential_strategy(
+                num_questions, api_filter
+            )
 
     @classmethod
     async def _filter_using_randomized_strategy(
@@ -440,7 +412,7 @@ class MetaculusApi:
                 break
 
             offset = page_index * questions_per_page
-            page_questions = cls.__grab_filtered_questions_with_offset(
+            page_questions, _ = cls.__grab_filtered_questions_with_offset(
                 filter, offset
             )
             questions.extend(page_questions)
@@ -459,22 +431,22 @@ class MetaculusApi:
         )
 
     @classmethod
-    async def _filter_sequentially(
+    async def _filter_sequential_strategy(
         cls, num_questions: int, filter: ApiFilter
     ) -> list[MetaculusQuestion]:
-        questions = []
+        questions: list[MetaculusQuestion] = []
         more_questions_available = True
         offset = 0
         while len(questions) < num_questions and more_questions_available:
-            new_questions = cls.__grab_filtered_questions_with_offset(
-                filter, offset
+            new_questions, continue_searching = (
+                cls.__grab_filtered_questions_with_offset(filter, offset)
             )
             questions.extend(new_questions)
-            if not new_questions:
+            if not continue_searching:
                 more_questions_available = False
             offset += cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
             await asyncio.sleep(0.1)
-        return questions
+        return questions[:num_questions]
 
     @classmethod
     def _determine_how_many_questions_match_filter(
@@ -492,17 +464,17 @@ class MetaculusApi:
             mid = (left + right) // 2
             offset = mid * cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
 
-            questions = cls.__grab_filtered_questions_with_offset(
+            _, found_questions = cls.__grab_filtered_questions_with_offset(
                 filter, offset
             )
 
-            if questions:
+            if found_questions:
                 left = mid + 1
                 last_successful_offset = offset
             else:
                 right = mid - 1
 
-        final_page_questions = cls.__grab_filtered_questions_with_offset(
+        final_page_questions, _ = cls.__grab_filtered_questions_with_offset(
             filter, last_successful_offset
         )
         total_questions = last_successful_offset + len(final_page_questions)
@@ -511,6 +483,9 @@ class MetaculusApi:
             raise ValueError(
                 f"Total questions ({total_questions}) exceeded estimated max ({estimated_max_questions})"
             )
+        logger.info(
+            f"Estimating that there are {total_questions} questions matching the filter -> {str(filter)[:200]}"
+        )
         return total_questions
 
     @classmethod
@@ -518,17 +493,19 @@ class MetaculusApi:
         cls,
         filter: ApiFilter,
         offset: int = 0,
-    ) -> list[MetaculusQuestion]:
+    ) -> tuple[list[MetaculusQuestion], bool]:
         url_params: dict[str, Any] = {
             "limit": cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST,
             "offset": offset,
+            "order_by": "-hotness",
+            "with_cp": "true",
         }
 
         if filter.allowed_types:
             url_params["forecast_type"] = filter.allowed_types
 
-        if filter.allowed_states:
-            url_params["statuses"] = filter.allowed_states
+        if filter.allowed_statuses:
+            url_params["statuses"] = filter.allowed_statuses
 
         if filter.scheduled_resolve_time_gt:
             url_params["scheduled_resolve_time__gt"] = (
@@ -569,25 +546,28 @@ class MetaculusApi:
         if filter.allowed_tournament_slugs:
             url_params["tournaments"] = filter.allowed_tournament_slugs
 
-        url_params["order_by"] = "-published_at"
-        url_params["with_cp"] = "true"
-
         questions = cls.__get_questions_from_api(url_params)
+        questions_were_found_before_local_filter = len(questions) > 0
 
-        if filter.num_forecasters_greater_than is not None:
+        if filter.num_forecasters_gte is not None:
             questions = cls.__filter_questions_by_forecasters(
-                questions, filter.num_forecasters_greater_than
+                questions, filter.num_forecasters_gte
             )
 
-        return questions
+        return questions, questions_were_found_before_local_filter
 
 
 class ApiFilter(BaseModel):
-    num_forecasters_greater_than: int | None = None
-    allowed_types: (
-        list[Literal["binary", "numeric", "multiple_choice", "date"]] | None
-    ) = None
-    allowed_states: (
+    num_forecasters_gte: int | None = None
+    allowed_types: list[
+        Literal["binary", "numeric", "multiple_choice", "date"]
+    ] = [
+        "binary",
+        "numeric",
+        "multiple_choice",
+        "date",
+    ]
+    allowed_statuses: (
         list[Literal["open", "upcoming", "resolved", "closed"]] | None
     ) = None
     scheduled_resolve_time_gt: datetime | None = None

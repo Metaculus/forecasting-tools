@@ -21,26 +21,29 @@ class QuestionState(Enum):
 
 class MetaculusQuestion(BaseModel, Jsonable):
     question_text: str
-    page_url: str | None = None
     id_of_post: int = Field(
         validation_alias=AliasChoices("question_id", "post_id", "id_of_post")
     )
+    page_url: str | None = None
     id_of_question: int | None = None
+    state: QuestionState
     num_forecasters: int | None = None
     num_predictions: int | None = None
-    state: QuestionState
     resolution_criteria: str | None = None
     fine_print: str | None = None
     background_info: str | None = None
     close_time: datetime | None = None
     actual_resolution_time: datetime | None = None
     scheduled_resolution_time: datetime | None = None
+    published_time: datetime | None = None
+    open_time: datetime | None = None
     date_accessed: datetime = Field(default_factory=datetime.now)
+    already_forecasted: bool = False
+    tournament_slugs: list[str] = Field(default_factory=list)
     api_json: dict = Field(
         description="The API JSON response used to create the question",
         default_factory=dict,
     )
-    already_forecasted: bool = False
 
     @classmethod
     def from_metaculus_api_json(cls, post_api_json: dict) -> MetaculusQuestion:
@@ -53,10 +56,6 @@ class MetaculusQuestion(BaseModel, Jsonable):
             "resolved": QuestionState.RESOLVED,
             "closed": QuestionState.CLOSED,
         }[json_state]
-        scheduled_resolution_time = cls._parse_api_date(
-            post_api_json["scheduled_resolve_time"]
-        )
-        resolution_time_is_in_past = scheduled_resolution_time < datetime.now()
         question_json: dict = post_api_json["question"]
 
         try:
@@ -67,11 +66,11 @@ class MetaculusQuestion(BaseModel, Jsonable):
         except Exception:
             is_forecasted = False
 
-        actual_resolve_time = (
-            cls._parse_api_date(question_json["actual_resolve_time"])
-            if question_json["actual_resolve_time"]
-            else None
-        )
+        try:
+            tournaments: list[dict] = post_api_json["projects"]["tournament"]  # type: ignore
+            tournament_slugs = [str(t["slug"]) for t in tournaments]
+        except KeyError:
+            tournament_slugs = []
 
         return MetaculusQuestion(
             state=question_state,
@@ -85,32 +84,47 @@ class MetaculusQuestion(BaseModel, Jsonable):
             num_forecasters=post_api_json["nr_forecasters"],
             num_predictions=post_api_json["forecasts_count"],
             close_time=cls._parse_api_date(
-                post_api_json["scheduled_close_time"]
+                post_api_json.get("scheduled_close_time")
             ),
-            actual_resolution_time=actual_resolve_time,
-            scheduled_resolution_time=(
-                scheduled_resolution_time
-                if not resolution_time_is_in_past
-                else None
+            actual_resolution_time=cls._parse_api_date(
+                question_json.get("actual_resolve_time")
             ),
+            scheduled_resolution_time=cls._parse_api_date(
+                post_api_json.get("scheduled_resolve_time")
+            ),
+            published_time=cls._parse_api_date(
+                post_api_json.get("published_at")
+            ),
+            open_time=cls._parse_api_date(post_api_json.get("open_time")),
             already_forecasted=is_forecasted,
+            tournament_slugs=tournament_slugs,
             api_json=post_api_json,
         )
 
     @classmethod
-    def _parse_api_date(cls, date_value: str | float) -> datetime:
+    def _parse_api_date(
+        cls, date_value: str | float | None
+    ) -> datetime | None:
+        if date_value is None:
+            return None
+
         if isinstance(date_value, float):
             return datetime.fromtimestamp(date_value)
+
+        date_formats = [
+            "%Y-%m-%dT%H:%M:%S.%fZ",
+            "%Y-%m-%dT%H:%M:%SZ",
+            "%Y-%m-%d",
+        ]
+
         assert isinstance(date_value, str)
-        try:
-            return datetime.strptime(date_value, "%Y-%m-%dT%H:%M:%S.%fZ")
-        except ValueError:
-            pass
-        try:
-            return datetime.strptime(date_value, "%Y-%m-%dT%H:%M:%SZ")
-        except ValueError:
-            pass
-        return datetime.strptime(date_value, "%Y-%m-%d")
+        for date_format in date_formats:
+            try:
+                return datetime.strptime(date_value, date_format)
+            except ValueError:
+                continue
+
+        raise ValueError(f"Unable to parse date: {date_value}")
 
     @classmethod
     def get_api_type_name(cls) -> str:
@@ -200,7 +214,7 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
     lower_bound: datetime
     upper_bound_is_hard_limit: bool
     lower_bound_is_hard_limit: bool
-    zero_point: datetime | None = None
+    zero_point: float | None = None
 
     @classmethod
     def from_metaculus_api_json(cls, api_json: dict) -> DateQuestion:
@@ -213,14 +227,14 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
             zero_point,
         ) = cls._get_bounds_from_api_json(api_json)
 
-        if zero_point is not None:
-            raise NotImplementedError(
-                "Zero point not implemented for date questions yet"
-            )
+        upper_bound = cls._parse_api_date(unparsed_upper_bound)
+        lower_bound = cls._parse_api_date(unparsed_lower_bound)
+        assert upper_bound is not None
+        assert lower_bound is not None
 
         return DateQuestion(
-            upper_bound=cls._parse_api_date(unparsed_upper_bound),
-            lower_bound=cls._parse_api_date(unparsed_lower_bound),
+            upper_bound=upper_bound,
+            lower_bound=lower_bound,
             upper_bound_is_hard_limit=not open_upper_bound,
             lower_bound_is_hard_limit=not open_lower_bound,
             **normal_metaculus_question.model_dump(),
