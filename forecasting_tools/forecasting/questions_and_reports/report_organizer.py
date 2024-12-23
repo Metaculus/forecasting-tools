@@ -105,12 +105,16 @@ class ReportOrganizer:
         jsons = file_manipulation.load_json_file(file_path)
         reports = []
         for json in jsons:
-            for report_type in cls.get_all_report_types():
+            report_types = cls.get_all_report_types()
+            for i, report_type in enumerate(report_types):
                 try:
                     report = report_type.from_json(json)
                     reports.append(report)
-                except Exception:
-                    pass
+                    break
+                except Exception as e:
+                    if i == len(report_types) - 1:
+                        raise e
+                    continue
         if len(reports) != len(jsons):
             raise ValueError(
                 f"Some reports were not loaded correctly. {len(reports)} reports loaded, {len(jsons)} jsons provided."
