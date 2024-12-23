@@ -8,7 +8,7 @@ import os
 import random
 import re
 from datetime import datetime, timedelta
-from typing import Any, Literal, Sequence, TypeVar
+from typing import Any, Literal, TypeVar
 
 import requests
 import typeguard
@@ -43,7 +43,6 @@ class MetaculusApi:
     CURRENT_QUARTERLY_CUP_ID = Q4_2024_QUARTERLY_CUP
 
     API_BASE_URL = "https://www.metaculus.com/api"
-    OLD_API_BASE_URL = "https://www.metaculus.com/api2"
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
 
     @classmethod
@@ -56,7 +55,7 @@ class MetaculusApi:
                 "is_private": True,
                 "included_forecast": True,
             },
-            **cls.__get_auth_headers(),  # type: ignore
+            **cls._get_auth_headers(),  # type: ignore
         )
         logger.info(f"Posted comment on post {post_id}")
         raise_for_status_with_additional_info(response)
@@ -108,24 +107,6 @@ class MetaculusApi:
         cls._post_question_prediction(question_id, payload)
 
     @classmethod
-    def _post_question_prediction(
-        cls, question_id: int, forecast_payload: dict
-    ) -> None:
-        url = f"{cls.API_BASE_URL}/questions/forecast/"
-        response = requests.post(
-            url,
-            json=[
-                {
-                    "question": question_id,
-                    **forecast_payload,
-                },
-            ],
-            **cls.__get_auth_headers(),  # type: ignore
-        )
-        logger.info(f"Posted prediction on question {question_id}")
-        raise_for_status_with_additional_info(response)
-
-    @classmethod
     def get_question_by_url(cls, question_url: str) -> MetaculusQuestion:
         """
         URL looks like https://www.metaculus.com/questions/28841/will-eric-adams-be-the-nyc-mayor-on-january-1-2025/
@@ -144,15 +125,36 @@ class MetaculusApi:
         url = f"{cls.API_BASE_URL}/posts/{post_id}/"
         response = requests.get(
             url,
-            **cls.__get_auth_headers(),  # type: ignore
+            **cls._get_auth_headers(),  # type: ignore
         )
         raise_for_status_with_additional_info(response)
         json_question = json.loads(response.content)
-        metaculus_question = MetaculusApi.__metaculus_api_json_to_question(
+        metaculus_question = MetaculusApi._metaculus_api_json_to_question(
             json_question
         )
         logger.info(f"Retrieved question details for question {post_id}")
         return metaculus_question
+
+    @classmethod
+    async def get_questions_matching_filter(
+        cls,
+        num_questions: int,
+        api_filter: ApiFilter,
+        randomly_sample: bool = False,
+    ) -> list[MetaculusQuestion]:
+        assert num_questions > 0, "Must request at least one question"
+        if randomly_sample:
+            questions = await cls._filter_using_randomized_strategy(
+                num_questions, api_filter
+            )
+        else:
+            questions = await cls._filter_sequential_strategy(
+                num_questions, api_filter
+            )
+        assert len(set(q.id_of_post for q in questions)) == len(
+            questions
+        ), "Not all questions found are unique"
+        return questions
 
     @classmethod
     def get_all_open_questions_from_tournament(
@@ -167,7 +169,7 @@ class MetaculusApi:
             "statuses": "open",
         }
 
-        metaculus_questions = cls.__get_questions_from_api(url_qparams)
+        metaculus_questions = cls._get_questions_from_api(url_qparams)
         logger.info(
             f"Retrieved {len(metaculus_questions)} questions from tournament {tournament_id}"
         )
@@ -175,142 +177,61 @@ class MetaculusApi:
 
     @classmethod
     def get_benchmark_questions(
-        cls, num_of_questions_to_return: int, random_seed: int | None = None
+        cls,
+        num_of_questions_to_return: int,
     ) -> list[BinaryQuestion]:
-        cls.__validate_requested_benchmark_question_count(
-            num_of_questions_to_return
+        three_months_from_now = datetime.now() + timedelta(days=90)
+        api_filter = ApiFilter(
+            allowed_statuses=["open"],
+            allowed_types=["binary"],
+            num_forecasters_gte=40,
+            scheduled_resolve_time_lt=three_months_from_now,
+            includes_bots_in_aggregates=False,
         )
-        questions = cls.__fetch_all_possible_benchmark_questions()
-        filtered_questions = cls.__filter_retrieved_benchmark_questions(
-            questions, num_of_questions_to_return
+        questions = asyncio.run(
+            cls.get_questions_matching_filter(
+                num_of_questions_to_return, api_filter, randomly_sample=True
+            )
         )
-        questions = cls.__get_random_sample_of_questions(
-            filtered_questions, num_of_questions_to_return, random_seed
-        )
-        for question in questions:
-            try:
-                assert not question.api_json["question"]["include_bots_in_aggregates"]  # type: ignore
-            except KeyError:
-                pass
+        questions = typeguard.check_type(questions, list[BinaryQuestion])
         return questions
 
     @classmethod
-    def __get_auth_headers(cls) -> dict[str, dict[str, str]]:
+    def _get_auth_headers(cls) -> dict[str, dict[str, str]]:
         METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
         if METACULUS_TOKEN is None:
             raise ValueError("METACULUS_TOKEN environment variable not set")
         return {"headers": {"Authorization": f"Token {METACULUS_TOKEN}"}}
 
     @classmethod
-    def __validate_requested_benchmark_question_count(
-        cls, num_of_questions_to_return: int
+    def _post_question_prediction(
+        cls, question_id: int, forecast_payload: dict
     ) -> None:
-        est_num_matching_filter = (
-            130  # As of Nov 5, there were only 130 questions matching filters
+        url = f"{cls.API_BASE_URL}/questions/forecast/"
+        response = requests.post(
+            url,
+            json=[
+                {
+                    "question": question_id,
+                    **forecast_payload,
+                },
+            ],
+            **cls._get_auth_headers(),  # type: ignore
         )
-        assert (
-            num_of_questions_to_return <= est_num_matching_filter
-        ), "There are not enough questions matching the filter"
-        if num_of_questions_to_return > est_num_matching_filter * 0.5:
-            logger.warning(
-                f"There are estimated to only be {est_num_matching_filter} questions matching all the filters. You are requesting {num_of_questions_to_return} questions."
-            )
+        logger.info(f"Posted prediction on question {question_id}")
+        raise_for_status_with_additional_info(response)
 
     @classmethod
-    def __fetch_all_possible_benchmark_questions(cls) -> list[BinaryQuestion]:
-        questions: list[BinaryQuestion] = []
-        iterations_to_get_past_estimate = 3
-
-        for i in range(iterations_to_get_past_estimate):
-            limit = cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
-            offset = i * limit
-            new_questions = (
-                cls.__get_general_open_binary_questions_resolving_in_3_months(
-                    limit, offset
-                )
-            )
-            questions.extend(new_questions)
-
-        logger.info(
-            f"There are {len(questions)} questions matching filter after iterating through {iterations_to_get_past_estimate} pages of {cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST} questions that matched the filter"
-        )
-        return questions
-
-    @classmethod
-    def __filter_retrieved_benchmark_questions(
-        cls, questions: list[BinaryQuestion], num_of_questions_to_return: int
-    ) -> list[BinaryQuestion]:
-        qs_with_enough_forecasters = cls.__filter_questions_by_forecasters(
-            questions, min_forecasters=40
-        )
-        filtered_questions = [
-            question
-            for question in qs_with_enough_forecasters
-            if question.community_prediction_at_access_time is not None
-        ]
-
-        logger.info(
-            f"Reduced to {len(filtered_questions)} questions with enough forecasters"
-        )
-
-        if len(filtered_questions) < num_of_questions_to_return:
-            raise ValueError(
-                f"Not enough questions available ({len(filtered_questions)}) "
-                f"to sample requested number ({num_of_questions_to_return})"
-            )
-        return filtered_questions
-
-    @classmethod
-    def __get_random_sample_of_questions(
-        cls,
-        questions: list[Q],
-        sample_size: int,
-        random_seed: int | None,
-    ) -> list[Q]:
-        if random_seed is not None:
-            previous_state = random.getstate()
-            random.seed(random_seed)
-            random_sample = random.sample(questions, sample_size)
-            random.setstate(previous_state)
-        else:
-            random_sample = random.sample(questions, sample_size)
-        return random_sample
-
-    @classmethod
-    def __get_general_open_binary_questions_resolving_in_3_months(
-        cls, number_of_questions: int, offset: int = 0
-    ) -> Sequence[BinaryQuestion]:
-        three_months_from_now = datetime.now() + timedelta(days=90)
-        params = {
-            "type": "forecast",
-            "forecast_type": "binary",
-            "status": "open",
-            "number_of_forecasters__gte": 40,
-            "scheduled_resolve_time__lt": three_months_from_now,
-            "order_by": "publish_time",
-            "offset": offset,
-            "limit": number_of_questions,
-        }
-        questions = cls.__get_questions_from_api(params, use_old_api=True)
-        checked_questions = typeguard.check_type(
-            questions, list[BinaryQuestion]
-        )
-        return checked_questions
-
-    @classmethod
-    def __get_questions_from_api(
-        cls, params: dict[str, Any], use_old_api: bool = False
+    def _get_questions_from_api(
+        cls, params: dict[str, Any]
     ) -> list[MetaculusQuestion]:
         num_requested = params.get("limit")
         assert (
             num_requested is None
             or num_requested <= cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
         ), "You cannot get more than 100 questions at a time"
-        if use_old_api:
-            url = f"{cls.OLD_API_BASE_URL}/questions/"
-        else:
-            url = f"{cls.API_BASE_URL}/posts/"
-        response = requests.get(url, params=params, **cls.__get_auth_headers())  # type: ignore
+        url = f"{cls.API_BASE_URL}/posts/"
+        response = requests.get(url, params=params, **cls._get_auth_headers())  # type: ignore
         raise_for_status_with_additional_info(response)
         data = json.loads(response.content)
         results = data["results"]
@@ -331,12 +252,12 @@ class MetaculusApi:
             )
 
         questions = [
-            cls.__metaculus_api_json_to_question(q) for q in supported_posts
+            cls._metaculus_api_json_to_question(q) for q in supported_posts
         ]
         return questions
 
     @classmethod
-    def __metaculus_api_json_to_question(
+    def _metaculus_api_json_to_question(
         cls, api_json: dict
     ) -> MetaculusQuestion:
         assert (
@@ -359,33 +280,6 @@ class MetaculusApi:
         return question
 
     @classmethod
-    def __filter_questions_by_forecasters(
-        cls, questions: list[Q], min_forecasters: int
-    ) -> list[Q]:
-        questions_with_enough_forecasters: list[Q] = []
-        for question in questions:
-            assert question.num_forecasters is not None
-            if question.num_forecasters >= min_forecasters:
-                questions_with_enough_forecasters.append(question)
-        return questions_with_enough_forecasters
-
-    @classmethod
-    async def get_questions_matching_filter(
-        cls,
-        num_questions: int,
-        api_filter: ApiFilter,
-        randomly_sample: bool = False,
-    ) -> list[MetaculusQuestion]:
-        if randomly_sample:
-            return await cls._filter_using_randomized_strategy(
-                num_questions, api_filter
-            )
-        else:
-            return await cls._filter_sequential_strategy(
-                num_questions, api_filter
-            )
-
-    @classmethod
     async def _filter_using_randomized_strategy(
         cls, num_questions: int, filter: ApiFilter
     ) -> list[MetaculusQuestion]:
@@ -401,6 +295,7 @@ class MetaculusApi:
         total_pages = math.ceil(
             number_of_questions_matching_filter / questions_per_page
         )
+        target_qs_to_sample_from = num_questions * 2
 
         # Create randomized list of all possible page indices
         available_page_indices = list(range(total_pages))
@@ -408,27 +303,31 @@ class MetaculusApi:
 
         questions: list[MetaculusQuestion] = []
         for page_index in available_page_indices:
-            if len(questions) >= num_questions:
+            if len(questions) >= target_qs_to_sample_from:
                 break
 
             offset = page_index * questions_per_page
-            page_questions, _ = cls.__grab_filtered_questions_with_offset(
+            page_questions, _ = cls._grab_filtered_questions_with_offset(
                 filter, offset
             )
             questions.extend(page_questions)
 
-            if (
-                page_index == available_page_indices[-1]
-                and len(questions) < num_questions
-            ):
-                raise ValueError(
-                    f"Exhausted all {total_pages} pages but only found {len(questions)} questions, needed {num_questions}"
-                )
             await asyncio.sleep(0.1)
 
-        return cls.__get_random_sample_of_questions(
-            questions, num_questions, None
+        if len(questions) < num_questions:
+            raise ValueError(
+                f"Exhausted all {total_pages} pages but only found {len(questions)} questions, needed {num_questions}"
+            )
+        assert len(set(q.id_of_post for q in questions)) == len(
+            questions
+        ), "Not all questions found are unique"
+
+        random_sample = random.sample(questions, num_questions)
+        logger.info(
+            f"Sampled {len(random_sample)} questions from {len(questions)} questions that matched the filterwhich were taken from {total_pages} randomly selected pages which each had at max {cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST} questions matching the filter"
         )
+
+        return random_sample
 
     @classmethod
     async def _filter_sequential_strategy(
@@ -436,16 +335,21 @@ class MetaculusApi:
     ) -> list[MetaculusQuestion]:
         questions: list[MetaculusQuestion] = []
         more_questions_available = True
-        offset = 0
+        page_num = 0
         while len(questions) < num_questions and more_questions_available:
+            offset = page_num * cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
             new_questions, continue_searching = (
-                cls.__grab_filtered_questions_with_offset(filter, offset)
+                cls._grab_filtered_questions_with_offset(filter, offset)
             )
             questions.extend(new_questions)
             if not continue_searching:
                 more_questions_available = False
-            offset += cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
+            page_num += 1
             await asyncio.sleep(0.1)
+        if len(questions) < num_questions:
+            raise ValueError(
+                f"Exhausted all {page_num} pages but only found {len(questions)} questions, needed {num_questions}"
+            )
         return questions[:num_questions]
 
     @classmethod
@@ -464,7 +368,7 @@ class MetaculusApi:
             mid = (left + right) // 2
             offset = mid * cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
 
-            _, found_questions = cls.__grab_filtered_questions_with_offset(
+            _, found_questions = cls._grab_filtered_questions_with_offset(
                 filter, offset
             )
 
@@ -474,7 +378,7 @@ class MetaculusApi:
             else:
                 right = mid - 1
 
-        final_page_questions, _ = cls.__grab_filtered_questions_with_offset(
+        final_page_questions, _ = cls._grab_filtered_questions_with_offset(
             filter, last_successful_offset
         )
         total_questions = last_successful_offset + len(final_page_questions)
@@ -489,7 +393,7 @@ class MetaculusApi:
         return total_questions
 
     @classmethod
-    def __grab_filtered_questions_with_offset(
+    def _grab_filtered_questions_with_offset(
         cls,
         filter: ApiFilter,
         offset: int = 0,
@@ -497,7 +401,7 @@ class MetaculusApi:
         url_params: dict[str, Any] = {
             "limit": cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST,
             "offset": offset,
-            "order_by": "-hotness",
+            "order_by": "-published_at",
             "with_cp": "true",
         }
 
@@ -525,15 +429,6 @@ class MetaculusApi:
                 "%Y-%m-%d"
             )
 
-        if filter.close_time_gt:
-            url_params["close_time__gt"] = filter.close_time_gt.strftime(
-                "%Y-%m-%d"
-            )
-        if filter.close_time_lt:
-            url_params["close_time__lt"] = filter.close_time_lt.strftime(
-                "%Y-%m-%d"
-            )
-
         if filter.open_time_gt:
             url_params["open_time__gt"] = filter.open_time_gt.strftime(
                 "%Y-%m-%d"
@@ -546,15 +441,64 @@ class MetaculusApi:
         if filter.allowed_tournament_slugs:
             url_params["tournaments"] = filter.allowed_tournament_slugs
 
-        questions = cls.__get_questions_from_api(url_params)
+        questions = cls._get_questions_from_api(url_params)
         questions_were_found_before_local_filter = len(questions) > 0
 
         if filter.num_forecasters_gte is not None:
-            questions = cls.__filter_questions_by_forecasters(
+            questions = cls._filter_questions_by_forecasters(
                 questions, filter.num_forecasters_gte
             )
 
+        if filter.close_time_gt or filter.close_time_lt:
+            questions = cls._filter_questions_by_close_time(
+                questions, filter.close_time_gt, filter.close_time_lt
+            )
+
+        if filter.includes_bots_in_aggregates is not None:
+            questions = cls._filter_questions_by_includes_bots_in_aggregates(
+                questions, filter.includes_bots_in_aggregates
+            )
+
         return questions, questions_were_found_before_local_filter
+
+    @classmethod
+    def _filter_questions_by_forecasters(
+        cls, questions: list[Q], min_forecasters: int
+    ) -> list[Q]:
+        questions_with_enough_forecasters: list[Q] = []
+        for question in questions:
+            assert question.num_forecasters is not None
+            if question.num_forecasters >= min_forecasters:
+                questions_with_enough_forecasters.append(question)
+        return questions_with_enough_forecasters
+
+    @classmethod
+    def _filter_questions_by_includes_bots_in_aggregates(
+        cls, questions: list[Q], includes_bots_in_aggregates: bool
+    ) -> list[Q]:
+        return [
+            question
+            for question in questions
+            if question.includes_bots_in_aggregates
+            == includes_bots_in_aggregates
+        ]
+
+    @classmethod
+    def _filter_questions_by_close_time(
+        cls,
+        questions: list[Q],
+        close_time_gt: datetime | None,
+        close_time_lt: datetime | None,
+    ) -> list[Q]:
+        questions_with_close_time: list[Q] = []
+        for question in questions:
+            if question.close_time is not None:
+                if close_time_gt and question.close_time <= close_time_gt:
+                    continue
+                if close_time_lt and question.close_time >= close_time_lt:
+                    continue
+                questions_with_close_time.append(question)
+        return questions_with_close_time
 
 
 class ApiFilter(BaseModel):
@@ -579,3 +523,4 @@ class ApiFilter(BaseModel):
     open_time_gt: datetime | None = None
     open_time_lt: datetime | None = None
     allowed_tournament_slugs: list[str] | None = None
+    includes_bots_in_aggregates: bool | None = None

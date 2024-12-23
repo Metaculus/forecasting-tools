@@ -40,6 +40,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     date_accessed: datetime = Field(default_factory=datetime.now)
     already_forecasted: bool = False
     tournament_slugs: list[str] = Field(default_factory=list)
+    includes_bots_in_aggregates: bool | None = None
     api_json: dict = Field(
         description="The API JSON response used to create the question",
         default_factory=dict,
@@ -98,6 +99,9 @@ class MetaculusQuestion(BaseModel, Jsonable):
             open_time=cls._parse_api_date(post_api_json.get("open_time")),
             already_forecasted=is_forecasted,
             tournament_slugs=tournament_slugs,
+            includes_bots_in_aggregates=post_api_json.get(
+                "include_bots_in_aggregates"
+            ),
             api_json=post_api_json,
         )
 

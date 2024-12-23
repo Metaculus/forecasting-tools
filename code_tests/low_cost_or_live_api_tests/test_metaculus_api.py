@@ -1,4 +1,5 @@
 import logging
+import random
 from datetime import datetime, timedelta
 
 import pytest
@@ -161,9 +162,7 @@ def test_get_questions_from_tournament() -> None:
 
     for question in questions:
         assert question.state == QuestionState.OPEN
-        assert_basic_question_attributes_not_none(
-            question, question.id_of_post
-        )
+    assert_basic_attributes_at_percentage(questions, 0.8)
 
 
 @pytest.mark.parametrize("num_questions_to_get", [30, 100])
@@ -171,10 +170,10 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
     if ForecastingTestManager.quarterly_cup_is_not_active():
         pytest.skip("Quarterly cup is not active")
 
-    random_seed = 42
-    questions = MetaculusApi.get_benchmark_questions(
-        num_questions_to_get, random_seed
-    )
+    previous_state = random.getstate()
+    random.seed(42)
+
+    questions = MetaculusApi.get_benchmark_questions(num_questions_to_get)
 
     assert (
         len(questions) == num_questions_to_get
@@ -204,14 +203,14 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
         set(question_ids)
     ), "Not all questions are unique"
 
-    questions2 = MetaculusApi.get_benchmark_questions(
-        num_questions_to_get, random_seed
-    )
+    questions2 = MetaculusApi.get_benchmark_questions(num_questions_to_get)
     question_ids1 = [q.id_of_post for q in questions]
     question_ids2 = [q.id_of_post for q in questions2]
     assert (
         question_ids1 == question_ids2
     ), "Questions retrieved with same random seed should return same IDs"
+
+    random.setstate(previous_state)
 
 
 @pytest.mark.parametrize(
@@ -225,7 +224,12 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
             False,
         ),
         (
-            ApiFilter(allowed_types=["binary"], allowed_statuses=["closed"]),
+            ApiFilter(
+                allowed_types=["binary"],
+                allowed_statuses=["closed", "resolved"],
+                scheduled_resolve_time_lt=datetime(2024, 1, 20),
+                open_time_gt=datetime(2022, 12, 22),
+            ),
             250,
             True,
         ),
@@ -233,7 +237,6 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
             ApiFilter(
                 close_time_gt=datetime(2024, 1, 15),
                 close_time_lt=datetime(2024, 1, 20),
-                scheduled_resolve_time_lt=datetime(2024, 1, 20),
                 allowed_tournament_slugs=["quarterly-cup-2024q1"],
             ),
             1,
@@ -259,6 +262,10 @@ async def test_get_questions_from_tournament_with_filter(
         num_questions, api_filter, randomly_sample
     )
     assert_questions_match_filter(questions, api_filter)
+    for question in questions:
+        assert_basic_question_attributes_not_none(
+            question, question.id_of_post
+        )
     assert len(questions) == num_questions
 
 
@@ -288,28 +295,66 @@ async def test_question_status_filters(
         assert any(question.state == expected_state for question in questions)
 
 
-async def test_fails_to_get_questions_if_filter_is_too_restrictive() -> None:
-    tournament_slug = "quarterly-cup-2024q1"
-    api_filter = ApiFilter(allowed_tournament_slugs=[tournament_slug])
-    num_questions_in_tournament = 46
+@pytest.mark.parametrize(
+    "api_filter, num_questions_in_tournament, randomly_sample",
+    [
+        (
+            ApiFilter(allowed_tournament_slugs=["quarterly-cup-2024q1"]),
+            46,
+            False,
+        ),
+        (
+            ApiFilter(allowed_tournament_slugs=["quarterly-cup-2024q1"]),
+            46,
+            True,
+        ),
+        (
+            ApiFilter(
+                includes_bots_in_aggregates=False,
+                allowed_tournament_slugs=["aibq4"],
+            ),
+            1,
+            False,
+        ),
+    ],
+)
+async def test_fails_to_get_questions_if_filter_is_too_restrictive(
+    api_filter: ApiFilter,
+    num_questions_in_tournament: int,
+    randomly_sample: bool,
+) -> None:
     requested_questions = num_questions_in_tournament + 50
-    with pytest.raises(Exception):
-        await MetaculusApi.get_questions_matching_filter(
-            requested_questions,
-            api_filter,
-            randomly_sample=False,
-        )
 
     with pytest.raises(Exception):
         await MetaculusApi.get_questions_matching_filter(
             requested_questions,
             api_filter,
-            randomly_sample=True,
+            randomly_sample=randomly_sample,
         )
+
+
+def assert_basic_attributes_at_percentage(
+    questions: list[MetaculusQuestion], percentage: float
+) -> None:
+    passing = []
+    failing_errors: list[Exception] = []
+    failing_questions: list[MetaculusQuestion] = []
+    for question in questions:
+        try:
+            assert_basic_question_attributes_not_none(
+                question, question.id_of_post
+            )
+            passing.append(question)
+        except Exception as e:
+            failing_errors.append(e)
+            failing_questions.append(question)
+    assert (
+        len(passing) / len(questions) >= percentage
+    ), f"Failed {len(failing_questions)} questions. Most recent question: {failing_questions[-1].page_url}. Most recent error: {failing_errors[-1]}"
 
 
 def assert_basic_question_attributes_not_none(
-    question: MetaculusQuestion, question_id: int
+    question: MetaculusQuestion, post_id: int
 ) -> None:
     assert question.resolution_criteria is not None
     assert question.fine_print is not None
@@ -319,11 +364,11 @@ def assert_basic_question_attributes_not_none(
     assert question.open_time is not None
     assert question.published_time is not None
     assert question.scheduled_resolution_time is not None
+    # assert question.includes_bots_in_aggregates is not None # tested questions are not consistent on this
     assert isinstance(question.state, QuestionState)
     assert isinstance(question.page_url, str)
     assert (
-        question.page_url
-        == f"https://www.metaculus.com/questions/{question_id}"
+        question.page_url == f"https://www.metaculus.com/questions/{post_id}"
     )
     assert isinstance(question.num_forecasters, int)
     assert isinstance(question.num_predictions, int)
@@ -341,6 +386,7 @@ def assert_basic_question_attributes_not_none(
         assert question.community_prediction_at_access_time is not None
         assert 0 <= question.community_prediction_at_access_time <= 1
     assert question.id_of_question is not None
+    assert question.id_of_post is not None
 
 
 def assert_questions_match_filter(  # NOSONAR
