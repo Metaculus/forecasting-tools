@@ -13,8 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class QuestionState(Enum):
+    UPCOMING = "upcoming"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
     OPEN = "open"
-    OTHER = "other"
 
 
 class MetaculusQuestion(BaseModel, Jsonable):
@@ -45,9 +47,12 @@ class MetaculusQuestion(BaseModel, Jsonable):
         post_id = post_api_json["id"]
         logger.debug(f"Processing Post ID {post_id}")
         json_state = post_api_json["status"]
-        question_state = (
-            QuestionState.OPEN if json_state == "open" else QuestionState.OTHER
-        )
+        question_state = {
+            "open": QuestionState.OPEN,
+            "upcoming": QuestionState.UPCOMING,
+            "resolved": QuestionState.RESOLVED,
+            "closed": QuestionState.CLOSED,
+        }[json_state]
         scheduled_resolution_time = cls._parse_api_date(
             post_api_json["scheduled_resolve_time"]
         )
