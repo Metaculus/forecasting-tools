@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import math
 import os
 import random
 import re
 from datetime import datetime, timedelta
-from typing import Any, Sequence, TypeVar
+from typing import Any, Literal, Sequence, TypeVar
 
 import requests
 import typeguard
+from pydantic import BaseModel
 
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     BinaryQuestion,
@@ -260,10 +263,10 @@ class MetaculusApi:
     @classmethod
     def __get_random_sample_of_questions(
         cls,
-        questions: list[BinaryQuestion],
+        questions: list[Q],
         sample_size: int,
         random_seed: int | None,
-    ) -> list[BinaryQuestion]:
+    ) -> list[Q]:
         if random_seed is not None:
             previous_state = random.getstate()
             random.seed(random_seed)
@@ -365,3 +368,234 @@ class MetaculusApi:
             if question.num_forecasters >= min_forecasters:
                 questions_with_enough_forecasters.append(question)
         return questions_with_enough_forecasters
+
+    @classmethod
+    async def get_questions_matching_filter(
+        cls,
+        num_questions: int,
+        randomly_sample: bool = False,
+        num_forecasters_greater_than: int | None = None,
+        allowed_types: (
+            list[Literal["binary", "numeric", "multiple_choice", "date"]]
+            | None
+        ) = None,
+        allowed_states: (
+            list[Literal["open", "upcoming", "resolved", "closed"]] | None
+        ) = None,
+        scheduled_resolve_time_gt: datetime | None = None,
+        scheduled_resolve_time_lt: datetime | None = None,
+        publish_time_gt: datetime | None = None,
+        publish_time_lt: datetime | None = None,
+        close_time_gt: datetime | None = None,
+        close_time_lt: datetime | None = None,
+        open_time_gt: datetime | None = None,
+        open_time_lt: datetime | None = None,
+        allowed_tournament_slugs: list[str] | None = None,
+    ) -> list[MetaculusQuestion]:
+        api_filter = ApiFilter(
+            num_forecasters_greater_than=num_forecasters_greater_than,
+            allowed_types=allowed_types,
+            allowed_states=allowed_states,
+            scheduled_resolve_time_gt=scheduled_resolve_time_gt,
+            scheduled_resolve_time_lt=scheduled_resolve_time_lt,
+            publish_time_gt=publish_time_gt,
+            publish_time_lt=publish_time_lt,
+            close_time_gt=close_time_gt,
+            close_time_lt=close_time_lt,
+            open_time_gt=open_time_gt,
+            open_time_lt=open_time_lt,
+            allowed_tournament_slugs=allowed_tournament_slugs,
+        )
+        if randomly_sample:
+            return await cls._filter_using_randomized_strategy(
+                num_questions, api_filter
+            )
+        else:
+            return await cls._filter_sequentially(num_questions, api_filter)
+
+    @classmethod
+    async def _filter_using_randomized_strategy(
+        cls, num_questions: int, filter: ApiFilter
+    ) -> list[MetaculusQuestion]:
+        number_of_questions_matching_filter = (
+            cls._determine_how_many_questions_match_filter(filter)
+        )
+        if number_of_questions_matching_filter < num_questions:
+            raise ValueError(
+                f"Not enough questions matching filter ({number_of_questions_matching_filter}) to sample {num_questions} questions"
+            )
+
+        questions_per_page = cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
+        total_pages = math.ceil(
+            number_of_questions_matching_filter / questions_per_page
+        )
+
+        # Create randomized list of all possible page indices
+        available_page_indices = list(range(total_pages))
+        random.shuffle(available_page_indices)
+
+        questions: list[MetaculusQuestion] = []
+        for page_index in available_page_indices:
+            if len(questions) >= num_questions:
+                break
+
+            offset = page_index * questions_per_page
+            page_questions = cls.__grab_filtered_questions_with_offset(
+                filter, offset
+            )
+            questions.extend(page_questions)
+
+            if (
+                page_index == available_page_indices[-1]
+                and len(questions) < num_questions
+            ):
+                raise ValueError(
+                    f"Exhausted all {total_pages} pages but only found {len(questions)} questions, needed {num_questions}"
+                )
+            await asyncio.sleep(0.1)
+
+        return cls.__get_random_sample_of_questions(
+            questions, num_questions, None
+        )
+
+    @classmethod
+    async def _filter_sequentially(
+        cls, num_questions: int, filter: ApiFilter
+    ) -> list[MetaculusQuestion]:
+        questions = []
+        more_questions_available = True
+        offset = 0
+        while len(questions) < num_questions and more_questions_available:
+            new_questions = cls.__grab_filtered_questions_with_offset(
+                filter, offset
+            )
+            questions.extend(new_questions)
+            if not new_questions:
+                more_questions_available = False
+            offset += cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
+            await asyncio.sleep(0.1)
+        return questions
+
+    @classmethod
+    def _determine_how_many_questions_match_filter(
+        cls, filter: ApiFilter
+    ) -> int:
+        """
+        Search Metaculus API with binary search to find the number of questions
+        matching the filter.
+        """
+        estimated_max_questions = 20000
+        left, right = 0, estimated_max_questions
+        last_successful_offset = 0
+
+        while left <= right:
+            mid = (left + right) // 2
+            offset = mid * cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
+
+            questions = cls.__grab_filtered_questions_with_offset(
+                filter, offset
+            )
+
+            if questions:
+                left = mid + 1
+                last_successful_offset = offset
+            else:
+                right = mid - 1
+
+        final_page_questions = cls.__grab_filtered_questions_with_offset(
+            filter, last_successful_offset
+        )
+        total_questions = last_successful_offset + len(final_page_questions)
+
+        if total_questions >= estimated_max_questions:
+            raise ValueError(
+                f"Total questions ({total_questions}) exceeded estimated max ({estimated_max_questions})"
+            )
+        return total_questions
+
+    @classmethod
+    def __grab_filtered_questions_with_offset(
+        cls,
+        filter: ApiFilter,
+        offset: int = 0,
+    ) -> list[MetaculusQuestion]:
+        url_params: dict[str, Any] = {
+            "limit": cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST,
+            "offset": offset,
+        }
+
+        if filter.allowed_types:
+            url_params["forecast_type"] = filter.allowed_types
+
+        if filter.allowed_states:
+            url_params["statuses"] = filter.allowed_states
+
+        if filter.scheduled_resolve_time_gt:
+            url_params["scheduled_resolve_time__gt"] = (
+                filter.scheduled_resolve_time_gt.strftime("%Y-%m-%d")
+            )
+        if filter.scheduled_resolve_time_lt:
+            url_params["scheduled_resolve_time__lt"] = (
+                filter.scheduled_resolve_time_lt.strftime("%Y-%m-%d")
+            )
+
+        if filter.publish_time_gt:
+            url_params["published_at__gt"] = filter.publish_time_gt.strftime(
+                "%Y-%m-%d"
+            )
+        if filter.publish_time_lt:
+            url_params["published_at__lt"] = filter.publish_time_lt.strftime(
+                "%Y-%m-%d"
+            )
+
+        if filter.close_time_gt:
+            url_params["close_time__gt"] = filter.close_time_gt.strftime(
+                "%Y-%m-%d"
+            )
+        if filter.close_time_lt:
+            url_params["close_time__lt"] = filter.close_time_lt.strftime(
+                "%Y-%m-%d"
+            )
+
+        if filter.open_time_gt:
+            url_params["open_time__gt"] = filter.open_time_gt.strftime(
+                "%Y-%m-%d"
+            )
+        if filter.open_time_lt:
+            url_params["open_time__lt"] = filter.open_time_lt.strftime(
+                "%Y-%m-%d"
+            )
+
+        if filter.allowed_tournament_slugs:
+            url_params["tournaments"] = filter.allowed_tournament_slugs
+
+        url_params["order_by"] = "-published_at"
+        url_params["with_cp"] = "true"
+
+        questions = cls.__get_questions_from_api(url_params)
+
+        if filter.num_forecasters_greater_than is not None:
+            questions = cls.__filter_questions_by_forecasters(
+                questions, filter.num_forecasters_greater_than
+            )
+
+        return questions
+
+
+class ApiFilter(BaseModel):
+    num_forecasters_greater_than: int | None = None
+    allowed_types: (
+        list[Literal["binary", "numeric", "multiple_choice", "date"]] | None
+    ) = None
+    allowed_states: (
+        list[Literal["open", "upcoming", "resolved", "closed"]] | None
+    ) = None
+    scheduled_resolve_time_gt: datetime | None = None
+    scheduled_resolve_time_lt: datetime | None = None
+    publish_time_gt: datetime | None = None
+    publish_time_lt: datetime | None = None
+    close_time_gt: datetime | None = None
+    close_time_lt: datetime | None = None
+    open_time_gt: datetime | None = None
+    open_time_lt: datetime | None = None
+    allowed_tournament_slugs: list[str] | None = None
