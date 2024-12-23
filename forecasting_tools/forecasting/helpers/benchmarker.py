@@ -66,8 +66,6 @@ class Benchmarker:
     async def run_benchmark(self) -> list[BenchmarkForBot]:
         questions = MetaculusApi.get_benchmark_questions(
             self.number_of_questions_to_use,
-            random_seed=42,
-            # Choose a random seed so all benchmarks in a similar time period use the same questions
         )
 
         questions = typeguard.check_type(questions, list[MetaculusQuestion])
