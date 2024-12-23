@@ -6,7 +6,10 @@ import pytest
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
 )
-from forecasting_tools.forecasting.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.forecasting.helpers.metaculus_api import (
+    ApiFilter,
+    MetaculusApi,
+)
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     BinaryQuestion,
     DateQuestion,
@@ -84,6 +87,13 @@ def test_get_multiple_choice_question_type_from_id() -> None:
     assert "8 or 9" in question.options
     assert "10 or more" in question.options
     assert_basic_question_attributes_not_none(question, post_id)
+
+
+def test_get_question_with_tournament_slug() -> None:
+    question = MetaculusApi.get_question_by_url(
+        "https://www.metaculus.com/questions/19741"
+    )
+    assert question.tournament_slugs == ["quarterly-cup-2024q1"]
 
 
 def test_post_comment_on_question() -> None:
@@ -204,6 +214,100 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
     ), "Questions retrieved with same random seed should return same IDs"
 
 
+@pytest.mark.parametrize(
+    "api_filter, num_questions, randomly_sample",
+    [
+        (
+            ApiFilter(
+                num_forecasters_gte=100, allowed_statuses=["open", "resolved"]
+            ),
+            10,
+            False,
+        ),
+        (
+            ApiFilter(allowed_types=["binary"], allowed_statuses=["closed"]),
+            250,
+            True,
+        ),
+        (
+            ApiFilter(
+                close_time_gt=datetime(2024, 1, 15),
+                close_time_lt=datetime(2024, 1, 20),
+                scheduled_resolve_time_lt=datetime(2024, 1, 20),
+                allowed_tournament_slugs=["quarterly-cup-2024q1"],
+            ),
+            1,
+            False,
+        ),
+        (
+            ApiFilter(
+                num_forecasters_gte=50,
+                allowed_types=["binary", "numeric"],
+                allowed_statuses=["resolved"],
+                publish_time_gt=datetime(2023, 12, 22),
+                close_time_lt=datetime(2025, 12, 22),
+            ),
+            120,
+            True,
+        ),
+    ],
+)
+async def test_get_questions_from_tournament_with_filter(
+    api_filter: ApiFilter, num_questions: int, randomly_sample: bool
+) -> None:
+    questions = await MetaculusApi.get_questions_matching_filter(
+        num_questions, api_filter, randomly_sample
+    )
+    assert_questions_match_filter(questions, api_filter)
+    assert len(questions) == num_questions
+
+
+@pytest.mark.skip(reason="This test takes a while to run")
+@pytest.mark.parametrize(
+    "status_filter",
+    [
+        [QuestionState.OPEN],
+        [QuestionState.CLOSED],
+        [QuestionState.RESOLVED],
+        [QuestionState.OPEN, QuestionState.CLOSED],
+        [QuestionState.CLOSED, QuestionState.RESOLVED],
+    ],
+)
+async def test_question_status_filters(
+    status_filter: list[QuestionState],
+) -> None:
+    api_filter = ApiFilter(
+        allowed_statuses=[state.value for state in status_filter]
+    )
+    questions = await MetaculusApi.get_questions_matching_filter(
+        250, api_filter, randomly_sample=True
+    )
+    for question in questions:
+        assert question.state in status_filter
+    for expected_state in status_filter:
+        assert any(question.state == expected_state for question in questions)
+
+
+async def test_fails_to_get_questions_if_filter_is_too_restrictive() -> None:
+    tournament_slug = "quarterly-cup-2024q1"
+    api_filter = ApiFilter(allowed_tournament_slugs=[tournament_slug])
+    num_questions_in_tournament = 46
+    requested_questions = num_questions_in_tournament + 50
+    with pytest.raises(Exception):
+        await MetaculusApi.get_questions_matching_filter(
+            requested_questions,
+            api_filter,
+            randomly_sample=False,
+        )
+
+    with pytest.raises(Exception):
+        await MetaculusApi.get_questions_matching_filter(
+            requested_questions,
+            api_filter,
+            randomly_sample=True,
+        )
+
+
 def assert_basic_question_attributes_not_none(
     question: MetaculusQuestion, question_id: int
 ) -> None:
@@ -212,7 +316,9 @@ def assert_basic_question_attributes_not_none(
     assert question.background_info is not None
     assert question.question_text is not None
     assert question.close_time is not None
-    # assert question.scheduled_resolution_time is not None
+    assert question.open_time is not None
+    assert question.published_time is not None
+    assert question.scheduled_resolution_time is not None
     assert isinstance(question.state, QuestionState)
     assert isinstance(question.page_url, str)
     assert (
@@ -235,3 +341,80 @@ def assert_basic_question_attributes_not_none(
         assert question.community_prediction_at_access_time is not None
         assert 0 <= question.community_prediction_at_access_time <= 1
     assert question.id_of_question is not None
+
+
+def assert_questions_match_filter(  # NOSONAR
+    questions: list[MetaculusQuestion], filter: ApiFilter
+) -> None:
+    for question in questions:
+        if filter.num_forecasters_gte is not None:
+            assert (
+                question.num_forecasters is not None
+                and question.num_forecasters >= filter.num_forecasters_gte
+            ), f"Question {question.id_of_post} has {question.num_forecasters} forecasters, expected > {filter.num_forecasters_gte}"
+
+        if filter.allowed_types:
+            question_type = type(question)
+            type_name = question_type.get_api_type_name()
+            assert (
+                type_name in filter.allowed_types
+            ), f"Question {question.id_of_post} has type {type_name}, expected one of {filter.allowed_types}"
+
+        if filter.allowed_statuses:
+            assert (
+                question.state.value in filter.allowed_statuses
+            ), f"Question {question.id_of_post} has state {question.state.value}, expected one of {filter.allowed_statuses}"
+
+        if filter.scheduled_resolve_time_gt:
+            assert (
+                question.scheduled_resolution_time
+                and question.scheduled_resolution_time
+                > filter.scheduled_resolve_time_gt
+            ), f"Question {question.id_of_post} resolves at {question.scheduled_resolution_time}, expected after {filter.scheduled_resolve_time_gt}"
+
+        if filter.scheduled_resolve_time_lt:
+            assert (
+                question.scheduled_resolution_time
+                and question.scheduled_resolution_time
+                < filter.scheduled_resolve_time_lt
+            ), f"Question {question.id_of_post} resolves at {question.scheduled_resolution_time}, expected before {filter.scheduled_resolve_time_lt}"
+
+        if filter.publish_time_gt:
+            assert (
+                question.published_time
+                and question.published_time > filter.publish_time_gt
+            ), f"Question {question.id_of_post} published at {question.published_time}, expected after {filter.publish_time_gt}"
+
+        if filter.publish_time_lt:
+            assert (
+                question.published_time
+                and question.published_time < filter.publish_time_lt
+            ), f"Question {question.id_of_post} published at {question.published_time}, expected before {filter.publish_time_lt}"
+
+        if filter.close_time_gt:
+            assert (
+                question.close_time
+                and question.close_time > filter.close_time_gt
+            ), f"Question {question.id_of_post} closes at {question.close_time}, expected after {filter.close_time_gt}"
+
+        if filter.close_time_lt:
+            assert (
+                question.close_time
+                and question.close_time < filter.close_time_lt
+            ), f"Question {question.id_of_post} closes at {question.close_time}, expected before {filter.close_time_lt}"
+
+        if filter.open_time_gt:
+            assert (
+                question.open_time and question.open_time > filter.open_time_gt
+            ), f"Question {question.id_of_post} opened at {question.open_time}, expected after {filter.open_time_gt}"
+
+        if filter.open_time_lt:
+            assert (
+                question.open_time and question.open_time < filter.open_time_lt
+            ), f"Question {question.id_of_post} opened at {question.open_time}, expected before {filter.open_time_lt}"
+
+        if filter.allowed_tournament_slugs:
+            assert any(
+                slug in filter.allowed_tournament_slugs
+                for slug in question.tournament_slugs
+            ), f"Question {question.id_of_post} tournaments {question.tournament_slugs} not in allowed tournaments {filter.allowed_tournament_slugs}"
