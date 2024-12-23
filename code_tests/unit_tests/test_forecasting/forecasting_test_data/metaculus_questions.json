@@ -2,7 +2,7 @@
     {
         "question_text": "Will the world end by 2100?",
         "question_id": 0,
-        "state": "other",
+        "state": null,
         "background_info": "No background info provided.",
         "resolution_criteria": "No resolution criteria provided.",
         "fine_print": "No fine print provided.",
@@ -278,7 +278,7 @@
         "date_accessed": "2024-10-04T18:00:05.505239",
         "question_text": "Will  Donald Trump win the 2024 election?",
         "question_id": 0,
-        "state": "other",
+        "state": null,
         "resolution_criteria": null,
         "fine_print": null,
         "background_info": null,

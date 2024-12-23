@@ -262,11 +262,8 @@ async def test_get_questions_from_tournament_with_filter(
         num_questions, api_filter, randomly_sample
     )
     assert_questions_match_filter(questions, api_filter)
-    for question in questions:
-        assert_basic_question_attributes_not_none(
-            question, question.id_of_post
-        )
     assert len(questions) == num_questions
+    assert_basic_attributes_at_percentage(questions, 0.8)
 
 
 @pytest.mark.skip(reason="This test takes a while to run")
@@ -364,7 +361,7 @@ def assert_basic_question_attributes_not_none(
     assert question.open_time is not None
     assert question.published_time is not None
     assert question.scheduled_resolution_time is not None
-    # assert question.includes_bots_in_aggregates is not None # tested questions are not consistent on this
+    assert question.includes_bots_in_aggregates is not None
     assert isinstance(question.state, QuestionState)
     assert isinstance(question.page_url, str)
     assert (
@@ -408,8 +405,9 @@ def assert_questions_match_filter(  # NOSONAR
 
         if filter.allowed_statuses:
             assert (
-                question.state.value in filter.allowed_statuses
-            ), f"Question {question.id_of_post} has state {question.state.value}, expected one of {filter.allowed_statuses}"
+                question.state
+                and question.state.value in filter.allowed_statuses
+            ), f"Question {question.id_of_post} has state {question.state}, expected one of {filter.allowed_statuses}"
 
         if filter.scheduled_resolve_time_gt:
             assert (

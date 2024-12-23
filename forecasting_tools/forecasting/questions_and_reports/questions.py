@@ -26,7 +26,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     )
     page_url: str | None = None
     id_of_question: int | None = None
-    state: QuestionState
+    state: QuestionState | None = None
     num_forecasters: int | None = None
     num_predictions: int | None = None
     resolution_criteria: str | None = None

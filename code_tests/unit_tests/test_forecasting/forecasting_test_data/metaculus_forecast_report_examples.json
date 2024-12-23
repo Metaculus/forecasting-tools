@@ -3,7 +3,7 @@
         "question": {
             "question_text": "Will the world end by 2100?",
             "question_id": 0,
-            "state": "other",
+            "state": null,
             "background_info": "No background info provided.",
             "resolution_criteria": "No resolution criteria provided.",
             "fine_print": "No fine print provided.",
@@ -537,7 +537,7 @@
         "question": {
             "question_text": "Will Israel invade Lebanon before October 1, 2024?",
             "question_id": 0,
-            "state": "other",
+            "state": null,
             "background_info": "Tensions between Israel and Hezbollah, a Lebanese militant group, have escalated dramatically. Recently, Hezbollah launched over 200 rockets into Israel in retaliation for the killing of one of its senior commanders by an Israeli strike. This attack represents one of the largest confrontations in the ongoing conflict along the Lebanon-Israel border, with significant military actions taken by both sides. Israel responded with strikes on various towns in southern Lebanon, targeting Hezbollah's military structures.\n\nThe conflict, which intensified following the outbreak of war in Gaza, has displaced tens of thousands of people on both sides of the border and resulted in numerous casualties. Israel considers Hezbollah its most direct threat, estimating the group possesses an arsenal of 150,000 rockets and missiles, including precision-guided ones. The international community, including the U.S. and France, is actively working to prevent these skirmishes from escalating into an all-out war that could impact the broader region. Despite diplomatic efforts, Israeli officials have indicated that they might decide to go to war in Lebanon if a diplomatic solution cannot be achieved.",
             "resolution_criteria": "This question will resolve as \"Yes\" if, after July 15, 2024, and before October 1, 2024, either the Government of Israel or any two Permanent Members of the United Nations Security Council announce or acknowledge that Israeli ground troops have entered Lebanese territory, and reporting from credible sources indicates that the number of troops entering is more than 100. From the credible sources, it must be clear that the troops are acting deliberately on orders of the Government of Israel and without permission of the currently recognized Government of Lebanon or the assent of the United Nations.\n\nThe announcements must describe events that take place (at least in part) between the launch of this question and October 1, 2024.\n\nFor the purpose of this question, Lebanese territory is determined by the 2000 Blue Line.",
             "fine_print": "No fine print provided.",
@@ -686,7 +686,7 @@
         "question": {
             "question_text": "Will Kamala Harris win the US 2024 election?",
             "question_id": 0,
-            "state": "other",
+            "state": null,
             "background_info": "No background info provided.",
             "resolution_criteria": "No resolution criteria provided.",
             "fine_print": "No fine print provided.",
@@ -840,7 +840,7 @@
         "question": {
             "question_text": "Will Donald Trump win the US 2024 Election?",
             "question_id": 0,
-            "state": "other",
+            "state": null,
             "background_info": null,
             "resolution_criteria": null,
             "fine_print": null,
