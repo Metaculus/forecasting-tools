@@ -99,7 +99,11 @@ class AnthropicTextToTextModel(TraditionalOnlineLlm, ABC):
         probable_output = "Hello! How can I assist you today? Feel free to ask any questions or let me know if you need help with anything."
 
         model = cls()
-        prompt_tokens = model.input_to_tokens(cheap_input)
+        prompt_tokens = (
+            model.input_to_tokens(cheap_input)
+            if os.getenv("ANTHROPIC_API_KEY")
+            else 13
+        )
         anthropic_llm = ChatAnthropic(
             model_name=model.MODEL_NAME,
             timeout=None,
