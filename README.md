@@ -3,8 +3,6 @@
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 [![Discord](https://img.shields.io/badge/Discord-Join-blue)](https://discord.gg/Dtq4JNdXnw)
 
-Last Update: Dec 17 2024
-
 
 # Quick Install
 Install this package with `pip install forecasting-tools`
