@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from unittest.mock import Mock
 
 import pytest
@@ -11,6 +12,9 @@ from code_tests.unit_tests.test_ai_models.models_to_test import ModelsToTest
 from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.basic_model_interfaces.time_limited_model import (
     TimeLimitedModel,
+)
+from forecasting_tools.ai_models.model_archetypes.anthropic_text_model import (
+    AnthropicTextToTextModel,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,6 +50,14 @@ def test_ai_model_does_not_time_out_when_run_time_less_than_timeout_time(
 ) -> None:
     if not issubclass(subclass, TimeLimitedModel):
         raise ValueError(TIME_LIMITED_ERROR_MESSAGE)
+
+    if (
+        issubclass(subclass, AnthropicTextToTextModel)
+        and os.getenv("ANTHROPIC_API_KEY") is None
+    ):
+        pytest.skip(
+            "Skipping test for AnthropicTextModel since API key is not set and is needed for token counting"
+        )
 
     AiModelMockManager.mock_ai_model_direct_call_with_predefined_mock_value(
         mocker, subclass

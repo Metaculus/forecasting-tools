@@ -21,9 +21,10 @@ logger = logging.getLogger(__name__)
 
 
 class AnthropicTextToTextModel(TraditionalOnlineLlm, ABC):
+    API_KEY_MISSING = True if os.getenv("ANTHROPIC_API_KEY") is None else False
     ANTHROPIC_API_KEY = SecretStr(
-        os.getenv("ANTHROPIC_API_KEY")
-        if os.getenv("ANTHROPIC_API_KEY")  # type: ignore
+        os.getenv("ANTHROPIC_API_KEY")  # type: ignore
+        if not API_KEY_MISSING
         else "fake-api-key-so-tests-dont-fail-to-initialize"
     )
 
@@ -101,7 +102,7 @@ class AnthropicTextToTextModel(TraditionalOnlineLlm, ABC):
         model = cls()
         prompt_tokens = (
             model.input_to_tokens(cheap_input)
-            if os.getenv("ANTHROPIC_API_KEY")
+            if not cls.API_KEY_MISSING
             else 13
         )
         anthropic_llm = ChatAnthropic(
@@ -113,7 +114,7 @@ class AnthropicTextToTextModel(TraditionalOnlineLlm, ABC):
         )
         completion_tokens = (
             anthropic_llm.get_num_tokens(probable_output)
-            if os.getenv("ANTHROPIC_API_KEY")
+            if not cls.API_KEY_MISSING
             else 26
         )
         total_cost = model.calculate_cost_from_tokens(
@@ -145,13 +146,6 @@ class AnthropicTextToTextModel(TraditionalOnlineLlm, ABC):
         )
         messages = self._turn_model_input_into_messages(prompt)
         tokens = llm.get_num_tokens_from_messages(messages)
-        adjustment = 0
-        for message in messages:
-            if isinstance(message, HumanMessage):
-                adjustment += 5  # Through manual experimentation, it was found that the number of tokens returned by the API is 5 off for user messages
-            if isinstance(message, SystemMessage):
-                adjustment -= 2  # Through manual experimentation, it was found that the number of tokens returned by the API is 2 off for system messages
-        tokens += adjustment
         return tokens
 
     def calculate_cost_from_tokens(
