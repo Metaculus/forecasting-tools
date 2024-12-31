@@ -28,4 +28,6 @@
     "--profile",
     "black"
   ],
+  "jupyter.debugJustMyCode": false,
+  "debugpy.debugJustMyCode": false,
 }

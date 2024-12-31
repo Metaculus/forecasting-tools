@@ -1,4 +1,5 @@
 import logging
+import os
 from abc import ABC
 
 from langchain_anthropic import ChatAnthropic
@@ -7,6 +8,7 @@ from langchain_community.callbacks.bedrock_anthropic_callback import (
     _get_anthropic_claude_token_cost,
 )
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from pydantic import SecretStr
 
 from forecasting_tools.ai_models.ai_utils.response_types import (
     TextTokenCostResponse,
@@ -19,6 +21,11 @@ logger = logging.getLogger(__name__)
 
 
 class AnthropicTextToTextModel(TraditionalOnlineLlm, ABC):
+    ANTHROPIC_API_KEY = SecretStr(
+        os.getenv("ANTHROPIC_API_KEY")
+        if os.getenv("ANTHROPIC_API_KEY")  # type: ignore
+        else "fake-api-key-so-tests-dont-fail-to-initialize"
+    )
 
     async def invoke(self, prompt: str) -> str:
         response: TextTokenCostResponse = (
@@ -46,6 +53,7 @@ class AnthropicTextToTextModel(TraditionalOnlineLlm, ABC):
             timeout=None,
             stop=None,
             base_url=None,
+            api_key=self.ANTHROPIC_API_KEY,
         )
         messages = self._turn_model_input_into_messages(prompt)
         answer_message = await anthropic_llm.ainvoke(messages)
@@ -97,10 +105,13 @@ class AnthropicTextToTextModel(TraditionalOnlineLlm, ABC):
             timeout=None,
             stop=None,
             base_url=None,
+            api_key=cls.ANTHROPIC_API_KEY,
         )
-        completion_tokens = anthropic_llm.get_num_tokens(probable_output)
-        adjustment = 9  # Through manual experimentation, it was found that the number of tokens returned by the API is 9 off for the completion response
-        completion_tokens += adjustment
+        completion_tokens = (
+            anthropic_llm.get_num_tokens(probable_output)
+            if os.getenv("ANTHROPIC_API_KEY")
+            else 26
+        )
         total_cost = model.calculate_cost_from_tokens(
             prompt_tkns=prompt_tokens, completion_tkns=completion_tokens
         )
@@ -126,6 +137,7 @@ class AnthropicTextToTextModel(TraditionalOnlineLlm, ABC):
             timeout=None,
             stop=None,
             base_url=None,
+            api_key=self.ANTHROPIC_API_KEY,
         )
         messages = self._turn_model_input_into_messages(prompt)
         tokens = llm.get_num_tokens_from_messages(messages)
