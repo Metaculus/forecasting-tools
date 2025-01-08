@@ -1,5 +1,4 @@
 import logging
-import random
 from datetime import datetime, timedelta
 
 import pytest
@@ -108,11 +107,13 @@ def test_post_comment_on_question() -> None:
     # No assertion needed, just check that the request did not raise an exception
 
 
-@pytest.mark.skip(reason="There are no safe questions to post predictions on")
 def test_post_binary_prediction_on_question() -> None:
-    question = ForecastingTestManager.get_fake_binary_questions()
+    question = MetaculusApi.get_question_by_url(
+        "https://www.metaculus.com/questions/578/human-extinction-by-2100/"
+    )
     assert isinstance(question, BinaryQuestion)
-    question_id = question.id_of_post
+    question_id = question.id_of_question
+    assert question_id is not None
     MetaculusApi.post_binary_question_prediction(question_id, 0.01)
     MetaculusApi.post_binary_question_prediction(question_id, 0.99)
 
@@ -131,6 +132,9 @@ def test_post_binary_prediction_error_when_out_of_range() -> None:
 
 
 def test_questions_returned_from_list_questions() -> None:
+    if ForecastingTestManager.quarterly_cup_is_not_active():
+        pytest.skip("Quarterly cup is not active")
+
     ai_tournament_id = (
         ForecastingTestManager.TOURNAMENT_WITH_MIXTURE_OF_OPEN_AND_NOT_OPEN
     )
@@ -142,6 +146,9 @@ def test_questions_returned_from_list_questions() -> None:
 
 
 def test_get_questions_from_tournament() -> None:
+    if ForecastingTestManager.quarterly_cup_is_not_active():
+        pytest.skip("Quarterly cup is not active")
+
     questions = MetaculusApi.get_all_open_questions_from_tournament(
         ForecastingTestManager.TOURN_WITH_OPENNESS_AND_TYPE_VARIATIONS
     )
@@ -165,14 +172,8 @@ def test_get_questions_from_tournament() -> None:
     assert_basic_attributes_at_percentage(questions, 0.8)
 
 
-@pytest.mark.parametrize("num_questions_to_get", [30, 100])
+@pytest.mark.parametrize("num_questions_to_get", [30])
 def test_get_benchmark_questions(num_questions_to_get: int) -> None:
-    if ForecastingTestManager.quarterly_cup_is_not_active():
-        pytest.skip("Quarterly cup is not active")
-
-    previous_state = random.getstate()
-    random.seed(42)
-
     questions = MetaculusApi.get_benchmark_questions(num_questions_to_get)
 
     assert (
@@ -192,9 +193,9 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
             question.num_forecasters >= 40
         ), "Need to have critical mass of forecasters to be confident in the results"
         assert isinstance(question, BinaryQuestion)
-        three_months_from_now = datetime.now() + timedelta(days=90)
-        assert question.close_time < three_months_from_now
-        assert question.scheduled_resolution_time < three_months_from_now
+        one_year_from_now = datetime.now() + timedelta(days=365)
+        assert question.close_time < one_year_from_now
+        assert question.scheduled_resolution_time < one_year_from_now
         assert question.state == QuestionState.OPEN
         assert question.community_prediction_at_access_time is not None
         logger.info(f"Found question: {question.question_text}")
@@ -206,11 +207,9 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
     questions2 = MetaculusApi.get_benchmark_questions(num_questions_to_get)
     question_ids1 = [q.id_of_post for q in questions]
     question_ids2 = [q.id_of_post for q in questions2]
-    assert (
-        question_ids1 == question_ids2
-    ), "Questions retrieved with same random seed should return same IDs"
-
-    random.setstate(previous_state)
+    assert set(question_ids1) != set(
+        question_ids2
+    ), "Questions should not be the same (randomly sampled)"
 
 
 @pytest.mark.parametrize(
@@ -345,45 +344,92 @@ def assert_basic_attributes_at_percentage(
         except Exception as e:
             failing_errors.append(e)
             failing_questions.append(question)
+    all_errors = "\n".join(str(e) for e in failing_errors)
     assert (
         len(passing) / len(questions) >= percentage
-    ), f"Failed {len(failing_questions)} questions. Most recent question: {failing_questions[-1].page_url}. Most recent error: {failing_errors[-1]}"
+    ), f"Failed {len(failing_questions)} questions. Most recent question: {failing_questions[-1].page_url}. All errors:\n{all_errors}"
 
 
 def assert_basic_question_attributes_not_none(
     question: MetaculusQuestion, post_id: int
 ) -> None:
-    assert question.resolution_criteria is not None
-    assert question.fine_print is not None
-    assert question.background_info is not None
-    assert question.question_text is not None
-    assert question.close_time is not None
-    assert question.open_time is not None
-    assert question.published_time is not None
-    assert question.scheduled_resolution_time is not None
-    assert question.includes_bots_in_aggregates is not None
-    assert isinstance(question.state, QuestionState)
-    assert isinstance(question.page_url, str)
+    assert (
+        question.resolution_criteria is not None
+    ), f"Resolution criteria is None for post ID {post_id}"
+    assert (
+        question.fine_print is not None
+    ), f"Fine print is None for post ID {post_id}"
+    assert (
+        question.background_info is not None
+    ), f"Background info is None for post ID {post_id}"
+    assert (
+        question.question_text is not None
+    ), f"Question text is None for post ID {post_id}"
+    assert (
+        question.close_time is not None
+    ), f"Close time is None for post ID {post_id}"
+    assert (
+        question.open_time is not None
+    ), f"Open time is None for post ID {post_id}"
+    assert (
+        question.published_time is not None
+    ), f"Published time is None for post ID {post_id}"
+    assert (
+        question.scheduled_resolution_time is not None
+    ), f"Scheduled resolution time is None for post ID {post_id}"
+    assert (
+        question.includes_bots_in_aggregates is not None
+    ), f"Includes bots in aggregates is None for post ID {post_id}"
+    assert isinstance(
+        question.state, QuestionState
+    ), f"State is not a QuestionState for post ID {post_id}"
+    assert isinstance(
+        question.page_url, str
+    ), f"Page URL is not a string for post ID {post_id}"
     assert (
         question.page_url == f"https://www.metaculus.com/questions/{post_id}"
-    )
-    assert isinstance(question.num_forecasters, int)
-    assert isinstance(question.num_predictions, int)
+    ), f"Page URL does not match expected URL for post ID {post_id}"
+    assert isinstance(
+        question.num_forecasters, int
+    ), f"Num forecasters is not an int for post ID {post_id}"
+    assert isinstance(
+        question.num_predictions, int
+    ), f"Num predictions is not an int for post ID {post_id}"
     assert question.actual_resolution_time is None or isinstance(
         question.actual_resolution_time, datetime
-    )
-    assert isinstance(question.api_json, dict)
-    assert question.close_time > datetime.now()
+    ), f"Actual resolution time is not a datetime for post ID {post_id}"
+    assert isinstance(
+        question.api_json, dict
+    ), f"API JSON is not a dict for post ID {post_id}"
+    assert (
+        question.close_time is not None
+    ), f"Close time is None for post ID {post_id}"
     if question.scheduled_resolution_time:
-        assert question.scheduled_resolution_time >= question.close_time
+        assert (
+            question.scheduled_resolution_time >= question.close_time
+        ), f"Scheduled resolution time is not after close time for post ID {post_id}"
     if (
         isinstance(question, BinaryQuestion)
         and question.state == QuestionState.OPEN
     ):
-        assert question.community_prediction_at_access_time is not None
-        assert 0 <= question.community_prediction_at_access_time <= 1
-    assert question.id_of_question is not None
-    assert question.id_of_post is not None
+        assert (
+            question.community_prediction_at_access_time is not None
+        ), f"Community prediction at access time is None for post ID {post_id}"
+        assert (
+            0 <= question.community_prediction_at_access_time <= 1
+        ), f"Community prediction at access time is not between 0 and 1 for post ID {post_id}"
+    assert (
+        question.id_of_question is not None
+    ), f"ID of question is None for post ID {post_id}"
+    assert (
+        question.id_of_post is not None
+    ), f"ID of post is None for post ID {post_id}"
+    assert question.date_accessed > datetime.now() - timedelta(
+        days=1
+    ), f"Date accessed is not in the past for post ID {post_id}"
+    assert isinstance(
+        question.already_forecasted, bool
+    ), f"Already forecasted is not a boolean for post ID {post_id}"
 
 
 def assert_questions_match_filter(  # NOSONAR

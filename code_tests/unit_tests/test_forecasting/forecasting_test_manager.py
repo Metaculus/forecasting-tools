@@ -25,11 +25,13 @@ T = TypeVar("T", bound=MetaculusQuestion)
 class ForecastingTestManager:
     TOURNAMENT_SAFE_TO_PULL_AND_PUSH_TO = MetaculusApi.AI_WARMUP_TOURNAMENT_ID
     TOURNAMENT_WITH_MIXTURE_OF_OPEN_AND_NOT_OPEN = (
-        MetaculusApi.Q4_2024_QUARTERLY_CUP
+        MetaculusApi.CURRENT_QUARTERLY_CUP_ID
     )
-    TOURNAMENT_WITH_MIX_OF_QUESTION_TYPES = MetaculusApi.Q4_2024_QUARTERLY_CUP
+    TOURNAMENT_WITH_MIX_OF_QUESTION_TYPES = (
+        MetaculusApi.CURRENT_QUARTERLY_CUP_ID
+    )
     TOURN_WITH_OPENNESS_AND_TYPE_VARIATIONS = (
-        MetaculusApi.Q4_2024_QUARTERLY_CUP
+        MetaculusApi.CURRENT_QUARTERLY_CUP_ID
     )
 
     @classmethod

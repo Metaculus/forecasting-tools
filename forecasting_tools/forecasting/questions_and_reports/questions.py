@@ -73,7 +73,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
         except KeyError:
             tournament_slugs = []
 
-        return MetaculusQuestion(
+        question = MetaculusQuestion(
             state=question_state,
             question_text=question_json["title"],
             id_of_post=post_id,
@@ -99,11 +99,12 @@ class MetaculusQuestion(BaseModel, Jsonable):
             open_time=cls._parse_api_date(post_api_json.get("open_time")),
             already_forecasted=is_forecasted,
             tournament_slugs=tournament_slugs,
-            includes_bots_in_aggregates=post_api_json.get(
+            includes_bots_in_aggregates=question_json[
                 "include_bots_in_aggregates"
-            ),
+            ],
             api_json=post_api_json,
         )
+        return question
 
     @classmethod
     def _parse_api_date(

@@ -41,7 +41,7 @@ async def test_predicts_test_question(
 
     question = ReportOrganizer.get_live_example_question_of_type(question_type)
     assert isinstance(question, question_type)
-    target_cost_in_usd = 2
+    target_cost_in_usd = 0.3
     with MonetaryCostManager() as cost_manager:
         report = await bot.forecast_question(question)
         logger.info(f"Cost of forecast: {cost_manager.current_usage}")
@@ -57,8 +57,12 @@ async def test_predicts_test_question(
     assert report.price_estimate is not None
     assert report.minutes_taken is not None
     assert report.question is not None
-
     await report.publish_report_to_metaculus()
+
+    updated_question = MetaculusApi.get_question_by_post_id(
+        question.id_of_post
+    )
+    assert updated_question.already_forecasted
 
 
 async def test_collects_reports_on_open_questions(mocker: Mock) -> None:

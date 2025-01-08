@@ -38,9 +38,11 @@ class MetaculusApi:
     )
     AI_COMPETITION_ID_Q3 = 3349  # https://www.metaculus.com/tournament/aibq3/
     AI_COMPETITION_ID_Q4 = 32506  # https://www.metaculus.com/tournament/aibq4/
+    AI_COMPETITION_ID_Q1 = 32627  # https://www.metaculus.com/tournament/aibq1/
     Q3_2024_QUARTERLY_CUP = 3366
     Q4_2024_QUARTERLY_CUP = 3672
-    CURRENT_QUARTERLY_CUP_ID = Q4_2024_QUARTERLY_CUP
+    Q1_2025_QUARTERLY_CUP = 0  # TBD
+    CURRENT_QUARTERLY_CUP_ID = Q1_2025_QUARTERLY_CUP
 
     API_BASE_URL = "https://www.metaculus.com/api"
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
@@ -180,12 +182,12 @@ class MetaculusApi:
         cls,
         num_of_questions_to_return: int,
     ) -> list[BinaryQuestion]:
-        three_months_from_now = datetime.now() + timedelta(days=90)
+        one_year_from_now = datetime.now() + timedelta(days=365)
         api_filter = ApiFilter(
             allowed_statuses=["open"],
             allowed_types=["binary"],
             num_forecasters_gte=40,
-            scheduled_resolve_time_lt=three_months_from_now,
+            scheduled_resolve_time_lt=one_year_from_now,
             includes_bots_in_aggregates=False,
         )
         questions = asyncio.run(
@@ -251,9 +253,13 @@ class MetaculusApi:
                 "are not supported (e.g. notebook or group question)"
             )
 
-        questions = [
-            cls._metaculus_api_json_to_question(q) for q in supported_posts
-        ]
+        questions = []
+        for q in supported_posts:
+            try:
+                questions.append(cls._metaculus_api_json_to_question(q))
+            except Exception as e:
+                logger.warning(f"Error processing post ID {q['id']}: {e}")
+
         return questions
 
     @classmethod

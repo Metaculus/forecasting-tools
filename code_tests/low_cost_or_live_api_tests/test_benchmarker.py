@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta
 from unittest.mock import Mock
 
 import pytest
@@ -56,7 +57,7 @@ async def test_file_is_made_for_benchmark(mocker: Mock) -> None:
 
 
 @pytest.mark.parametrize("num_questions", [1, 5, 10])
-async def test_each_benchmark_mode_calls_forecaster_more_time(
+async def test_benchmarks_run_properly_with_mocked_bot(
     mocker: Mock,
     num_questions: int,
 ) -> None:
@@ -75,3 +76,43 @@ async def test_each_benchmark_mode_calls_forecaster_more_time(
         isinstance(benchmark, BenchmarkForBot) for benchmark in benchmarks
     )
     assert mock_run_forecast.call_count == num_questions
+
+    for benchmark in benchmarks:
+        assert_all_benchmark_object_fields_are_not_none(
+            benchmark, num_questions
+        )
+
+
+def assert_all_benchmark_object_fields_are_not_none(
+    benchmark: BenchmarkForBot, num_questions: int
+) -> None:
+    expected_time_taken = 0.5
+    assert benchmark.name is not None, "Name is not set"
+    assert benchmark.description is not None, "Description is not set"
+    assert (
+        benchmark.timestamp < datetime.now()
+        and benchmark.timestamp
+        > datetime.now() - timedelta(minutes=expected_time_taken)
+    ), ("Timestamp is not set properly")
+    assert (
+        benchmark.time_taken_in_minutes is not None
+        and benchmark.time_taken_in_minutes > 0
+        and benchmark.time_taken_in_minutes
+        < expected_time_taken  # The mocked benchmark should be quick
+    ), "Time taken in minutes is not set"
+    assert (
+        benchmark.total_cost is not None and benchmark.total_cost >= 0
+    ), "Total cost is not set"
+    assert benchmark.git_commit_hash is not None, "Git commit hash is not set"
+    assert "False" in str(
+        benchmark.forecast_bot_config
+    ), "Forecast bot config is not set"
+    assert (
+        benchmark.code is not None and "class" in benchmark.code
+    ), "Code is not set"
+    assert (
+        len(benchmark.forecast_reports) == num_questions
+    ), "Forecast reports is not set"
+    assert (
+        benchmark.average_inverse_expected_log_score > 0
+    ), "Average inverse expected log score is not set"

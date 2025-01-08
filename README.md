@@ -2,6 +2,8 @@
 ![Python Versions](https://img.shields.io/pypi/pyversions/forecasting-tools.svg)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 [![Discord](https://img.shields.io/badge/Discord-Join-blue)](https://discord.gg/Dtq4JNdXnw)
+[![Downloads](https://static.pepy.tech/personalized-badge/forecasting-tools?period=month&units=international_system&left_color=black&right_color=brightgreen&left_text=Monthly%20Downloads)](https://pepy.tech/project/confidenceinterval)
+[![Downloads](https://static.pepy.tech/personalized-badge/forecasting-tools?period=total&units=international_system&left_color=black&right_color=blue&left_text=Total%20Downloads)](https://pepy.tech/project/confidenceinterval)
 
 
 # Quick Install
@@ -15,7 +17,7 @@ This repository contains forecasting and research tools built with Python and St
 Here are the tools most likely to be useful to you:
 - 🎯 **Forecasting Bot:** General Forecaster that integrates with the Metaculus AI benchmarking competition. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the API code, etc)
 - 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run you bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected log scores.
-- 🔍 **Perplexity++ Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and Gpt. Its a better (but slightly more expensive) alternative to Perplexity.ai that is configurable, more accurate, able to decide on filters, able to link to exact paragraphs, etc.
+- 🔍 **Perplexity++ Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and GPT. Its a better (but slightly more expensive) alternative to Perplexity.ai that is configurable, more accurate, able to decide on filters, able to link to exact paragraphs, etc.
 - 🔑 **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
 
 
@@ -66,7 +68,7 @@ for report in reports:
     print(f"Prediction: {report.prediction}")
 ```
 
-### Forecasting a Single Question
+### Forecasting Outside a Tournament
 
 
 ```python
@@ -148,7 +150,6 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 
 class MyCustomBot(TemplateBot):
     async def run_research(self, question: MetaculusQuestion) -> str:
-        """Custom research method that focuses on recent events and expert opinions"""
         searcher = SmartSearcher(
             num_searches_to_run=3,
             num_sites_per_search=5
@@ -595,7 +596,7 @@ This repository uses pytest tests are subdivided into folders 'unit_tests', 'low
 
 1. **Fork the Repository**: Fork the repository on GitHub. Clone your fork locally: `git clone git@github.com:your-username/forecasting-tools.git`
 2. **Set Up Development Environment**: Follow the "Local Development" section in the README to set up your environment
-3. **Come up with an improvement**: Decide on something worth changing. Perhaps, you want to add your own custom bot to the forecasting_bots folder. Perhaps you want to add a tool that you think others could benefit from. Most every contribution will be accepted, though if you are worried about adoption, feel free to chat on our discord or create an issue.
+3. **Come up with an improvement**: Decide on something worth changing. Perhaps, you want to add your own custom bot to the forecasting_bots folder. Perhaps you want to add a tool that you think others could benefit from. As long as your code is clean, you can probably expect your contribution to be accepted, though if you are worried about adoption, feel free to chat on our discord or create an issue.
 4. **Make a pull request**:
    - Make changes
    - Push your changes to your fork

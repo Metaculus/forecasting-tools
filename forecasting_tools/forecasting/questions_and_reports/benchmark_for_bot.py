@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import typeguard
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from forecasting_tools.forecasting.questions_and_reports.binary_report import (
     BinaryReport,
@@ -21,7 +21,7 @@ from forecasting_tools.util.jsonable import Jsonable
 class BenchmarkForBot(BaseModel, Jsonable):
     name: str
     description: str
-    timestamp: datetime = datetime.now()
+    timestamp: datetime = Field(default_factory=datetime.now)
     time_taken_in_minutes: float | None
     total_cost: float | None
     git_commit_hash: str
