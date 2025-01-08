@@ -2,8 +2,8 @@
 ![Python Versions](https://img.shields.io/pypi/pyversions/forecasting-tools.svg)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 [![Discord](https://img.shields.io/badge/Discord-Join-blue)](https://discord.gg/Dtq4JNdXnw)
-[![Downloads](https://static.pepy.tech/personalized-badge/forecasting-tools?period=month&units=international_system&left_color=black&right_color=brightgreen&left_text=Monthly%20Downloads)](https://pepy.tech/project/confidenceinterval)
-[![Downloads](https://static.pepy.tech/personalized-badge/forecasting-tools?period=total&units=international_system&left_color=black&right_color=blue&left_text=Total%20Downloads)](https://pepy.tech/project/confidenceinterval)
+[![Downloads](https://static.pepy.tech/personalized-badge/forecasting-tools?period=month&units=international_system&left_color=black&right_color=brightgreen&left_text=Monthly%20Downloads)](https://pepy.tech/project/forecasting-tools)
+[![Downloads](https://static.pepy.tech/personalized-badge/forecasting-tools?period=total&units=international_system&left_color=black&right_color=blue&left_text=Total%20Downloads)](https://pepy.tech/project/forecasting-tools)
 
 
 # Quick Install
@@ -16,17 +16,18 @@ This repository contains forecasting and research tools built with Python and St
 
 Here are the tools most likely to be useful to you:
 - 🎯 **Forecasting Bot:** General Forecaster that integrates with the Metaculus AI benchmarking competition. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the API code, etc)
+- 🔌 **Metaculus API Wrapper:** for interacting with questions and tournaments
 - 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run you bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected log scores.
 - 🔍 **Perplexity++ Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and GPT. Its a better (but slightly more expensive) alternative to Perplexity.ai that is configurable, more accurate, able to decide on filters, able to link to exact paragraphs, etc.
 - 🔑 **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
-
 
 Here are some other cool components and features of the project:
 - **Base Rate Researcher:** for calculating event probabilities (still experimental)
 - **Niche List Researcher:** for analyzing very specific lists of past events or items (still experimental)
 - **Fermi Estimator:** for breaking down numerical estimates (still experimental)
-- **Metaculus API Wrapper:** for interacting with questions and tournaments
 - **Monetary Cost Manager:** for tracking AI and API expenses
+
+All the examples below are in a Jupyter Notebook called `README.ipynb` which you can run locally to test the package.
 
 Join the [discord](https://discord.gg/Dtq4JNdXnw) for updates and to give feedback (btw feedback is very appreciated, even just a quick "I did/didn't decide to use tool X for reason Y, though am busy and don't have time to elaborate" is helpful to know)
 
@@ -53,16 +54,15 @@ from forecasting_tools import TemplateBot, MetaculusApi
 bot = TemplateBot(
     research_reports_per_question=3,  # Number of separate research attempts per question
     predictions_per_research_report=5,  # Number of predictions to make per research report
-    publish_reports_to_metaculus=True,  # Whether to post the forecasts to Metaculus
+    publish_reports_to_metaculus=False,  # Whether to post the forecasts to Metaculus
     folder_to_save_reports_to="logs/forecasts/",  # Where to save detailed reports (file saving environment variable must be set)
     skip_previously_forecasted_questions=False
 )
 
-# Run forecasts on Q4 2024 AI Tournament
-TOURNAMENT_ID = MetaculusApi.AI_COMPETITION_ID_Q4
+TOURNAMENT_ID = MetaculusApi.CURRENT_QUARTERLY_CUP_ID
 reports = await bot.forecast_on_tournament(TOURNAMENT_ID)
 
-# Print results
+# Print results (if the tournament is not active, no reports will be returned)
 for report in reports:
     print(f"\nQuestion: {report.question.question_text}")
     print(f"Prediction: {report.prediction}")
@@ -100,9 +100,17 @@ reports = await bot.forecast_questions([question1, question2])
 for report in reports:
     print(f"Question: {report.question.question_text}")
     print(f"Prediction: {report.prediction}")
-    print("\nReasoning:")
-    print(report.explanation)
+    shortened_explanation = report.explanation.replace('\n', ' ')[:100]
+    print(f"Reasoning: {shortened_explanation}...")
 ```
+
+    Question: Will humans go extinct before 2100?
+    Prediction: 0.02
+    Reasoning:  # SUMMARY *Question*: Will humans go extinct before 2100? *Final Prediction*: 2.0% *Total Cost*: $0...
+    Question: Will YouTube be blocked in Russia?
+    Prediction: 0.7
+    Reasoning:  # SUMMARY *Question*: Will YouTube be blocked in Russia? *Final Prediction*: 70.0% *Total Cost*: $0...
+
 
 The bot will:
 1. Research the question
@@ -115,7 +123,7 @@ Note: You'll need to have your environment variables set up (see the section bel
 
 ## Making your own bot for Metaculus AI Tournament
 
-### Join the tournament quick-start
+### Join the tournament through forking (quickest)
 The quickest way to join the Metaculus Benchmarking Tournament (or any other tournament) is to fork this repo, enable Github workflow/actions, and then set repository secrets. Ideally this takes less than 15min, and then you have a bot in the tournament! Later you can develop locally and then merge in changes to your fork.
 
 There is a prewritten workflow that will run the bot every 15min, pick up new questions, and forecast on them. Automation is handled in the `.github/workflows/` folder. The `hourly-run.yaml` file runs the bot every 15 min and will skip questions it has already forecasted on.
@@ -125,6 +133,9 @@ There is a prewritten workflow that will run the bot every 15min, pick up new qu
 3) **Enable Actions**: Go to 'Actions' then click 'Enable'. Then go to the 'Hourly Run' workflow, and click 'Enable'. To test if the workflow is working, click 'Run workflow', choose the main branch, then click the green 'Run workflow' button. This will check for new questions and forecast only on ones it has not yet successfully forecast on.
 
 The bot should just work as is at this point. You can disable the workflow by clicking `Actions > Hourly Run > Triple dots > disable workflow`
+
+### Join the tournament using package
+You can create your own custom bot through the package in your own repo (see example below). If you do this, it is recommended that you copy the `.github/workflow` workflows and customize them to call your bot so that you can run questions automatically.
 
 ### Local Development
 See the 'Local Development' section later in this README.
@@ -151,8 +162,8 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 class MyCustomBot(TemplateBot):
     async def run_research(self, question: MetaculusQuestion) -> str:
         searcher = SmartSearcher(
-            num_searches_to_run=3,
-            num_sites_per_search=5
+            num_searches_to_run=2,
+            num_sites_per_search=3
         )
 
         prompt = clean_indents(
@@ -194,7 +205,22 @@ class MyCustomBot(TemplateBot):
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
         ...
+
+custom_bot = MyCustomBot()
+question = MetaculusApi.get_question_by_url(
+    "https://www.metaculus.com/questions/578/human-extinction-by-2100/"
+)
+report = await custom_bot.forecast_question(question)
+print(f"Question: {report.question.question_text}")
+print(f"Prediction: {report.prediction}")
+print(f"Research: {report.research[:100]}...")
 ```
+
+    Question: Will humans go extinct before 2100?
+    Prediction: 0.05
+    Research: # RESEARCH
+    To analyze the question of whether humans will go extinct before 2100, we need to consider...
+
 
 ## Setting Environment Variables
 Whether running locally or through Github actions, you will need to set environment variables. All environment variables you might want are in `.env.template`. Generally you only need the METACULUS_TOKEN if running the Template. Having an EXA_API_KEY (see www.exa.ai) or PERPLEXITY_API_KEY (see www.perplexity.ai) is needed for searching the web. Make sure to put these variables in your `.env` file if running locally and in the Github actions secrets if running on Github actions. Remember to set 'FILE_WRITING_ALLOWED' to true if you want to save results.
@@ -221,13 +247,28 @@ benchmarker = Benchmarker(
 benchmarks: list[BenchmarkForBot] = await benchmarker.run_benchmark()
 
 # View results
-for benchmark in benchmarks:
+for benchmark in benchmarks[:2]:
+    print(f"--------------------------------")
     print(f"Bot: {benchmark.name}")
     print(f"Score: {benchmark.average_inverse_expected_log_score}") # Lower is better
-    print(f"Num Forecasts: {len(benchmark.forecast_reports)}")
+    print(f"Num reports in benchmark: {len(benchmark.forecast_reports)}")
     print(f"Time: {benchmark.time_taken_in_minutes}min")
     print(f"Cost: ${benchmark.total_cost}")
 ```
+
+    --------------------------------
+    Bot: Benchmark for TemplateBot
+    Score: 0.771654061941104
+    Num reports in benchmark: 2
+    Time: 0.5136146903038025min
+    Cost: $0.0332325
+    --------------------------------
+    Bot: Benchmark for CustomBot
+    Score: 0.7516094970590276
+    Num reports in benchmark: 2
+    Time: 0.4508770227432251min
+    Cost: $0.03279
+
 
 The ideal number of questions to get a good sense of whether one bot is better than another can vary. 100+ should tell your something decent. See [this analysis](https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world) for exploration of the numbers.
 
@@ -502,25 +543,56 @@ The Metaculus API wrapper helps interact with Metaculus questions and tournament
 
 
 ```python
-from forecasting_tools import MetaculusApi
+from forecasting_tools import MetaculusApi, ApiFilter
+from datetime import datetime
 
-question = MetaculusApi.get_question_by_post_id(11245)  # US 2024 Election
-question = MetaculusApi.get_question_by_url("https://www.metaculus.com/questions/11245/...")
+question = MetaculusApi.get_question_by_post_id(578)
+print(question.page_url)
+
+question = MetaculusApi.get_question_by_url("https://www.metaculus.com/questions/578/human-extinction-by-2100/")
+print(question.page_url)
+
 questions = MetaculusApi.get_all_open_questions_from_tournament(
-    tournament_id=3672,  # Q4 2024 Quarterly Cup
+    tournament_id=MetaculusApi.CURRENT_QUARTERLY_CUP_ID
 )
-MetaculusApi.post_binary_question_prediction(
-    question_id=11245,
-    prediction_in_decimal=0.75  # Must be between 0.01 and 0.99
+print(f"Num tournament questions: {len(questions)}")
+
+api_filter = ApiFilter(
+    num_forecasters_gte=40,
+    close_time_gt=datetime(2023, 12, 31),
+    close_time_lt=datetime(2024, 12, 31),
+    scheduled_resolve_time_lt=datetime(2024, 12, 31),
+    allowed_types=["binary"],
+    allowed_statuses=["resolved"],
 )
-MetaculusApi.post_question_comment(
-    post_id=11245,
-    comment_text="Here's my reasoning..."
-)
+questions = await MetaculusApi.get_questions_matching_filter(100, api_filter, randomly_sample=False)
+print(f"Num filtered questions: {len(questions)}")
+
 benchmark_questions = MetaculusApi.get_benchmark_questions(
     num_of_questions_to_return=20
 )
+print(f"Num benchmark questions: {len(benchmark_questions)}")
+
+MetaculusApi.post_binary_question_prediction(
+    question_id=578, # Note that the question ID is not always the same as the post ID
+    prediction_in_decimal=0.012  # Must be between 0.01 and 0.99
+)
+print("Posted prediction")
+MetaculusApi.post_question_comment(
+    post_id=578,
+    comment_text="Here's example reasoning for testing... This will be a private comment..."
+)
+print("Posted comment")
 ```
+
+    https://www.metaculus.com/questions/578
+    https://www.metaculus.com/questions/578
+    Num tournament questions: 0
+    Num filtered questions: 100.
+    Num benchmark questions: 20.
+    Posted prediction
+    Posted comment
+
 
 ## Monetary Cost Manager
 The Monetary Cost Manager helps to track AI and API costs. It tracks expenses and errors if it goes over the limit. Leave the limit empty to disable the limit. It shouldn't be trusted as an exact expense, but a good estimate of costs. See `forecasting_tools/ai_models/README.md` for more details, and some flaws it has.
@@ -586,9 +658,12 @@ If you choose not to run Docker, you can use poetry to set up a local virtual en
 ## Running the Front End
 You can run any front end folder in the front_end directory by executing `streamlit run front_end/Home.py`. This will start a development server for you that you can run.
 
+Streamlit makes it very easy to publish demos. If you change up the bot(s) within the front_end, you can quickly deploy a free demo others can play with (look up streamlit cloud).
+
 ## Testing
 This repository uses pytest tests are subdivided into folders 'unit_tests', 'low_cost_or_live_api', 'expensive'. Unit tests should always pass, while the other tests are for sanity checking. The low cost folder should be able to be run on mass without a huge cost to you. Do not run `pytest` without specifying which folder you want or else you will incur some large expenses from the 'expensive' folder.
 
+Also it's helpful to use the log file that is automatically placed at `logs/latest.log`. You may need to set `FILE_WRITING_ALLOWED=TRUE` in .env for this to work.
 
 # Contributing
 
@@ -610,7 +685,7 @@ This repository uses pytest tests are subdivided into folders 'unit_tests', 'low
 ## Development Guidelines
 
 1. **Code Style**
-   - Code is automatically formatted using Black
+   - Code is automatically formatted on commit using precommit (this should be automatically installed when you start the devcontainer). Formatting is done using Black, Ruff, and some other tools.
    - Use type hints for all function parameters and return values
    - Use descriptive variable names over comments
    - Follow existing patterns in the codebase

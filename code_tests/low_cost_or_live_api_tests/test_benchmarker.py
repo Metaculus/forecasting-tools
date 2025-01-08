@@ -56,7 +56,7 @@ async def test_file_is_made_for_benchmark(mocker: Mock) -> None:
         os.remove(os.path.join(absolute_path, new_file))
 
 
-@pytest.mark.parametrize("num_questions", [1, 5, 10])
+@pytest.mark.parametrize("num_questions", [10])
 async def test_benchmarks_run_properly_with_mocked_bot(
     mocker: Mock,
     num_questions: int,

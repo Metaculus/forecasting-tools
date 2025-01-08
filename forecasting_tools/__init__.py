@@ -27,6 +27,9 @@ from forecasting_tools.forecasting.helpers.benchmarker import (
     Benchmarker as Benchmarker,
 )
 from forecasting_tools.forecasting.helpers.metaculus_api import (
+    ApiFilter as ApiFilter,
+)
+from forecasting_tools.forecasting.helpers.metaculus_api import (
     MetaculusApi as MetaculusApi,
 )
 from forecasting_tools.forecasting.helpers.smart_searcher import (

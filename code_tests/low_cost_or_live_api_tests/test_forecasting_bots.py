@@ -66,6 +66,9 @@ async def test_predicts_test_question(
 
 
 async def test_collects_reports_on_open_questions(mocker: Mock) -> None:
+    if ForecastingTestManager.quarterly_cup_is_not_active():
+        pytest.skip("Quarterly cup is not active")
+
     bot_type = TemplateBot
     bot = bot_type()
     ForecastingTestManager.mock_forecast_bot_run_forecast(bot_type, mocker)
