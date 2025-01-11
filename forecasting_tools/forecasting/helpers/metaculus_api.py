@@ -39,10 +39,11 @@ class MetaculusApi:
     AI_COMPETITION_ID_Q3 = 3349  # https://www.metaculus.com/tournament/aibq3/
     AI_COMPETITION_ID_Q4 = 32506  # https://www.metaculus.com/tournament/aibq4/
     AI_COMPETITION_ID_Q1 = 32627  # https://www.metaculus.com/tournament/aibq1/
+    ACX_2025_TOURNAMENT = 32564
     Q3_2024_QUARTERLY_CUP = 3366
     Q4_2024_QUARTERLY_CUP = 3672
-    Q1_2025_QUARTERLY_CUP = 0  # TBD
-    CURRENT_QUARTERLY_CUP_ID = Q4_2024_QUARTERLY_CUP
+    Q1_2025_QUARTERLY_CUP = 32630
+    CURRENT_QUARTERLY_CUP_ID = Q1_2025_QUARTERLY_CUP
 
     API_BASE_URL = "https://www.metaculus.com/api"
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
@@ -258,7 +259,9 @@ class MetaculusApi:
             try:
                 questions.append(cls._metaculus_api_json_to_question(q))
             except Exception as e:
-                logger.warning(f"Error processing post ID {q['id']}: {e}")
+                logger.warning(
+                    f"Error processing post ID {q['id']}: {e.__class__.__name__} {e}"
+                )
 
         return questions
 
