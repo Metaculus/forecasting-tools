@@ -4,7 +4,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Coroutine, cast
+from typing import Any, Coroutine, TypeVar, cast, overload
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
@@ -32,7 +32,8 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
 from forecasting_tools.forecasting.questions_and_reports.report_organizer import (
     ReportOrganizer,
 )
-from forecasting_tools.util import async_batching
+
+T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,6 @@ class ForecastBot(ABC):
         publish_reports_to_metaculus: bool = False,
         folder_to_save_reports_to: str | None = None,
         skip_previously_forecasted_questions: bool = False,
-        skip_questions_that_error: bool = True,
     ) -> None:
         assert (
             research_reports_per_question > 0
@@ -66,7 +66,6 @@ class ForecastBot(ABC):
         self.skip_previously_forecasted_questions = (
             skip_previously_forecasted_questions
         )
-        self.skip_questions_that_error = skip_questions_that_error
 
     def get_config(self) -> dict[str, str]:
         params = inspect.signature(self.__init__).parameters
@@ -76,33 +75,75 @@ class ForecastBot(ABC):
             if name != "self" and name != "kwargs" and name != "args"
         }
 
+    @overload
     async def forecast_on_tournament(
         self,
         tournament_id: int,
-    ) -> list[ForecastReport]:
+        return_exceptions: bool = False,
+    ) -> list[ForecastReport]: ...
+
+    @overload
+    async def forecast_on_tournament(
+        self,
+        tournament_id: int,
+        return_exceptions: bool = True,
+    ) -> list[ForecastReport | BaseException]: ...
+
+    async def forecast_on_tournament(
+        self,
+        tournament_id: int,
+        return_exceptions: bool = False,
+    ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
         questions = MetaculusApi.get_all_open_questions_from_tournament(
             tournament_id
         )
-        return await self.forecast_questions(questions)
+        return await self.forecast_questions(questions, return_exceptions)
+
+    @overload
+    async def forecast_question(
+        self,
+        question: MetaculusQuestion,
+        return_exceptions: bool = False,
+    ) -> ForecastReport: ...
+
+    @overload
+    async def forecast_question(
+        self,
+        question: MetaculusQuestion,
+        return_exceptions: bool = True,
+    ) -> ForecastReport | BaseException: ...
 
     async def forecast_question(
         self,
         question: MetaculusQuestion,
-    ) -> ForecastReport:
+        return_exceptions: bool = False,
+    ) -> ForecastReport | BaseException:
         assert (
             not self.skip_previously_forecasted_questions
         ), "Skipping questions is not supported for single question forecasts"
-        reports = await self.forecast_questions([question])
-        if len(reports) == 0:
-            raise ValueError(
-                "No reports found. There was probably an error lower in the system. Check logs."
-            )
+        reports = await self.forecast_questions([question], return_exceptions)
+        assert len(reports) == 1, f"Expected 1 report, got {len(reports)}"
         return reports[0]
+
+    @overload
+    async def forecast_questions(
+        self,
+        questions: list[MetaculusQuestion],
+        return_exceptions: bool = False,
+    ) -> list[ForecastReport]: ...
+
+    @overload
+    async def forecast_questions(
+        self,
+        questions: list[MetaculusQuestion],
+        return_exceptions: bool = True,
+    ) -> list[ForecastReport | BaseException]: ...
 
     async def forecast_questions(
         self,
         questions: list[MetaculusQuestion],
-    ) -> list[ForecastReport]:
+        return_exceptions: bool = True,
+    ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
         if self.skip_previously_forecasted_questions:
             unforecasted_questions = [
                 question
@@ -114,16 +155,23 @@ class ForecastBot(ABC):
                     f"Skipping {len(questions) - len(unforecasted_questions)} previously forecasted questions"
                 )
             questions = unforecasted_questions
-        reports: list[ForecastReport] = []
-        reports = await self._run_coroutines_and_error_if_configured(
-            [self._run_individual_question(question) for question in questions]
+        reports: list[ForecastReport | BaseException] = []
+        reports = await asyncio.gather(
+            *[
+                self._run_individual_question(question)
+                for question in questions
+            ],
+            return_exceptions=return_exceptions,
         )
         if self.folder_to_save_reports_to:
-            file_path = self.__create_file_path_to_save_to(questions)
-            ForecastReport.save_object_list_to_file_path(reports, file_path)
-        if self.publish_reports_to_metaculus:
-            await self._run_coroutines_and_error_if_configured(
-                [report.publish_report_to_metaculus() for report in reports]
+            non_exception_reports = [
+                report
+                for report in reports
+                if not isinstance(report, BaseException)
+            ]
+            file_path = self._create_file_path_to_save_to(questions)
+            ForecastReport.save_object_list_to_file_path(
+                non_exception_reports, file_path
             )
         return reports
 
@@ -148,19 +196,20 @@ class ForecastBot(ABC):
                 self._research_and_make_predictions(question)
                 for _ in range(self.research_reports_per_question)
             ]
-            research_with_predictions_units = (
-                await self._run_coroutines_and_error_if_configured(
-                    prediction_tasks
-                )
+            valid_prediction_set, errors = (
+                await self._gather_results_and_exceptions(prediction_tasks)
             )
-            if len(research_with_predictions_units) == 0:
-                raise ValueError("All research reports/predictions failed")
+
+            if len(valid_prediction_set) == 0:
+                raise ValueError(
+                    f"All {self.research_reports_per_question} research reports/predictions failed. Errors: {errors}"
+                )
             report_type = ReportOrganizer.get_report_type_for_question_type(
                 type(question)
             )
             all_predictions = [
                 reasoned_prediction.prediction_value
-                for research_prediction_collection in research_with_predictions_units
+                for research_prediction_collection in valid_prediction_set
                 for reasoned_prediction in research_prediction_collection.predictions
             ]
             aggregated_prediction = await report_type.aggregate_predictions(
@@ -173,18 +222,22 @@ class ForecastBot(ABC):
 
         unified_explanation = self._create_unified_explanation(
             question,
-            research_with_predictions_units,
+            valid_prediction_set,
             aggregated_prediction,
             final_cost,
             time_spent_in_minutes,
         )
-        return report_type(
+        report = report_type(
             question=question,
             prediction=aggregated_prediction,
             explanation=unified_explanation,
             price_estimate=final_cost,
             minutes_taken=time_spent_in_minutes,
+            errors=errors,
         )
+        if self.publish_reports_to_metaculus:
+            await report.publish_report_to_metaculus()
+        return report
 
     async def _research_and_make_predictions(
         self, question: MetaculusQuestion
@@ -219,32 +272,19 @@ class ForecastBot(ABC):
                 for _ in range(self.predictions_per_research_report)
             ],
         )
-        reasoned_predictions, _ = (
-            async_batching.run_coroutines_while_removing_and_logging_exceptions(
-                tasks
-            )
+        valid_predictions, errors = await self._gather_results_and_exceptions(
+            tasks
         )
-        if len(reasoned_predictions) == 0:
-            raise ValueError("All predictions failed")
-
+        if len(valid_predictions) == 0:
+            raise ValueError(
+                f"All {self.predictions_per_research_report} predictions failed. Errors: {errors}"
+            )
         return ResearchWithPredictions(
             research_report=research,
             summary_report=summary_report,
-            predictions=reasoned_predictions,
+            errors=errors,
+            predictions=valid_predictions,
         )
-
-    async def _run_coroutines_and_error_if_configured(
-        self, coroutines: list[Coroutine[Any, Any, Any]]
-    ) -> list[Any]:
-        if self.skip_questions_that_error:
-            outputs, _ = (
-                async_batching.run_coroutines_while_removing_and_logging_exceptions(
-                    coroutines
-                )
-            )
-            return outputs
-        else:
-            return await asyncio.gather(*coroutines)
 
     @abstractmethod
     async def _run_forecast_on_binary(
@@ -374,7 +414,7 @@ class ForecastBot(ABC):
             rationales.append(new_rationale)
         return "\n".join(rationales)
 
-    def __create_file_path_to_save_to(
+    def _create_file_path_to_save_to(
         self, questions: list[MetaculusQuestion]
     ) -> str:
         assert (
@@ -387,3 +427,17 @@ class ForecastBot(ABC):
             folder_path += "/"
 
         return f"{folder_path}Forecasts-for-{now_as_string}--{len(questions)}-questions.json"
+
+    async def _gather_results_and_exceptions(
+        self, coroutines: list[Coroutine[Any, Any, T]]
+    ) -> tuple[list[T], list[str]]:
+        results = await asyncio.gather(*coroutines, return_exceptions=True)
+        valid_results = [
+            result
+            for result in results
+            if not isinstance(result, BaseException)
+        ]
+        errors = [
+            str(error) for error in results if isinstance(error, BaseException)
+        ]
+        return valid_results, errors

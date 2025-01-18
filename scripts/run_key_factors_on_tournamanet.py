@@ -20,26 +20,38 @@ from forecasting_tools.util.custom_logger import CustomLogger
 logger = logging.getLogger(__name__)
 
 
-string_questions = [
-    "How many units of humanoid robots sold for performing in-home daily tasks by 2030?",
-    "How many doctor positions will be filled by humans in 2030?",
-    "How many full time programmer positions will be filled by humans in 2030?",
-    "What percent of the current number of human jobs will AI systems be performing end-to-end at a human level in 2030?",
-    "Can AIs outperform superforecasters by 2030?",
-    "How many named machine learning algorithm advancements will have been autonomously discovered by AI systems without human intervention by 2030?",
-    "How many U.S. remote workers will delegate complex work (lasting >1 hour per task) at least 3 times per week to autonomous AI agents that can independently execute multi-step workflows and produce complete deliverables without continuous human supervision by 2030?",
-    "Global number of people living on less than $10k / year in 2030?",
-    "What will be the global 80/20 wealth concentration in 2030?",
-    "US average annual GDP growth rate from 2027 to 2030?",
-    "Global average annual GDP growth rate from 2027 to 2030?",
-    "How many hours per week will an average person work in 2030?",
-    "What will be the average number of years of schooling in 2030?",
-    "Civilian unemployment rate in 2030?",
-    "How many self-driving vehicles will be on the roads in developed countries in 2030?",
-    "What percent of customer service calls will be entirely handled by AI systems in 2030?",
-    "What will the global labor share of gross domestic product be in 2030?",
-    "What will the total world unemployment rate be in 2030?",
-    "What will the global median income or consumption per day be in 2030 in 2017 USD adjusted for purchasing power?",
+post_id_or_string_question = [
+    # "How many units of humanoid robots sold for performing in-home daily tasks by 2030?",
+    # "How many doctor positions will be filled by humans in 2030?",
+    # "How many full time programmer positions will be filled by humans in 2030?",
+    # "What percent of the current number of human jobs will AI systems be performing end-to-end at a human level in 2030?",
+    # "Can AIs outperform superforecasters by 2030?",
+    # "How many named machine learning algorithm advancements will have been autonomously discovered by AI systems without human intervention by 2030?",
+    # "How many U.S. remote workers will delegate complex work (lasting >1 hour per task) at least 3 times per week to autonomous AI agents that can independently execute multi-step workflows and produce complete deliverables without continuous human supervision by 2030?",
+    # "Global number of people living on less than $10k / year in 2030?",
+    # "What will be the global 80/20 wealth concentration in 2030?",
+    # "US average annual GDP growth rate from 2027 to 2030?",
+    # "Global average annual GDP growth rate from 2027 to 2030?",
+    # "How many hours per week will an average person work in 2030?",
+    # "What will be the average number of years of schooling in 2030?",
+    # "Civilian unemployment rate in 2030?",
+    # "How many self-driving vehicles will be on the roads in developed countries in 2030?",
+    # "What percent of customer service calls will be entirely handled by AI systems in 2030?",
+    # "What will the global labor share of gross domestic product be in 2030?",
+    # "What will the total world unemployment rate be in 2030?",
+    # "What will the global median income or consumption per day be in 2030 in 2017 USD adjusted for purchasing power?",
+    2534,  # https://www.metaculus.com/questions/2534/
+    # 22519,  # https://www.metaculus.com/questions/22519/
+    6614,  # https://www.metaculus.com/questions/6614/
+    18546,  # https://www.metaculus.com/questions/18546/
+    22244,  # https://www.metaculus.com/questions/22244/
+    6046,  # https://www.metaculus.com/questions/6046/
+    3244,  # https://www.metaculus.com/questions/3244/
+    11588,  # https://www.metaculus.com/questions/11588/
+    22954,  # https://www.metaculus.com/questions/22954/
+    3366,  # https://www.metaculus.com/questions/3366/
+    # 27811,  # https://www.metaculus.com/questions/27811/
+    7444,  # https://www.metaculus.com/questions/7444/
 ]
 
 
@@ -47,7 +59,7 @@ async def run_key_factors_on_tournament(
     tournament_id: int | None = None,
 ) -> None:
     if tournament_id is None:
-        questions = string_questions
+        questions = post_id_or_string_question
     else:
         tournament_questions = (
             MetaculusApi.get_all_open_questions_from_tournament(
@@ -84,24 +96,29 @@ async def run_key_factors_on_tournament(
     logger.info(f"Question backgrounds written to {output_path}")
 
 
-async def _process_question(question: str | MetaculusQuestion) -> dict:
+async def _process_question(question: int | str | MetaculusQuestion) -> dict:
     if isinstance(question, str):
         general_search_responder = GeneralResearcher(question)
-        background_info = (
+        generated_background_info = (
             await general_search_responder.respond_with_markdown()
         )
 
-        question = MetaculusQuestion(
+        metaculus_question = MetaculusQuestion(
             question_text=question,
-            background_info=background_info,
+            background_info=generated_background_info,
             id_of_post=0,
             state=QuestionState.OPEN,
             page_url="",
             api_json={},
         )
+    if isinstance(question, int):
+        metaculus_question = MetaculusApi.get_question_by_post_id(question)
     else:
-        background_info = question.background_info
+        assert isinstance(question, MetaculusQuestion)
         metaculus_question = question
+
+    background_info = metaculus_question.background_info
+
     key_factors = await KeyFactorsResearcher.find_and_sort_key_factors(
         metaculus_question, num_key_factors_to_return=5
     )
@@ -115,7 +132,7 @@ async def _process_question(question: str | MetaculusQuestion) -> dict:
         "key_factors": [
             key_factor.model_dump_json() for key_factor in key_factors
         ],
-        "question": question.to_json(),
+        "question": metaculus_question.to_json(),
     }
     return return_value
 

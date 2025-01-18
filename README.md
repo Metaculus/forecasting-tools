@@ -2,8 +2,8 @@
 ![Python Versions](https://img.shields.io/pypi/pyversions/forecasting-tools.svg)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 [![Discord](https://img.shields.io/badge/Discord-Join-blue)](https://discord.gg/Dtq4JNdXnw)
-[![Downloads](https://static.pepy.tech/personalized-badge/forecasting-tools?period=month&units=international_system&left_color=black&right_color=brightgreen&left_text=Monthly%20Downloads)](https://pepy.tech/project/forecasting-tools)
-[![Downloads](https://static.pepy.tech/personalized-badge/forecasting-tools?period=total&units=international_system&left_color=black&right_color=blue&left_text=Total%20Downloads)](https://pepy.tech/project/forecasting-tools)
+[![PyPI Downloads](https://static.pepy.tech/badge/forecasting-tools/month)](https://pepy.tech/projects/forecasting-tools)
+[![PyPI Downloads](https://static.pepy.tech/badge/forecasting-tools)](https://pepy.tech/projects/forecasting-tools)
 
 
 # Quick Install
@@ -27,7 +27,7 @@ Here are some other cool components and features of the project:
 - **Fermi Estimator:** for breaking down numerical estimates (still experimental)
 - **Monetary Cost Manager:** for tracking AI and API expenses
 
-All the examples below are in a Jupyter Notebook called `README.ipynb` which you can run locally to test the package.
+All the examples below are in a Jupyter Notebook called `README.ipynb` which you can run locally to test the package (make sure to run the first cell though).
 
 Join the [discord](https://discord.gg/Dtq4JNdXnw) for updates and to give feedback (btw feedback is very appreciated, even just a quick "I did/didn't decide to use tool X for reason Y, though am busy and don't have time to elaborate" is helpful to know)
 
@@ -72,7 +72,7 @@ for report in reports:
 
 
 ```python
-from forecasting_tools import TemplateBot, BinaryQuestion, QuestionState
+from forecasting_tools import TemplateBot, BinaryQuestion, QuestionState, MetaculusApi
 
 # Initialize the bot
 bot = TemplateBot(
@@ -104,12 +104,262 @@ for report in reports:
     print(f"Reasoning: {shortened_explanation}...")
 ```
 
-    Question: Will humans go extinct before 2100?
-    Prediction: 0.02
-    Reasoning:  # SUMMARY *Question*: Will humans go extinct before 2100? *Final Prediction*: 2.0% *Total Cost*: $0...
-    Question: Will YouTube be blocked in Russia?
-    Prediction: 0.7
-    Reasoning:  # SUMMARY *Question*: Will YouTube be blocked in Russia? *Final Prediction*: 70.0% *Total Cost*: $0...
+    /workspaces/forecasting-tools/.venv/lib/python3.10/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+      from .autonotebook import tqdm as notebook_tqdm
+
+
+
+    ---------------------------------------------------------------------------
+
+    CancelledError                            Traceback (most recent call last)
+
+    File /usr/local/lib/python3.10/asyncio/tasks.py:232, in Task.__step(***failed resolving arguments***)
+        229 if exc is None:
+        230     # We use the `send` method directly, because coroutines
+        231     # don't have `__iter__` and `__next__` methods.
+    --> 232     result = coro.send(None)
+        233 else:
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/forecasting/forecast_bots/forecast_bot.py:230, in ForecastBot._research_and_make_predictions(self, question)
+        227 async def _research_and_make_predictions(
+        228     self, question: MetaculusQuestion
+        229 ) -> ResearchWithPredictions:
+    --> 230     research = await self.run_research(question)
+        231     summary_report = await self.summarize_research(question, research)
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/forecasting/forecast_bots/template_bot.py:73, in TemplateBot.run_research(self, question)
+         72 if os.getenv("PERPLEXITY_API_KEY"):
+    ---> 73     response = await Perplexity(system_prompt=system_prompt).invoke(
+         74         prompt
+         75     )
+         76 elif os.getenv("EXA_API_KEY"):
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/ai_models/model_archetypes/openai_text_model.py:36, in OpenAiTextToTextModel.invoke(self, prompt)
+         34 async def invoke(self, prompt: str) -> str:
+         35     response: TextTokenCostResponse = (
+    ---> 36         await self._invoke_with_request_cost_time_and_token_limits_and_retry(
+         37             prompt
+         38         )
+         39     )
+         40     return response.data
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/ai_models/basic_model_interfaces/request_limited_model.py:57, in RequestLimitedModel._wait_till_request_capacity_available.<locals>.wrapper(self, *args, **kwargs)
+         54 await self._request_limiter.wait_till_able_to_acquire_resources(
+         55     number_of_requests_being_made
+         56 )
+    ---> 57 result = await func(self, *args, **kwargs)
+         58 return result
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/ai_models/basic_model_interfaces/token_limited_model.py:59, in TokenLimitedModel._wait_till_token_capacity_available.<locals>.wrapper(self, *args, **kwargs)
+         56 await self._token_limiter.wait_till_able_to_acquire_resources(
+         57     tokens_of_prompt
+         58 )
+    ---> 59 result = await func(self, *args, **kwargs)
+         60 return result
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/ai_models/basic_model_interfaces/retryable_model.py:64, in RetryableModel._retry_according_to_model_allowed_tries.<locals>.wrapper_with_access_to_self_variable(self, *args, **kwargs)
+         62     return result
+    ---> 64 return await wrapper_with_action(self, *args, **kwargs)
+
+
+    File /workspaces/forecasting-tools/.venv/lib/python3.10/site-packages/tenacity/asyncio/__init__.py:189, in AsyncRetrying.wraps.<locals>.async_wrapped(*args, **kwargs)
+        188 async_wrapped.statistics = copy.statistics  # type: ignore[attr-defined]
+    --> 189 return await copy(fn, *args, **kwargs)
+
+
+    File /workspaces/forecasting-tools/.venv/lib/python3.10/site-packages/tenacity/asyncio/__init__.py:111, in AsyncRetrying.__call__(self, fn, *args, **kwargs)
+        110 while True:
+    --> 111     do = await self.iter(retry_state=retry_state)
+        112     if isinstance(do, DoAttempt):
+
+
+    File /workspaces/forecasting-tools/.venv/lib/python3.10/site-packages/tenacity/asyncio/__init__.py:153, in AsyncRetrying.iter(self, retry_state)
+        152 for action in self.iter_state.actions:
+    --> 153     result = await action(retry_state)
+        154 return result
+
+
+    File /workspaces/forecasting-tools/.venv/lib/python3.10/site-packages/tenacity/_utils.py:99, in wrap_to_async_func.<locals>.inner(*args, **kwargs)
+         98 async def inner(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+    ---> 99     return call(*args, **kwargs)
+
+
+    File /workspaces/forecasting-tools/.venv/lib/python3.10/site-packages/tenacity/__init__.py:398, in BaseRetrying._post_retry_check_actions.<locals>.<lambda>(rs)
+        397 if not (self.iter_state.is_explicit_retry or self.iter_state.retry_run_result):
+    --> 398     self._add_action_func(lambda rs: rs.outcome.result())
+        399     return
+
+
+    File /usr/local/lib/python3.10/concurrent/futures/_base.py:451, in Future.result(self, timeout)
+        450 elif self._state == FINISHED:
+    --> 451     return self.__get_result()
+        453 self._condition.wait(timeout)
+
+
+    File /usr/local/lib/python3.10/concurrent/futures/_base.py:403, in Future.__get_result(self)
+        402 try:
+    --> 403     raise self._exception
+        404 finally:
+        405     # Break a reference cycle with the exception in self._exception
+
+
+    File /workspaces/forecasting-tools/.venv/lib/python3.10/site-packages/tenacity/asyncio/__init__.py:114, in AsyncRetrying.__call__(self, fn, *args, **kwargs)
+        113 try:
+    --> 114     result = await fn(*args, **kwargs)
+        115 except BaseException:  # noqa: B902
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/ai_models/basic_model_interfaces/retryable_model.py:61, in RetryableModel._retry_according_to_model_allowed_tries.<locals>.wrapper_with_access_to_self_variable.<locals>.wrapper_with_action(self, *args, **kwargs)
+         51 @retry(
+         52     wait=wait_random_exponential(
+         53         exp_base=2, multiplier=10, min=5, max=60
+       (...)
+         59     self: RetryableModel, *args, **kwargs
+         60 ) -> T:
+    ---> 61     result = await func(self, *args, **kwargs)
+         62     return result
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/ai_models/basic_model_interfaces/incurs_cost.py:31, in IncursCost._wrap_in_cost_limiting_and_tracking.<locals>.wrapper(self, *args, **kwargs)
+         29 MonetaryCostManager.raise_error_if_limit_would_be_reached()
+    ---> 31 direct_call_response = await func(self, *args, **kwargs)
+         33 await self._track_cost_in_manager_using_model_response(
+         34     direct_call_response
+         35 )
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/ai_models/basic_model_interfaces/time_limited_model.py:38, in TimeLimitedModel._wrap_in_model_defined_timeout.<locals>.wrapper(self, *args, **kwargs)
+         35 timed_coroutine = async_batching.wrap_coroutines_with_timeout(
+         36     [coroutine], self.TIMEOUT_TIME
+         37 )[0]
+    ---> 38 return await timed_coroutine
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/util/async_batching.py:47, in wrap_coroutines_with_timeout.<locals>.coroutine_with_timeout(coroutine, timeout_time)
+         46 try:
+    ---> 47     result = await asyncio.wait_for(coroutine, timeout=timeout_time)
+         48     return result
+
+
+    File /usr/local/lib/python3.10/asyncio/tasks.py:432, in wait_for(fut, timeout)
+        431 try:
+    --> 432     await waiter
+        433 except exceptions.CancelledError:
+
+
+    File /usr/local/lib/python3.10/asyncio/futures.py:285, in Future.__await__(self)
+        284     self._asyncio_future_blocking = True
+    --> 285     yield self  # This tells Task to wait for completion.
+        286 if not self.done():
+
+
+    File /usr/local/lib/python3.10/asyncio/tasks.py:304, in Task.__wakeup(self, future)
+        303 try:
+    --> 304     future.result()
+        305 except BaseException as exc:
+        306     # This may also be a cancellation.
+
+
+    File /usr/local/lib/python3.10/asyncio/futures.py:196, in Future.result(self)
+        195     exc = self._make_cancelled_error()
+    --> 196     raise exc
+        197 if self._state != _FINISHED:
+
+
+    CancelledError:
+
+
+    During handling of the above exception, another exception occurred:
+
+
+    CancelledError                            Traceback (most recent call last)
+
+    File /usr/local/lib/python3.10/asyncio/tasks.py:234, in Task.__step(***failed resolving arguments***)
+        233     else:
+    --> 234         result = coro.throw(exc)
+        235 except StopIteration as exc:
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/forecasting/forecast_bots/forecast_bot.py:184, in ForecastBot._run_individual_question(self, question)
+        180 prediction_tasks = [
+        181     self._research_and_make_predictions(question)
+        182     for _ in range(self.research_reports_per_question)
+        183 ]
+    --> 184 valid_prediction_set, errors = await self._gather_results_and_exceptions(
+        185     prediction_tasks
+        186 )
+        188 if len(valid_prediction_set) == 0:
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/forecasting/forecast_bots/forecast_bot.py:403, in ForecastBot._gather_results_and_exceptions(self, coroutines)
+        400 async def _gather_results_and_exceptions(
+        401     self, coroutines: list[Coroutine[Any, Any, T]]
+        402 ) -> tuple[list[T], list[str]]:
+    --> 403     results = await asyncio.gather(*coroutines, return_exceptions=True)
+        404     valid_results = [
+        405         result for result in results if not isinstance(result, BaseException)
+        406     ]
+
+
+    File /usr/local/lib/python3.10/asyncio/tasks.py:304, in Task.__wakeup(self, future)
+        303 try:
+    --> 304     future.result()
+        305 except BaseException as exc:
+        306     # This may also be a cancellation.
+
+
+    CancelledError:
+
+
+    During handling of the above exception, another exception occurred:
+
+
+    CancelledError                            Traceback (most recent call last)
+
+    Cell In[7], line 23
+         11 question1 = MetaculusApi.get_question_by_url(
+         12     "https://www.metaculus.com/questions/578/human-extinction-by-2100/"
+         13 )
+         14 question2 = BinaryQuestion(
+         15     question_text="Will YouTube be blocked in Russia?",
+         16     background_info="...", # Or 'None'
+       (...)
+         20     state=QuestionState.OPEN
+         21 )
+    ---> 23 reports = await bot.forecast_questions([question1, question2])
+         25 # Print results
+         26 for report in reports:
+
+
+    File /workspaces/forecasting-tools/forecasting_tools/forecasting/forecast_bots/forecast_bot.py:149, in ForecastBot.forecast_questions(self, questions, return_exceptions)
+        147     questions = unforecasted_questions
+        148 reports: list[ForecastReport | BaseException] = []
+    --> 149 reports = await asyncio.gather(
+        150     *[self._run_individual_question(question) for question in questions],
+        151     return_exceptions=return_exceptions,
+        152 )
+        153 if self.folder_to_save_reports_to:
+        154     non_exception_reports = [
+        155         report for report in reports if not isinstance(report, BaseException)
+        156     ]
+
+
+    File /usr/local/lib/python3.10/asyncio/tasks.py:304, in Task.__wakeup(self, future)
+        302 def __wakeup(self, future):
+        303     try:
+    --> 304         future.result()
+        305     except BaseException as exc:
+        306         # This may also be a cancellation.
+        307         self.__step(exc)
+
+
+    CancelledError:
 
 
 The bot will:
@@ -248,7 +498,7 @@ benchmarks: list[BenchmarkForBot] = await benchmarker.run_benchmark()
 
 # View results
 for benchmark in benchmarks[:2]:
-    print(f"--------------------------------")
+    print("--------------------------------")
     print(f"Bot: {benchmark.name}")
     print(f"Score: {benchmark.average_inverse_expected_log_score}") # Lower is better
     print(f"Num reports in benchmark: {len(benchmark.forecast_reports)}")
@@ -645,7 +895,7 @@ Once Docker is installed, when you open up the project folder in VSCode, you wil
 
 Once you are in the container, poetry should have already installed a virtual environment. For VSCode features to use this environment, you will need to select the correct python interpreter. You can do this by pressing `Ctrl + Shift + P` and then typing `Python: Select Interpreter`. Then select the interpreter that starts with `.venv`.
 
-A number of vscode extensions are installed automatically (e.g. linting). You may need to wait a little while and then reload the window after all of these extensions are installed. You can install personal vscode extensions in the dev environment.
+A number of vscode extensions are installed automatically (e.g. linting). You may need to wait a little while and then reload the window (once for things to install, and a second for needed reload after installation). You can install personal vscode extensions in the dev environment.
 
 
 ### Managing Docker

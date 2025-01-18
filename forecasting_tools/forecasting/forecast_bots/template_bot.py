@@ -213,8 +213,10 @@ class TemplateBot(ForecastBot):
             {lower_bound_message}
             {upper_bound_message}
 
-            Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1m).
-            Never use scientific notation.
+            Formatting Instructions:
+            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1m).
+            - Never use scientific notation.
+            - Always start with a smaller number (more negative if negative) and then increase from there
 
             Before answering you write:
             (a) The time left until the outcome to the question is known.

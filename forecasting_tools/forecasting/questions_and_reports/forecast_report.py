@@ -4,7 +4,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     MetaculusQuestion,
@@ -26,6 +26,7 @@ class ReasonedPrediction(BaseModel, Generic[T]):
 class ResearchWithPredictions(BaseModel, Generic[T]):
     research_report: str
     summary_report: str
+    errors: list[str] = Field(default_factory=list)
     predictions: list[ReasonedPrediction[T]]
 
 
@@ -35,6 +36,7 @@ class ForecastReport(BaseModel, Jsonable, ABC):
     other_notes: str | None = None
     price_estimate: float | None = None
     minutes_taken: float | None = None
+    errors: list[str] = Field(default_factory=list)
     prediction: Any
 
     @field_validator("explanation")
