@@ -9,6 +9,9 @@ from front_end.helpers.report_displayer import ReportDisplayer
 
 
 def main() -> None:
+    """
+    Run this file as a streamlit app in order to view saved forecast reports.
+    """
     st.title("Report Viewer")
 
     # File uploader instead of text area

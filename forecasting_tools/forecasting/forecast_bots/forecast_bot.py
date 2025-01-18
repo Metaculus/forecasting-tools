@@ -438,6 +438,8 @@ class ForecastBot(ABC):
             if not isinstance(result, BaseException)
         ]
         errors = [
-            str(error) for error in results if isinstance(error, BaseException)
+            f"{error.__class__.__name__}: {error}"
+            for error in results
+            if isinstance(error, BaseException)
         ]
         return valid_results, errors
