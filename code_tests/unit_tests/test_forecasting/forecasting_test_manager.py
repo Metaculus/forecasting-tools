@@ -13,9 +13,22 @@ from forecasting_tools.forecasting.helpers.metaculus_api import MetaculusApi
 from forecasting_tools.forecasting.questions_and_reports.binary_report import (
     BinaryReport,
 )
+from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
+    ReasonedPrediction,
+)
+from forecasting_tools.forecasting.questions_and_reports.multiple_choice_report import (
+    PredictedOption,
+    PredictedOptionList,
+)
+from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
+    NumericDistribution,
+    Percentile,
+)
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     BinaryQuestion,
     MetaculusQuestion,
+    MultipleChoiceQuestion,
+    NumericQuestion,
     QuestionState,
 )
 
@@ -127,3 +140,98 @@ class ForecastingTestManager:
             ForecastingTestManager.get_fake_binary_questions()
         ]
         return mock_function
+
+
+class MockBot(ForecastBot):
+    research_calls: int = 0
+    binary_calls: int = 0
+    multiple_choice_calls: int = 0
+    numeric_calls: int = 0
+    summarize_calls: int = 0
+
+    async def run_research(self, question: MetaculusQuestion) -> str:
+        self.__class__.research_calls += 1
+        return "Mock research"
+
+    async def _run_forecast_on_binary(
+        self, question: BinaryQuestion, research: str
+    ) -> ReasonedPrediction[float]:
+        self.__class__.binary_calls += 1
+        return ReasonedPrediction(
+            prediction_value=0.5,
+            reasoning="Mock rationale",
+        )
+
+    async def _run_forecast_on_multiple_choice(
+        self, question: MultipleChoiceQuestion, research: str
+    ) -> ReasonedPrediction[PredictedOptionList]:
+        self.__class__.multiple_choice_calls += 1
+
+        # Create evenly distributed probabilities for each option
+        num_options = len(question.options)
+        probability_per_option = 1.0 / num_options
+
+        predicted_options = [
+            PredictedOption(
+                option_name=option, probability=probability_per_option
+            )
+            for option in question.options
+        ]
+
+        return ReasonedPrediction(
+            prediction_value=PredictedOptionList(
+                predicted_options=predicted_options
+            ),
+            reasoning="Mock rationale",
+        )
+
+    async def _run_forecast_on_numeric(
+        self, question: NumericQuestion, research: str
+    ) -> ReasonedPrediction[NumericDistribution]:
+        self.__class__.numeric_calls += 1
+
+        # Create a simple distribution with 5 percentiles
+        percentiles = [
+            Percentile(value=question.lower_bound or 0, percentile=0.1),
+            Percentile(
+                value=(question.lower_bound or 0) * 0.75
+                + (question.upper_bound or 100) * 0.25,
+                percentile=0.25,
+            ),
+            Percentile(
+                value=(
+                    (question.lower_bound or 0) + (question.upper_bound or 100)
+                )
+                / 2,
+                percentile=0.5,
+            ),
+            Percentile(
+                value=(question.lower_bound or 0) * 0.25
+                + (question.upper_bound or 100) * 0.75,
+                percentile=0.75,
+            ),
+            Percentile(value=question.upper_bound or 100, percentile=0.9),
+        ]
+
+        mock_distribution = NumericDistribution(
+            declared_percentiles=percentiles,
+            open_upper_bound=question.open_upper_bound,
+            open_lower_bound=question.open_lower_bound,
+            upper_bound=question.upper_bound,
+            lower_bound=question.lower_bound,
+            zero_point=question.zero_point,
+        )
+
+        return ReasonedPrediction(
+            prediction_value=mock_distribution,
+            reasoning="Mock rationale",
+        )
+
+    async def summarize(
+        self,
+        question: MetaculusQuestion,
+        research: str,
+        prediction: ReasonedPrediction,
+    ) -> str:
+        self.__class__.summarize_calls += 1
+        return "Mock summary"

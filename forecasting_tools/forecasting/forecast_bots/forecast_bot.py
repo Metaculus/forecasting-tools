@@ -4,7 +4,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Coroutine, TypeVar, cast, overload
+from typing import Any, Coroutine, Sequence, TypeVar, cast, overload
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
@@ -128,20 +128,20 @@ class ForecastBot(ABC):
     @overload
     async def forecast_questions(
         self,
-        questions: list[MetaculusQuestion],
+        questions: Sequence[MetaculusQuestion],
         return_exceptions: bool = False,
     ) -> list[ForecastReport]: ...
 
     @overload
     async def forecast_questions(
         self,
-        questions: list[MetaculusQuestion],
+        questions: Sequence[MetaculusQuestion],
         return_exceptions: bool = True,
     ) -> list[ForecastReport | BaseException]: ...
 
     async def forecast_questions(
         self,
-        questions: list[MetaculusQuestion],
+        questions: Sequence[MetaculusQuestion],
         return_exceptions: bool = True,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
         if self.skip_previously_forecasted_questions:
@@ -169,7 +169,8 @@ class ForecastBot(ABC):
                 for report in reports
                 if not isinstance(report, BaseException)
             ]
-            file_path = self._create_file_path_to_save_to(questions)
+            questions_as_list = list(questions)
+            file_path = self._create_file_path_to_save_to(questions_as_list)
             ForecastReport.save_object_list_to_file_path(
                 non_exception_reports, file_path
             )
@@ -196,13 +197,19 @@ class ForecastBot(ABC):
                 self._research_and_make_predictions(question)
                 for _ in range(self.research_reports_per_question)
             ]
-            valid_prediction_set, errors = (
+            valid_prediction_set, research_errors = (
                 await self._gather_results_and_exceptions(prediction_tasks)
             )
+            prediction_errors = [
+                error
+                for prediction_set in valid_prediction_set
+                for error in prediction_set.errors
+            ]
+            all_errors = research_errors + prediction_errors
 
             if len(valid_prediction_set) == 0:
-                raise ValueError(
-                    f"All {self.research_reports_per_question} research reports/predictions failed. Errors: {errors}"
+                raise RuntimeError(
+                    f"All {self.research_reports_per_question} research reports/predictions failed. Errors: {research_errors}"
                 )
             report_type = ReportOrganizer.get_report_type_for_question_type(
                 type(question)
@@ -233,7 +240,7 @@ class ForecastBot(ABC):
             explanation=unified_explanation,
             price_estimate=final_cost,
             minutes_taken=time_spent_in_minutes,
-            errors=errors,
+            errors=all_errors,
         )
         if self.publish_reports_to_metaculus:
             await report.publish_report_to_metaculus()
@@ -276,7 +283,7 @@ class ForecastBot(ABC):
             tasks
         )
         if len(valid_predictions) == 0:
-            raise ValueError(
+            raise RuntimeError(
                 f"All {self.predictions_per_research_report} predictions failed. Errors: {errors}"
             )
         return ResearchWithPredictions(
