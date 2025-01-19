@@ -252,9 +252,9 @@ class ForecastBot(ABC):
         research = await self.run_research(question)
         summary_report = await self.summarize_research(question, research)
         research_to_use = (
-            research
+            summary_report
             if self.use_research_summary_to_forecast
-            else summary_report
+            else research
         )
 
         if isinstance(question, BinaryQuestion):
