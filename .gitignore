@@ -3,11 +3,10 @@
 logs
 temp
 .personal/
-.sandbox/
+sandbox/
 sandbox.py
 sandbox.ipynb
-run_bot.py
-
+custom/
 
 .DS_Store
 

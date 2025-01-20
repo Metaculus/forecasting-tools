@@ -1,13 +1,18 @@
-name: Hourly Run Main Bot
+name: Run Bot for AI Benchmark Tournament
 
 on:
   workflow_dispatch:
   schedule:
     - cron: "*/15 * * * *" # runs every 15 minutes. Make sure to skip already forecasted questions!
 
+# Add concurrency group to prevent parallel runs
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 # Daily job to run the forecast bot
 jobs:
-  daily_build:
+  run_bot:
     runs-on: ubuntu-latest # determines the machine that will run the job - keep as is
     steps: # sets up the steps that will be run in order
       # setup repository with all necessary dependencies - keep as is
@@ -32,7 +37,7 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run bot
         run: |
-          poetry run python scripts/run_forecasts_for_ai_tournament.py --bot-type main
+          poetry run python run_bot.py --skip-previous true --tournament-id 32627
         # this reads the environment variables from the github repository.
         # Store under Settings --> Secrets and variables --> Actions
         # Not all these variables are required. See the ReadMe for more details.

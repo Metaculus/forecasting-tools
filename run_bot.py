@@ -15,8 +15,10 @@ dotenv.load_dotenv()
 
 import logging
 
-from forecasting_tools.forecasting.forecast_bots.template_bot import (
-    TemplateBot,
+from forecasting_tools.forecasting.forecast_bots.main_bot import MainBot
+from forecasting_tools.forecasting.helpers.forecast_database_manager import (
+    ForecastDatabaseManager,
+    ForecastRunType,
 )
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
     ForecastReport,
@@ -30,13 +32,10 @@ async def run_forecasts(skip_previous: bool, tournament_id: int) -> None:
     Make a copy of this file called run_bot.py (i.e. remove template) and fill in your bot details.
     This will be run in the workflows
     """
-    forecaster = TemplateBot(
-        research_reports_per_question=1,
-        predictions_per_research_report=1,
+    forecaster = MainBot(
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=skip_previous,
-        use_research_summary_to_forecast=False,
     )
     reports = await forecaster.forecast_on_tournament(
         tournament_id, return_exceptions=True
@@ -50,6 +49,15 @@ async def run_forecasts(skip_previous: bool, tournament_id: int) -> None:
     minor_exceptions = [
         report.errors for report in valid_reports if report.errors
     ]
+
+    for report in valid_reports:
+        await asyncio.sleep(5)
+        try:
+            ForecastDatabaseManager.add_forecast_report_to_database(
+                report, ForecastRunType.REGULAR_FORECAST
+            )
+        except Exception as e:
+            logger.error(f"Error adding forecast report to database: {e}")
 
     if exceptions:
         raise RuntimeError(
