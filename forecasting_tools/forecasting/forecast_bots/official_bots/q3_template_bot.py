@@ -10,9 +10,17 @@ from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
     ReasonedPrediction,
 )
+from forecasting_tools.forecasting.questions_and_reports.multiple_choice_report import (
+    PredictedOptionList,
+)
+from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
+    NumericDistribution,
+)
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     BinaryQuestion,
     MetaculusQuestion,
+    MultipleChoiceQuestion,
+    NumericQuestion,
 )
 
 
@@ -105,3 +113,13 @@ class Q3TemplateBot(ForecastBot):
             raise ValueError(
                 f"Could not extract prediction from response: {rationale}"
             )
+
+    async def _run_forecast_on_multiple_choice(
+        self, question: MultipleChoiceQuestion, research: str
+    ) -> ReasonedPrediction[PredictedOptionList]:
+        raise NotImplementedError("Multiple choice was not supported in Q3")
+
+    async def _run_forecast_on_numeric(
+        self, question: NumericQuestion, research: str
+    ) -> ReasonedPrediction[NumericDistribution]:
+        raise NotImplementedError("Numeric was not supported in Q3")

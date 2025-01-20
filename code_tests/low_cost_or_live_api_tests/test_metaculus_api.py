@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timedelta
 
 import pytest
+import typeguard
 
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
@@ -180,24 +181,46 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
         len(questions) == num_questions_to_get
     ), f"Expected {num_questions_to_get} questions to be returned"
     for question in questions:
-        assert isinstance(question, BinaryQuestion)
-        assert question.date_accessed.date() == datetime.now().date()
-        assert isinstance(question.num_forecasters, int)
-        assert isinstance(question.num_predictions, int)
-        assert isinstance(question.close_time, datetime)
-        assert isinstance(question.scheduled_resolution_time, datetime)
+        assert isinstance(
+            question, BinaryQuestion
+        ), f"Question {question.id_of_post} is not a BinaryQuestion"
+        assert (
+            question.date_accessed.date() == datetime.now().date()
+        ), f"Question {question.id_of_post} was accessed at {question.date_accessed}, expected today"
+        assert isinstance(
+            question.num_forecasters, int
+        ), f"Question {question.id_of_post} has {question.num_forecasters} forecasters, expected an int"
+        assert isinstance(
+            question.num_predictions, int
+        ), f"Question {question.id_of_post} has {question.num_predictions} predictions, expected an int"
+        assert isinstance(
+            question.close_time, datetime
+        ), f"Question {question.id_of_post} closes at {question.close_time}, expected a datetime"
+        assert isinstance(
+            question.scheduled_resolution_time, datetime
+        ), f"Question {question.id_of_post} resolves at {question.scheduled_resolution_time}, expected a datetime"
         assert (
             question.num_predictions >= 40
         ), "Need to have critical mass of predictions to be confident in the results"
         assert (
             question.num_forecasters >= 40
         ), "Need to have critical mass of forecasters to be confident in the results"
-        assert isinstance(question, BinaryQuestion)
+        assert isinstance(
+            question, BinaryQuestion
+        ), f"Question {question.id_of_post} is not a BinaryQuestion"
         one_year_from_now = datetime.now() + timedelta(days=365)
-        assert question.close_time < one_year_from_now
-        assert question.scheduled_resolution_time < one_year_from_now
-        assert question.state == QuestionState.OPEN
-        assert question.community_prediction_at_access_time is not None
+        assert (
+            question.close_time < one_year_from_now
+        ), f"Question {question.id_of_post} closes at {question.close_time}, expected before {one_year_from_now}"
+        assert (
+            question.scheduled_resolution_time < one_year_from_now
+        ), f"Question {question.id_of_post} resolves at {question.scheduled_resolution_time}, expected before {one_year_from_now}"
+        assert (
+            question.state == QuestionState.OPEN
+        ), f"Question {question.id_of_post} is not open"
+        assert (
+            question.community_prediction_at_access_time is not None
+        ), f"Community prediction at access time is None for question {question.id_of_post}"
         logger.info(f"Found question: {question.question_text}")
     question_ids = [question.id_of_post for question in questions]
     assert len(question_ids) == len(
@@ -410,11 +433,8 @@ def assert_basic_question_attributes_not_none(
         ), f"Scheduled resolution time is not after close time for post ID {post_id}"
     if (
         isinstance(question, BinaryQuestion)
-        and question.state == QuestionState.OPEN
+        and question.community_prediction_at_access_time is not None
     ):
-        assert (
-            question.community_prediction_at_access_time is not None
-        ), f"Community prediction at access time is None for post ID {post_id}"
         assert (
             0 <= question.community_prediction_at_access_time <= 1
         ), f"Community prediction at access time is not between 0 and 1 for post ID {post_id}"
@@ -508,3 +528,17 @@ def assert_questions_match_filter(  # NOSONAR
                 slug in filter.allowed_tournament_slugs
                 for slug in question.tournament_slugs
             ), f"Question {question.id_of_post} tournaments {question.tournament_slugs} not in allowed tournaments {filter.allowed_tournament_slugs}"
+
+        if filter.community_prediction_exists is not None:
+            assert filter.allowed_types == [
+                "binary"
+            ], "Community prediction filter only works for binary questions at the moment"
+            question = typeguard.check_type(question, BinaryQuestion)
+            filter_passes = (
+                question.community_prediction_at_access_time is not None
+                if filter.community_prediction_exists
+                else question.community_prediction_at_access_time is None
+            )
+            assert (
+                filter_passes
+            ), f"Question {question.id_of_post} has no community prediction at access time"

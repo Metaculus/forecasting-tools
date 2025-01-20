@@ -190,6 +190,7 @@ class MetaculusApi:
             num_forecasters_gte=40,
             scheduled_resolve_time_lt=one_year_from_now,
             includes_bots_in_aggregates=False,
+            community_prediction_exists=True,
         )
         questions = asyncio.run(
             cls.get_questions_matching_filter(
@@ -468,6 +469,18 @@ class MetaculusApi:
                 questions, filter.includes_bots_in_aggregates
             )
 
+        if filter.community_prediction_exists is not None:
+            assert filter.allowed_types == [
+                "binary"
+            ], "Community prediction filter only works for binary questions at the moment"
+            questions = typeguard.check_type(questions, list[BinaryQuestion])
+            questions = cls._filter_questions_by_community_prediction_exists(
+                questions, filter.community_prediction_exists
+            )
+            questions = typeguard.check_type(
+                questions, list[MetaculusQuestion]
+            )
+
         return questions, questions_were_found_before_local_filter
 
     @classmethod
@@ -509,6 +522,17 @@ class MetaculusApi:
                 questions_with_close_time.append(question)
         return questions_with_close_time
 
+    @classmethod
+    def _filter_questions_by_community_prediction_exists(
+        cls, questions: list[BinaryQuestion], community_prediction_exists: bool
+    ) -> list[BinaryQuestion]:
+        return [
+            question
+            for question in questions
+            if (question.community_prediction_at_access_time is not None)
+            == community_prediction_exists
+        ]
+
 
 class ApiFilter(BaseModel):
     num_forecasters_gte: int | None = None
@@ -533,3 +557,4 @@ class ApiFilter(BaseModel):
     open_time_lt: datetime | None = None
     allowed_tournament_slugs: list[str] | None = None
     includes_bots_in_aggregates: bool | None = None
+    community_prediction_exists: bool | None = None
