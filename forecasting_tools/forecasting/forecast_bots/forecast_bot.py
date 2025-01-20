@@ -142,7 +142,7 @@ class ForecastBot(ABC):
     async def forecast_questions(
         self,
         questions: Sequence[MetaculusQuestion],
-        return_exceptions: bool = True,
+        return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
         if self.skip_previously_forecasted_questions:
             unforecasted_questions = [
@@ -212,7 +212,9 @@ class ForecastBot(ABC):
 
             if len(valid_prediction_set) == 0:
                 raise RuntimeError(
-                    f"All {self.research_reports_per_question} research reports/predictions failed. Errors: {research_errors}"
+                    f"All {self.research_reports_per_question} research reports/predictions failed. "
+                    f"Research errors: {research_errors if research_errors else 'None'}, "
+                    f"Prediction errors: {prediction_errors if prediction_errors else 'None'}"
                 )
             report_type = ReportOrganizer.get_report_type_for_question_type(
                 type(question)

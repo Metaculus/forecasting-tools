@@ -131,7 +131,7 @@ There is a prewritten workflow that will run the bot every 15min, pick up new qu
 1) **Fork the repository**: Click 'fork' in the right hand corner of the repo.
 2) **Set secrets**: Go to `Settings -> Secrets and variables -> Actions -> New repository secret` and set API keys/Tokens as secrets. You will want to set your METACULUS_TOKEN. This will be used to post questions to Metaculus, and access the Metaculus OpenAI proxy (you should automatically be given some credits if you have a bot account). For additional environment variables you might want, see the section below.
 3) **Set up run_bot.py**: Click on the `run_bot.template.py` file in github and copy its contents. Then click the `run_bot.py` file. When looking at this file click the edit button (pencil icon). Paste the contents of the template file. Click `Commit Changes`. Either commit directly to the main branch, or create a pull request and merge this change in. This file will be run regularly by the github workflow to check for new questions and forecast on them
-4) **Enable Actions**: Go to 'Actions' then click 'Enable'. Then go to the 'Hourly Run' workflow, and click 'Enable'. To test if the workflow is working, click 'Run workflow', choose the main branch, then click the green 'Run workflow' button. This will check for new questions and forecast only on ones it has not yet successfully forecast on. You can disable the workflow by clicking `Actions > Hourly Run > Triple dots > disable workflow`.
+4) **Enable Actions**: Go to 'Actions' then click 'Enable'. Then go to the 'Run Bot for Benchmark' workflow, and click 'Enable'. To test if the workflow is working, click 'Run workflow', choose the main branch, then click the green 'Run workflow' button. This will check for new questions and forecast only on ones it has not yet successfully forecast on. You can disable the workflow by clicking `Actions > Run Bot For Benchmark > Triple dots > disable workflow`.
 
 The bot should just work as is at this point.
 
@@ -657,7 +657,7 @@ There are many ways to manager Docker containers, but generally if you download 
 If you choose not to run Docker, you can use poetry to set up a local virtual environment. If you are on Ubuntu, you should be able to just read through and then run `.devcontainer/postinstall.sh`. If you aren't on Ubuntu, check out the links in the postinstall file for where install instructions for dependencies were originally found. You may also want to take a look at VSCode extensions that would be installed (see the list in the `.devcontainer/devcontainer.json` file) so that some VSCode workplace settings work out of the box (e.g. automatic Black Formatting).
 
 ### Private/Custom Code
-If you have a custom bot you don't want committed to the repository when you add code the the package, you can use the `custom` directory which is ignored by git.
+If you have a custom bot you don't want committed to the repository when you add code the the package, you can use the `custom` directory which is ignored by git. Additionally the `.gitattributes` file makes sure changes to the run_bot.py on a fork/branch will not change the `run_bot.py` file in the main repo, so feel free to change this as much as desired.
 
 ## Running the Front End
 You can run any front end folder in the front_end directory by executing `streamlit run front_end/Home.py`. This will start a development server for you that you can run.

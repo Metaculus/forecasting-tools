@@ -3,7 +3,7 @@
 logs
 temp
 .personal/
-sandbox/
+.sandbox/
 sandbox.py
 sandbox.ipynb
 custom/

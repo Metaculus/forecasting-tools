@@ -1,4 +1,4 @@
-name: Run Bot for AI Benchmark Tournament
+name: Run Bot for Metaculus AI Benchmark Tournament
 
 on:
   workflow_dispatch:
