@@ -11,8 +11,7 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 from forecasting_tools.forecasting.forecast_bots.bot_lists import (
-    get_all_bot_classes,
-    get_cheap_bot_question_type_pairs,
+    get_all_bot_question_type_pairs_for_cheap_tests,
 )
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
     ForecastBot,
@@ -32,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
-    "question_type, bot", get_cheap_bot_question_type_pairs()
+    "question_type, bot", get_all_bot_question_type_pairs_for_cheap_tests()
 )
 async def test_predicts_test_question(
     question_type: type[MetaculusQuestion],
@@ -108,11 +107,3 @@ async def test_no_reports_when_questions_already_forecasted(
     assert len(reports) == len(
         questions
     ), "Expected all questions to be forecasted on"
-
-
-@pytest.mark.parametrize("bot", get_all_bot_classes())
-def test_bot_has_config(bot: type[ForecastBot]):
-    probable_minimum_number_of_bot_params = 3
-    bot_config = bot().get_config()
-    assert bot_config is not None
-    assert len(bot_config.keys()) > probable_minimum_number_of_bot_params

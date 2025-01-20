@@ -19,8 +19,9 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
 class Q3TemplateBot(ForecastBot):
     """
     This is the template bot for the Q3 2024 Metaculus AI Tournament.
-    It should be exactly the same except for inheriting ability to
+    It should be exactly the same except for Perplexity running on a new model (the original model was deprecated)
     Find the q3 bot here: https://github.com/Metaculus/metac-bot/commit/e459f2958f66658783057da46e257896b49607be
+    This comment was last updated on Jan 20 2025
     """
 
     FINAL_DECISION_LLM = Gpt4o(

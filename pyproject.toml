@@ -40,6 +40,7 @@ pillow = "^11.0.0"
 transformers = "^4.44.1"
 typeguard = "^4.3.0"
 scikit-learn = "^1.5.2"
+asknews = "^0.7.58"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.1"

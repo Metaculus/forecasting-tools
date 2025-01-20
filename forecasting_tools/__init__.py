@@ -23,6 +23,9 @@ from forecasting_tools.forecasting.forecast_bots.main_bot import (
 from forecasting_tools.forecasting.forecast_bots.template_bot import (
     TemplateBot as TemplateBot,
 )
+from forecasting_tools.forecasting.helpers.asknews_searcher import (
+    AskNewsSearcher as AskNewsSearcher,
+)
 from forecasting_tools.forecasting.helpers.benchmarker import (
     Benchmarker as Benchmarker,
 )

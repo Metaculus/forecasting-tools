@@ -5,11 +5,15 @@ from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.claude35sonnet import Claude35Sonnet
+from forecasting_tools.ai_models.exa_searcher import ExaSearcher
 from forecasting_tools.ai_models.gpt4o import Gpt4o
 from forecasting_tools.ai_models.metaculus4o import Gpt4oMetaculusProxy
 from forecasting_tools.ai_models.perplexity import Perplexity
-from forecasting_tools.forecasting.forecast_bots.official_bots.q3_template_bot import (
-    Q3TemplateBot,
+from forecasting_tools.forecasting.forecast_bots.official_bots.q4_template_bot import (
+    Q4TemplateBot,
+)
+from forecasting_tools.forecasting.helpers.asknews_searcher import (
+    AskNewsSearcher,
 )
 from forecasting_tools.forecasting.helpers.smart_searcher import SmartSearcher
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
@@ -33,7 +37,7 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
 logger = logging.getLogger(__name__)
 
 
-class Q1TemplateBot(Q3TemplateBot):
+class Q1TemplateBot(Q4TemplateBot):
     """
     This is a copy of the template bot for Q1 2025 Metaculus AI Tournament.
     The official bots on the leaderboard use AskNews in Q1.
@@ -54,6 +58,23 @@ class Q1TemplateBot(Q3TemplateBot):
     )
 
     async def run_research(self, question: MetaculusQuestion) -> str:
+        research = ""
+        if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
+            research = AskNewsSearcher.get_formatted_news(
+                question.question_text
+            )
+        elif os.getenv("EXA_API_KEY"):
+            research = await self.call_exa_smart_searcher(
+                question.question_text
+            )
+        elif os.getenv("PERPLEXITY_API_KEY"):
+            research = await self.call_perplexity(question.question_text)
+        else:
+            raise ValueError("No API key provided")
+        return research
+
+    @classmethod
+    async def call_perplexity(cls, question: str) -> str:
         system_prompt = clean_indents(
             """
             You are an assistant to a superforecaster.
@@ -62,29 +83,43 @@ class Q1TemplateBot(Q3TemplateBot):
             You do not produce forecasts yourself.
             """
         )
-        prompt = clean_indents(
-            f"""
-            Question:
-            {question.question_text}
+        model = Perplexity(
+            temperature=0.1, system_prompt=system_prompt
+        )  # The temperature was not specified in the original template bot
+        return await model.invoke(question)
 
-            {question.resolution_criteria}
-
-            {question.fine_print}
-
-            {question.background_info}
-            """
-        )
-        if os.getenv("PERPLEXITY_API_KEY"):
-            response = await Perplexity(system_prompt=system_prompt).invoke(
-                prompt
+    @classmethod
+    async def call_exa_smart_searcher(cls, question: str) -> str:
+        if os.getenv("OPENAI_API_KEY") is None:
+            searcher = ExaSearcher(
+                include_highlights=True,
+                num_results=10,
             )
-        elif os.getenv("EXA_API_KEY"):
-            response = await SmartSearcher().invoke(prompt)
+            highlights = (
+                await searcher.invoke_for_highlights_in_relevance_order(
+                    question
+                )
+            )
+            prioritized_highlights = highlights[:10]
+            combined_highlights = ""
+            for i, highlight in enumerate(prioritized_highlights):
+                combined_highlights += f'[Highlight {i+1}]:\nTitle: {highlight.source.title}\nURL: {highlight.source.url}\nText: "{highlight.highlight_text}"\n\n'
+            response = combined_highlights
         else:
-            logger.error(
-                "No API keys for searching the web. Skipping research and setting it blank."
+            searcher = SmartSearcher(
+                temperature=0,
+                num_searches_to_run=2,
+                num_sites_per_search=10,
             )
-            response = ""
+            prompt = (
+                "You are an assistant to a superforecaster. The superforecaster will give"
+                "you a question they intend to forecast on. To be a great assistant, you generate"
+                "a concise but detailed rundown of the most relevant news, including if the question"
+                "would resolve Yes or No based on current information. You do not produce forecasts yourself."
+                f"\n\nThe question is: {question}"
+            )
+            response = await searcher.invoke(prompt)
+
         return response
 
     async def _run_forecast_on_binary(
