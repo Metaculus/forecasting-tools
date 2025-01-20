@@ -62,6 +62,9 @@ from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
 from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
     NumericReport as NumericReport,
 )
+from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
+    Percentile as Percentile,
+)
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     BinaryQuestion as BinaryQuestion,
 )

@@ -32,13 +32,20 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run bot
         run: |
-          poetry run python scripts/run_forecasts_for_ai_tournament.py --bot-type template
+          poetry run python forecasting_bots/run_johnathan_bot.py
         # this reads the environment variables from the github repository.
         # Store under Settings --> Secrets and variables --> Actions
         # Not all these variables are required. See the ReadMe for more details.
         env:
+          FILE_WRITING_ALLOWED: true
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          PERPLEXITY_API_KEY:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
-          CODA_API_KEY: ${{ secrets.CODA_API_KEY }}
+          CODA_API_KEY:
           PYTHONPATH: .
+      - name: Upload logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: forecasts-logs
+          path: logs/forecasts/

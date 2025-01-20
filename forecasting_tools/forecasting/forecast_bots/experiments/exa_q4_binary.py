@@ -1,7 +1,9 @@
 from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.gpt4o import Gpt4o
+from forecasting_tools.ai_models.gemini2flashthinking import (
+    Gemini2FlashThinking,
+)
 from forecasting_tools.forecasting.forecast_bots.template_bot import (
     TemplateBot,
 )
@@ -16,7 +18,7 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
 
 
 class ExaQ4BinaryBot(TemplateBot):
-    FINAL_DECISION_LLM = Gpt4o(temperature=0.1)
+    FINAL_DECISION_LLM = Gemini2FlashThinking(temperature=0.1)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         prompt = clean_indents(
@@ -76,6 +78,7 @@ class ExaQ4BinaryBot(TemplateBot):
             You write your rationale and then the last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
+        print("asking FINAL_DECISION_LLM about question")
         gpt_forecast = await self.FINAL_DECISION_LLM.invoke(prompt)
         prediction = self._extract_forecast_from_binary_rationale(
             gpt_forecast, max_prediction=0.99, min_prediction=0.01
