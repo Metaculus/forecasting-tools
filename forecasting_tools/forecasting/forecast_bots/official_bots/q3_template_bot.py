@@ -1,10 +1,11 @@
+import re
 from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.gpt4o import Gpt4o
 from forecasting_tools.ai_models.perplexity import Perplexity
-from forecasting_tools.forecasting.forecast_bots.template_bot import (
-    TemplateBot,
+from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
+    ForecastBot,
 )
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
     ReasonedPrediction,
@@ -15,8 +16,10 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
 )
 
 
-class Q3TemplateBot(TemplateBot):
+class Q3TemplateBot(ForecastBot):
     """
+    This is the template bot for the Q3 2024 Metaculus AI Tournament.
+    It should be exactly the same except for inheriting ability to
     Find the q3 bot here: https://github.com/Metaculus/metac-bot/commit/e459f2958f66658783057da46e257896b49607be
     """
 
@@ -79,3 +82,25 @@ class Q3TemplateBot(TemplateBot):
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )
+
+    def _extract_forecast_from_binary_rationale(
+        self, rationale: str, max_prediction: float, min_prediction: float
+    ) -> float:
+        assert 0 <= max_prediction <= 1
+        assert 0 <= min_prediction <= 1
+        assert max_prediction >= min_prediction
+        matches = re.findall(r"(\d+)%", rationale)
+        if matches:
+            # Return the last number found before a '%'
+            original_number = int(matches[-1]) / 100
+            clamped_number = min(
+                max_prediction, max(min_prediction, original_number)
+            )
+            assert (
+                min_prediction <= clamped_number <= max_prediction
+            ), f"Clamped number {clamped_number} is not between {min_prediction} and {max_prediction}"
+            return clamped_number
+        else:
+            raise ValueError(
+                f"Could not extract prediction from response: {rationale}"
+            )

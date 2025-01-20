@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.forecasting.forecast_bots.experiments.q3_template_bot import (
+from forecasting_tools.forecasting.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot,
 )
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (

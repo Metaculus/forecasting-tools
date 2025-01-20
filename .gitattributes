@@ -1,3 +1,0 @@
-# Force Git to always use our version of run_bot.py during merge conflicts
-# specifically so people can keep custom implementations in their repos
-run_bot.py merge=ours
