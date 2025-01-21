@@ -1,3 +1,5 @@
+from litellm import model_cost
+
 from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.basic_model_interfaces.incurs_cost import (
     IncursCost,
@@ -21,6 +23,7 @@ from forecasting_tools.ai_models.basic_model_interfaces.tokens_incur_cost import
     TokensIncurCost,
 )
 from forecasting_tools.ai_models.claude35sonnet import Claude35Sonnet
+from forecasting_tools.ai_models.deepseek_r1 import DeepSeekR1
 from forecasting_tools.ai_models.exa_searcher import ExaSearcher
 from forecasting_tools.ai_models.gpt4o import Gpt4o
 from forecasting_tools.ai_models.gpt4ovision import Gpt4oVision
@@ -30,6 +33,12 @@ from forecasting_tools.ai_models.perplexity import Perplexity
 
 
 class ModelsToTest:
+
+    def litellm_has_model_cost(self, model: str) -> bool:
+        assert isinstance(model_cost, dict)
+        available_models = model_cost.keys()
+        return model in available_models
+
     ALL_MODELS = [
         Gpt4o,
         Gpt4oMetaculusProxy,
@@ -39,6 +48,7 @@ class ModelsToTest:
         Claude35Sonnet,
         Perplexity,
         ExaSearcher,
+        DeepSeekR1,
     ]
     BASIC_MODEL_LIST: list[type[AiModel]] = [
         model for model in ALL_MODELS if issubclass(model, AiModel)

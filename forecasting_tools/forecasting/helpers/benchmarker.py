@@ -106,9 +106,10 @@ class Benchmarker:
                         for report in reports
                         if isinstance(report, Exception)
                     ]
-                    logger.error(
-                        f"{len(exceptions)} reports failed. Exceptions: {exceptions}"
-                    )
+                    if exceptions:
+                        logger.error(
+                            f"{len(exceptions)} reports failed. Exceptions: {exceptions}"
+                        )
                     valid_reports = [
                         report
                         for report in reports

@@ -306,7 +306,8 @@ class ForecastBot(ABC):
         valid_predictions, errors = await self._gather_results_and_exceptions(
             tasks
         )
-        logger.warning(f"Encountered errors while predicting: {errors}")
+        if errors:
+            logger.warning(f"Encountered errors while predicting: {errors}")
         if len(valid_predictions) == 0:
             raise RuntimeError(
                 f"All {self.predictions_per_research_report} predictions failed. Errors: {errors}"

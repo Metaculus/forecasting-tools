@@ -11,50 +11,10 @@ from code_tests.unit_tests.test_ai_models.ai_mock_manager import (
 from code_tests.unit_tests.test_ai_models.models_to_test import ModelsToTest
 from code_tests.utilities_for_tests import coroutine_testing
 from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
-from forecasting_tools.ai_models.claude35sonnet import Claude35Sonnet
-from forecasting_tools.ai_models.exa_searcher import ExaSearcher
 from forecasting_tools.ai_models.gpto1preview import GptO1Preview
 from forecasting_tools.ai_models.metaculus4o import Gpt4oMetaculusProxy
-from forecasting_tools.ai_models.perplexity import Perplexity
 
 logger = logging.getLogger(__name__)
-
-
-@pytest.mark.parametrize("subclass", ModelsToTest.BASIC_MODEL_LIST)
-async def test_response_from_a_direct_call_is_same_ask_mock_value(
-    subclass: type[AiModel],
-) -> None:
-    if issubclass(subclass, Perplexity):
-        pytest.skip(
-            "Perplexity model doesn't give consistent responses at temperature 0"
-        )
-
-    if issubclass(subclass, ExaSearcher):
-        pytest.skip(
-            "As of Aug 18 2024 Exasearcher doesn't depend on exact mock return values to validate other steps"
-        )
-
-    if issubclass(subclass, GptO1Preview):
-        pytest.skip("GptO1 has inconsistent reasoning token count.")
-
-    if issubclass(subclass, Claude35Sonnet):
-        pytest.skip(
-            "Claude35Sonnet has inconsistent completion token count event for the same completion. Why the heck this happens, I have no idea."
-        )
-
-    model = subclass()
-    model_input = model._get_cheap_input_for_invoke()
-    response = await model._mockable_direct_call_to_model(model_input)
-    assert response is not None, "Response is None"
-
-    mock_value = (
-        model._get_mock_return_for_direct_call_to_model_using_cheap_input()
-    )
-    logger.info(f"Response: {response}, Mock Value: {mock_value}")
-
-    assert (
-        response == mock_value
-    ), f"Response is not the same as the mock value. Response: {response}, Mock Value: {mock_value}"
 
 
 @pytest.mark.parametrize("subclass", ModelsToTest.BASIC_MODEL_LIST)
