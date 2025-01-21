@@ -1,5 +1,8 @@
 import asyncio
+import random
 from datetime import datetime
+
+from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.gpt4o import Gpt4o
@@ -24,8 +27,33 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
 )
 
 
+class Persona(BaseModel):
+    occupation: str
+    expertise_areas: list[str]
+    background: str
+
+
 class Q1VeritasBot(Q1TemplateBot):
     FINAL_DECISION_LLM = Gpt4o(temperature=0.1)
+
+    def __init__(
+        self,
+        *,
+        research_reports_per_question: int = 5,
+        predictions_per_research_report: int = 10,
+        use_research_summary_to_forecast: bool = False,
+        publish_reports_to_metaculus: bool = False,
+        folder_to_save_reports_to: str | None = None,
+        skip_previously_forecasted_questions: bool = False,
+    ) -> None:
+        super().__init__(
+            research_reports_per_question=research_reports_per_question,
+            predictions_per_research_report=predictions_per_research_report,
+            use_research_summary_to_forecast=use_research_summary_to_forecast,
+            publish_reports_to_metaculus=publish_reports_to_metaculus,
+            folder_to_save_reports_to=folder_to_save_reports_to,
+            skip_previously_forecasted_questions=skip_previously_forecasted_questions,
+        )
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         searcher = SmartSearcher(
@@ -62,9 +90,17 @@ class Q1VeritasBot(Q1TemplateBot):
         assert isinstance(
             question, BinaryQuestion
         ), "Question must be a BinaryQuestion"
+        personas = await self._determine_personality(question)
+        random_persona = random.choice(personas)
         prompt = clean_indents(
             f"""
             You are a professional forecaster interviewing for a job.
+
+            Your past history and expertise:
+            - Occupation: {random_persona.occupation}
+            - Expertise areas: {random_persona.expertise_areas}
+            - Background: {random_persona.background}
+
             Your interview question is:
             {question.question_text}
 
@@ -109,6 +145,25 @@ class Q1VeritasBot(Q1TemplateBot):
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )
+
+    async def _determine_personality(
+        self, question: MetaculusQuestion
+    ) -> list[Persona]:
+        prompt = clean_indents(
+            f"""
+            You are a superforecaster trying to put together a panel of experts to forecast on a question.
+            The question is:
+            {question.question_text}
+
+            Please come up with 10 different personas of experts that would be relevant to this question.
+            Return your answer as a list of Persona objects.
+            {Gpt4o.get_schema_format_instructions_for_pydantic_type(Persona)}
+            """
+        )
+        response = await Gpt4o(
+            temperature=0.8
+        ).invoke_and_return_verified_type(prompt, list[Persona])
+        return response
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -190,7 +245,6 @@ class Q1VeritasBot(Q1TemplateBot):
         return ReasonedPrediction(
             prediction_value=prediction,
             reasoning=reasoning,
-            sub_predictions=binary_forecasts,
         )
 
     async def _run_forecast_on_numeric(
@@ -322,5 +376,4 @@ class Q1VeritasBot(Q1TemplateBot):
         return ReasonedPrediction(
             prediction_value=prediction,
             reasoning=reasoning,
-            sub_predictions=binary_forecasts,
         )
