@@ -217,9 +217,10 @@ class ForecastBot(ABC):
             valid_prediction_set, research_errors = (
                 await self._gather_results_and_exceptions(prediction_tasks)
             )
-            logger.warning(
-                f"Encountered errors while researching: {research_errors}"
-            )
+            if research_errors:
+                logger.warning(
+                    f"Encountered errors while researching: {research_errors}"
+                )
             prediction_errors = [
                 error
                 for prediction_set in valid_prediction_set

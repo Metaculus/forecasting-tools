@@ -656,8 +656,12 @@ There are many ways to manager Docker containers, but generally if you download 
 ### Alternatives to Docker
 If you choose not to run Docker, you can use poetry to set up a local virtual environment. If you are on Ubuntu, you should be able to just read through and then run `.devcontainer/postinstall.sh`. If you aren't on Ubuntu, check out the links in the postinstall file for where install instructions for dependencies were originally found. You may also want to take a look at VSCode extensions that would be installed (see the list in the `.devcontainer/devcontainer.json` file) so that some VSCode workplace settings work out of the box (e.g. automatic Black Formatting).
 
-### Private/Custom Code
-If you have a custom bot you don't want committed to the repository when you add code the the package, you can use the `custom` directory which is ignored by git. Additionally the `.gitattributes` file makes sure changes to the run_bot.py on a fork/branch will not change the `run_bot.py` file in the main repo, so feel free to change this as much as desired.
+## Private/Custom Code
+Given you have forked, if you have a custom bot you don't want committed to the repository when you add code the the package, its probably best to create a branch locally that holds your custom branch in order to leave the main branch open to pull updates or push changes you want to add. If you add all your custom files in a new folder (e.g. custom) then you shouldn't have merge conflicts, and can more easily remove the folder when ready to pull or push.
+
+If you want to add your bot to the package, feel free to add your bot under `forecasting/forecast_bots/community` and other helper classes under folders that make sense.
+
+You should be able to change up `run_bot.py` and merge, and a github action will make sure it doesn't overwrite the main repo's run_bot.py (though not a hard fix if not).
 
 ## Running the Front End
 You can run any front end folder in the front_end directory by executing `streamlit run front_end/Home.py`. This will start a development server for you that you can run.

@@ -5,7 +5,9 @@ import dotenv
 import streamlit as st
 from pydantic import BaseModel, Field
 
-from forecasting_tools.forecasting.forecast_bots.main_bot import MainBot
+from forecasting_tools.forecasting.forecast_bots.official_bots.q4_veritas_bot import (
+    Q4VeritasBot,
+)
 from forecasting_tools.forecasting.helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
@@ -101,7 +103,7 @@ class ForecasterPage(ToolPage):
                 question = BinaryQuestion(
                     question_text=question_text,
                     id_of_post=0,
-                    state=QuestionState.OTHER,
+                    state=QuestionState.OPEN,
                     background_info=background_info,
                     resolution_criteria=resolution_criteria,
                     fine_print=fine_print,
@@ -118,7 +120,7 @@ class ForecasterPage(ToolPage):
     @classmethod
     async def _run_tool(cls, input: ForecastInput) -> BinaryReport:
         with st.spinner("Forecasting... This may take a minute or two..."):
-            report = await MainBot(
+            report = await Q4VeritasBot(
                 research_reports_per_question=1,
                 predictions_per_research_report=5,
                 publish_reports_to_metaculus=False,

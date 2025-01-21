@@ -1,5 +1,7 @@
 import os
 
+import pandas as pd
+import plotly.express as px
 import streamlit as st
 import typeguard
 
@@ -145,6 +147,17 @@ def display_benchmark_list(benchmarks: list[BenchmarkForBot]) -> None:
         st.markdown(
             f"**Average Inverse Expected Log Score:** {benchmark.average_inverse_expected_log_score:.4f}"
         )
+        # Add average deviation score if reports are binary
+        if isinstance(benchmark.forecast_reports[0], BinaryReport):
+            reports = typeguard.check_type(
+                benchmark.forecast_reports, list[BinaryReport]
+            )
+            average_deviation = (
+                BinaryReport.calculate_average_deviation_points(reports)
+            )
+            st.markdown(
+                f"**Average Deviation Score:** {average_deviation:.2%} percentage points"
+            )
 
     with st.expander("Bot Configuration", expanded=False):
         st.markdown("### Bot Configuration")
@@ -168,22 +181,14 @@ def display_benchmark_comparison_graphs(
     benchmarks: list[BenchmarkForBot],
 ) -> None:
     st.subheader("Benchmark Score Comparisons")
-    st.markdown("Lower score is better. Inverse expected log score is used.")
+    st.markdown("Lower score is better for both metrics.")
 
-    # Prepare data for all three categories
-    benchmark_names = []
-    overall_scores = []
-    certain_scores = []
-    uncertain_scores = []
+    # Prepare data for all categories
+    data_by_benchmark = []
 
     for benchmark in benchmarks:
         reports = benchmark.forecast_reports
-        if not isinstance(reports[0], BinaryReport):
-            continue
-
-        benchmark_names.append(benchmark.name)
-        overall_scores.append(benchmark.average_inverse_expected_log_score)
-
+        reports = typeguard.check_type(reports, list[BinaryReport])
         certain_reports = [
             r
             for r in reports
@@ -197,43 +202,82 @@ def display_benchmark_comparison_graphs(
             and 0.1 <= r.community_prediction <= 0.9
         ]
 
-        certain_score = (
-            BinaryReport.calculate_average_inverse_expected_log_score(
-                certain_reports
-            )
+        # Calculate all scores
+        data_by_benchmark.extend(
+            [
+                {
+                    "Benchmark": benchmark.name,
+                    "Category": "All Questions",
+                    "Expected Log Score": benchmark.average_inverse_expected_log_score,
+                    "Deviation Score": BinaryReport.calculate_average_deviation_points(
+                        reports
+                    )
+                    * 100,
+                },
+                {
+                    "Benchmark": benchmark.name,
+                    "Category": "Certain Questions",
+                    "Expected Log Score": BinaryReport.calculate_average_inverse_expected_log_score(
+                        certain_reports
+                    ),
+                    "Deviation Score": BinaryReport.calculate_average_deviation_points(
+                        certain_reports
+                    )
+                    * 100,
+                },
+                {
+                    "Benchmark": benchmark.name,
+                    "Category": "Uncertain Questions",
+                    "Expected Log Score": BinaryReport.calculate_average_inverse_expected_log_score(
+                        uncertain_reports
+                    ),
+                    "Deviation Score": BinaryReport.calculate_average_deviation_points(
+                        uncertain_reports
+                    )
+                    * 100,
+                },
+            ]
         )
-        uncertain_score = (
-            BinaryReport.calculate_average_inverse_expected_log_score(
-                uncertain_reports
-            )
+
+    if not data_by_benchmark:
+        return
+
+    try:
+
+        df = pd.DataFrame(data_by_benchmark)
+
+        st.markdown("### Expected Log Scores")
+        st.markdown("Lower score indicates better performance.")
+        fig = px.bar(
+            df,
+            x="Benchmark",
+            y="Expected Log Score",
+            color="Category",
+            barmode="group",
+            title="Expected Log Scores by Benchmark and Category",
         )
+        fig.update_layout(yaxis_title="Expected Log Score")
+        st.plotly_chart(fig)
 
-        certain_scores.append(certain_score)
-        uncertain_scores.append(uncertain_score)
+        st.markdown("### Deviation Scores")
+        st.markdown(
+            "Lower score indicates predictions closer to community consensus. Shown as difference in percentage points between bot and community."
+        )
+        fig = px.bar(
+            df,
+            x="Benchmark",
+            y="Deviation Score",
+            color="Category",
+            barmode="group",
+            title="Deviation Scores by Benchmark and Category",
+        )
+        fig.update_layout(yaxis_title="Deviation Score (percentage points)")
+        st.plotly_chart(fig)
 
-    st.markdown("### Overall Scores")
-    chart_data = {"Benchmark": benchmark_names, "Score": overall_scores}
-    st.bar_chart(
-        chart_data,
-        x="Benchmark",
-        y="Score",
-    )
-
-    st.markdown("### Certain Questions")
-    chart_data = {"Benchmark": benchmark_names, "Score": certain_scores}
-    st.bar_chart(
-        chart_data,
-        x="Benchmark",
-        y="Score",
-    )
-
-    st.markdown("### Uncertain Questions")
-    chart_data = {"Benchmark": benchmark_names, "Score": uncertain_scores}
-    st.bar_chart(
-        chart_data,
-        x="Benchmark",
-        y="Score",
-    )
+    except ImportError:
+        st.error(
+            "Please install plotly and pandas to view the graphs: `pip install plotly pandas`"
+        )
 
 
 def main() -> None:

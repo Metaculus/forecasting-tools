@@ -174,12 +174,12 @@ class Q1VeritasBot(Q1TemplateBot):
         )
         gpt_forecast = await self.FINAL_DECISION_LLM.invoke(prompt)
         prediction = self._extract_forecast_from_binary_rationale(
-            gpt_forecast, max_prediction=0.95, min_prediction=0.05
+            gpt_forecast, max_prediction=0.99, min_prediction=0.01
         )
-        reasoning = (
-            gpt_forecast
-            + "\nThe original forecast may have been clamped between 5% and 95%."
-        )
+        if persona is not None:
+            reasoning = f"Persona: {persona.occupation}\n" + gpt_forecast
+        else:
+            reasoning = gpt_forecast
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )
