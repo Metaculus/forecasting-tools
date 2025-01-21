@@ -13,10 +13,14 @@ from forecasting_tools.forecasting.questions_and_reports.forecast_report import 
 from forecasting_tools.forecasting.questions_and_reports.multiple_choice_report import (
     PredictedOptionList,
 )
+from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
+    NumericDistribution,
+)
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     BinaryQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
+    NumericQuestion,
 )
 
 
@@ -137,7 +141,7 @@ class Q1VeritasBot(Q1TemplateBot):
             f"""
             You are a professional forecaster. You've made individual probability assessments for each option in a multiple choice question.
             Your task is to make these probabilities consistent (sum to 100%) while preserving their relative relationships.
-            The probabilities were made by domain experts smarter in this field than you, but they may conflict. Your goal is to synthesize their assessments.
+            The probabilities were made by domain experts smarter in this field than you, but they may conflict. Your goal is to synthesize their assessments. Change them as little as possible.
 
             The question being asked is:
             {question.question_text}
@@ -147,6 +151,11 @@ class Q1VeritasBot(Q1TemplateBot):
 
             The fine print is:
             {question.fine_print}
+
+            Your research assistant says:
+            ```
+            {research}
+            ```
 
             The options and their initial probabilities are:
             {options_message}
@@ -172,6 +181,138 @@ class Q1VeritasBot(Q1TemplateBot):
                     f"Probability: {pred.prediction_value*100:.1f}%\n"
                     f"Reasoning:\n{pred.reasoning}"
                     for opt, pred in zip(question.options, binary_forecasts)
+                ]
+            )
+            + "\n\nFinal consistent distribution reasoning:\n"
+            + final_distribution
+        )
+
+        return ReasonedPrediction(
+            prediction_value=prediction,
+            reasoning=reasoning,
+            sub_predictions=binary_forecasts,
+        )
+
+    async def _run_forecast_on_numeric(
+        self, question: NumericQuestion, research: str
+    ) -> ReasonedPrediction[NumericDistribution]:
+        initial_prediction: ReasonedPrediction[NumericDistribution] = (
+            await super()._run_forecast_on_numeric(question, research)
+        )
+
+        new_questions: list[BinaryQuestion] = []
+        upper_bound_message, lower_bound_message = (
+            self._create_upper_and_lower_bound_messages(question)
+        )
+        for (
+            percentile
+        ) in initial_prediction.prediction_value.declared_percentiles:
+            new_question = BinaryQuestion(
+                question_text=f'Will the value be less than or equal to {percentile.value} for the question "{question.question_text}"?',
+                background_info=f"{question.background_info}\n{upper_bound_message}\n{lower_bound_message}",
+                resolution_criteria=f"The question resolves yes if the value is less than or equal to {percentile.value} (assume the units inferred below). Here is the overall question criteria:\n{question.resolution_criteria}",
+                fine_print=question.fine_print,
+                id_of_post=0,
+            )
+            new_questions.append(new_question)
+
+        # Get binary forecasts for each percentile
+        binary_forecasts = await asyncio.gather(
+            *[
+                self._run_forecast_on_binary(new_question, research)
+                for new_question in new_questions
+            ]
+        )
+
+        # Create message showing initial percentile assessments
+        percentile_message = "\n".join(
+            [
+                f"Percentile {int(pred.prediction_value * 100)}: {percentile.value}"
+                for percentile, pred in zip(
+                    initial_prediction.prediction_value.declared_percentiles,
+                    binary_forecasts,
+                )
+            ]
+        )
+
+        consistency_prompt = clean_indents(
+            f"""
+            You are a professional forecaster. You've made individual probability assessments for different percentiles in a numeric question.
+            Your task is to make these percentiles consistent while preserving their relative relationships as much as possible.
+            The probabilities were made by domain experts smarter in this field than you, but they may conflict.
+            Your goal is to make your own assessment and then synthesize it with their assessment.
+            Every consecutive percentile should have a higher value
+            Please fill in the gaps and give the percentiles as listed in the example below
+
+            The question being asked is:
+            {question.question_text}
+
+            The resolution criteria are:
+            {question.resolution_criteria}
+
+            The fine print is:
+            {question.fine_print}
+
+            Your research assistant says:
+            ```
+            {research}
+            ```
+
+            Today is {datetime.now().strftime("%Y-%m-%d")}.
+
+            {lower_bound_message}
+            {upper_bound_message}
+
+            The initial assessment is below:
+            {percentile_message}
+
+            Formatting Instructions:
+            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1m).
+            - Never use scientific notation.
+            - Always start with a smaller number (more negative if negative) and then increase from there
+
+            Before answering you write:
+            (a) The time left until the outcome to the question is known.
+            (b) The outcome if nothing changed.
+            (c) The outcome if the current trend continued.
+            (d) The expectations of experts and markets.
+            (e) A brief description of an unexpected scenario that results in a low outcome.
+            (f) A brief description of an unexpected scenario that results in a high outcome.
+            (g) Given the initial assessment was made by experts smarter than you, how would you adjust your own assessment to synthesize your views?
+
+            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+
+            The last thing you write is your final answer as:
+            "
+            Percentile 10: XX
+            Percentile 20: XX
+            Percentile 40: XX
+            Percentile 60: XX
+            Percentile 80: XX
+            Percentile 90: XX
+            "
+            """
+        )
+
+        final_distribution = await self.FINAL_DECISION_LLM.invoke(
+            consistency_prompt
+        )
+        prediction = self._extract_forecast_from_numeric_rationale(
+            final_distribution, question
+        )
+
+        reasoning = (
+            "Individual percentile assessments and reasoning:\n"
+            + "\n\n".join(
+                [
+                    f"#### Percentile {int(percentile.percentile * 100)}\n"
+                    f"Value: {percentile.value}\n"
+                    f"Binary Assessment: {pred.prediction_value*100:.1f}%\n"
+                    f"Reasoning:\n{pred.reasoning}"
+                    for percentile, pred in zip(
+                        initial_prediction.prediction_value.declared_percentiles,
+                        binary_forecasts,
+                    )
                 ]
             )
             + "\n\nFinal consistent distribution reasoning:\n"

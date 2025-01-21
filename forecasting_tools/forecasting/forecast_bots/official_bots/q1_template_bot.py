@@ -217,19 +217,9 @@ class Q1TemplateBot(Q4TemplateBot):
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
-        if question.open_upper_bound:
-            upper_bound_message = ""
-        else:
-            upper_bound_message = (
-                f"The outcome can not be higher than {question.upper_bound}."
-            )
-        if question.open_lower_bound:
-            lower_bound_message = ""
-        else:
-            lower_bound_message = (
-                f"The outcome can not be lower than {question.lower_bound}."
-            )
-
+        upper_bound_message, lower_bound_message = (
+            self._create_upper_and_lower_bound_messages(question)
+        )
         prompt = clean_indents(
             f"""
             You are a professional forecaster interviewing for a job.
@@ -286,6 +276,23 @@ class Q1TemplateBot(Q4TemplateBot):
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )
+
+    def _create_upper_and_lower_bound_messages(
+        self, question: NumericQuestion
+    ) -> tuple[str, str]:
+        if question.open_upper_bound:
+            upper_bound_message = ""
+        else:
+            upper_bound_message = (
+                f"The outcome can not be higher than {question.upper_bound}."
+            )
+        if question.open_lower_bound:
+            lower_bound_message = ""
+        else:
+            lower_bound_message = (
+                f"The outcome can not be lower than {question.lower_bound}."
+            )
+        return upper_bound_message, lower_bound_message
 
     def _extract_forecast_from_multiple_choice_rationale(
         self, reasoning: str, options: list[str]
