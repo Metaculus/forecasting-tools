@@ -6,7 +6,7 @@ import typeguard
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.gpt4o import Gpt4o
+from forecasting_tools.ai_models.deepseek_r1 import DeepSeekR1
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import ScratchPad
 from forecasting_tools.forecasting.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot,
@@ -55,7 +55,7 @@ class PersonaScratchpad(ScratchPad):
 
 
 class Q1VeritasBot(Q1TemplateBot):
-    FINAL_DECISION_LLM = Gpt4o(temperature=0.1)
+    FINAL_DECISION_LLM = DeepSeekR1(temperature=0.1)
 
     def __init__(
         self,
@@ -194,10 +194,10 @@ class Q1VeritasBot(Q1TemplateBot):
 
             Please come up with {self.research_reports_per_question} different personas of experts that would be relevant to this question.
             Return your answer as a list of Persona objects.
-            {Gpt4o.get_schema_format_instructions_for_pydantic_type(Persona)}
+            {DeepSeekR1.get_schema_format_instructions_for_pydantic_type(Persona)}
             """
         )
-        response = await Gpt4o(
+        response = await DeepSeekR1(
             temperature=0.8
         ).invoke_and_return_verified_type(prompt, list[Persona])
         return response
@@ -208,11 +208,11 @@ class Q1VeritasBot(Q1TemplateBot):
         new_questions: list[BinaryQuestion] = []
         for option in question.options:
             new_question = BinaryQuestion(
+                id_of_post=0,
                 question_text=f'Will the outcome be option "{option}" for the question "{question.question_text}"?',
                 background_info=question.background_info,
                 resolution_criteria=f'The question resolves yes if the below criteria resolves for the option "{option}". Here is the overall question criteria:\n{question.resolution_criteria}',
                 fine_print=question.fine_print,
-                id_of_post=0,
             )
             new_questions.append(new_question)
         binary_forecasts = await asyncio.gather(
