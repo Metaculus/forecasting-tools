@@ -21,6 +21,9 @@ from forecasting_tools.forecasting.forecast_bots.template_bot import (
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
     ForecastReport,
 )
+from forecasting_tools.util.custom_logger import CustomLogger
+
+CustomLogger.setup_logging()
 
 logger = logging.getLogger(__name__)
 

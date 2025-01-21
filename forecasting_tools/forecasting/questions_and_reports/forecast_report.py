@@ -21,6 +21,7 @@ T = TypeVar("T")
 class ReasonedPrediction(BaseModel, Generic[T]):
     prediction_value: T
     reasoning: str
+    sub_predictions: list[ReasonedPrediction[float]] | None = None
 
 
 class ResearchWithPredictions(BaseModel, Generic[T]):

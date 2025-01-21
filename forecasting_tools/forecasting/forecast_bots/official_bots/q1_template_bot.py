@@ -64,17 +64,17 @@ class Q1TemplateBot(Q4TemplateBot):
                 question.question_text
             )
         elif os.getenv("EXA_API_KEY"):
-            research = await self.call_exa_smart_searcher(
+            research = await self._call_exa_smart_searcher(
                 question.question_text
             )
         elif os.getenv("PERPLEXITY_API_KEY"):
-            research = await self.call_perplexity(question.question_text)
+            research = await self._call_perplexity(question.question_text)
         else:
             raise ValueError("No API key provided")
         return research
 
     @classmethod
-    async def call_perplexity(cls, question: str) -> str:
+    async def _call_perplexity(cls, question: str) -> str:
         system_prompt = clean_indents(
             """
             You are an assistant to a superforecaster.
@@ -89,7 +89,7 @@ class Q1TemplateBot(Q4TemplateBot):
         return await model.invoke(question)
 
     @classmethod
-    async def call_exa_smart_searcher(cls, question: str) -> str:
+    async def _call_exa_smart_searcher(cls, question: str) -> str:
         if os.getenv("OPENAI_API_KEY") is None:
             searcher = ExaSearcher(
                 include_highlights=True,

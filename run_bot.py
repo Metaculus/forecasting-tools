@@ -23,6 +23,9 @@ from forecasting_tools.forecasting.helpers.forecast_database_manager import (
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
     ForecastReport,
 )
+from forecasting_tools.util.custom_logger import CustomLogger
+
+CustomLogger.setup_logging()
 
 logger = logging.getLogger(__name__)
 

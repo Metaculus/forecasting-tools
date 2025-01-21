@@ -8,17 +8,17 @@ import typeguard
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.forecasting.forecast_bots.experiments.exa_bot import (
-    ExaBot,
-)
-from forecasting_tools.forecasting.forecast_bots.experiments.exa_q4_binary import (
-    ExaQ4BinaryBot,
-)
-from forecasting_tools.forecasting.forecast_bots.experiments.exa_q4_binary_o1_preview import (
-    ExaQ4BinaryO1PreviewBot,
+from forecasting_tools.forecasting.forecast_bots.experiments.q3t_w_exa import (
+    Q3TemplateWithExa,
 )
 from forecasting_tools.forecasting.forecast_bots.experiments.q4_main_binary_bot import (
-    Q4MainBinaryBot,
+    Q3TemplatePlusQ4VeritasBinaryPrompt,
+)
+from forecasting_tools.forecasting.forecast_bots.experiments.q4v_w_exa import (
+    Q4VeritasWithExa,
+)
+from forecasting_tools.forecasting.forecast_bots.experiments.q4v_w_exa_and_o1_preview import (
+    Q4VeritasWithExaAndO1Preview,
 )
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
     ForecastBot,
@@ -33,10 +33,10 @@ async def benchmark_forecast_bot() -> None:
     questions_to_use = 120
     with MonetaryCostManager() as cost_manager:
         bots = [
-            ExaBot(),
-            Q4MainBinaryBot(),
-            ExaQ4BinaryBot(),
-            ExaQ4BinaryO1PreviewBot(),
+            Q3TemplateWithExa(),
+            Q3TemplatePlusQ4VeritasBinaryPrompt(),
+            Q4VeritasWithExa(),
+            Q4VeritasWithExaAndO1Preview(),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
         benchmarks = await Benchmarker(

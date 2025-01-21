@@ -1,6 +1,6 @@
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.forecasting.forecast_bots.old_bots.q3_template_bot import (
-    Q3TemplateBot,
+from forecasting_tools.forecasting.forecast_bots.official_bots.q4_veritas_bot import (
+    Q4VeritasBot,
 )
 from forecasting_tools.forecasting.helpers.smart_searcher import SmartSearcher
 from forecasting_tools.forecasting.questions_and_reports.questions import (
@@ -8,7 +8,7 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
 )
 
 
-class ExaBot(Q3TemplateBot):
+class Q4VeritasWithExa(Q4VeritasBot):
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         prompt = clean_indents(
