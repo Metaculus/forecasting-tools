@@ -134,8 +134,7 @@ class SmartSearcher(OutputsText, AiModel):
         deduplicated_quotes = sorted(
             unique_quotes.values(), key=lambda x: x.score, reverse=True
         )
-        if len(deduplicated_quotes) == 0:
-            raise RuntimeError("No quotes found")
+
         if len(deduplicated_quotes) < self.num_quotes_to_evaluate_from_search:
             logger.warning(
                 f"Couldn't find the number of quotes asked for. Found {len(deduplicated_quotes)} quotes, but need {self.num_quotes_to_evaluate_from_search} quotes"
@@ -150,10 +149,13 @@ class SmartSearcher(OutputsText, AiModel):
         search_results: list[ExaHighlightQuote],
         original_instructions: str,
     ) -> str:
-        assert len(search_results) > 0, "No search results found"
+        if len(search_results) == 0:
+            return "No search results found for the query using the search filter chosen"
+
         assert (
             len(search_results) <= self.num_quotes_to_evaluate_from_search
         ), "Too many search results found"
+
         search_result_context = (
             self.__turn_highlights_into_search_context_for_prompt(
                 search_results

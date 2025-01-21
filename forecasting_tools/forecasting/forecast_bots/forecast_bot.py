@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Coroutine, Sequence, TypeVar, cast, overload
 
+from pydantic import BaseModel
+
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -38,7 +40,20 @@ T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
+class ScratchPad(BaseModel):
+    """
+    Context object that is available while forecasting on a question
+    You can keep tally's, todos, notes, or other organizational information here
+    that other parts of the forecasting bot needs to access
+    """
+
+    question: MetaculusQuestion
+
+
 class ForecastBot(ABC):
+    """
+    Base class for all forecasting bots.
+    """
 
     def __init__(
         self,
@@ -66,6 +81,7 @@ class ForecastBot(ABC):
         self.skip_previously_forecasted_questions = (
             skip_previously_forecasted_questions
         )
+        self.scratch_pads: list[ScratchPad] = []
 
     def get_config(self) -> dict[str, str]:
         params = inspect.signature(self.__init__).parameters
@@ -191,6 +207,7 @@ class ForecastBot(ABC):
     async def _run_individual_question(
         self, question: MetaculusQuestion
     ) -> ForecastReport:
+        await self._initialize_scratchpad(question)
         with MonetaryCostManager() as cost_manager:
             start_time = time.time()
             prediction_tasks = [
@@ -249,6 +266,7 @@ class ForecastBot(ABC):
         )
         if self.publish_reports_to_metaculus:
             await report.publish_report_to_metaculus()
+        self._remove_scratchpad(question)
         return report
 
     async def _research_and_make_predictions(
@@ -456,3 +474,22 @@ class ForecastBot(ABC):
             if isinstance(error, BaseException)
         ]
         return valid_results, errors
+
+    async def _initialize_scratchpad(
+        self, question: MetaculusQuestion
+    ) -> None:
+        new_scratchpad = ScratchPad(question=question)
+        self.scratch_pads.append(new_scratchpad)
+
+    def _remove_scratchpad(self, question: MetaculusQuestion) -> None:
+        self.scratch_pads = [
+            scratchpad
+            for scratchpad in self.scratch_pads
+            if scratchpad.question != question
+        ]
+
+    def _get_scratchpad(self, question: MetaculusQuestion) -> ScratchPad:
+        for scratchpad in self.scratch_pads:
+            if scratchpad.question == question:
+                return scratchpad
+        raise ValueError(f"No scratchpad found for question: {question}")

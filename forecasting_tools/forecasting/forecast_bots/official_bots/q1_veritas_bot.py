@@ -2,10 +2,12 @@ import asyncio
 import random
 from datetime import datetime
 
+import typeguard
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.gpt4o import Gpt4o
+from forecasting_tools.forecasting.forecast_bots.forecast_bot import ScratchPad
 from forecasting_tools.forecasting.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot,
 )
@@ -32,6 +34,25 @@ class Persona(BaseModel):
     expertise_areas: list[str]
     background: str
 
+    def create_persona_description(self) -> str:
+        return clean_indents(
+            f"""
+            Your past history and expertise:
+            - Occupation: {self.occupation}
+            - Expertise areas: {self.expertise_areas}
+            - Background: {self.background}
+            """
+        )
+
+
+class PersonaScratchpad(ScratchPad):
+    question: MetaculusQuestion
+    personas: list[Persona | None]
+
+    def get_random_persona(self) -> Persona | None:
+        random_persona = random.choice(self.personas)
+        return random_persona
+
 
 class Q1VeritasBot(Q1TemplateBot):
     FINAL_DECISION_LLM = Gpt4o(temperature=0.1)
@@ -44,7 +65,7 @@ class Q1VeritasBot(Q1TemplateBot):
         use_research_summary_to_forecast: bool = False,
         publish_reports_to_metaculus: bool = False,
         folder_to_save_reports_to: str | None = None,
-        skip_previously_forecasted_questions: bool = False,
+        skip_previously_forecasted_questions: bool = True,
     ) -> None:
         super().__init__(
             research_reports_per_question=research_reports_per_question,
@@ -54,6 +75,17 @@ class Q1VeritasBot(Q1TemplateBot):
             folder_to_save_reports_to=folder_to_save_reports_to,
             skip_previously_forecasted_questions=skip_previously_forecasted_questions,
         )
+        self.scratch_pads: list[PersonaScratchpad] = []
+
+    async def _initialize_scratchpad(
+        self, question: MetaculusQuestion
+    ) -> None:
+        personas = await self._create_personas(question)
+        personas_with_none = personas + [None]
+        new_scratchpad = PersonaScratchpad(
+            question=question, personas=personas_with_none
+        )
+        self.scratch_pads.append(new_scratchpad)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         searcher = SmartSearcher(
@@ -61,6 +93,11 @@ class Q1VeritasBot(Q1TemplateBot):
             num_searches_to_run=2,
             num_sites_per_search=10,
         )
+        persona = self._get_scratchpad(question).get_random_persona()
+        if persona is None:
+            persona_message = ""
+        else:
+            persona_message = persona.create_persona_description()
         prompt = clean_indents(
             f"""
             You are an assistant to a superforecaster. The superforecaster will give
@@ -70,6 +107,8 @@ class Q1VeritasBot(Q1TemplateBot):
 
             The question is:
             {question.question_text}
+
+            {persona_message}
 
             Background information:
             {question.background_info if question.background_info else "No background information provided."}
@@ -87,20 +126,19 @@ class Q1VeritasBot(Q1TemplateBot):
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
-        assert isinstance(
-            question, BinaryQuestion
-        ), "Question must be a BinaryQuestion"
-        personas = await self._determine_personality(question)
-        random_persona = random.choice(personas)
+        scratchpad = self._get_scratchpad(question)
+        persona = scratchpad.get_random_persona()
+
+        if persona is None:
+            persona_message = ""
+        else:
+            persona_message = persona.create_persona_description()
+
         prompt = clean_indents(
             f"""
             You are a professional forecaster interviewing for a job.
 
-            Your past history and expertise:
-            - Occupation: {random_persona.occupation}
-            - Expertise areas: {random_persona.expertise_areas}
-            - Background: {random_persona.background}
-
+            {persona_message}
             Your interview question is:
             {question.question_text}
 
@@ -146,7 +184,7 @@ class Q1VeritasBot(Q1TemplateBot):
             prediction_value=prediction, reasoning=reasoning
         )
 
-    async def _determine_personality(
+    async def _create_personas(
         self, question: MetaculusQuestion
     ) -> list[Persona]:
         prompt = clean_indents(
@@ -155,7 +193,7 @@ class Q1VeritasBot(Q1TemplateBot):
             The question is:
             {question.question_text}
 
-            Please come up with 10 different personas of experts that would be relevant to this question.
+            Please come up with {self.research_reports_per_question} different personas of experts that would be relevant to this question.
             Return your answer as a list of Persona objects.
             {Gpt4o.get_schema_format_instructions_for_pydantic_type(Persona)}
             """
@@ -377,3 +415,9 @@ class Q1VeritasBot(Q1TemplateBot):
             prediction_value=prediction,
             reasoning=reasoning,
         )
+
+    def _get_scratchpad(
+        self, question: MetaculusQuestion
+    ) -> PersonaScratchpad:
+        scratchpad = super()._get_scratchpad(question)
+        return typeguard.check_type(scratchpad, PersonaScratchpad)

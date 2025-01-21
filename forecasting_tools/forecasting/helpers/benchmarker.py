@@ -71,7 +71,7 @@ class Benchmarker:
         questions = typeguard.check_type(questions, list[MetaculusQuestion])
         assert len(questions) == self.number_of_questions_to_use
 
-        benchmarks = []
+        benchmarks: list[BenchmarkForBot] = []
         for bot in self.forecast_bots:
             try:
                 source_code = inspect.getsource(bot.__class__)
@@ -98,14 +98,29 @@ class Benchmarker:
                 for batch in self._batch_questions(
                     questions, self.concurrent_question_batch_size
                 ):
-                    reports = await bot.forecast_questions(batch)
-                    reports = typeguard.check_type(
-                        reports,
+                    reports = await bot.forecast_questions(
+                        batch, return_exceptions=True
+                    )
+                    exceptions = [
+                        report
+                        for report in reports
+                        if isinstance(report, Exception)
+                    ]
+                    logger.error(
+                        f"{len(exceptions)} reports failed. Exceptions: {exceptions}"
+                    )
+                    valid_reports = [
+                        report
+                        for report in reports
+                        if not isinstance(report, Exception)
+                    ]
+                    valid_reports = typeguard.check_type(
+                        valid_reports,
                         list[
                             BinaryReport | MultipleChoiceReport | NumericReport
                         ],
                     )
-                    benchmark.forecast_reports.extend(reports)
+                    benchmark.forecast_reports.extend(valid_reports)
                     self._save_benchmarks_to_file_if_configured(benchmarks)
                 end_time = time.time()
                 benchmark.time_taken_in_minutes = (end_time - start_time) / 60

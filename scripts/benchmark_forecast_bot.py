@@ -30,8 +30,8 @@ async def benchmark_forecast_bot() -> None:
     questions_to_use = 65
     with MonetaryCostManager() as cost_manager:
         bots = [
-            Q3TemplateWithAskNews(),
             Q3TemplateWithExa(),
+            Q3TemplateWithAskNews(),
             Q3TemplateBot(),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
