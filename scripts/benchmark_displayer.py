@@ -1,3 +1,9 @@
+"""
+Run this file as a streamlit app. `streamlit run scripts/benchmark_displayer.py`
+As long as your benchmark files (contain 'bench' and end in '.json')
+are in the project directory tree, you should be able to view them.
+"""
+
 import os
 
 import pandas as pd
@@ -10,6 +16,9 @@ from forecasting_tools.forecasting.questions_and_reports.benchmark_for_bot impor
 )
 from forecasting_tools.forecasting.questions_and_reports.binary_report import (
     BinaryReport,
+)
+from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
+    ForecastReport,
 )
 from forecasting_tools.util import file_manipulation
 from front_end.helpers.report_displayer import ReportDisplayer
@@ -26,7 +35,7 @@ def get_json_files(directory: str) -> list[str]:
 
 
 def display_deviation_scores(reports: list[BinaryReport]) -> None:
-    with st.expander("Deviation Scores", expanded=False):
+    with st.expander("Scores", expanded=False):
         certain_reports = [
             r
             for r in reports
@@ -177,16 +186,22 @@ def display_benchmark_list(benchmarks: list[BenchmarkForBot]) -> None:
         ReportDisplayer.display_report_list(reports)
 
 
+def get_benchmark_display_name(benchmark: BenchmarkForBot, index: int) -> str:
+    config = benchmark.forecast_bot_config
+    reports_per_q = config.get("research_reports_per_question", "1")
+    preds_per_r = config.get("predictions_per_research_report", "1")
+    return f"{index}: {benchmark.name} ({reports_per_q}x{preds_per_r})"
+
+
 def display_benchmark_comparison_graphs(
     benchmarks: list[BenchmarkForBot],
 ) -> None:
-    st.subheader("Benchmark Score Comparisons")
+    st.markdown("# Benchmark Score Comparisons")
     st.markdown("Lower score is better for both metrics.")
 
-    # Prepare data for all categories
     data_by_benchmark = []
 
-    for benchmark in benchmarks:
+    for index, benchmark in enumerate(benchmarks):
         reports = benchmark.forecast_reports
         reports = typeguard.check_type(reports, list[BinaryReport])
         certain_reports = [
@@ -201,12 +216,19 @@ def display_benchmark_comparison_graphs(
             if r.community_prediction is not None
             and 0.1 <= r.community_prediction <= 0.9
         ]
+        certain_reports = typeguard.check_type(
+            certain_reports, list[ForecastReport]
+        )
+        uncertain_reports = typeguard.check_type(
+            uncertain_reports, list[ForecastReport]
+        )
 
-        # Calculate all scores
+        benchmark_name = get_benchmark_display_name(benchmark, index)
+
         data_by_benchmark.extend(
             [
                 {
-                    "Benchmark": benchmark.name,
+                    "Benchmark": benchmark_name,
                     "Category": "All Questions",
                     "Expected Log Score": benchmark.average_inverse_expected_log_score,
                     "Deviation Score": BinaryReport.calculate_average_deviation_points(
@@ -215,7 +237,7 @@ def display_benchmark_comparison_graphs(
                     * 100,
                 },
                 {
-                    "Benchmark": benchmark.name,
+                    "Benchmark": benchmark_name,
                     "Category": "Certain Questions",
                     "Expected Log Score": BinaryReport.calculate_average_inverse_expected_log_score(
                         certain_reports
@@ -226,7 +248,7 @@ def display_benchmark_comparison_graphs(
                     * 100,
                 },
                 {
-                    "Benchmark": benchmark.name,
+                    "Benchmark": benchmark_name,
                     "Category": "Uncertain Questions",
                     "Expected Log Score": BinaryReport.calculate_average_inverse_expected_log_score(
                         uncertain_reports
@@ -243,11 +265,16 @@ def display_benchmark_comparison_graphs(
         return
 
     try:
-
         df = pd.DataFrame(data_by_benchmark)
 
         st.markdown("### Expected Log Scores")
         st.markdown("Lower score indicates better performance.")
+
+        min_scores = df.groupby("Category")["Expected Log Score"].transform(
+            "min"
+        )
+        df["Is Min Expected"] = df["Expected Log Score"] == min_scores
+
         fig = px.bar(
             df,
             x="Benchmark",
@@ -257,12 +284,29 @@ def display_benchmark_comparison_graphs(
             title="Expected Log Scores by Benchmark and Category",
         )
         fig.update_layout(yaxis_title="Expected Log Score")
+
+        for idx, row in df[df["Is Min Expected"]].iterrows():
+            fig.add_annotation(
+                x=row["Benchmark"],
+                y=row["Expected Log Score"],
+                text="★",
+                showarrow=False,
+                yshift=10,
+                font=dict(size=20),
+            )
+
         st.plotly_chart(fig)
 
         st.markdown("### Deviation Scores")
         st.markdown(
             "Lower score indicates predictions closer to community consensus. Shown as difference in percentage points between bot and community."
         )
+
+        min_deviations = df.groupby("Category")["Deviation Score"].transform(
+            "min"
+        )
+        df["Is Min Deviation"] = df["Deviation Score"] == min_deviations
+
         fig = px.bar(
             df,
             x="Benchmark",
@@ -272,6 +316,17 @@ def display_benchmark_comparison_graphs(
             title="Deviation Scores by Benchmark and Category",
         )
         fig.update_layout(yaxis_title="Deviation Score (percentage points)")
+
+        for idx, row in df[df["Is Min Deviation"]].iterrows():
+            fig.add_annotation(
+                x=row["Benchmark"],
+                y=row["Deviation Score"],
+                text="★",
+                showarrow=False,
+                yshift=10,
+                font=dict(size=20),
+            )
+
         st.plotly_chart(fig)
 
     except ImportError:
@@ -280,9 +335,27 @@ def display_benchmark_comparison_graphs(
         )
 
 
+def make_perfect_benchmark(
+    model_benchmark: BenchmarkForBot,
+) -> BenchmarkForBot:
+    perfect_benchmark = model_benchmark.model_copy()
+    reports_of_perfect_benchmark = [
+        report.model_copy() for report in perfect_benchmark.forecast_reports
+    ]
+    reports_of_perfect_benchmark = typeguard.check_type(
+        reports_of_perfect_benchmark, list[BinaryReport]
+    )
+    for report in reports_of_perfect_benchmark:
+        assert report.community_prediction is not None
+        report.prediction = report.community_prediction
+    perfect_benchmark.forecast_reports = reports_of_perfect_benchmark
+    perfect_benchmark.name = "Perfect Predictor (questions of benchmark 1)"
+    return perfect_benchmark
+
+
 def main() -> None:
     st.title("Benchmark Viewer")
-    st.write("Select a JSON file containing BenchmarkForBot objects.")
+    st.write("Select JSON files containing BenchmarkForBot objects.")
 
     project_directory = file_manipulation.get_absolute_path("")
     json_files = get_json_files(project_directory)
@@ -291,21 +364,41 @@ def main() -> None:
         st.warning(f"No JSON files found in {project_directory}")
         return
 
-    selected_file = st.selectbox(
-        "Select a benchmark file:",
+    selected_files = st.multiselect(
+        "Select benchmark files:",
         json_files,
         format_func=lambda x: os.path.basename(x),
     )
 
-    if selected_file:
+    if selected_files:
         try:
-            benchmarks: list[BenchmarkForBot] = (
-                BenchmarkForBot.load_json_from_file_path(selected_file)
+            all_benchmarks: list[BenchmarkForBot] = []
+            for file in selected_files:
+                benchmarks = BenchmarkForBot.load_json_from_file_path(file)
+                all_benchmarks.extend(benchmarks)
+
+            perfect_benchmark = make_perfect_benchmark(all_benchmarks[0])
+            all_benchmarks.insert(0, perfect_benchmark)
+
+            benchmark_options = [
+                f"{i}: {b.name} (Score: {b.average_inverse_expected_log_score:.4f})"
+                for i, b in enumerate(all_benchmarks)
+            ]
+            selected_benchmarks = st.multiselect(
+                "Select benchmarks to display:",
+                range(len(all_benchmarks)),
+                default=range(len(all_benchmarks)),
+                format_func=lambda i: benchmark_options[i],
             )
-            display_benchmark_comparison_graphs(benchmarks)
-            display_benchmark_list(benchmarks)
+
+            if selected_benchmarks:
+                filtered_benchmarks = [
+                    all_benchmarks[i] for i in selected_benchmarks
+                ]
+                display_benchmark_comparison_graphs(filtered_benchmarks)
+                display_benchmark_list(filtered_benchmarks)
         except Exception as e:
-            st.error(f"Could not load file. Error: {str(e)}")
+            st.error(f"Could not load files. Error: {str(e)}")
 
 
 if __name__ == "__main__":

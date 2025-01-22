@@ -72,6 +72,16 @@ class ForecastReport(BaseModel, Jsonable, ABC):
         (see scripts/simulate_a_tournament.ipynb).
         We invert the expected log score so it behaves like a brier score
         (where it is positive and lower is better).
+
+        The score for a perfect predictor for a set of binary questions with
+        community predictions distributed
+        - Uniformly between 0 and 1 is 0.723
+        - Closer to 0 or 1 is 0.553
+        - Closer to 0.5 is 0.932
+        - Uniformly between 0.1 and 0.9 is 0.834
+        - Uniformly between (0 and 0.1) union (0.9 and 1) is 0.270
+
+        Someone who predicts 0.5 always gets a value of 1
         """
         raise NotImplementedError("Not implemented")
 

@@ -6,7 +6,7 @@ import typeguard
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.deepseek_r1 import DeepSeekR1
+from forecasting_tools.ai_models.gpt4o import Gpt4o
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import ScratchPad
 from forecasting_tools.forecasting.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot,
@@ -55,13 +55,13 @@ class PersonaScratchpad(ScratchPad):
 
 
 class Q1VeritasBot(Q1TemplateBot):
-    FINAL_DECISION_LLM = DeepSeekR1(temperature=0.1)
+    FINAL_DECISION_LLM = Gpt4o(temperature=0.1)
 
     def __init__(
         self,
         *,
         research_reports_per_question: int = 5,
-        predictions_per_research_report: int = 10,
+        predictions_per_research_report: int = 5,
         use_research_summary_to_forecast: bool = False,
         publish_reports_to_metaculus: bool = False,
         folder_to_save_reports_to: str | None = None,
@@ -194,10 +194,10 @@ class Q1VeritasBot(Q1TemplateBot):
 
             Please come up with {self.research_reports_per_question} different personas of experts that would be relevant to this question.
             Return your answer as a list of Persona objects.
-            {DeepSeekR1.get_schema_format_instructions_for_pydantic_type(Persona)}
+            {Gpt4o.get_schema_format_instructions_for_pydantic_type(Persona)}
             """
         )
-        response = await DeepSeekR1(
+        response = await Gpt4o(
             temperature=0.8
         ).invoke_and_return_verified_type(prompt, list[Persona])
         return response

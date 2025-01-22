@@ -84,7 +84,7 @@ class Benchmarker:
                 forecast_reports=[],
                 forecast_bot_config=bot.get_config(),
                 description=f"This benchmark ran the {bot.__class__.__name__} bot on {self.number_of_questions_to_use} questions.",
-                name=f"Benchmark for {bot.__class__.__name__}",
+                name=f"{bot.__class__.__name__}",
                 time_taken_in_minutes=None,
                 total_cost=None,
                 git_commit_hash=self._get_git_commit_hash(),

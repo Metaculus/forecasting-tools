@@ -426,12 +426,17 @@ class ForecastBot(ABC):
         lines = markdown.split("\n")
         modified_content = ""
 
-        # Add Report number to all headings
         for line in lines:
-            if line.startswith("## "):
-                line = f"## R{report_number}: {line[3:]}"
+            if line.startswith("#"):
+                heading_level = len(line) - len(line.lstrip("#"))
+                content = line[heading_level:].lstrip()
+                new_heading_level = max(3, heading_level + 2)
+                line = f"{'#' * new_heading_level} {content}"
             modified_content += line + "\n"
-        return modified_content
+        final_content = (
+            f"## Report {report_number} Research\n{modified_content}"
+        )
+        return final_content
 
     def _format_forecaster_rationales(
         self, report_number: int, collection: ResearchWithPredictions
