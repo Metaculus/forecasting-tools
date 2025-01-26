@@ -3,14 +3,14 @@ from typing import Any
 from forecasting_tools.ai_models.ai_utils.response_types import (
     TextTokenCostResponse,
 )
-from forecasting_tools.ai_models.model_archetypes.general_llm import (
-    GeneralTextToTextLlm,
+from forecasting_tools.ai_models.model_archetypes.openai_text_model import (
+    OpenAiTextToTextModel,
 )
 
 
-class GptO1Preview(GeneralTextToTextLlm):
+class GptO1Preview(OpenAiTextToTextModel):
     # See OpenAI Limit on the account dashboard for most up-to-date limit
-    MODEL_NAME: str = "openai/o1-preview"
+    MODEL_NAME: str = "o1-preview"
     REQUESTS_PER_PERIOD_LIMIT: int = 8_000
     REQUEST_PERIOD_IN_SECONDS: int = 60
     TIMEOUT_TIME: int = 120
