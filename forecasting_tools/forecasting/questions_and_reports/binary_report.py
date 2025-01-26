@@ -59,6 +59,8 @@ class BinaryReport(ForecastReport):
         p = self.prediction
         if c is None:
             return None
+        # TODO: Run a simulation using ln rather than log2
+        # since Metaculus uses ln for log scores https://www.metaculus.com/help/scores-faq/#log-score
         expected_log_score = c * np.log2(p) + (1 - c) * np.log2(1 - p)
         inversed_expected_log_score = -1 * expected_log_score
         return inversed_expected_log_score

@@ -45,6 +45,10 @@ class CustomLogger:
         watchdog_logger.setLevel(logging.WARNING)
         watchdog_logger.propagate = False
 
+        litellm_logger = logging.getLogger("LiteLLM")
+        litellm_logger.setLevel(logging.WARNING)
+        litellm_logger.propagate = False
+
         handlers = []
 
         file_writing_is_allowed = (

@@ -5,6 +5,9 @@ from forecasting_tools.forecasting.forecast_bots.main_bot import MainBot
 from forecasting_tools.forecasting.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot,
 )
+from forecasting_tools.forecasting.forecast_bots.official_bots.q1_veritas_bot import (
+    Q1VeritasBot,
+)
 from forecasting_tools.forecasting.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot,
 )
@@ -33,13 +36,12 @@ def get_all_official_bot_classes() -> list[type[ForecastBot]]:
         Q3TemplateBot,
         Q4TemplateBot,
         Q4VeritasBot,
+        Q1VeritasBot,
     ]
 
 
 def get_all_bots_for_doing_cheap_tests() -> list[ForecastBot]:
-    return [
-        TemplateBot(),
-    ]
+    return [TemplateBot()]
 
 
 def get_all_bot_question_type_pairs_for_cheap_tests() -> (

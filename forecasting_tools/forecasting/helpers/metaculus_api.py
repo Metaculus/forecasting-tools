@@ -141,12 +141,24 @@ class MetaculusApi:
     @classmethod
     async def get_questions_matching_filter(
         cls,
-        num_questions: int,
         api_filter: ApiFilter,
+        num_questions: int | None = None,
         randomly_sample: bool = False,
     ) -> list[MetaculusQuestion]:
-        assert num_questions > 0, "Must request at least one question"
+        """
+        Will return a list of questions that match the filter.
+        If num questions is not set, it will only grab the first page of questions from API.
+        If you use filter criteria that are not directly built into the API,
+        then there maybe questions that match the filter even if the first page does not contain any.
+
+        Requiring a number will go through pages until it finds the number of questions or runs out of pages.
+        """
+        if num_questions is not None:
+            assert num_questions > 0, "Must request at least one question"
         if randomly_sample:
+            assert (
+                num_questions is not None
+            ), "Must request at least one question if randomly sampling"
             questions = await cls._filter_using_randomized_strategy(
                 num_questions, api_filter
             )
@@ -154,6 +166,10 @@ class MetaculusApi:
             questions = await cls._filter_sequential_strategy(
                 num_questions, api_filter
             )
+        if num_questions is not None:
+            assert (
+                len(questions) == num_questions
+            ), f"Requested number of questions ({num_questions}) does not match number of questions found ({len(questions)})"
         assert len(set(q.id_of_post for q in questions)) == len(
             questions
         ), "Not all questions found are unique"
@@ -162,21 +178,15 @@ class MetaculusApi:
     @classmethod
     def get_all_open_questions_from_tournament(
         cls,
-        tournament_id: int,
+        tournament_id: int | str,
     ) -> list[MetaculusQuestion]:
         logger.info(f"Retrieving questions from tournament {tournament_id}")
-        url_qparams = {
-            "tournaments": [tournament_id],
-            "with_cp": "true",
-            "order_by": "-hotness",
-            "statuses": "open",
-        }
-
-        metaculus_questions = cls._get_questions_from_api(url_qparams)
-        logger.info(
-            f"Retrieved {len(metaculus_questions)} questions from tournament {tournament_id}"
+        api_filter = ApiFilter(
+            allowed_tournaments=[tournament_id],
+            allowed_statuses=["open"],
         )
-        return metaculus_questions
+        questions = asyncio.run(cls.get_questions_matching_filter(api_filter))
+        return questions
 
     @classmethod
     def get_benchmark_questions(
@@ -194,7 +204,9 @@ class MetaculusApi:
         )
         questions = asyncio.run(
             cls.get_questions_matching_filter(
-                num_of_questions_to_return, api_filter, randomly_sample=True
+                api_filter,
+                num_questions=num_of_questions_to_return,
+                randomly_sample=True,
             )
         )
         questions = typeguard.check_type(questions, list[BinaryQuestion])
@@ -341,8 +353,12 @@ class MetaculusApi:
 
     @classmethod
     async def _filter_sequential_strategy(
-        cls, num_questions: int, filter: ApiFilter
+        cls, num_questions: int | None, filter: ApiFilter
     ) -> list[MetaculusQuestion]:
+        if num_questions is None:
+            questions, _ = cls._grab_filtered_questions_with_offset(filter, 0)
+            return questions
+
         questions: list[MetaculusQuestion] = []
         more_questions_available = True
         page_num = 0
@@ -356,10 +372,6 @@ class MetaculusApi:
                 more_questions_available = False
             page_num += 1
             await asyncio.sleep(0.1)
-        if len(questions) < num_questions:
-            raise ValueError(
-                f"Exhausted all {page_num} pages but only found {len(questions)} questions, needed {num_questions}"
-            )
         return questions[:num_questions]
 
     @classmethod
@@ -448,8 +460,8 @@ class MetaculusApi:
                 "%Y-%m-%d"
             )
 
-        if filter.allowed_tournament_slugs:
-            url_params["tournaments"] = filter.allowed_tournament_slugs
+        if filter.allowed_tournaments:
+            url_params["tournaments"] = filter.allowed_tournaments
 
         questions = cls._get_questions_from_api(url_params)
         questions_were_found_before_local_filter = len(questions) > 0
@@ -555,6 +567,6 @@ class ApiFilter(BaseModel):
     close_time_lt: datetime | None = None
     open_time_gt: datetime | None = None
     open_time_lt: datetime | None = None
-    allowed_tournament_slugs: list[str] | None = None
+    allowed_tournaments: list[str | int] | None = None
     includes_bots_in_aggregates: bool | None = None
     community_prediction_exists: bool | None = None

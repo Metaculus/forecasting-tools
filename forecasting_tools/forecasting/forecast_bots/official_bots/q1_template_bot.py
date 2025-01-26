@@ -44,15 +44,15 @@ class Q1TemplateBot(Q4TemplateBot):
     """
 
     FINAL_DECISION_LLM = (
-        Gpt4o(temperature=0.7)
+        Gpt4o(temperature=0.3)
         if os.getenv("OPENAI_API_KEY")
         else (
-            Gpt4oMetaculusProxy(temperature=0.7)
+            Gpt4oMetaculusProxy(temperature=0.3)
             if os.getenv("METACULUS_TOKEN")
             else (
-                Claude35Sonnet(temperature=0.7)
+                Claude35Sonnet(temperature=0.3)
                 if os.getenv("ANTHROPIC_API_KEY")
-                else Gpt4o(temperature=0.7)
+                else Gpt4o(temperature=0.3)
             )
         )
     )

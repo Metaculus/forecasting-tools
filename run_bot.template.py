@@ -28,7 +28,7 @@ CustomLogger.setup_logging()
 logger = logging.getLogger(__name__)
 
 
-async def run_forecasts(skip_previous: bool, tournament_id: int) -> None:
+async def run_forecasts(skip_previous: bool, tournament: int | str) -> None:
     """
     Make a copy of this file called run_bot.py (i.e. remove template) and fill in your bot details.
     This will be run in the workflows
@@ -42,7 +42,7 @@ async def run_forecasts(skip_previous: bool, tournament_id: int) -> None:
         use_research_summary_to_forecast=False,
     )
     reports = await forecaster.forecast_on_tournament(
-        tournament_id, return_exceptions=True
+        tournament, return_exceptions=True
     )
     valid_reports = [
         report for report in reports if isinstance(report, ForecastReport)
@@ -69,20 +69,32 @@ if __name__ == "__main__":
         description="Run forecasts with specified bot type"
     )
     parser.add_argument(
-        "--skip-previous",
-        type=bool,
+        "--skip_previous",
+        type=str,
         required=True,
-        help="Skip previously forecasted questions",
+        help="Skip previously forecasted questions (True or False)",
     )
     parser.add_argument(
         "--tournament",
-        type=int,
+        type=str,
         required=True,
         help="Tournament to forecast on",
     )
     args = parser.parse_args()
 
-    skip_previous = args.skip_previous
-    tournament_id = args.tournament
+    try:
+        tournament = int(args.tournament)
+    except ValueError:
+        tournament = str(args.tournament)
 
-    asyncio.run(run_forecasts(skip_previous, tournament_id))
+    if args.skip_previous == "True":
+        skip_previous = True
+    elif args.skip_previous == "False":
+        skip_previous = False
+    else:
+        raise ValueError(
+            f"Invalid value for skip_previous: {args.skip_previous}. "
+            "Must be True or False"
+        )
+
+    asyncio.run(run_forecasts(skip_previous, tournament))

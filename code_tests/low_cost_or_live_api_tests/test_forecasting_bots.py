@@ -37,7 +37,6 @@ async def test_predicts_test_question(
     question_type: type[MetaculusQuestion],
     bot: ForecastBot,
 ) -> None:
-
     question = ReportOrganizer.get_live_example_question_of_type(question_type)
     assert isinstance(question, question_type)
     target_cost_in_usd = 0.3
@@ -48,6 +47,7 @@ async def test_predicts_test_question(
         expected_report_type = (
             ReportOrganizer.get_report_type_for_question_type(question_type)
         )
+    await report.publish_report_to_metaculus()
     assert isinstance(report, expected_report_type)
     assert cost_manager.current_usage <= target_cost_in_usd
     assert len(report.report_sections) > 1
@@ -56,7 +56,6 @@ async def test_predicts_test_question(
     assert report.price_estimate is not None
     assert report.minutes_taken is not None
     assert report.question is not None
-    await report.publish_report_to_metaculus()
 
     updated_question = MetaculusApi.get_question_by_post_id(
         question.id_of_post

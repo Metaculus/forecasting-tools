@@ -50,9 +50,10 @@ class MetaculusQuestion(BaseModel, Jsonable):
     def from_metaculus_api_json(cls, post_api_json: dict) -> MetaculusQuestion:
         post_id = post_api_json["id"]
         logger.debug(f"Processing Post ID {post_id}")
-        json_state = post_api_json["status"]
-        question_state = QuestionState(json_state)
+
         question_json: dict = post_api_json["question"]
+        json_state = question_json["status"]
+        question_state = QuestionState(json_state)
 
         try:
             forecast_values = question_json["my_forecasts"]["latest"][  # type: ignore

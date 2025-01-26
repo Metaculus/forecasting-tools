@@ -82,7 +82,7 @@ class ExaSearcher(
     RequestLimitedModel, RetryableModel, TimeLimitedModel, IncursCost
 ):
     REQUESTS_PER_PERIOD_LIMIT = (
-        4  # For rate limits see https://docs.exa.ai/reference/rate-limits
+        3  # For rate limits see https://docs.exa.ai/reference/rate-limits
     )
     REQUEST_PERIOD_IN_SECONDS = 1
     TIMEOUT_TIME = 30

@@ -81,7 +81,8 @@ class ForecastBot(ABC):
         self.skip_previously_forecasted_questions = (
             skip_previously_forecasted_questions
         )
-        self.scratch_pads: list[ScratchPad] = []
+        self._scratch_pads: list[ScratchPad] = []
+        self._scratch_pad_lock = asyncio.Lock()
 
     def get_config(self) -> dict[str, str]:
         params = inspect.signature(self.__init__).parameters
@@ -94,20 +95,20 @@ class ForecastBot(ABC):
     @overload
     async def forecast_on_tournament(
         self,
-        tournament_id: int,
+        tournament_id: int | str,
         return_exceptions: bool = False,
     ) -> list[ForecastReport]: ...
 
     @overload
     async def forecast_on_tournament(
         self,
-        tournament_id: int,
+        tournament_id: int | str,
         return_exceptions: bool = True,
     ) -> list[ForecastReport | BaseException]: ...
 
     async def forecast_on_tournament(
         self,
-        tournament_id: int,
+        tournament_id: int | str,
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
         questions = MetaculusApi.get_all_open_questions_from_tournament(
@@ -207,7 +208,9 @@ class ForecastBot(ABC):
     async def _run_individual_question(
         self, question: MetaculusQuestion
     ) -> ForecastReport:
-        await self._initialize_scratchpad(question)
+        scratchpad = await self._initialize_scratchpad(question)
+        async with self._scratch_pad_lock:
+            self._scratch_pads.append(scratchpad)
         with MonetaryCostManager() as cost_manager:
             start_time = time.time()
             prediction_tasks = [
@@ -267,7 +270,7 @@ class ForecastBot(ABC):
         )
         if self.publish_reports_to_metaculus:
             await report.publish_report_to_metaculus()
-        self._remove_scratchpad(question)
+        await self._remove_scratchpad(question)
         return report
 
     async def _research_and_make_predictions(
@@ -475,28 +478,38 @@ class ForecastBot(ABC):
             for result in results
             if not isinstance(result, BaseException)
         ]
-        errors = [
-            f"{error.__class__.__name__}: {error}"
-            for error in results
-            if isinstance(error, BaseException)
-        ]
+        errors = []
+        for error in results:
+            if isinstance(error, BaseException):
+                error_location = (
+                    error.__traceback__.tb_frame.f_code.co_filename
+                    if error.__traceback__
+                    else "Unknown"
+                )
+                errors.append(
+                    f"{error.__class__.__name__} in {error_location}: {error}"
+                )
         return valid_results, errors
 
     async def _initialize_scratchpad(
         self, question: MetaculusQuestion
-    ) -> None:
+    ) -> ScratchPad:
         new_scratchpad = ScratchPad(question=question)
-        self.scratch_pads.append(new_scratchpad)
+        return new_scratchpad
 
-    def _remove_scratchpad(self, question: MetaculusQuestion) -> None:
-        self.scratch_pads = [
-            scratchpad
-            for scratchpad in self.scratch_pads
-            if scratchpad.question != question
-        ]
+    async def _remove_scratchpad(self, question: MetaculusQuestion) -> None:
+        async with self._scratch_pad_lock:
+            self._scratch_pads = [
+                scratchpad
+                for scratchpad in self._scratch_pads
+                if scratchpad.question != question
+            ]
 
-    def _get_scratchpad(self, question: MetaculusQuestion) -> ScratchPad:
-        for scratchpad in self.scratch_pads:
-            if scratchpad.question == question:
-                return scratchpad
-        raise ValueError(f"No scratchpad found for question: {question}")
+    async def _get_scratchpad(self, question: MetaculusQuestion) -> ScratchPad:
+        async with self._scratch_pad_lock:
+            for scratchpad in self._scratch_pads:
+                if scratchpad.question == question:
+                    return scratchpad
+        raise ValueError(
+            f"No scratchpad found for question: ID: {question.id_of_post} Text: {question.question_text}"
+        )

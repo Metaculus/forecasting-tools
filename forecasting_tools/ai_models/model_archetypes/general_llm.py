@@ -122,7 +122,7 @@ class GeneralTextToTextLlm(
         choices = typeguard.check_type(choices, list[Choices])
         answer = choices[0].message.content
         assert isinstance(answer, str)
-        usage = response.usage
+        usage = response.usage  # type: ignore
         assert isinstance(usage, Usage)
         prompt_tokens = usage.prompt_tokens
         completion_tokens = usage.completion_tokens

@@ -30,7 +30,7 @@ CustomLogger.setup_logging()
 logger = logging.getLogger(__name__)
 
 
-async def run_forecasts(skip_previous: bool, tournament_id: int) -> None:
+async def run_forecasts(skip_previous: bool, tournament: int | str) -> None:
     """
     Make a copy of this file called run_bot.py (i.e. remove template) and fill in your bot details.
     This will be run in the workflows
@@ -41,7 +41,7 @@ async def run_forecasts(skip_previous: bool, tournament_id: int) -> None:
         skip_previously_forecasted_questions=skip_previous,
     )
     reports = await forecaster.forecast_on_tournament(
-        tournament_id, return_exceptions=True
+        tournament, return_exceptions=True
     )
     valid_reports = [
         report for report in reports if isinstance(report, ForecastReport)
@@ -53,7 +53,9 @@ async def run_forecasts(skip_previous: bool, tournament_id: int) -> None:
         report.errors for report in valid_reports if report.errors
     ]
 
+    total_cost = 0
     for report in valid_reports:
+        total_cost += report.price_estimate if report.price_estimate else 0
         await asyncio.sleep(5)
         try:
             ForecastDatabaseManager.add_forecast_report_to_database(
@@ -61,6 +63,7 @@ async def run_forecasts(skip_previous: bool, tournament_id: int) -> None:
             )
         except Exception as e:
             logger.error(f"Error adding forecast report to database: {e}")
+    logger.info(f"Total cost estimated: {total_cost}")
 
     if exceptions:
         raise RuntimeError(
@@ -77,20 +80,32 @@ if __name__ == "__main__":
         description="Run forecasts with specified bot type"
     )
     parser.add_argument(
-        "--skip-previous",
-        type=bool,
+        "--skip_previous",
+        type=str,
         required=True,
-        help="Skip previously forecasted questions",
+        help="Skip previously forecasted questions (True or False)",
     )
     parser.add_argument(
         "--tournament",
-        type=int,
+        type=str,
         required=True,
         help="Tournament to forecast on",
     )
     args = parser.parse_args()
 
-    skip_previous = args.skip_previous
-    tournament_id = args.tournament
+    try:
+        tournament = int(args.tournament)
+    except ValueError:
+        tournament = str(args.tournament)
 
-    asyncio.run(run_forecasts(skip_previous, tournament_id))
+    if args.skip_previous == "True":
+        skip_previous = True
+    elif args.skip_previous == "False":
+        skip_previous = False
+    else:
+        raise ValueError(
+            f"Invalid value for skip_previous: {args.skip_previous}. "
+            "Must be True or False"
+        )
+
+    asyncio.run(run_forecasts(skip_previous, tournament))

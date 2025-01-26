@@ -1,9 +1,9 @@
-name: Run Bot for Metaculus AI Benchmark Tournament
+name: Run Bot for Metaculus Quarterly Cup
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *" # runs every 15 minutes. Make sure to skip already forecasted questions!
+    - cron: "0 0 */2 * *" # runs at midnight every 2 days
 
 # Add concurrency group to prevent parallel runs
 concurrency:
@@ -37,7 +37,7 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run bot
         run: |
-          poetry run python run_bot.py --skip_previous True --tournament 32627
+          poetry run python run_bot.py --skip_previous False --tournament quarterly-cup
         # this reads the environment variables from the github repository.
         # Store under Settings --> Secrets and variables --> Actions
         # Not all these variables are required. See the ReadMe for more details.

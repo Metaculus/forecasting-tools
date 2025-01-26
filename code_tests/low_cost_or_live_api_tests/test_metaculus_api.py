@@ -259,7 +259,7 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
             ApiFilter(
                 close_time_gt=datetime(2024, 1, 15),
                 close_time_lt=datetime(2024, 1, 20),
-                allowed_tournament_slugs=["quarterly-cup-2024q1"],
+                allowed_tournaments=["quarterly-cup-2024q1"],
             ),
             1,
             False,
@@ -318,19 +318,19 @@ async def test_question_status_filters(
     "api_filter, num_questions_in_tournament, randomly_sample",
     [
         (
-            ApiFilter(allowed_tournament_slugs=["quarterly-cup-2024q1"]),
+            ApiFilter(allowed_tournaments=["quarterly-cup-2024q1"]),
             46,
             False,
         ),
         (
-            ApiFilter(allowed_tournament_slugs=["quarterly-cup-2024q1"]),
+            ApiFilter(allowed_tournaments=["quarterly-cup-2024q1"]),
             46,
             True,
         ),
         (
             ApiFilter(
                 includes_bots_in_aggregates=False,
-                allowed_tournament_slugs=["aibq4"],
+                allowed_tournaments=["aibq4"],
             ),
             1,
             False,
@@ -346,10 +346,18 @@ async def test_fails_to_get_questions_if_filter_is_too_restrictive(
 
     with pytest.raises(Exception):
         await MetaculusApi.get_questions_matching_filter(
-            requested_questions,
             api_filter,
+            num_questions=requested_questions,
             randomly_sample=randomly_sample,
         )
+
+
+async def test_api_filter_with_no_required_questions() -> None:
+    # test both slug and not
+    # Test new tournament ID function
+    # Test no required question set only hits api once even for large query
+    # test that Test entering string into forecast_on_tourn Forecastbot
+    raise NotImplementedError()
 
 
 def assert_basic_attributes_at_percentage(
@@ -523,11 +531,11 @@ def assert_questions_match_filter(  # NOSONAR
                 question.open_time and question.open_time < filter.open_time_lt
             ), f"Question {question.id_of_post} opened at {question.open_time}, expected before {filter.open_time_lt}"
 
-        if filter.allowed_tournament_slugs:
+        if filter.allowed_tournaments:
             assert any(
-                slug in filter.allowed_tournament_slugs
+                slug in filter.allowed_tournaments
                 for slug in question.tournament_slugs
-            ), f"Question {question.id_of_post} tournaments {question.tournament_slugs} not in allowed tournaments {filter.allowed_tournament_slugs}"
+            ), f"Question {question.id_of_post} tournaments {question.tournament_slugs} not in allowed tournaments {filter.allowed_tournaments}"
 
         if filter.community_prediction_exists is not None:
             assert filter.allowed_types == [
