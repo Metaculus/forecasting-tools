@@ -136,14 +136,25 @@ def test_questions_returned_from_list_questions() -> None:
     if ForecastingTestManager.quarterly_cup_is_not_active():
         pytest.skip("Quarterly cup is not active")
 
-    ai_tournament_id = (
+    tournament_id = (
         ForecastingTestManager.TOURNAMENT_WITH_MIXTURE_OF_OPEN_AND_NOT_OPEN
     )
     questions = MetaculusApi.get_all_open_questions_from_tournament(
-        ai_tournament_id
+        tournament_id
     )
     assert len(questions) > 0
-    # TODO: Add a tournament ID field and assert that the tournament is the same
+    assert all(question.state == QuestionState.OPEN for question in questions)
+
+    quarterly_cup_slug = "quarterly-cup"
+    questions = MetaculusApi.get_all_open_questions_from_tournament(
+        quarterly_cup_slug
+    )
+    assert len(questions) > 0
+    assert all(
+        quarterly_cup_slug in question.tournament_slugs
+        for question in questions
+    )
+    assert all(question.state == QuestionState.OPEN for question in questions)
 
 
 def test_get_questions_from_tournament() -> None:
@@ -266,6 +277,13 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
         ),
         (
             ApiFilter(
+                allowed_tournaments=[32506],  # Q4 AIB Metaculus Tournament
+            ),
+            None,
+            False,
+        ),
+        (
+            ApiFilter(
                 num_forecasters_gte=50,
                 allowed_types=["binary", "numeric"],
                 allowed_statuses=["resolved"],
@@ -278,13 +296,18 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
     ],
 )
 async def test_get_questions_from_tournament_with_filter(
-    api_filter: ApiFilter, num_questions: int, randomly_sample: bool
+    api_filter: ApiFilter, num_questions: int | None, randomly_sample: bool
 ) -> None:
     questions = await MetaculusApi.get_questions_matching_filter(
-        num_questions, api_filter, randomly_sample
+        api_filter,
+        num_questions=num_questions,
+        randomly_sample=randomly_sample,
     )
     assert_questions_match_filter(questions, api_filter)
-    assert len(questions) == num_questions
+    if num_questions is not None:
+        assert len(questions) == num_questions
+    else:
+        assert len(questions) > 0
     assert_basic_attributes_at_percentage(questions, 0.8)
 
 
@@ -306,7 +329,7 @@ async def test_question_status_filters(
         allowed_statuses=[state.value for state in status_filter]
     )
     questions = await MetaculusApi.get_questions_matching_filter(
-        250, api_filter, randomly_sample=True
+        api_filter, num_questions=250, randomly_sample=True
     )
     for question in questions:
         assert question.state in status_filter
@@ -350,14 +373,6 @@ async def test_fails_to_get_questions_if_filter_is_too_restrictive(
             num_questions=requested_questions,
             randomly_sample=randomly_sample,
         )
-
-
-async def test_api_filter_with_no_required_questions() -> None:
-    # test both slug and not
-    # Test new tournament ID function
-    # Test no required question set only hits api once even for large query
-    # test that Test entering string into forecast_on_tourn Forecastbot
-    raise NotImplementedError()
 
 
 def assert_basic_attributes_at_percentage(
@@ -531,7 +546,13 @@ def assert_questions_match_filter(  # NOSONAR
                 question.open_time and question.open_time < filter.open_time_lt
             ), f"Question {question.id_of_post} opened at {question.open_time}, expected before {filter.open_time_lt}"
 
-        if filter.allowed_tournaments:
+        if filter.allowed_tournaments and all(
+            isinstance(tournament, str)
+            for tournament in filter.allowed_tournaments
+        ):
+            # TODO: Handle when an allowed tournament is an int ID rather than a slug
+            # TODO: As of Jan 25, 2025 you can pass in a question series slug and get back questions.
+            #       this should be collected in the question
             assert any(
                 slug in filter.allowed_tournaments
                 for slug in question.tournament_slugs

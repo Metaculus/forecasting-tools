@@ -88,6 +88,7 @@ class GeneralTextToTextLlm(
         self, *args, **kwargs
     ) -> Any:
         logger.debug(f"Invoking model with args: {args} and kwargs: {kwargs}")
+        MonetaryCostManager.raise_error_if_limit_would_be_reached()
         direct_call_response = await self._mockable_direct_call_to_model(
             *args, **kwargs
         )
@@ -97,6 +98,8 @@ class GeneralTextToTextLlm(
             else direct_call_response
         )
         logger.debug(f"Model responded with: {response_to_log}...")
+        cost = direct_call_response.cost
+        MonetaryCostManager.increase_current_usage_in_parent_managers(cost)
         return direct_call_response
 
     @classmethod
@@ -133,7 +136,6 @@ class GeneralTextToTextLlm(
         ]  # If this has problems, consider using the budgetmanager class
         if cost is None:
             cost = 0
-        MonetaryCostManager.increase_current_usage_in_parent_managers(cost)
 
         return TextTokenCostResponse(
             data=answer,
