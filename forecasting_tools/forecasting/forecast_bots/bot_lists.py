@@ -20,11 +20,11 @@ from forecasting_tools.forecasting.forecast_bots.official_bots.q4_veritas_bot im
 from forecasting_tools.forecasting.forecast_bots.template_bot import (
     TemplateBot,
 )
+from forecasting_tools.forecasting.questions_and_reports.data_organizer import (
+    DataOrganizer,
+)
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     MetaculusQuestion,
-)
-from forecasting_tools.forecasting.questions_and_reports.report_organizer import (
-    ReportOrganizer,
 )
 
 
@@ -47,8 +47,15 @@ def get_all_bots_for_doing_cheap_tests() -> list[ForecastBot]:
 def get_all_bot_question_type_pairs_for_cheap_tests() -> (
     list[tuple[type[MetaculusQuestion], ForecastBot]]
 ):
-    return [
-        (question_type, bot)
-        for question_type in ReportOrganizer.get_all_question_types()
-        for bot in get_all_bots_for_doing_cheap_tests()
-    ]
+    question_type_and_bot_pairs = []
+    for question_type in DataOrganizer.get_all_question_types():
+        for bot in get_all_bots_for_doing_cheap_tests():
+            try:  # Skip questions that don't have a report type
+                report_type = DataOrganizer.get_report_type_for_question_type(
+                    question_type
+                )
+                assert report_type is not None
+            except Exception:
+                continue
+            question_type_and_bot_pairs.append((question_type, bot))
+    return question_type_and_bot_pairs

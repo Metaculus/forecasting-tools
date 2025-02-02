@@ -30,7 +30,7 @@ class TypeMapping(BaseModel):
     report_type: type[ForecastReport] | None
 
 
-class ReportOrganizer:
+class DataOrganizer:
     __TYPE_MAPPING = [
         TypeMapping(
             question_type=NumericQuestion,

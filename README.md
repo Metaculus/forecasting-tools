@@ -72,7 +72,13 @@ for report in reports:
 
 
 ```python
-from forecasting_tools import TemplateBot, BinaryQuestion, QuestionState, MetaculusApi
+from forecasting_tools import (
+    TemplateBot,
+    BinaryQuestion,
+    QuestionState,
+    MetaculusApi,
+    DataOrganizer
+)
 
 # Initialize the bot
 bot = TemplateBot(
@@ -96,12 +102,18 @@ question2 = BinaryQuestion(
 
 reports = await bot.forecast_questions([question1, question2])
 
+
 # Print results
 for report in reports:
     print(f"Question: {report.question.question_text}")
     print(f"Prediction: {report.prediction}")
     shortened_explanation = report.explanation.replace('\n', ' ')[:100]
     print(f"Reasoning: {shortened_explanation}...")
+
+# You can also save and load questions and reports
+file_path = "temp/reports.json"
+DataOrganizer.save_reports_to_file_path(reports, file_path)
+loaded_reports = DataOrganizer.load_reports_from_file_path(file_path)
 ```
 
     Question: Will humans go extinct before 2100?
@@ -146,6 +158,7 @@ Generally all you have to do to make your own bot is inherit from the TemplateBo
 
 
 ```python
+
 from forecasting_tools import (
     TemplateBot,
     MetaculusQuestion,
@@ -156,11 +169,13 @@ from forecasting_tools import (
     PredictedOptionList,
     NumericDistribution,
     SmartSearcher,
-    Gpt4oMetaculusProxy
+    Gpt4oMetaculusProxy,
+    MetaculusApi
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 
 class MyCustomBot(TemplateBot):
+
     async def run_research(self, question: MetaculusQuestion) -> str:
         searcher = SmartSearcher(
             num_searches_to_run=2,
@@ -544,41 +559,59 @@ The Metaculus API wrapper helps interact with Metaculus questions and tournament
 
 
 ```python
-from forecasting_tools import MetaculusApi, ApiFilter
+from forecasting_tools import MetaculusApi, ApiFilter, DataOrganizer
 from datetime import datetime
 
+
+# Get a question by post id
 question = MetaculusApi.get_question_by_post_id(578)
-print(question.page_url)
+print(f"Question found with url: {question.page_url}")
 
+# Get a question by url
 question = MetaculusApi.get_question_by_url("https://www.metaculus.com/questions/578/human-extinction-by-2100/")
-print(question.page_url)
+print(f"Question found with url: {question.page_url}")
 
+# Get all open questions from a tournament
 questions = MetaculusApi.get_all_open_questions_from_tournament(
     tournament_id=MetaculusApi.CURRENT_QUARTERLY_CUP_ID
 )
 print(f"Num tournament questions: {len(questions)}")
 
+# Get questions matching a filter
 api_filter = ApiFilter(
     num_forecasters_gte=40,
     close_time_gt=datetime(2023, 12, 31),
     close_time_lt=datetime(2024, 12, 31),
     scheduled_resolve_time_lt=datetime(2024, 12, 31),
-    allowed_types=["binary"],
+    allowed_types=["binary", "multiple_choice", "numeric", "date"],
     allowed_statuses=["resolved"],
 )
-questions = await MetaculusApi.get_questions_matching_filter(100, api_filter, randomly_sample=False)
+questions = await MetaculusApi.get_questions_matching_filter(
+    api_filter=api_filter,
+    num_questions=50, # Remove this field to make it not error if you don't get 50 questions. However it will only go through one page of questions
+    randomly_sample=False
+)
 print(f"Num filtered questions: {len(questions)}")
 
+# Load and save questions/reports
+file_path = "temp/questions.json"
+DataOrganizer.save_questions_to_file_path(questions, file_path)
+questions = DataOrganizer.load_questions_from_file_path(file_path)
+
+# Get benchmark questions
 benchmark_questions = MetaculusApi.get_benchmark_questions(
     num_of_questions_to_return=20
 )
 print(f"Num benchmark questions: {len(benchmark_questions)}")
 
+# Post a prediction
 MetaculusApi.post_binary_question_prediction(
     question_id=578, # Note that the question ID is not always the same as the post ID
     prediction_in_decimal=0.012  # Must be between 0.01 and 0.99
 )
 print("Posted prediction")
+
+# Post a comment
 MetaculusApi.post_question_comment(
     post_id=578,
     comment_text="Here's example reasoning for testing... This will be a private comment..."
@@ -586,11 +619,11 @@ MetaculusApi.post_question_comment(
 print("Posted comment")
 ```
 
-    https://www.metaculus.com/questions/578
-    https://www.metaculus.com/questions/578
-    Num tournament questions: 0
-    Num filtered questions: 100.
-    Num benchmark questions: 20.
+    Question found with url: https://www.metaculus.com/questions/578
+    Question found with url: https://www.metaculus.com/questions/578
+    Num tournament questions: 11
+    Num filtered questions: 50
+    Num benchmark questions: 20
     Posted prediction
     Posted comment
 

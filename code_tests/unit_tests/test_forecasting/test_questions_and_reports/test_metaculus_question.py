@@ -1,20 +1,20 @@
 import os
 
+from forecasting_tools.forecasting.questions_and_reports.data_organizer import (
+    DataOrganizer,
+)
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     BinaryQuestion,
     DateQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
 )
-from forecasting_tools.forecasting.questions_and_reports.report_organizer import (
-    ReportOrganizer,
-)
 
 
 def test_metaculus_question_is_jsonable() -> None:
     temp_writing_path = "temp/temp_metaculus_question.json"
     read_report_path = "code_tests/unit_tests/test_forecasting/forecasting_test_data/metaculus_questions.json"
-    questions = ReportOrganizer.load_questions_from_file_path(read_report_path)
+    questions = DataOrganizer.load_questions_from_file_path(read_report_path)
     assert any(isinstance(question, NumericQuestion) for question in questions)
     assert any(isinstance(question, BinaryQuestion) for question in questions)
     assert any(
@@ -22,8 +22,8 @@ def test_metaculus_question_is_jsonable() -> None:
     )
     assert any(isinstance(question, DateQuestion) for question in questions)
 
-    ReportOrganizer.save_questions_to_file_path(questions, temp_writing_path)
-    questions_2 = ReportOrganizer.load_questions_from_file_path(
+    DataOrganizer.save_questions_to_file_path(questions, temp_writing_path)
+    questions_2 = DataOrganizer.load_questions_from_file_path(
         temp_writing_path
     )
     assert len(questions) == len(questions_2)

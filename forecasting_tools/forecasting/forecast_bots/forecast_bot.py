@@ -13,6 +13,9 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 from forecasting_tools.forecasting.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.forecasting.questions_and_reports.data_organizer import (
+    DataOrganizer,
+)
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
     ForecastReport,
     ReasonedPrediction,
@@ -30,9 +33,6 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
-)
-from forecasting_tools.forecasting.questions_and_reports.report_organizer import (
-    ReportOrganizer,
 )
 
 T = TypeVar("T")
@@ -237,7 +237,7 @@ class ForecastBot(ABC):
                     f"Research errors: {research_errors if research_errors else 'None'}, "
                     f"Prediction errors: {prediction_errors if prediction_errors else 'None'}"
                 )
-            report_type = ReportOrganizer.get_report_type_for_question_type(
+            report_type = DataOrganizer.get_report_type_for_question_type(
                 type(question)
             )
             all_predictions = [
@@ -348,7 +348,7 @@ class ForecastBot(ABC):
         final_cost: float,
         time_spent_in_minutes: float,
     ) -> str:
-        report_type = ReportOrganizer.get_report_type_for_question_type(
+        report_type = DataOrganizer.get_report_type_for_question_type(
             type(question)
         )
 

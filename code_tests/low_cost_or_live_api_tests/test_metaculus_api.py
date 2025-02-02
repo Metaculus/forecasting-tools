@@ -11,6 +11,9 @@ from forecasting_tools.forecasting.helpers.metaculus_api import (
     ApiFilter,
     MetaculusApi,
 )
+from forecasting_tools.forecasting.questions_and_reports.data_organizer import (
+    DataOrganizer,
+)
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     BinaryQuestion,
     DateQuestion,
@@ -18,9 +21,6 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
     MultipleChoiceQuestion,
     NumericQuestion,
     QuestionState,
-)
-from forecasting_tools.forecasting.questions_and_reports.report_organizer import (
-    ReportOrganizer,
 )
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_get_binary_question_type_from_id() -> None:
-    question_id = ReportOrganizer.get_example_post_id_for_question_type(
+    question_id = DataOrganizer.get_example_post_id_for_question_type(
         BinaryQuestion
     )
     question = MetaculusApi.get_question_by_post_id(question_id)
@@ -45,7 +45,7 @@ def test_get_binary_question_type_from_id() -> None:
 
 
 def test_get_numeric_question_type_from_id() -> None:
-    question_id = ReportOrganizer.get_example_post_id_for_question_type(
+    question_id = DataOrganizer.get_example_post_id_for_question_type(
         NumericQuestion
     )
     question = MetaculusApi.get_question_by_post_id(question_id)
@@ -60,7 +60,7 @@ def test_get_numeric_question_type_from_id() -> None:
 
 @pytest.mark.skip(reason="Date questions are not fully supported yet")
 def test_get_date_question_type_from_id() -> None:
-    question_id = ReportOrganizer.get_example_post_id_for_question_type(
+    question_id = DataOrganizer.get_example_post_id_for_question_type(
         DateQuestion
     )
     question = MetaculusApi.get_question_by_post_id(question_id)
@@ -74,7 +74,7 @@ def test_get_date_question_type_from_id() -> None:
 
 
 def test_get_multiple_choice_question_type_from_id() -> None:
-    post_id = ReportOrganizer.get_example_post_id_for_question_type(
+    post_id = DataOrganizer.get_example_post_id_for_question_type(
         MultipleChoiceQuestion
     )
     question = MetaculusApi.get_question_by_post_id(post_id)
@@ -98,7 +98,7 @@ def test_get_question_with_tournament_slug() -> None:
 
 
 def test_post_comment_on_question() -> None:
-    post_id = ReportOrganizer.get_example_post_id_for_question_type(
+    post_id = DataOrganizer.get_example_post_id_for_question_type(
         BinaryQuestion
     )
     question = MetaculusApi.get_question_by_post_id(post_id)

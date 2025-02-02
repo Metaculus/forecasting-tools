@@ -20,6 +20,12 @@ def test_prediction_validation() -> None:
     report = ForecastingTestManager.get_fake_forecast_report(prediction=0.9999)
     assert report.prediction == pytest.approx(0.9999)
 
+    report = ForecastingTestManager.get_fake_forecast_report(prediction=0)
+    assert report.prediction == pytest.approx(0)
+
+    report = ForecastingTestManager.get_fake_forecast_report(prediction=1)
+    assert report.prediction == pytest.approx(1)
+
     # Invalid predictions
     with pytest.raises(ValueError):
         ForecastingTestManager.get_fake_forecast_report(prediction=-0.1)
