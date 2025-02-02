@@ -52,6 +52,7 @@ class GeneralTextToTextLlm(
     NamedModel,
     ABC,
 ):
+    _gave_cost_tracking_warning = False
 
     def __init__(
         self,
@@ -62,15 +63,18 @@ class GeneralTextToTextLlm(
         super().__init__(allowed_tries=allowed_tries)
         self.temperature: float = temperature
         self.system_prompt: str | None = system_prompt
+        if not self._gave_cost_tracking_warning:
+            self._give_cost_tracking_warning()
+            self._gave_cost_tracking_warning = True
 
-    def __init_subclass__(cls: type[GeneralTextToTextLlm], **kwargs) -> None:
-        super().__init_subclass__(**kwargs)
+    @classmethod
+    def _give_cost_tracking_warning(cls) -> None:
         assert isinstance(model_cost, dict)
         supported_model_names = model_cost.keys()
         model_not_supported = cls.MODEL_NAME not in supported_model_names
         if model_not_supported:
             logger.warning(
-                f"Model {cls.MODEL_NAME} is not supported by model_cost"
+                f"Model {cls.MODEL_NAME} does not support cost tracking. "
             )
 
     async def invoke(self, prompt: str) -> str:

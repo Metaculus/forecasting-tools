@@ -334,7 +334,7 @@ class MetaculusApi:
             )
             questions.extend(page_questions)
 
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.2)
 
         if len(questions) < num_questions:
             raise ValueError(
@@ -493,6 +493,11 @@ class MetaculusApi:
                 questions, list[MetaculusQuestion]
             )
 
+        if filter.cp_reveal_time_gt or filter.cp_reveal_time_lt:
+            questions = cls._filter_questions_by_cp_reveal_time(
+                questions, filter.cp_reveal_time_gt, filter.cp_reveal_time_lt
+            )
+
         return questions, questions_were_found_before_local_filter
 
     @classmethod
@@ -545,6 +550,29 @@ class MetaculusApi:
             == community_prediction_exists
         ]
 
+    @classmethod
+    def _filter_questions_by_cp_reveal_time(
+        cls,
+        questions: list[Q],
+        cp_reveal_time_gt: datetime | None,
+        cp_reveal_time_lt: datetime | None,
+    ) -> list[Q]:
+        questions_with_cp_reveal_time: list[Q] = []
+        for question in questions:
+            if question.cp_reveal_time is not None:
+                if (
+                    cp_reveal_time_gt
+                    and question.cp_reveal_time <= cp_reveal_time_gt
+                ):
+                    continue
+                if (
+                    cp_reveal_time_lt
+                    and question.cp_reveal_time >= cp_reveal_time_lt
+                ):
+                    continue
+                questions_with_cp_reveal_time.append(question)
+        return questions_with_cp_reveal_time
+
 
 class ApiFilter(BaseModel):
     num_forecasters_gte: int | None = None
@@ -570,3 +598,5 @@ class ApiFilter(BaseModel):
     allowed_tournaments: list[str | int] | None = None
     includes_bots_in_aggregates: bool | None = None
     community_prediction_exists: bool | None = None
+    cp_reveal_time_gt: datetime | None = None
+    cp_reveal_time_lt: datetime | None = None

@@ -81,6 +81,9 @@ from forecasting_tools.forecasting.questions_and_reports.questions import (
 from forecasting_tools.forecasting.questions_and_reports.questions import (
     QuestionState as QuestionState,
 )
+from forecasting_tools.forecasting.questions_and_reports.report_organizer import (
+    ReportOrganizer as ReportOrganizer,
+)
 from forecasting_tools.forecasting.sub_question_researchers.base_rate_researcher import (
     BaseRateResearcher as BaseRateResearcher,
 )

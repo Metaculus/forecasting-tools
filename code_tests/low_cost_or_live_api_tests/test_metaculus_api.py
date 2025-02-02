@@ -293,6 +293,15 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
             120,
             True,
         ),
+        (
+            ApiFilter(
+                allowed_statuses=["resolved"],
+                cp_reveal_time_gt=datetime(2023, 1, 1),
+                cp_reveal_time_lt=datetime(2024, 1, 1),
+            ),
+            30,
+            False,
+        ),
     ],
 )
 async def test_get_questions_from_tournament_with_filter(
@@ -426,6 +435,9 @@ def assert_basic_question_attributes_not_none(
     assert (
         question.includes_bots_in_aggregates is not None
     ), f"Includes bots in aggregates is None for post ID {post_id}"
+    assert (
+        question.cp_reveal_time is not None
+    ), f"CP reveal time is None for post ID {post_id}"
     assert isinstance(
         question.state, QuestionState
     ), f"State is not a QuestionState for post ID {post_id}"
@@ -545,6 +557,18 @@ def assert_questions_match_filter(  # NOSONAR
             assert (
                 question.open_time and question.open_time < filter.open_time_lt
             ), f"Question {question.id_of_post} opened at {question.open_time}, expected before {filter.open_time_lt}"
+
+        if filter.cp_reveal_time_gt:
+            assert (
+                question.cp_reveal_time
+                and question.cp_reveal_time > filter.cp_reveal_time_gt
+            ), f"Question {question.id_of_post} CP reveal time is {question.cp_reveal_time}, expected after {filter.cp_reveal_time_gt}"
+
+        if filter.cp_reveal_time_lt:
+            assert (
+                question.cp_reveal_time
+                and question.cp_reveal_time < filter.cp_reveal_time_lt
+            ), f"Question {question.id_of_post} CP reveal time is {question.cp_reveal_time}, expected before {filter.cp_reveal_time_lt}"
 
         if filter.allowed_tournaments and all(
             isinstance(tournament, str)

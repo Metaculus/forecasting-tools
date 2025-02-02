@@ -41,6 +41,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     already_forecasted: bool = False
     tournament_slugs: list[str] = Field(default_factory=list)
     includes_bots_in_aggregates: bool | None = None
+    cp_reveal_time: datetime | None = None  # Community Prediction Reveal Time
     api_json: dict = Field(
         description="The API JSON response used to create the question",
         default_factory=dict,
@@ -91,6 +92,9 @@ class MetaculusQuestion(BaseModel, Jsonable):
             ),
             published_time=cls._parse_api_date(
                 post_api_json.get("published_at")
+            ),
+            cp_reveal_time=cls._parse_api_date(
+                question_json.get("cp_reveal_time")
             ),
             open_time=cls._parse_api_date(post_api_json.get("open_time")),
             already_forecasted=is_forecasted,
