@@ -3,12 +3,12 @@ from typing import Any
 from forecasting_tools.ai_models.ai_utils.response_types import (
     TextTokenCostResponse,
 )
-from forecasting_tools.ai_models.model_archetypes.general_llm import (
-    GeneralTextToTextLlm,
+from forecasting_tools.ai_models.model_archetypes.general_text_to_text_llm import (
+    BaseLlmArchetype,
 )
 
 
-class GptO1Preview(GeneralTextToTextLlm):
+class GptO1Preview(BaseLlmArchetype):
     # See OpenAI Limit on the account dashboard for most up-to-date limit
     MODEL_NAME: str = "o1-preview"
     REQUESTS_PER_PERIOD_LIMIT: int = 8_000
