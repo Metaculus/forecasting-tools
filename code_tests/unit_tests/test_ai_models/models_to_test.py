@@ -27,7 +27,7 @@ from forecasting_tools.ai_models.deepseek_r1 import DeepSeekR1
 from forecasting_tools.ai_models.exa_searcher import ExaSearcher
 from forecasting_tools.ai_models.gpt4o import Gpt4o
 from forecasting_tools.ai_models.gpt4ovision import Gpt4oVision
-from forecasting_tools.ai_models.gpto1preview import GptO1Preview
+from forecasting_tools.ai_models.gpto1 import GptO1
 from forecasting_tools.ai_models.metaculus4o import Gpt4oMetaculusProxy
 from forecasting_tools.ai_models.perplexity import Perplexity
 
@@ -43,8 +43,8 @@ class ModelsToTest:
         Gpt4o,
         Gpt4oMetaculusProxy,
         Gpt4oVision,
-        GptO1Preview,
-        # GptO1, # TODO: dependencies do not yet support this
+        # GptO1Preview,
+        GptO1,
         Claude35Sonnet,
         Perplexity,
         ExaSearcher,

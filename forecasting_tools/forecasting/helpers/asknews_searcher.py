@@ -5,7 +5,7 @@ import base64
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, AsyncGenerator, Dict, List, Literal, Optional, Union
 from urllib.parse import quote, urlencode
 
 import httpx
@@ -57,7 +57,9 @@ class OAuth2ClientCredentials(Auth):
             ),
         )
 
-    async def async_auth_flow(self, request: Request) -> httpx.AsyncClient:
+    async def async_auth_flow(
+        self, request: Request
+    ) -> AsyncGenerator[Request, None]:
         if not self.token or (
             self.token_expires
             and datetime.now().timestamp() > self.token_expires

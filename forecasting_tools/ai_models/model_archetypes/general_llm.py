@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from abc import ABC
 from typing import Any
 
@@ -11,6 +12,10 @@ from litellm.files.main import ModelResponse
 from litellm.types.utils import Choices, Usage
 from litellm.utils import token_counter
 
+from forecasting_tools.ai_models.ai_utils.openai_utils import (
+    OpenAiUtils,
+    VisionMessageData,
+)
 from forecasting_tools.ai_models.ai_utils.response_types import (
     TextTokenCostResponse,
 )
@@ -53,6 +58,12 @@ class GeneralTextToTextLlm(
     ABC,
 ):
     _gave_cost_tracking_warning = False
+    _USE_METACULUS_PROXY: bool = False
+
+    def __init_subclass__(cls: type[NamedModel], **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        if ABC not in cls.__bases__ and cls.MODEL_NAME is NotImplemented:
+            raise NotImplementedError("You forgot to define MODEL_NAME")
 
     def __init__(
         self,
@@ -77,7 +88,7 @@ class GeneralTextToTextLlm(
                 f"Model {cls.MODEL_NAME} does not support cost tracking. "
             )
 
-    async def invoke(self, prompt: str) -> str:
+    async def invoke(self, prompt: str | VisionMessageData) -> str:
         response: TextTokenCostResponse = (
             await self._invoke_with_request_cost_time_and_token_limits_and_retry(
                 prompt
@@ -117,12 +128,26 @@ class GeneralTextToTextLlm(
         self._everything_special_to_call_before_direct_call()
         assert self.MODEL_NAME is not None
         litellm.drop_params = True
+
+        if self._USE_METACULUS_PROXY:
+            base_url = "https://llm-proxy.metaculus.com/proxy/openai/v1"
+            METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
+            extra_headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Token {METACULUS_TOKEN}",
+            }
+        else:
+            base_url = None
+            extra_headers = None
+
         response = await acompletion(
             model=self.MODEL_NAME,
             messages=self._get_messages(prompt),
             temperature=self.temperature,
             stream=False,
             timeout=self.TIMEOUT_TIME,
+            base_url=base_url,
+            extra_headers=extra_headers,
         )
         assert isinstance(response, ModelResponse)
         choices = response.choices
@@ -150,14 +175,33 @@ class GeneralTextToTextLlm(
             cost=cost,
         )
 
-    def _get_messages(self, prompt: str) -> list[dict[str, str]]:
-        user_message = {"role": "user", "content": prompt}
-        if self.system_prompt is not None:
-            return [
-                {"role": "system", "content": self.system_prompt},
-                user_message,
-            ]
-        return [user_message]
+    def _get_messages(
+        self, input: str | VisionMessageData
+    ) -> list[dict[str, str]]:
+        if isinstance(input, str):
+            user_message: dict[str, str] = {"role": "user", "content": input}
+            if self.system_prompt is not None:
+                return [
+                    {"role": "system", "content": self.system_prompt},
+                    user_message,
+                ]
+            return [user_message]
+        elif isinstance(input, VisionMessageData):
+            if self.system_prompt is not None:
+                messages = (
+                    OpenAiUtils.create_system_and_image_message_from_prompt(
+                        input, self.system_prompt
+                    )
+                )
+                messages = typeguard.check_type(messages, list[dict[str, str]])
+                return messages
+            messages = OpenAiUtils.put_single_image_message_in_list_using_gpt_vision_input(
+                input
+            )
+            messages = typeguard.check_type(messages, list[dict[str, str]])
+            return messages
+        else:
+            raise TypeError("Prompt must be a str or VisionMessageData")
 
     ################################## Methods For Mocking/Testing ##################################
 

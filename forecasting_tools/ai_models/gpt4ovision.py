@@ -1,8 +1,11 @@
 from typing import Final
 
 from forecasting_tools.ai_models.ai_utils.openai_utils import VisionMessageData
-from forecasting_tools.ai_models.model_archetypes.openai_vision_model import (
-    OpenAiVisionToTextModel,
+from forecasting_tools.ai_models.ai_utils.response_types import (
+    TextTokenCostResponse,
+)
+from forecasting_tools.ai_models.model_archetypes.general_llm import (
+    GeneralTextToTextLlm,
 )
 
 
@@ -11,7 +14,7 @@ class Gpt4VisionInput(VisionMessageData):
     pass
 
 
-class Gpt4oVision(OpenAiVisionToTextModel):
+class Gpt4oVision(GeneralTextToTextLlm):
     MODEL_NAME: Final[str] = "gpt-4o"
     REQUESTS_PER_PERIOD_LIMIT: Final[int] = (
         4000  # Errors said the limit is 4k, but it says 100k online See OpenAI Limit on the account dashboard for most up-to-date limit
@@ -22,3 +25,21 @@ class Gpt4oVision(OpenAiVisionToTextModel):
         35000  # Actual rate is 40k, but lowered for wiggle room. See OpenAI Limit on the account dashboard for most up-to-date limit
     )
     TOKEN_PERIOD_IN_SECONDS: Final[int] = 60
+
+    SMALL_BASE_64_IMAGE = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+    CHEAP_VISION_MESSAGE_DATA = VisionMessageData(
+        prompt="Hi", b64_image=SMALL_BASE_64_IMAGE, image_resolution="low"
+    )
+
+    @classmethod
+    def _get_cheap_input_for_invoke(cls) -> VisionMessageData:
+        return cls.CHEAP_VISION_MESSAGE_DATA
+
+    async def invoke(self, input: VisionMessageData) -> str:
+        assert isinstance(input, VisionMessageData)
+        response: TextTokenCostResponse = (
+            await self._invoke_with_request_cost_time_and_token_limits_and_retry(
+                input
+            )
+        )
+        return response.data
