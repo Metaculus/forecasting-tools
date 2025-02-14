@@ -235,9 +235,9 @@ class GeneralLlm(
         completion_tokens = usage.completion_tokens
         total_tokens = usage.total_tokens
 
-        cost = response._hidden_params[
+        cost = response._hidden_params.get(
             "response_cost"
-        ]  # If this has problems, consider using the budgetmanager class
+        )  # If this has problems, consider using the budgetmanager class
         if cost is None:
             cost = 0
 
@@ -256,6 +256,9 @@ class GeneralLlm(
         messages: list[dict[str, str]] = []
 
         if isinstance(user_input, list):
+            assert (
+                system_prompt is None
+            ), "System prompt cannot be used with list of messages since the list may include a system message"
             user_input = typeguard.check_type(user_input, list[dict[str, str]])
             messages = user_input
         elif isinstance(user_input, str):

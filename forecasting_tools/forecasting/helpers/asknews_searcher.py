@@ -62,7 +62,8 @@ class OAuth2ClientCredentials(Auth):
     ) -> AsyncGenerator[Request, None]:
         if not self.token or (
             self.token_expires
-            and datetime.now().timestamp() > self.token_expires
+            and datetime.now().timestamp()
+            > (self.token_expires - 15)  # 15 seconds before expiration
         ):
             token_request = self._build_token_request()
             async with httpx.AsyncClient() as client:
