@@ -1,11 +1,8 @@
 from typing import Final
 
 from forecasting_tools.ai_models.ai_utils.openai_utils import VisionMessageData
-from forecasting_tools.ai_models.ai_utils.response_types import (
-    TextTokenCostResponse,
-)
-from forecasting_tools.ai_models.model_archetypes.general_text_to_text_llm import (
-    BaseLlmArchetype,
+from forecasting_tools.ai_models.basic_model_interfaces.combined_llm_archetype import (
+    CombinedLlmArchetype,
 )
 
 
@@ -14,7 +11,7 @@ class Gpt4VisionInput(VisionMessageData):
     pass
 
 
-class Gpt4oVision(BaseLlmArchetype):
+class Gpt4oVision(CombinedLlmArchetype):
     MODEL_NAME: Final[str] = "gpt-4o"
     REQUESTS_PER_PERIOD_LIMIT: Final[int] = (
         4000  # Errors said the limit is 4k, but it says 100k online See OpenAI Limit on the account dashboard for most up-to-date limit
@@ -34,12 +31,3 @@ class Gpt4oVision(BaseLlmArchetype):
     @classmethod
     def _get_cheap_input_for_invoke(cls) -> VisionMessageData:
         return cls.CHEAP_VISION_MESSAGE_DATA
-
-    async def invoke(self, input: VisionMessageData) -> str:
-        assert isinstance(input, VisionMessageData)
-        response: TextTokenCostResponse = (
-            await self._invoke_with_request_cost_time_and_token_limits_and_retry(
-                input
-            )
-        )
-        return response.data

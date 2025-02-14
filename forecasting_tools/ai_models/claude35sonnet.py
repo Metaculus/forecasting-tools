@@ -1,11 +1,11 @@
 from typing import Final
 
-from forecasting_tools.ai_models.model_archetypes.general_text_to_text_llm import (
-    BaseLlmArchetype,
+from forecasting_tools.ai_models.basic_model_interfaces.combined_llm_archetype import (
+    CombinedLlmArchetype,
 )
 
 
-class Claude35Sonnet(BaseLlmArchetype):
+class Claude35Sonnet(CombinedLlmArchetype):
     # See Anthropic Limit on the account dashboard for most up-to-date limit
     # Latest as of Nov 6 2024 is claude-2-5-sonnet-20241022
     # Latest in general is claude-3-5-sonnet-latest

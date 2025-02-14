@@ -1,9 +1,9 @@
-from forecasting_tools.ai_models.model_archetypes.general_text_to_text_llm import (
-    BaseLlmArchetype,
+from forecasting_tools.ai_models.basic_model_interfaces.combined_llm_archetype import (
+    CombinedLlmArchetype,
 )
 
 
-class DeepSeekR1(BaseLlmArchetype):
+class DeepSeekR1(CombinedLlmArchetype):
     MODEL_NAME = "deepseek/deepseek-reasoner"
     REQUESTS_PER_PERIOD_LIMIT: int = 8_000
     REQUEST_PERIOD_IN_SECONDS: int = 60

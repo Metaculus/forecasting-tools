@@ -1,7 +1,7 @@
-from forecasting_tools.ai_models.ai_utils.openai_utils import OpenAiUtils
-from forecasting_tools.ai_models.model_archetypes.openai_vision_model import (
-    OpenAiVisionToTextModel,
+from code_tests.unit_tests.test_ai_models.models_to_test import (
+    GeneralLlmInstancesToTest,
 )
+from forecasting_tools.ai_models.ai_utils.openai_utils import OpenAiUtils
 
 
 ################################## Message Creation Tests ##################################
@@ -26,7 +26,7 @@ def test_system_and_user_message_creator_has_two_messages() -> None:
 
 
 def test_vision_message_creator_has_one_message() -> None:
-    vision_data = OpenAiVisionToTextModel.CHEAP_VISION_MESSAGE_DATA
+    vision_data = GeneralLlmInstancesToTest.CHEAP_VISION_MESSAGE_DATA
     messages = (
         OpenAiUtils.put_single_image_message_in_list_using_gpt_vision_input(
             vision_data
@@ -39,7 +39,7 @@ def test_vision_message_creator_has_one_message() -> None:
 
 
 def test_system_and_vision_message_creator_has_two_messages() -> None:
-    vision_data = OpenAiVisionToTextModel.CHEAP_VISION_MESSAGE_DATA
+    vision_data = GeneralLlmInstancesToTest.CHEAP_VISION_MESSAGE_DATA
     messages = OpenAiUtils.create_system_and_image_message_from_prompt(
         vision_data, "Hi"
     )

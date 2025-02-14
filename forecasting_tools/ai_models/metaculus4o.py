@@ -1,11 +1,11 @@
 from typing import Final
 
-from forecasting_tools.ai_models.model_archetypes.general_text_to_text_llm import (
-    BaseLlmArchetype,
+from forecasting_tools.ai_models.basic_model_interfaces.combined_llm_archetype import (
+    CombinedLlmArchetype,
 )
 
 
-class Gpt4oMetaculusProxy(BaseLlmArchetype):
+class Gpt4oMetaculusProxy(CombinedLlmArchetype):
     """
     This model sends gpt4o requests to the Metaculus proxy server.
     """
