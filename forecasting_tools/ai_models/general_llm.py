@@ -64,7 +64,7 @@ class GeneralLlm(
     A wrapper around litellm's acompletion function that adds some functionality
     like rate limiting, retry logic, metaculus proxy, and cost callback handling.
 
-    Litellm support every model and acts as one interface for every provider.
+    Litellm support every model, most every parameter, and acts as one interface for every provider.
     """
 
     _model_trackers: dict[str, ModelTracker] = {}
@@ -115,6 +115,7 @@ class GeneralLlm(
         model_list: list | None = None,  # pass in a list of api_base,keys, etc.
         extra_headers: dict | None = None,
         # Optional liteLLM function params
+        **kwargs,
         """
         super().__init__(allowed_tries=allowed_tries)
         self.model = model
@@ -271,26 +272,19 @@ class GeneralLlm(
                 messages = [user_message]
         elif isinstance(user_input, VisionMessageData):
             if system_prompt is not None:
-                temporary_messages = (
+                messages = (
                     OpenAiUtils.create_system_and_image_message_from_prompt(
                         user_input, system_prompt
                     )
-                )
-                temporary_messages = typeguard.check_type(
-                    temporary_messages, list[dict[str, str]]
-                )
-                messages = temporary_messages
+                )  # type: ignore
             else:
-                temporary_messages = OpenAiUtils.put_single_image_message_in_list_using_gpt_vision_input(
+                messages = OpenAiUtils.put_single_image_message_in_list_using_gpt_vision_input(
                     user_input
-                )
-                temporary_messages = typeguard.check_type(
-                    temporary_messages, list[dict[str, str]]
-                )
-                messages = temporary_messages
+                )  # type: ignore
         else:
-            raise TypeError("Prompt must be a str or VisionMessageData")
+            raise TypeError("Unexpected model input type")
 
+        messages = typeguard.check_type(messages, list[dict[str, str]])
         return messages
 
     ################################## Methods For Mocking/Testing ##################################
