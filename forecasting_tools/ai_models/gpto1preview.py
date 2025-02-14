@@ -3,7 +3,7 @@ from typing import Any
 from forecasting_tools.ai_models.ai_utils.response_types import (
     TextTokenCostResponse,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.combined_llm_archetype import (
+from forecasting_tools.ai_models.model_interfaces.combined_llm_archetype import (
     CombinedLlmArchetype,
 )
 

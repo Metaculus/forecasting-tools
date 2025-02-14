@@ -14,11 +14,11 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import validate_complex_type
 from forecasting_tools.ai_models.ai_utils.response_types import (
     TextTokenCostResponse,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
-from forecasting_tools.ai_models.basic_model_interfaces.outputs_text import (
+from forecasting_tools.ai_models.gpt4o import Gpt4o
+from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
+from forecasting_tools.ai_models.model_interfaces.outputs_text import (
     OutputsText,
 )
-from forecasting_tools.ai_models.gpt4o import Gpt4o
 
 logger = logging.getLogger(__name__)
 

@@ -8,8 +8,8 @@ from code_tests.unit_tests.test_ai_models.ai_mock_manager import (
     AiModelMockManager,
 )
 from code_tests.unit_tests.test_ai_models.models_to_test import ModelsToTest
-from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
-from forecasting_tools.ai_models.basic_model_interfaces.retryable_model import (
+from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
+from forecasting_tools.ai_models.model_interfaces.retryable_model import (
     RetryableModel,
 )
 

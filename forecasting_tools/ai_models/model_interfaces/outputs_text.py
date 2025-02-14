@@ -12,7 +12,7 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import (
     try_function_till_tries_run_out,
     validate_complex_type,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
+from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)

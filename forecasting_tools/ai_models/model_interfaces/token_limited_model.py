@@ -3,13 +3,13 @@ from __future__ import annotations
 import logging
 from abc import ABC
 
-from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
+from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 
 logger = logging.getLogger(__name__)
 import functools
 from typing import Any, Callable, Coroutine, TypeVar
 
-from forecasting_tools.ai_models.basic_model_interfaces.tokens_are_calculatable import (
+from forecasting_tools.ai_models.model_interfaces.tokens_are_calculatable import (
     TokensAreCalculatable,
 )
 from forecasting_tools.ai_models.resource_managers.refreshing_bucket_rate_limiter import (

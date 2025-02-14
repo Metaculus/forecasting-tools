@@ -1,7 +1,7 @@
 import logging
 from typing import Final
 
-from forecasting_tools.ai_models.basic_model_interfaces.combined_llm_archetype import (
+from forecasting_tools.ai_models.model_interfaces.combined_llm_archetype import (
     CombinedLlmArchetype,
 )
 

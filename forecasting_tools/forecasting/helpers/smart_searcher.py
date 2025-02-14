@@ -5,14 +5,14 @@ import urllib.parse
 from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
-from forecasting_tools.ai_models.basic_model_interfaces.outputs_text import (
-    OutputsText,
-)
 from forecasting_tools.ai_models.exa_searcher import (
     ExaHighlightQuote,
     ExaSearcher,
     SearchInput,
+)
+from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
+from forecasting_tools.ai_models.model_interfaces.outputs_text import (
+    OutputsText,
 )
 from forecasting_tools.forecasting.helpers.configured_llms import BasicLlm
 from forecasting_tools.forecasting.helpers.works_cited_creator import (

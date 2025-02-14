@@ -18,13 +18,13 @@ from forecasting_tools.ai_models.ai_utils.openai_utils import (
 from forecasting_tools.ai_models.ai_utils.response_types import (
     TextTokenCostResponse,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.outputs_text import (
+from forecasting_tools.ai_models.model_interfaces.outputs_text import (
     OutputsText,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.retryable_model import (
+from forecasting_tools.ai_models.model_interfaces.retryable_model import (
     RetryableModel,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.tokens_incur_cost import (
+from forecasting_tools.ai_models.model_interfaces.tokens_incur_cost import (
     TokensIncurCost,
 )
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (

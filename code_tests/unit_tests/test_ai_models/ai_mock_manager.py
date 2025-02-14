@@ -2,17 +2,17 @@ import asyncio
 import logging
 from unittest.mock import Mock
 
-from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
-from forecasting_tools.ai_models.basic_model_interfaces.request_limited_model import (
+from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
+from forecasting_tools.ai_models.model_interfaces.request_limited_model import (
     RequestLimitedModel,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.time_limited_model import (
+from forecasting_tools.ai_models.model_interfaces.time_limited_model import (
     TimeLimitedModel,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.token_limited_model import (
+from forecasting_tools.ai_models.model_interfaces.token_limited_model import (
     TokenLimitedModel,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.tokens_are_calculatable import (
+from forecasting_tools.ai_models.model_interfaces.tokens_are_calculatable import (
     TokensAreCalculatable,
 )
 

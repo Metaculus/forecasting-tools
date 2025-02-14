@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from typing import Any, Callable, Coroutine, TypeVar
 
-from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
+from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 
 logger = logging.getLogger(__name__)
 import functools

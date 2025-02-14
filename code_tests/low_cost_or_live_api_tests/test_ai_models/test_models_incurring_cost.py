@@ -12,11 +12,12 @@ from code_tests.unit_tests.test_ai_models.models_to_test import ModelsToTest
 from forecasting_tools.ai_models.ai_utils.response_types import (
     TextTokenCostResponse,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
-from forecasting_tools.ai_models.basic_model_interfaces.incurs_cost import (
-    IncursCost,
+from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
+from forecasting_tools.ai_models.model_interfaces.combined_llm_archetype import (
+    CombinedLlmArchetype,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.retryable_model import (
+from forecasting_tools.ai_models.model_interfaces.incurs_cost import IncursCost
+from forecasting_tools.ai_models.model_interfaces.retryable_model import (
     RetryableModel,
 )
 from forecasting_tools.ai_models.resource_managers.hard_limit_manager import (
@@ -122,6 +123,27 @@ def test_cost_manager_notices_cost_without_mocks(
     max_cost = 100
     cost = run_cheap_invoke_and_track_cost(subclass, max_cost)
     assert cost > 0, "No cost was incurred"
+
+
+@pytest.mark.parametrize("subclass", ModelsToTest.INCURS_COST_LIST)
+async def test_cost_calculated_matches_actual_cost(
+    subclass: type[AiModel],
+) -> None:
+    if not issubclass(subclass, CombinedLlmArchetype):
+        pytest.skip("Model does not have calculate_cost_from_tokens method")
+    model = subclass()
+    direct_response = await model._mockable_direct_call_to_model(
+        model._get_cheap_input_for_invoke()
+    )
+    assert isinstance(direct_response, TextTokenCostResponse)
+    actual_cost = direct_response.cost
+    calculated_cost = model.calculate_cost_from_tokens(
+        direct_response.prompt_tokens_used,
+        direct_response.completion_tokens_used,
+    )
+    assert calculated_cost == pytest.approx(
+        actual_cost
+    ), "Cost calculated does not match actual cost"
 
 
 @pytest.mark.parametrize("subclass", ModelsToTest.INCURS_COST_LIST)

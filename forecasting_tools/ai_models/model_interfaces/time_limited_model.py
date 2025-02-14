@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from abc import ABC
 
-from forecasting_tools.ai_models.basic_model_interfaces.ai_model import AiModel
+from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.util import async_batching
 
 logger = logging.getLogger(__name__)

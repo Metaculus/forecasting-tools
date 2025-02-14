@@ -15,13 +15,13 @@ import time
 from enum import Enum
 
 from code_tests.utilities_for_tests import coroutine_testing
-from forecasting_tools.ai_models.basic_model_interfaces.request_limited_model import (
+from forecasting_tools.ai_models.model_interfaces.request_limited_model import (
     RequestLimitedModel,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.token_limited_model import (
+from forecasting_tools.ai_models.model_interfaces.token_limited_model import (
     TokenLimitedModel,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.tokens_are_calculatable import (
+from forecasting_tools.ai_models.model_interfaces.tokens_are_calculatable import (
     TokensAreCalculatable,
 )
 from forecasting_tools.util import async_batching

@@ -7,16 +7,14 @@ from datetime import datetime
 import aiohttp
 from pydantic import BaseModel, Field
 
-from forecasting_tools.ai_models.basic_model_interfaces.incurs_cost import (
-    IncursCost,
-)
-from forecasting_tools.ai_models.basic_model_interfaces.request_limited_model import (
+from forecasting_tools.ai_models.model_interfaces.incurs_cost import IncursCost
+from forecasting_tools.ai_models.model_interfaces.request_limited_model import (
     RequestLimitedModel,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.retryable_model import (
+from forecasting_tools.ai_models.model_interfaces.retryable_model import (
     RetryableModel,
 )
-from forecasting_tools.ai_models.basic_model_interfaces.time_limited_model import (
+from forecasting_tools.ai_models.model_interfaces.time_limited_model import (
     TimeLimitedModel,
 )
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
