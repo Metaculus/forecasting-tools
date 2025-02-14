@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "forecasting-tools"
-version = "0.2.11"
+version = "0.2.12"
 description = "AI forecasting and research tools to help humans reason about and forecast the future"
 authors = ["Benjamin Wilson <mokoresearch@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-keywords = ["ai", "forecasting", "research", "metaculus", "prediction"]
+keywords = ["ai", "forecasting", "research", "metaculus", "prediction", "future", "market"]
 repository = "https://github.com/Metaculus/forecasting-tools"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -18,10 +18,6 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-langchain-community = "^0.3.13"
-langchain-openai = "^0.3.2"
-langchain-core = "^0.3.15"
-langchain-anthropic = "^0.3.1"
 openai = "^1.51.0"
 tiktoken = "^0.8.0"
 aiofiles = "^24.1.0"

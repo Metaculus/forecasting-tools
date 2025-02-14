@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import logging
 import os
 from typing import Any
@@ -48,6 +49,12 @@ logger = logging.getLogger(__name__)
 ModelInputType = str | VisionMessageData | list[dict[str, str]]
 
 
+class ModelTracker:
+    def __init__(self, model: str) -> None:
+        self.model = model
+        self.gave_cost_tracking_warning = False
+
+
 class GeneralLlm(
     TokensIncurCost,
     RetryableModel,
@@ -60,13 +67,14 @@ class GeneralLlm(
     Litellm support every model and acts as one interface for every provider.
     """
 
-    _gave_cost_tracking_warning: bool = False
+    _model_trackers: dict[str, ModelTracker] = {}
 
     def __init__(
-        self,  # NOSONAR
+        self,
         model: str,
         allowed_tries: int = RetryableModel._DEFAULT_ALLOWED_TRIES,
-        system_prompt: str | None = None,
+        temperature: float | int | None = 0,
+        timeout: float | int | None = 120,
         **kwargs,
     ) -> None:
         """
@@ -118,10 +126,10 @@ class GeneralLlm(
             if self._use_metaculus_proxy
             else model
         )
-        self.system_prompt = system_prompt
-
         self.litellm_kwargs = kwargs
         self.litellm_kwargs["model"] = self._litellm_model
+        self.litellm_kwargs["temperature"] = temperature
+        self.litellm_kwargs["timeout"] = timeout
 
         if self._use_metaculus_proxy:
             assert (
@@ -143,18 +151,39 @@ class GeneralLlm(
                 "Content-Type": "application/json",
                 "Authorization": f"Token {METACULUS_TOKEN}",
             }
-        if not self._gave_cost_tracking_warning:
-            self._give_cost_tracking_warning()
-            self._gave_cost_tracking_warning = True
 
-    def _give_cost_tracking_warning(self) -> None:
+        valid_acompletion_params = set(
+            inspect.signature(acompletion).parameters.keys()
+        )
+        invalid_params = (
+            set(self.litellm_kwargs.keys()) - valid_acompletion_params
+        )
+        if invalid_params:
+            raise ValueError(
+                f"The following parameters are not valid for litellm's acompletion: {invalid_params}"
+            )
+
+        self._give_cost_tracking_warning_if_needed()
+
+    def _give_cost_tracking_warning_if_needed(self) -> None:
+        model = self._litellm_model
+        model_tracker = self._model_trackers.get(model)
+        if model_tracker is None:
+            self._model_trackers[model] = ModelTracker(model)
+        model_tracker = self._model_trackers[model]
+
+        if model_tracker.gave_cost_tracking_warning:
+            return
+
         assert isinstance(model_cost, dict)
         supported_model_names = model_cost.keys()
-        model_not_supported = self._litellm_model not in supported_model_names
+        model_not_supported = model not in supported_model_names
         if model_not_supported:
-            message = f"Warning: Model {self._litellm_model} does not support cost tracking."
+            message = f"Warning: Model {model} does not support cost tracking."
             print(message)
             logger.warning(message)
+
+        model_tracker.gave_cost_tracking_warning = True
 
     async def invoke(self, prompt: ModelInputType) -> str:
         response: TextTokenCostResponse = (
@@ -191,7 +220,7 @@ class GeneralLlm(
         litellm.drop_params = True
 
         response = await acompletion(
-            messages=self._get_messages(prompt),
+            messages=self.model_input_to_message(prompt),
             **self.litellm_kwargs,
         )
         assert isinstance(response, ModelResponse)
@@ -220,8 +249,8 @@ class GeneralLlm(
             cost=cost,
         )
 
-    def _get_messages(
-        self, user_input: ModelInputType
+    def model_input_to_message(
+        self, user_input: ModelInputType, system_prompt: str | None = None
     ) -> list[dict[str, str]]:
         messages: list[dict[str, str]] = []
 
@@ -233,18 +262,18 @@ class GeneralLlm(
                 "role": "user",
                 "content": user_input,
             }
-            if self.system_prompt is not None:
+            if system_prompt is not None:
                 messages = [
-                    {"role": "system", "content": self.system_prompt},
+                    {"role": "system", "content": system_prompt},
                     user_message,
                 ]
             else:
                 messages = [user_message]
         elif isinstance(user_input, VisionMessageData):
-            if self.system_prompt is not None:
+            if system_prompt is not None:
                 temporary_messages = (
                     OpenAiUtils.create_system_and_image_message_from_prompt(
-                        user_input, self.system_prompt
+                        user_input, system_prompt
                     )
                 )
                 temporary_messages = typeguard.check_type(
@@ -300,7 +329,8 @@ class GeneralLlm(
 
     def input_to_tokens(self, prompt: ModelInputType) -> int:
         return token_counter(
-            model=self._litellm_model, messages=self._get_messages(prompt)
+            model=self._litellm_model,
+            messages=self.model_input_to_message(prompt),
         )
 
     def text_to_tokens_direct(self, text: str) -> int:

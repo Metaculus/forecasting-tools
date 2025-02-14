@@ -66,8 +66,8 @@ class CombinedLlmArchetype(
             model=model_name,
             temperature=temperature,
             allowed_tries=allowed_tries,
-            system_prompt=system_prompt,
         )
+        self.system_prompt = system_prompt
 
     @classmethod
     def _give_cost_tracking_warning(cls) -> None:
@@ -79,8 +79,14 @@ class CombinedLlmArchetype(
                 f"Model {cls.MODEL_NAME} does not support cost tracking. "
             )
 
-    async def invoke(self, prompt: str | VisionMessageData) -> str:
+    async def invoke(
+        self, prompt: str | VisionMessageData | list[dict[str, str]]
+    ) -> str:
         MonetaryCostManager.raise_error_if_limit_would_be_reached()
+        if self.system_prompt is not None:
+            prompt = self.llm.model_input_to_message(
+                prompt, self.system_prompt
+            )
         response: TextTokenCostResponse = (
             await self._mockable_direct_call_to_model(prompt)
         )
@@ -95,7 +101,7 @@ class CombinedLlmArchetype(
         cls._reinitialize_token_limiter()
 
     async def _mockable_direct_call_to_model(
-        self, prompt: str | VisionMessageData
+        self, prompt: str | VisionMessageData | list[dict[str, str]]
     ) -> TextTokenCostResponse:
         return await self.llm._mockable_direct_call_to_model(prompt)
 
