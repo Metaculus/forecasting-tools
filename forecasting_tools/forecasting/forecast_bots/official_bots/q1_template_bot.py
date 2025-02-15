@@ -116,14 +116,18 @@ class Q1TemplateBot(ForecastBot):
         model = None
         if os.getenv("OPENAI_API_KEY"):
             model = GeneralLlm(model="gpt-4o", temperature=0.3)
-        elif os.getenv("METACULUS_TOKEN"):
-            model = GeneralLlm(model="metaculus/gpt-4o", temperature=0.3)
         elif os.getenv("ANTHROPIC_API_KEY"):
             model = GeneralLlm(
                 model="claude-3-5-sonnet-20241022", temperature=0.3
             )
+        elif os.getenv("OPENROUTER_API_KEY"):
+            model = GeneralLlm(
+                model="openrouter/openai/gpt-4o", temperature=0.3
+            )
+        elif os.getenv("METACULUS_TOKEN"):
+            model = GeneralLlm(model="metaculus/gpt-4o", temperature=0.3)
         else:
-            model = GeneralLlm(model="gpt-4o", temperature=0.3)
+            raise ValueError("No API key for final_decision_llm found")
         return model
 
     async def _run_forecast_on_binary(

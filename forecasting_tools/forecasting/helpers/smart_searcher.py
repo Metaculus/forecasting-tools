@@ -30,16 +30,13 @@ class SmartSearcher(OutputsText, AiModel):
 
     def __init__(
         self,
-        *args,
         include_works_cited_list: bool = False,
         use_brackets_around_citations: bool = True,
         num_searches_to_run: int = 2,
         num_sites_per_search: int = 10,
         model: str | GeneralLlm = default_llms["basic"],
         temperature: float | None = None,
-        **kwargs,
     ) -> None:
-        super().__init__(*args, **kwargs)
         assert (
             temperature is None or 0 <= temperature <= 1
         ), "Temperature must be between 0 and 1"
@@ -56,7 +53,7 @@ class SmartSearcher(OutputsText, AiModel):
         else:
             assert (
                 temperature is None
-            ), "Temperature must be None if model is a GeneralLlm"
+            ), "Temperature must be None if model is a preconfigured GeneralLlm"
             self.llm = model
         self.include_works_cited_list = include_works_cited_list
         self.use_citation_brackets = use_brackets_around_citations

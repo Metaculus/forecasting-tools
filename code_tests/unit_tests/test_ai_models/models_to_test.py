@@ -135,6 +135,10 @@ class GeneralLlmInstancesToTest:
                 GeneralLlm(model="deepseek/deepseek-reasoner"),
                 self._get_cheap_user_message(),
             ),
+            ModelTest(
+                GeneralLlm(model="openrouter/openai/gpt-4o"),
+                self._get_cheap_user_message(),
+            ),
         ]
 
     def all_tests_with_names(self) -> list[tuple[str, ModelTest]]:
