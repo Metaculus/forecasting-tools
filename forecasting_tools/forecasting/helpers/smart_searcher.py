@@ -10,11 +10,12 @@ from forecasting_tools.ai_models.exa_searcher import (
     ExaSearcher,
     SearchInput,
 )
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.model_interfaces.outputs_text import (
     OutputsText,
 )
-from forecasting_tools.forecasting.helpers.configured_llms import BasicLlm
+from forecasting_tools.forecasting.helpers.configured_llms import default_llms
 from forecasting_tools.forecasting.helpers.works_cited_creator import (
     WorksCitedCreator,
 )
@@ -30,15 +31,18 @@ class SmartSearcher(OutputsText, AiModel):
     def __init__(
         self,
         *args,
-        temperature: float = 0,
         include_works_cited_list: bool = False,
         use_brackets_around_citations: bool = True,
         num_searches_to_run: int = 2,
         num_sites_per_search: int = 10,
+        model: str | GeneralLlm = default_llms["basic"],
+        temperature: float | None = None,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        assert 0 <= temperature <= 1, "Temperature must be between 0 and 1"
+        assert (
+            temperature is None or 0 <= temperature <= 1
+        ), "Temperature must be between 0 and 1"
         self.temperature = temperature
         self.num_quotes_to_evaluate_from_search = 15
         self.number_of_searches_to_run = num_searches_to_run
@@ -47,7 +51,13 @@ class SmartSearcher(OutputsText, AiModel):
             include_highlights=True,
             num_results=num_sites_per_search,
         )
-        self.llm = BasicLlm(temperature=temperature)
+        if isinstance(model, str):
+            self.llm = GeneralLlm(model=model, temperature=temperature)
+        else:
+            assert (
+                temperature is None
+            ), "Temperature must be None if model is a GeneralLlm"
+            self.llm = model
         self.include_works_cited_list = include_works_cited_list
         self.use_citation_brackets = use_brackets_around_citations
 

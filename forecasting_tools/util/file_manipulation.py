@@ -75,7 +75,7 @@ def skip_if_file_writing_not_allowed(func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper(*args, **kwargs):  # NOSONAR
         not_allowed_to_write_to_files_string: str = os.environ.get(
-            "FILE_WRITING_ALLOWED", "FALSE"
+            "FILE_WRITING_ALLOWED", "TRUE"
         )
         is_allowed = not_allowed_to_write_to_files_string.upper() == "TRUE"
         if is_allowed:

@@ -18,28 +18,6 @@ logger = logging.getLogger(__name__)
 TIME_LIMITED_ERROR_MESSAGE = "Model must be TimeLimited"
 
 
-@pytest.mark.skip(
-    "This test takes too long to run between threads for some reason (it passes but doesn't check for timeout within 10 sec). Not important enough to fix right now"
-)
-@pytest.mark.parametrize("subclass", ModelsToTest.TIME_LIMITED_LIST)
-def test_ai_model_successfully_times_out(
-    mocker: Mock, subclass: type[AiModel]
-) -> None:
-    if not issubclass(subclass, TimeLimitedModel):
-        raise ValueError(TIME_LIMITED_ERROR_MESSAGE)
-
-    subclass.TIMEOUT_TIME = 10
-
-    AiModelMockManager.mock_ai_model_direct_call_with_long_wait(
-        mocker, subclass
-    )
-    model = subclass()
-    model_input = model._get_cheap_input_for_invoke()
-
-    with pytest.raises(asyncio.exceptions.TimeoutError):
-        asyncio.run(model.invoke(model_input))
-
-
 @pytest.mark.parametrize("subclass", ModelsToTest.TIME_LIMITED_LIST)
 def test_ai_model_has_at_least_minimum_timeout(
     mocker: Mock, subclass: type[AiModel]

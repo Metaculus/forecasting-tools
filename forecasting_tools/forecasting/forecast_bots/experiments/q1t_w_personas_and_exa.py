@@ -6,6 +6,7 @@ import typeguard
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.gpt4o import Gpt4o
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import ScratchPad
 from forecasting_tools.forecasting.forecast_bots.official_bots.q1_template_bot import (
@@ -57,7 +58,6 @@ class PersonaScratchpad(ScratchPad):
 
 
 class Q1TemplateWithPersonasAndExa(Q1TemplateBot):
-    FINAL_DECISION_LLM = Gpt4o(temperature=0.3)
 
     def __init__(
         self,
@@ -78,6 +78,9 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot):
             skip_previously_forecasted_questions=skip_previously_forecasted_questions,
         )
         self.scratch_pads: list[PersonaScratchpad] = []
+
+    def _get_final_decision_llm(self) -> GeneralLlm:
+        return GeneralLlm(model="gpt-4o", temperature=0.3)
 
     async def _initialize_scratchpad(
         self, question: MetaculusQuestion
@@ -161,7 +164,7 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self.FINAL_DECISION_LLM.invoke(prompt)
+        reasoning = await self._get_final_decision_llm().invoke(prompt)
         prediction = self._extract_forecast_from_binary_rationale(
             reasoning, max_prediction=1, min_prediction=0
         )
@@ -213,7 +216,7 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self.FINAL_DECISION_LLM.invoke(prompt)
+        reasoning = await self._get_final_decision_llm().invoke(prompt)
         prediction = self._extract_forecast_from_multiple_choice_rationale(
             reasoning, question.options
         )
@@ -280,7 +283,7 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot):
             "
             """
         )
-        reasoning = await self.FINAL_DECISION_LLM.invoke(prompt)
+        reasoning = await self._get_final_decision_llm().invoke(prompt)
         reasoning = f"Persona:\n{persona_message}\n\nReasoning:\n{reasoning}"
         prediction = self._extract_forecast_from_numeric_rationale(
             reasoning, question

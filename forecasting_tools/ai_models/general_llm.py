@@ -33,19 +33,6 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 )
 
 logger = logging.getLogger(__name__)
-
-
-# Structured Output
-# System Prompt
-
-# Confirmed Tests
-# calculate_cost_from_tokens matches actual cost given actual tokens
-# Works with vision data, prompt, and list of messages into GeneralLlm
-# Rejects system prompt if included in list of messages
-# Metaculus proxy fails on unsupported models
-# parametrize with instances and inputs
-
-
 ModelInputType = str | VisionMessageData | list[dict[str, str]]
 
 
@@ -241,6 +228,8 @@ class GeneralLlm(
         if cost is None:
             cost = 0
 
+        cost += self.calculate_per_request_cost(self.model)
+
         return TextTokenCostResponse(
             data=answer,
             prompt_tokens_used=prompt_tokens,
@@ -334,7 +323,10 @@ class GeneralLlm(
         return token_counter(model=self._litellm_model, text=text)
 
     def calculate_cost_from_tokens(
-        self, prompt_tkns: int, completion_tkns: int
+        self,
+        prompt_tkns: int,
+        completion_tkns: int,
+        calculate_full_cost: bool = True,
     ) -> float:
         assert self._litellm_model is not None
         # litellm.model_cost contains cost per 1k tokens for input/output
@@ -355,4 +347,15 @@ class GeneralLlm(
         completion_cost = (completion_tkns / 1000) * output_cost_per_1k
 
         total_cost = prompt_cost + completion_cost
+        if calculate_full_cost:
+            total_cost += self.calculate_per_request_cost(self.model)
         return total_cost
+
+    @classmethod
+    def calculate_per_request_cost(cls, model: str) -> float:
+        cost = 0
+        if "perplexity" in model:
+            cost += 0.005  # There is at least one search costing $0.005 per perplexity request
+            if "pro" in model:
+                cost += 0.005  # There is probably more than one search in pro models
+        return cost

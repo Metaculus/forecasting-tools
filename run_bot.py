@@ -15,7 +15,9 @@ dotenv.load_dotenv()
 
 import logging
 
-from forecasting_tools.forecasting.forecast_bots.main_bot import MainBot
+from forecasting_tools.forecasting.forecast_bots.community.q1_veritas_bot import (
+    Q1VeritasBot,
+)
 from forecasting_tools.forecasting.helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
@@ -35,7 +37,7 @@ async def run_forecasts(skip_previous: bool, tournament: int | str) -> None:
     Make a copy of this file called run_bot.py (i.e. remove template) and fill in your bot details.
     This will be run in the workflows
     """
-    forecaster = MainBot(
+    forecaster = Q1VeritasBot(
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=skip_previous,

@@ -8,11 +8,11 @@ import typeguard
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.forecasting.forecast_bots.community.q1_veritas_bot import (
+    Q1VeritasBot,
+)
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
     ForecastBot,
-)
-from forecasting_tools.forecasting.forecast_bots.official_bots.q1_veritas_bot import (
-    Q1VeritasBot,
 )
 from forecasting_tools.forecasting.helpers.benchmarker import Benchmarker
 from forecasting_tools.util.custom_logger import CustomLogger

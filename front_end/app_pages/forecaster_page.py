@@ -5,7 +5,7 @@ import dotenv
 import streamlit as st
 from pydantic import BaseModel, Field
 
-from forecasting_tools.forecasting.forecast_bots.official_bots.q4_veritas_bot import (
+from forecasting_tools.forecasting.forecast_bots.community.q4_veritas_bot import (
     Q4VeritasBot,
 )
 from forecasting_tools.forecasting.helpers.forecast_database_manager import (

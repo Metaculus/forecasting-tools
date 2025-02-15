@@ -92,7 +92,7 @@ class Q1TemplateBotWithConvertToBinary(Q1TemplateBot):
             """
         )
 
-        final_distribution = await self.FINAL_DECISION_LLM.invoke(
+        final_distribution = await self._get_final_decision_llm().invoke(
             consistency_prompt
         )
         prediction = self._extract_forecast_from_multiple_choice_rationale(
@@ -212,7 +212,7 @@ class Q1TemplateBotWithConvertToBinary(Q1TemplateBot):
             """
         )
 
-        final_distribution = await self.FINAL_DECISION_LLM.invoke(
+        final_distribution = await self._get_final_decision_llm().invoke(
             consistency_prompt
         )
         prediction = self._extract_forecast_from_numeric_rationale(

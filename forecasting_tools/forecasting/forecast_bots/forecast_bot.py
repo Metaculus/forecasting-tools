@@ -45,9 +45,12 @@ class ScratchPad(BaseModel):
     Context object that is available while forecasting on a question
     You can keep tally's, todos, notes, or other organizational information here
     that other parts of the forecasting bot needs to access
+
+    You will want to inherit from this class to add additional attributes
     """
 
     question: MetaculusQuestion
+    note_entries: dict[str, str] = {}
 
 
 class ForecastBot(ABC):

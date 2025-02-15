@@ -1,3 +1,9 @@
+from forecasting_tools.forecasting.forecast_bots.community.q1_veritas_bot import (
+    Q1VeritasBot,
+)
+from forecasting_tools.forecasting.forecast_bots.community.q4_veritas_bot import (
+    Q4VeritasBot,
+)
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
     ForecastBot,
 )
@@ -5,17 +11,11 @@ from forecasting_tools.forecasting.forecast_bots.main_bot import MainBot
 from forecasting_tools.forecasting.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot,
 )
-from forecasting_tools.forecasting.forecast_bots.official_bots.q1_veritas_bot import (
-    Q1VeritasBot,
-)
 from forecasting_tools.forecasting.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot,
 )
 from forecasting_tools.forecasting.forecast_bots.official_bots.q4_template_bot import (
     Q4TemplateBot,
-)
-from forecasting_tools.forecasting.forecast_bots.official_bots.q4_veritas_bot import (
-    Q4VeritasBot,
 )
 from forecasting_tools.forecasting.forecast_bots.template_bot import (
     TemplateBot,
