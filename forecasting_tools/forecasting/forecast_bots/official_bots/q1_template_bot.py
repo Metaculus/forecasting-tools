@@ -12,7 +12,7 @@ from forecasting_tools.forecasting.helpers.asknews_searcher import (
     AskNewsSearcher,
 )
 from forecasting_tools.forecasting.helpers.prediction_extraction import (
-    extract_final_percentage,
+    extract_last_percentage_value,
     extract_numeric_distribution_from_list_of_percentile_number_and_probability,
     extract_option_list_with_percentage_afterwards,
 )
@@ -163,7 +163,7 @@ class Q1TemplateBot(ForecastBot):
             """
         )
         reasoning = await self._get_final_decision_llm().invoke(prompt)
-        prediction = extract_final_percentage(
+        prediction = extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0
         )
         logger.info(
