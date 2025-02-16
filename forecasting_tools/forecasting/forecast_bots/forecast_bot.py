@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import logging
+import os
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -9,6 +10,7 @@ from typing import Any, Coroutine, Sequence, TypeVar, cast, overload
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
@@ -206,7 +208,32 @@ class ForecastBot(ABC):
     async def summarize_research(
         self, question: MetaculusQuestion, research: str
     ) -> str:
-        return f"{research[:2500]}..."
+        default_summary = f"{research[:2500]}..."
+
+        if os.getenv("OPENAI_API_KEY"):
+            model = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+        elif os.getenv("METACULUS_TOKEN"):
+            model = GeneralLlm(model="metaculus/gpt-4o-mini", temperature=0.3)
+        else:
+            return default_summary
+
+        try:
+            prompt = clean_indents(
+                f"""
+                Please summarize the following research report in 1-2 paragraphs. The report tries to help answer the question:
+                {question.question_text}
+
+                The research report is:
+                {research}
+                """
+            )
+            summary = await model.invoke(prompt)
+            return summary
+        except Exception as e:
+            logger.debug(
+                f"Could not summarize research. Defaulting to first 2500 characters: {e}"
+            )
+            return default_summary
 
     async def _run_individual_question(
         self, question: MetaculusQuestion
@@ -248,7 +275,7 @@ class ForecastBot(ABC):
                 for research_prediction_collection in valid_prediction_set
                 for reasoned_prediction in research_prediction_collection.predictions
             ]
-            aggregated_prediction = await report_type.aggregate_predictions(
+            aggregated_prediction = await self._aggregate_predictions(
                 all_predictions,
                 question,
             )
@@ -275,6 +302,16 @@ class ForecastBot(ABC):
             await report.publish_report_to_metaculus()
         await self._remove_scratchpad(question)
         return report
+
+    async def _aggregate_predictions(
+        self,
+        predictions: list[ReasonedPrediction[Any]],
+        question: MetaculusQuestion,
+    ) -> Any:
+        report_type = DataOrganizer.get_report_type_for_question_type(
+            type(question)
+        )
+        return report_type.aggregate_predictions(predictions, question)
 
     async def _research_and_make_predictions(
         self, question: MetaculusQuestion

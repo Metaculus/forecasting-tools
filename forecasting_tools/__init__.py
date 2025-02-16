@@ -6,6 +6,7 @@ from forecasting_tools.ai_models.claude35sonnet import (
 )
 from forecasting_tools.ai_models.deepseek_r1 import DeepSeekR1 as DeepSeekR1
 from forecasting_tools.ai_models.exa_searcher import ExaSearcher as ExaSearcher
+from forecasting_tools.ai_models.general_llm import GeneralLlm as GeneralLlm
 from forecasting_tools.ai_models.gpt4o import Gpt4o as Gpt4o
 from forecasting_tools.ai_models.gpt4ovision import Gpt4oVision as Gpt4oVision
 from forecasting_tools.ai_models.metaculus4o import (
@@ -35,6 +36,9 @@ from forecasting_tools.forecasting.helpers.metaculus_api import (
 )
 from forecasting_tools.forecasting.helpers.metaculus_api import (
     MetaculusApi as MetaculusApi,
+)
+from forecasting_tools.forecasting.helpers.prediction_extractor import (
+    PredictionExtractor as PredictionExtractor,
 )
 from forecasting_tools.forecasting.helpers.smart_searcher import (
     SmartSearcher as SmartSearcher,

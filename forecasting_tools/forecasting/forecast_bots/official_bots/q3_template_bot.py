@@ -6,8 +6,8 @@ from forecasting_tools.ai_models.perplexity import Perplexity
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
     ForecastBot,
 )
-from forecasting_tools.forecasting.helpers.prediction_extraction import (
-    extract_last_percentage_value,
+from forecasting_tools.forecasting.helpers.prediction_extractor import (
+    PredictionExtractor,
 )
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
     ReasonedPrediction,
@@ -87,7 +87,7 @@ class Q3TemplateBot(ForecastBot):
             """
         )
         reasoning = await self.FINAL_DECISION_LLM.invoke(prompt)
-        prediction = extract_last_percentage_value(
+        prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=0.99, min_prediction=0.01
         )
         return ReasonedPrediction(

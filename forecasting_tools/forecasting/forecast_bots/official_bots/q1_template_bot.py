@@ -3,7 +3,6 @@ import os
 from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.exa_searcher import ExaSearcher
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
     ForecastBot,
@@ -11,10 +10,8 @@ from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
 from forecasting_tools.forecasting.helpers.asknews_searcher import (
     AskNewsSearcher,
 )
-from forecasting_tools.forecasting.helpers.prediction_extraction import (
-    extract_last_percentage_value,
-    extract_numeric_distribution_from_list_of_percentile_number_and_probability,
-    extract_option_list_with_percentage_afterwards,
+from forecasting_tools.forecasting.helpers.prediction_extractor import (
+    PredictionExtractor,
 )
 from forecasting_tools.forecasting.helpers.smart_searcher import SmartSearcher
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
@@ -41,7 +38,17 @@ class Q1TemplateBot(ForecastBot):
     This is a copy of the template bot for Q1 2025 Metaculus AI Tournament.
     The official bots on the leaderboard use AskNews in Q1.
 
-    The main entry point of this bot is 'forecast_on_tournament' in the parent class.
+    The main entry point of this bot is `forecast_on_tournament` in the parent class.
+    However generally the flow is:
+    - Load questions from Metaculus
+    - For each question
+        - Execute run_research for research_reports_per_question runs
+        - Execute respective run_forecast function for `predictions_per_research_report * research_reports_per_question` runs
+        - Aggregate the predictions
+        - Submit prediction (if publish_reports_to_metaculus is True)
+    - Return a list of ForecastReport objects
+
+    Only the research and forecast functions need to be implemented in ForecastBot subclasses.
     """
 
     async def run_research(self, question: MetaculusQuestion) -> str:
@@ -71,7 +78,7 @@ class Q1TemplateBot(ForecastBot):
             """
         )
         model = GeneralLlm(
-            model="perplexity/sonar-pro",  # Regular sonar is cheaper, but does only 1 search.
+            model="perplexity/sonar-pro",  # perplexity/sonar is cheaper, but does only 1 search.
             temperature=0.1,
             system_prompt=system_prompt,
         )
@@ -79,37 +86,23 @@ class Q1TemplateBot(ForecastBot):
         return response
 
     async def _call_exa_smart_searcher(self, question: str) -> str:
-        if os.getenv("OPENAI_API_KEY") is None:
-            searcher = ExaSearcher(
-                include_highlights=True,
-                num_results=10,
-            )
-            highlights = (
-                await searcher.invoke_for_highlights_in_relevance_order(
-                    question
-                )
-            )
-            prioritized_highlights = highlights[:10]
-            combined_highlights = ""
-            for i, highlight in enumerate(prioritized_highlights):
-                combined_highlights += f'[Highlight {i+1}]:\nTitle: {highlight.source.title}\nURL: {highlight.source.url}\nText: "{highlight.highlight_text}"\n\n'
-            response = combined_highlights
-        else:
-            searcher = SmartSearcher(
-                model=self._get_final_decision_llm(),
-                temperature=0,
-                num_searches_to_run=2,
-                num_sites_per_search=10,
-            )
-            prompt = (
-                "You are an assistant to a superforecaster. The superforecaster will give"
-                "you a question they intend to forecast on. To be a great assistant, you generate"
-                "a concise but detailed rundown of the most relevant news, including if the question"
-                "would resolve Yes or No based on current information. You do not produce forecasts yourself."
-                f"\n\nThe question is: {question}"
-            )
-            response = await searcher.invoke(prompt)
-
+        """
+        SmartSearcher is a custom class that is a wrapper around an search on Exa.ai
+        """
+        searcher = SmartSearcher(
+            model=self._get_final_decision_llm(),
+            temperature=0,
+            num_searches_to_run=2,
+            num_sites_per_search=10,
+        )
+        prompt = (
+            "You are an assistant to a superforecaster. The superforecaster will give"
+            "you a question they intend to forecast on. To be a great assistant, you generate"
+            "a concise but detailed rundown of the most relevant news, including if the question"
+            "would resolve Yes or No based on current information. You do not produce forecasts yourself."
+            f"\n\nThe question is: {question}"
+        )  # You can ask the searcher to filter by date, exclude/include a domain, and run specific searches for finding sources vs finding highlights within a source
+        response = await searcher.invoke(prompt)
         return response
 
     def _get_final_decision_llm(self) -> GeneralLlm:
@@ -167,7 +160,7 @@ class Q1TemplateBot(ForecastBot):
             """
         )
         reasoning = await self._get_final_decision_llm().invoke(prompt)
-        prediction = extract_last_percentage_value(
+        prediction: float = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0
         )
         logger.info(
@@ -218,8 +211,10 @@ class Q1TemplateBot(ForecastBot):
             """
         )
         reasoning = await self._get_final_decision_llm().invoke(prompt)
-        prediction = extract_option_list_with_percentage_afterwards(
-            reasoning, question.options
+        prediction: PredictedOptionList = (
+            PredictionExtractor.extract_option_list_with_percentage_afterwards(
+                reasoning, question.options
+            )
         )
         logger.info(
             f"Forecasted {question.page_url} as {prediction} with reasoning:\n{reasoning}"
@@ -284,8 +279,10 @@ class Q1TemplateBot(ForecastBot):
             """
         )
         reasoning = await self._get_final_decision_llm().invoke(prompt)
-        prediction = extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-            reasoning, question
+        prediction: NumericDistribution = (
+            PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+                reasoning, question
+            )
         )
         logger.info(
             f"Forecasted {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
