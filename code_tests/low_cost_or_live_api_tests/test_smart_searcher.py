@@ -3,26 +3,49 @@ import re
 
 import pytest
 
-from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
-    MonetaryCostManager,
-)
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecasting.helpers.smart_searcher import SmartSearcher
 
 logger = logging.getLogger(__name__)
 
 
 async def test_ask_question_basic() -> None:
-    num_searches_to_run = 1
-    num_sites_per_search = 3
     searcher = SmartSearcher(
         include_works_cited_list=True,
-        num_searches_to_run=num_searches_to_run,
-        num_sites_per_search=num_sites_per_search,
+        num_searches_to_run=1,
+        num_sites_per_search=3,
     )
     question = "What is the recent news on SpaceX?"
     report = await searcher.invoke(question)
     logger.info(f"Report:\n{report}")
+    validate_search_report(report)
 
+
+async def test_ask_question_with_different_llm() -> None:
+    temperature = 0.7
+    chosen_model = "gpt-3.5-turbo"
+    searcher = SmartSearcher(
+        model=chosen_model,
+        include_works_cited_list=True,
+        num_searches_to_run=1,
+        num_sites_per_search=3,
+        temperature=temperature,
+    )
+
+    assert isinstance(searcher.llm, GeneralLlm)
+    assert searcher.llm.model == chosen_model
+    assert searcher.llm.litellm_kwargs["temperature"] == pytest.approx(
+        temperature
+    )
+    assert searcher.llm.litellm_kwargs["model"] == chosen_model
+
+    question = "What is the recent news on SpaceX?"
+    report = await searcher.invoke(question)
+    logger.info(f"Report:\n{report}")
+    validate_search_report(report)
+
+
+def validate_search_report(report: str) -> None:
     assert report, "Result should not be empty"
     assert isinstance(report, str), "Result should be a string"
 
@@ -60,13 +83,3 @@ async def test_ask_question_empty_prompt() -> None:
     searcher = SmartSearcher()
     with pytest.raises(ValueError):
         await searcher.invoke("")
-
-
-@pytest.mark.skip("Run this when needed as it's purely a qualitative test")
-async def test_screenshot_question_2() -> None:
-    with MonetaryCostManager() as cost_manager:
-        searcher = SmartSearcher(num_sites_to_deep_dive=2)
-        question = "Please tell me about the recent trends in the Federal Funds Effective Rate."
-        result = await searcher.invoke(question)
-        logger.info(f"Result: {result}")
-        logger.info(f"Cost: {cost_manager.current_usage}")

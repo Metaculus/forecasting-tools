@@ -17,6 +17,7 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 from forecasting_tools.forecasting.helpers.metaculus_api import MetaculusApi
 from forecasting_tools.forecasting.questions_and_reports.data_organizer import (
     DataOrganizer,
+    PredictionTypes,
 )
 from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
     ForecastReport,
@@ -305,13 +306,16 @@ class ForecastBot(ABC):
 
     async def _aggregate_predictions(
         self,
-        predictions: list[ReasonedPrediction[Any]],
+        predictions: list[ReasonedPrediction[PredictionTypes]],
         question: MetaculusQuestion,
-    ) -> Any:
+    ) -> ReasonedPrediction[PredictionTypes]:
         report_type = DataOrganizer.get_report_type_for_question_type(
             type(question)
         )
-        return report_type.aggregate_predictions(predictions, question)
+        aggregate = await report_type.aggregate_predictions(
+            predictions, question
+        )
+        return aggregate
 
     async def _research_and_make_predictions(
         self, question: MetaculusQuestion
@@ -384,7 +388,7 @@ class ForecastBot(ABC):
         self,
         question: MetaculusQuestion,
         research_prediction_collections: list[ResearchWithPredictions],
-        aggregated_prediction: Any,
+        aggregated_prediction: ReasonedPrediction[PredictionTypes],
         final_cost: float,
         time_spent_in_minutes: float,
     ) -> str:

@@ -10,8 +10,10 @@ from forecasting_tools.forecasting.questions_and_reports.forecast_report import 
 )
 from forecasting_tools.forecasting.questions_and_reports.multiple_choice_report import (
     MultipleChoiceReport,
+    PredictedOptionList,
 )
 from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
+    NumericDistribution,
     NumericReport,
 )
 from forecasting_tools.forecasting.questions_and_reports.questions import (
@@ -28,6 +30,13 @@ class TypeMapping(BaseModel):
     question_type: type[MetaculusQuestion]
     test_post_id: int
     report_type: type[ForecastReport] | None
+
+
+PredictionTypes = NumericDistribution | PredictedOptionList | float
+QuestionTypes = (
+    NumericQuestion | DateQuestion | MultipleChoiceQuestion | BinaryQuestion
+)
+ReportTypes = NumericReport | MultipleChoiceReport | BinaryReport
 
 
 class DataOrganizer:
