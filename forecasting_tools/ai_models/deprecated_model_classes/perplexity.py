@@ -1,10 +1,15 @@
 from typing import Final
 
+import typing_extensions
+
 from forecasting_tools.ai_models.model_interfaces.combined_llm_archetype import (
     CombinedLlmArchetype,
 )
 
 
+@typing_extensions.deprecated(
+    "LLM calls will slowly be moved to the GeneralLlm class", category=None
+)
 class Perplexity(CombinedLlmArchetype):
     MODEL_NAME: Final[str] = "perplexity/sonar-pro"
     REQUESTS_PER_PERIOD_LIMIT: Final[int] = (

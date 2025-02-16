@@ -1,5 +1,7 @@
 from typing import Final
 
+import typing_extensions
+
 from forecasting_tools.ai_models.ai_utils.openai_utils import VisionMessageData
 from forecasting_tools.ai_models.model_interfaces.combined_llm_archetype import (
     CombinedLlmArchetype,
@@ -11,6 +13,9 @@ class Gpt4VisionInput(VisionMessageData):
     pass
 
 
+@typing_extensions.deprecated(
+    "LLM calls will slowly be moved to the GeneralLlm class", category=None
+)
 class Gpt4oVision(CombinedLlmArchetype):
     MODEL_NAME: Final[str] = "gpt-4o"
     REQUESTS_PER_PERIOD_LIMIT: Final[int] = (

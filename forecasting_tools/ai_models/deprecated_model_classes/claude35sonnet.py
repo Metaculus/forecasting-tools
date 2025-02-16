@@ -1,10 +1,15 @@
 from typing import Final
 
+import typing_extensions
+
 from forecasting_tools.ai_models.model_interfaces.combined_llm_archetype import (
     CombinedLlmArchetype,
 )
 
 
+@typing_extensions.deprecated(
+    "LLM calls will slowly be moved to the GeneralLlm class", category=None
+)
 class Claude35Sonnet(CombinedLlmArchetype):
     # See Anthropic Limit on the account dashboard for most up-to-date limit
     # Latest as of Nov 6 2024 is claude-2-5-sonnet-20241022
