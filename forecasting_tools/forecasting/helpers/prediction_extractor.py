@@ -49,7 +49,13 @@ class PredictionExtractor:
             probability_found = False
             matching_lines = []
             for line in reasoning.split("\n"):
-                if expected_option in line:
+                expected_option_with_underscores = expected_option.replace(
+                    " ", "_"
+                )
+                if (
+                    expected_option.lower() in line.lower()
+                    or expected_option_with_underscores.lower() in line.lower()
+                ):
                     matching_lines.append(line)
 
             if matching_lines:
@@ -63,6 +69,9 @@ class PredictionExtractor:
                 ]
                 if len(numbers_as_float) >= 1:
                     last_number = numbers_as_float[-1]
+                    assert (
+                        0 <= last_number <= 100
+                    ), f"Probability {last_number} is not between 0 and 100 for option: {expected_option}"
                     option_probabilities.append(last_number)
                     probability_found = True
 
@@ -76,16 +85,19 @@ class PredictionExtractor:
         ), f"Number of option probabilities {len(option_probabilities)} does not match number of options {len(options)}"
 
         total_sum = sum(option_probabilities)
+        assert (
+            total_sum > 1.5
+        ), f"Total sum of option probabilities {total_sum} is not greater than 1.5 indicating rationale was working in decimal probabilities"
         decimal_list = [x / total_sum for x in option_probabilities]
 
         # Step 1: Clamp values
-        clamped_list = [max(min(x, 0.99), 0.01) for x in decimal_list]
+        clamped_list = [max(min(x, 0.999), 0.001) for x in decimal_list]
 
         # Step 2: Calculate the sum of all elements
-        total_sum = sum(clamped_list)
+        total_sum_decimal = sum(clamped_list)
 
         # Step 3: Normalize the list so that all elements add up to 1
-        normalized_list = [x / total_sum for x in clamped_list]
+        normalized_list = [x / total_sum_decimal for x in clamped_list]
 
         # Step 4: Adjust for any small floating-point errors
         adjustment = 1.0 - sum(normalized_list)

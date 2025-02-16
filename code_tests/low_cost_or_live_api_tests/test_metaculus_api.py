@@ -32,16 +32,17 @@ logger = logging.getLogger(__name__)
 
 
 def test_get_binary_question_type_from_id() -> None:
-    question_id = DataOrganizer.get_example_post_id_for_question_type(
+    # Test question w/ <1% probability: https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    post_id = DataOrganizer.get_example_post_id_for_question_type(
         BinaryQuestion
     )
-    question = MetaculusApi.get_question_by_post_id(question_id)
+    question = MetaculusApi.get_question_by_post_id(post_id)
     assert isinstance(question, BinaryQuestion)
-    assert question_id == question.id_of_post
+    assert post_id == question.id_of_post
     assert question.community_prediction_at_access_time is not None
-    assert question.community_prediction_at_access_time == pytest.approx(0.01)
+    assert question.community_prediction_at_access_time <= 0.01
     assert question.state == QuestionState.OPEN
-    assert_basic_question_attributes_not_none(question, question_id)
+    assert_basic_question_attributes_not_none(question, post_id)
 
 
 def test_get_numeric_question_type_from_id() -> None:
