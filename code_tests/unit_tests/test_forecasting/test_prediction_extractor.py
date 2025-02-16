@@ -1,7 +1,7 @@
 import pytest
 
-from forecasting_tools.forecasting.forecast_bots.template_bot import (
-    TemplateBot,
+from forecasting_tools.forecasting.helpers.prediction_extractor import (
+    PredictionExtractor,
 )
 from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
     Percentile,
@@ -202,8 +202,7 @@ def test_numeric_parsing(
     expected_percentiles: list[Percentile],
     question: NumericQuestion,
 ) -> None:
-    bot = TemplateBot()
-    numeric_distribution = bot._extract_forecast_from_numeric_rationale(
+    numeric_distribution = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
         gpt_response, question
     )
     for declared_percentile, expected_percentile in zip(
