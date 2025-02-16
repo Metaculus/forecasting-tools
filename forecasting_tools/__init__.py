@@ -1,18 +1,26 @@
 from forecasting_tools.ai_models.ai_utils.ai_misc import (
     clean_indents as clean_indents,
 )
-from forecasting_tools.ai_models.claude35sonnet import (
+from forecasting_tools.ai_models.deprecated_model_classes.claude35sonnet import (
     Claude35Sonnet as Claude35Sonnet,
 )
-from forecasting_tools.ai_models.deepseek_r1 import DeepSeekR1 as DeepSeekR1
-from forecasting_tools.ai_models.exa_searcher import ExaSearcher as ExaSearcher
-from forecasting_tools.ai_models.general_llm import GeneralLlm as GeneralLlm
-from forecasting_tools.ai_models.gpt4o import Gpt4o as Gpt4o
-from forecasting_tools.ai_models.gpt4ovision import Gpt4oVision as Gpt4oVision
-from forecasting_tools.ai_models.metaculus4o import (
+from forecasting_tools.ai_models.deprecated_model_classes.deepseek_r1 import (
+    DeepSeekR1 as DeepSeekR1,
+)
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import (
+    Gpt4o as Gpt4o,
+)
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4ovision import (
+    Gpt4oVision as Gpt4oVision,
+)
+from forecasting_tools.ai_models.deprecated_model_classes.metaculus4o import (
     Gpt4oMetaculusProxy as Gpt4oMetaculusProxy,
 )
-from forecasting_tools.ai_models.perplexity import Perplexity as Perplexity
+from forecasting_tools.ai_models.deprecated_model_classes.perplexity import (
+    Perplexity as Perplexity,
+)
+from forecasting_tools.ai_models.exa_searcher import ExaSearcher as ExaSearcher
+from forecasting_tools.ai_models.general_llm import GeneralLlm as GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager as MonetaryCostManager,
 )

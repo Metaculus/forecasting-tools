@@ -10,8 +10,12 @@ from code_tests.unit_tests.test_ai_models.ai_mock_manager import (
 )
 from code_tests.unit_tests.test_ai_models.models_to_test import ModelsToTest
 from code_tests.utilities_for_tests import coroutine_testing
-from forecasting_tools.ai_models.gpto1preview import GptO1Preview
-from forecasting_tools.ai_models.metaculus4o import Gpt4oMetaculusProxy
+from forecasting_tools.ai_models.deprecated_model_classes.gpto1preview import (
+    GptO1Preview,
+)
+from forecasting_tools.ai_models.deprecated_model_classes.metaculus4o import (
+    Gpt4oMetaculusProxy,
+)
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 
 logger = logging.getLogger(__name__)

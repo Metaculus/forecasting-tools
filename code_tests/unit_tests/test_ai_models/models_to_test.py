@@ -1,14 +1,25 @@
 from litellm import model_cost
 
 from forecasting_tools.ai_models.ai_utils.openai_utils import VisionMessageData
-from forecasting_tools.ai_models.claude35sonnet import Claude35Sonnet
-from forecasting_tools.ai_models.deepseek_r1 import DeepSeekR1
+from forecasting_tools.ai_models.deprecated_model_classes.claude35sonnet import (
+    Claude35Sonnet,
+)
+from forecasting_tools.ai_models.deprecated_model_classes.deepseek_r1 import (
+    DeepSeekR1,
+)
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4ovision import (
+    Gpt4oVision,
+)
+from forecasting_tools.ai_models.deprecated_model_classes.gpto1 import GptO1
+from forecasting_tools.ai_models.deprecated_model_classes.metaculus4o import (
+    Gpt4oMetaculusProxy,
+)
+from forecasting_tools.ai_models.deprecated_model_classes.perplexity import (
+    Perplexity,
+)
 from forecasting_tools.ai_models.exa_searcher import ExaSearcher
 from forecasting_tools.ai_models.general_llm import GeneralLlm, ModelInputType
-from forecasting_tools.ai_models.gpt4o import Gpt4o
-from forecasting_tools.ai_models.gpt4ovision import Gpt4oVision
-from forecasting_tools.ai_models.gpto1 import GptO1
-from forecasting_tools.ai_models.metaculus4o import Gpt4oMetaculusProxy
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.model_interfaces.incurs_cost import IncursCost
 from forecasting_tools.ai_models.model_interfaces.outputs_text import (
@@ -29,7 +40,6 @@ from forecasting_tools.ai_models.model_interfaces.token_limited_model import (
 from forecasting_tools.ai_models.model_interfaces.tokens_incur_cost import (
     TokensIncurCost,
 )
-from forecasting_tools.ai_models.perplexity import Perplexity
 
 
 class ModelsToTest:

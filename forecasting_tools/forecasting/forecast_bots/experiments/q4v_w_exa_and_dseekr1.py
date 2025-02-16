@@ -1,4 +1,6 @@
-from forecasting_tools.ai_models.deepseek_r1 import DeepSeekR1
+from forecasting_tools.ai_models.deprecated_model_classes.deepseek_r1 import (
+    DeepSeekR1,
+)
 from forecasting_tools.forecasting.forecast_bots.experiments.q4v_w_exa_and_o1_preview import (
     Q4VeritasWithExaAndO1Preview,
 )

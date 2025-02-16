@@ -1,4 +1,6 @@
-from forecasting_tools.ai_models.gpto1preview import GptO1Preview
+from forecasting_tools.ai_models.deprecated_model_classes.gpto1preview import (
+    GptO1Preview,
+)
 from forecasting_tools.forecasting.forecast_bots.experiments.q4v_w_exa import (
     Q4VeritasWithExa,
 )

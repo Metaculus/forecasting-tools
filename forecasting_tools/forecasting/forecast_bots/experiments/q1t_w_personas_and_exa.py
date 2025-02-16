@@ -6,8 +6,8 @@ import typeguard
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.general_llm import GeneralLlm
-from forecasting_tools.ai_models.gpt4o import Gpt4o
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import ScratchPad
 from forecasting_tools.forecasting.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot,

@@ -14,7 +14,7 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import validate_complex_type
 from forecasting_tools.ai_models.ai_utils.response_types import (
     TextTokenCostResponse,
 )
-from forecasting_tools.ai_models.gpt4o import Gpt4o
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.model_interfaces.outputs_text import (
     OutputsText,

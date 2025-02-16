@@ -1,5 +1,5 @@
-from forecasting_tools.ai_models.gpt4o import Gpt4o
-from forecasting_tools.ai_models.gpt4ovision import (
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4ovision import (
     Gpt4oVision,
     Gpt4VisionInput,
 )
