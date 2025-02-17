@@ -19,12 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 class OutputsText(AiModel, ABC):
+    _DEFAULT_TRIES = 2
 
     async def invoke_and_return_verified_type(
         self,
         input: Any,
         normal_complex_or_pydantic_type: type[T],
-        allowed_invoke_tries_for_failed_output: int = 3,
+        allowed_invoke_tries_for_failed_output: int = _DEFAULT_TRIES,
     ) -> T:
         """
         Input should ask for the type of resulting object you want with no other words around it
@@ -62,7 +63,7 @@ class OutputsText(AiModel, ABC):
         self,
         input: Any,
         expected_output_type: type[T],
-        allowed_invoke_tries_for_failed_output: int,
+        allowed_invoke_tries_for_failed_output: int = _DEFAULT_TRIES,
     ) -> tuple[T, str]:
         """
         Input should ask for a code block with no other words around it
@@ -81,7 +82,7 @@ class OutputsText(AiModel, ABC):
         input: Any,
         true_keyword: str = "YES",
         false_keyword: str = "NO",
-        allowed_invoke_tries_for_failed_output: int = 3,
+        allowed_invoke_tries_for_failed_output: int = _DEFAULT_TRIES,
     ) -> bool:
         return await try_function_till_tries_run_out(
             allowed_invoke_tries_for_failed_output,

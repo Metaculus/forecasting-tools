@@ -31,7 +31,7 @@ class RefreshingBucketRateLimiter:
     - tokens per second
     - etc.
 
-    It sets up a capacity and a refresh rate.
+    It sets up a capacity and a refresh rate. Refresh rate is per second.
     The capacity acts as a burst limit. You can spend X resources in a short interval before being forced to slow down.
     If you use only X capacity, it will take the (refresh rate * X) to get back to full capacity.
     If you reach the bottom of the bucket, the bucket will fill all the way up before you can use resources again.

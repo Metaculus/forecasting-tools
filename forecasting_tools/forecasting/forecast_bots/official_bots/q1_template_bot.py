@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from datetime import datetime
@@ -49,24 +50,38 @@ class Q1TemplateBot(ForecastBot):
     - Return a list of ForecastReport objects
 
     Only the research and forecast functions need to be implemented in ForecastBot subclasses.
+
+    If you end up having trouble with rate limits and want to try a more sophisticated rate limiter try:
+    ```
+    from forecasting_tools.ai_models.resource_managers.refreshing_bucket_rate_limiter import RefreshingBucketRateLimiter
+    rate_limiter = RefreshingBucketRateLimiter(
+        capacity=2,
+        refresh_rate=1,
+    ) # Allows 1 request per second on average with a burst of 2 requests initially. Set this as a class variable
+    await self.rate_limiter.wait_till_able_to_acquire_resources(1) # 1 because it's consuming 1 request (use more if you are adding a token limit)
+    ```
     """
 
+    _max_concurrent_questions = 2  # Set this to whatever works for your search-provider/ai-model rate limits
+    _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
+
     async def run_research(self, question: MetaculusQuestion) -> str:
-        research = ""
-        if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
-            research = AskNewsSearcher().get_formatted_news(
-                question.question_text
-            )
-        elif os.getenv("EXA_API_KEY"):
-            research = await self._call_exa_smart_searcher(
-                question.question_text
-            )
-        elif os.getenv("PERPLEXITY_API_KEY"):
-            research = await self._call_perplexity(question.question_text)
-        else:
+        async with self._concurrency_limiter:
             research = ""
-        logger.info(f"Found Research for {question.page_url}:\n{research}")
-        return research
+            if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
+                research = AskNewsSearcher().get_formatted_news(
+                    question.question_text
+                )
+            elif os.getenv("EXA_API_KEY"):
+                research = await self._call_exa_smart_searcher(
+                    question.question_text
+                )
+            elif os.getenv("PERPLEXITY_API_KEY"):
+                research = await self._call_perplexity(question.question_text)
+            else:
+                research = ""
+            logger.info(f"Found Research for {question.page_url}:\n{research}")
+            return research
 
     async def _call_perplexity(self, question: str) -> str:
         system_prompt = clean_indents(
