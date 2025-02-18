@@ -1,14 +1,14 @@
 import re
 
-from forecasting_tools.questions_and_reports.multiple_choice_report import (
+from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOption,
     PredictedOptionList,
 )
-from forecasting_tools.questions_and_reports.numeric_report import (
+from forecasting_tools.data_models.numeric_report import (
     NumericDistribution,
     Percentile,
 )
-from forecasting_tools.questions_and_reports.questions import NumericQuestion
+from forecasting_tools.data_models.questions import NumericQuestion
 
 
 class PredictionExtractor:

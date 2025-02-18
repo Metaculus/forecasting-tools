@@ -14,7 +14,7 @@ import requests
 import typeguard
 from pydantic import BaseModel
 
-from forecasting_tools.questions_and_reports.questions import (
+from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     DateQuestion,
     MetaculusQuestion,
