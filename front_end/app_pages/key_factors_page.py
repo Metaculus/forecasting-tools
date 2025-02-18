@@ -17,11 +17,13 @@ sys.path.append(top_level_dir)
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.forecasting.helpers.forecast_database_manager import (
+from forecasting_tools.forecasting.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
 )
-from forecasting_tools.forecasting.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.forecasting.forecast_helpers.metaculus_api import (
+    MetaculusApi,
+)
 from forecasting_tools.forecasting.sub_question_researchers.key_factors_researcher import (
     KeyFactorsResearcher,
     ScoredKeyFactor,

@@ -7,20 +7,20 @@ import typeguard
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
 )
-from forecasting_tools.forecasting.helpers.metaculus_api import (
-    ApiFilter,
-    MetaculusApi,
-)
-from forecasting_tools.forecasting.questions_and_reports.data_organizer import (
+from forecasting_tools.forecasting.data_models.data_organizer import (
     DataOrganizer,
 )
-from forecasting_tools.forecasting.questions_and_reports.questions import (
+from forecasting_tools.forecasting.data_models.questions import (
     BinaryQuestion,
     DateQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
     QuestionState,
+)
+from forecasting_tools.forecasting.forecast_helpers.metaculus_api import (
+    ApiFilter,
+    MetaculusApi,
 )
 
 logger = logging.getLogger(__name__)

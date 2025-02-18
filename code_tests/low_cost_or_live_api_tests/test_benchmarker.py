@@ -7,12 +7,14 @@ import pytest
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
 )
+from forecasting_tools.forecasting.data_models.benchmark_for_bot import (
+    BenchmarkForBot,
+)
 from forecasting_tools.forecasting.forecast_bots.template_bot import (
     TemplateBot,
 )
-from forecasting_tools.forecasting.helpers.benchmarker import Benchmarker
-from forecasting_tools.forecasting.questions_and_reports.benchmark_for_bot import (
-    BenchmarkForBot,
+from forecasting_tools.forecasting.forecast_helpers.benchmarker import (
+    Benchmarker,
 )
 from forecasting_tools.util import file_manipulation
 

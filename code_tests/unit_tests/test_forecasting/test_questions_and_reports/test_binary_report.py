@@ -4,7 +4,7 @@ import pytest
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
 )
-from forecasting_tools.forecasting.questions_and_reports.binary_report import (
+from forecasting_tools.forecasting.data_models.binary_report import (
     BinaryReport,
 )
 

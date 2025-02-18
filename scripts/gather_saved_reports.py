@@ -8,12 +8,12 @@ from datetime import datetime
 
 import dotenv
 
-from forecasting_tools.forecasting.helpers.forecast_database_manager import (
+from forecasting_tools.forecasting.data_models.binary_report import (
+    BinaryReport,
+)
+from forecasting_tools.forecasting.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
-)
-from forecasting_tools.forecasting.questions_and_reports.binary_report import (
-    BinaryReport,
 )
 from forecasting_tools.util import file_manipulation
 from forecasting_tools.util.custom_logger import CustomLogger

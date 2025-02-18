@@ -1,14 +1,12 @@
 import pytest
 
-from forecasting_tools.forecasting.helpers.prediction_extractor import (
-    PredictionExtractor,
-)
-from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
-    Percentile,
-)
-from forecasting_tools.forecasting.questions_and_reports.questions import (
+from forecasting_tools.forecasting.data_models.numeric_report import Percentile
+from forecasting_tools.forecasting.data_models.questions import (
     NumericQuestion,
     QuestionState,
+)
+from forecasting_tools.forecasting.forecast_helpers.prediction_extractor import (
+    PredictionExtractor,
 )
 
 

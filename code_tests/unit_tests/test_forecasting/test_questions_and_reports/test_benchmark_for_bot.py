@@ -1,14 +1,14 @@
 from code_tests.utilities_for_tests import jsonable_assertations
-from forecasting_tools.forecasting.questions_and_reports.benchmark_for_bot import (
+from forecasting_tools.forecasting.data_models.benchmark_for_bot import (
     BenchmarkForBot,
 )
-from forecasting_tools.forecasting.questions_and_reports.binary_report import (
+from forecasting_tools.forecasting.data_models.binary_report import (
     BinaryReport,
 )
-from forecasting_tools.forecasting.questions_and_reports.multiple_choice_report import (
+from forecasting_tools.forecasting.data_models.multiple_choice_report import (
     MultipleChoiceReport,
 )
-from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
+from forecasting_tools.forecasting.data_models.numeric_report import (
     NumericReport,
 )
 

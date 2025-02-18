@@ -10,6 +10,12 @@ from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.forecasting.data_models.data_organizer import (
+    DataOrganizer,
+)
+from forecasting_tools.forecasting.data_models.questions import (
+    MetaculusQuestion,
+)
 from forecasting_tools.forecasting.forecast_bots.bot_lists import (
     get_all_bot_question_type_pairs_for_cheap_tests,
 )
@@ -19,12 +25,8 @@ from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
 from forecasting_tools.forecasting.forecast_bots.template_bot import (
     TemplateBot,
 )
-from forecasting_tools.forecasting.helpers.metaculus_api import MetaculusApi
-from forecasting_tools.forecasting.questions_and_reports.data_organizer import (
-    DataOrganizer,
-)
-from forecasting_tools.forecasting.questions_and_reports.questions import (
-    MetaculusQuestion,
+from forecasting_tools.forecasting.forecast_helpers.metaculus_api import (
+    MetaculusApi,
 )
 
 logger = logging.getLogger(__name__)

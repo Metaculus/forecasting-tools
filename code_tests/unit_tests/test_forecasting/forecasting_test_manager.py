@@ -3,33 +3,35 @@ from datetime import datetime
 from typing import TypeVar
 from unittest.mock import Mock
 
-from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
-    ForecastBot,
-)
-from forecasting_tools.forecasting.helpers.forecast_database_manager import (
-    ForecastDatabaseManager,
-)
-from forecasting_tools.forecasting.helpers.metaculus_api import MetaculusApi
-from forecasting_tools.forecasting.questions_and_reports.binary_report import (
+from forecasting_tools.forecasting.data_models.binary_report import (
     BinaryReport,
 )
-from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
+from forecasting_tools.forecasting.data_models.forecast_report import (
     ReasonedPrediction,
 )
-from forecasting_tools.forecasting.questions_and_reports.multiple_choice_report import (
+from forecasting_tools.forecasting.data_models.multiple_choice_report import (
     PredictedOption,
     PredictedOptionList,
 )
-from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
+from forecasting_tools.forecasting.data_models.numeric_report import (
     NumericDistribution,
     Percentile,
 )
-from forecasting_tools.forecasting.questions_and_reports.questions import (
+from forecasting_tools.forecasting.data_models.questions import (
     BinaryQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
     QuestionState,
+)
+from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
+    ForecastBot,
+)
+from forecasting_tools.forecasting.forecast_helpers.forecast_database_manager import (
+    ForecastDatabaseManager,
+)
+from forecasting_tools.forecasting.forecast_helpers.metaculus_api import (
+    MetaculusApi,
 )
 
 T = TypeVar("T", bound=MetaculusQuestion)
@@ -104,7 +106,7 @@ class ForecastingTestManager:
             ForecastingTestManager.get_fake_binary_questions()
         )
         mock_function = mocker.patch(
-            f"{subclass._run_individual_question.__module__}.{subclass._run_individual_question.__qualname__}"
+            f"{subclass._run_individual_question_with_error_propagation.__module__}.{subclass._run_individual_question_with_error_propagation.__qualname__}"
         )
         assert isinstance(test_binary_question, BinaryQuestion)
         mock_function.return_value = (

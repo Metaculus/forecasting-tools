@@ -3,7 +3,7 @@ import textwrap
 import dotenv
 import streamlit as st
 
-from forecasting_tools.forecasting.questions_and_reports.binary_report import (
+from forecasting_tools.forecasting.data_models.binary_report import (
     BinaryReport,
 )
 from front_end.helpers.app_page import AppPage

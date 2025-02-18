@@ -6,18 +6,16 @@ from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
     MockBot,
 )
+from forecasting_tools.forecasting.data_models.forecast_report import (
+    ReasonedPrediction,
+)
+from forecasting_tools.forecasting.data_models.questions import BinaryQuestion
 from forecasting_tools.forecasting.forecast_bots.bot_lists import (
     get_all_official_bot_classes,
 )
 from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
     ForecastBot,
     ForecastReport,
-)
-from forecasting_tools.forecasting.questions_and_reports.forecast_report import (
-    ReasonedPrediction,
-)
-from forecasting_tools.forecasting.questions_and_reports.questions import (
-    BinaryQuestion,
 )
 
 

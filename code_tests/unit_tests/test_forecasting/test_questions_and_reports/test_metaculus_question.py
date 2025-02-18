@@ -1,9 +1,9 @@
 import os
 
-from forecasting_tools.forecasting.questions_and_reports.data_organizer import (
+from forecasting_tools.forecasting.data_models.data_organizer import (
     DataOrganizer,
 )
-from forecasting_tools.forecasting.questions_and_reports.questions import (
+from forecasting_tools.forecasting.data_models.questions import (
     BinaryQuestion,
     DateQuestion,
     MultipleChoiceQuestion,

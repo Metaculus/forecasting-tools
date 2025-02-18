@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from forecasting_tools.forecasting.helpers.asknews_searcher import (
+from forecasting_tools.forecasting.forecast_helpers.asknews_searcher import (
     AskNewsSearcher,
 )
 

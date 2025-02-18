@@ -6,19 +6,19 @@ import pytest
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
 )
-from forecasting_tools.forecasting.questions_and_reports.binary_report import (
+from forecasting_tools.forecasting.data_models.binary_report import (
     BinaryReport,
 )
-from forecasting_tools.forecasting.questions_and_reports.data_organizer import (
+from forecasting_tools.forecasting.data_models.data_organizer import (
     DataOrganizer,
 )
-from forecasting_tools.forecasting.questions_and_reports.multiple_choice_report import (
+from forecasting_tools.forecasting.data_models.multiple_choice_report import (
     MultipleChoiceReport,
 )
-from forecasting_tools.forecasting.questions_and_reports.numeric_report import (
+from forecasting_tools.forecasting.data_models.numeric_report import (
     NumericReport,
 )
-from forecasting_tools.forecasting.questions_and_reports.report_section import (
+from forecasting_tools.forecasting.data_models.report_section import (
     ReportSection,
 )
 

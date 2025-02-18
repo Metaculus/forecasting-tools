@@ -1,12 +1,12 @@
 import pytest
 from pydantic import ValidationError
 
-from forecasting_tools.forecasting.questions_and_reports.multiple_choice_report import (
+from forecasting_tools.forecasting.data_models.multiple_choice_report import (
     MultipleChoiceReport,
     PredictedOption,
     PredictedOptionList,
 )
-from forecasting_tools.forecasting.questions_and_reports.questions import (
+from forecasting_tools.forecasting.data_models.questions import (
     MultipleChoiceQuestion,
     QuestionState,
 )
