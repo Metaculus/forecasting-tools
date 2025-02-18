@@ -1,16 +1,10 @@
 from code_tests.utilities_for_tests import jsonable_assertations
-from forecasting_tools.forecasting.data_models.benchmark_for_bot import (
-    BenchmarkForBot,
-)
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
-from forecasting_tools.forecasting.data_models.multiple_choice_report import (
+from forecasting_tools.data_models.benchmark_for_bot import BenchmarkForBot
+from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.multiple_choice_report import (
     MultipleChoiceReport,
 )
-from forecasting_tools.forecasting.data_models.numeric_report import (
-    NumericReport,
-)
+from forecasting_tools.data_models.numeric_report import NumericReport
 
 
 def test_benchmark_for_bot() -> None:

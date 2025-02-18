@@ -3,18 +3,12 @@ from datetime import datetime
 import typeguard
 from pydantic import BaseModel, Field
 
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
-from forecasting_tools.forecasting.data_models.forecast_report import (
-    ForecastReport,
-)
-from forecasting_tools.forecasting.data_models.multiple_choice_report import (
+from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.forecast_report import ForecastReport
+from forecasting_tools.data_models.multiple_choice_report import (
     MultipleChoiceReport,
 )
-from forecasting_tools.forecasting.data_models.numeric_report import (
-    NumericReport,
-)
+from forecasting_tools.data_models.numeric_report import NumericReport
 from forecasting_tools.util.jsonable import Jsonable
 
 

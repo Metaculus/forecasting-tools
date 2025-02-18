@@ -5,13 +5,9 @@ import logging
 import numpy as np
 from pydantic import BaseModel, field_validator
 
-from forecasting_tools.forecasting.data_models.forecast_report import (
-    ForecastReport,
-)
-from forecasting_tools.forecasting.data_models.questions import NumericQuestion
-from forecasting_tools.forecasting.forecast_helpers.metaculus_api import (
-    MetaculusApi,
-)
+from forecasting_tools.data_models.forecast_report import ForecastReport
+from forecasting_tools.data_models.questions import NumericQuestion
+from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 
 logger = logging.getLogger(__name__)
 

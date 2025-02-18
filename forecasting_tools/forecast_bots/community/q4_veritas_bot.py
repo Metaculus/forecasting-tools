@@ -2,17 +2,15 @@ from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
-from forecasting_tools.forecasting.data_models.forecast_report import (
-    ReasonedPrediction,
-)
-from forecasting_tools.forecasting.data_models.questions import (
+from forecasting_tools.data_models.forecast_report import ReasonedPrediction
+from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     MetaculusQuestion,
 )
-from forecasting_tools.forecasting.forecast_bots.official_bots.q3_template_bot import (
+from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot,
 )
-from forecasting_tools.forecasting.sub_question_researchers.research_coordinator import (
+from forecasting_tools.sub_question_researchers.research_coordinator import (
     ResearchCoordinator,
 )
 

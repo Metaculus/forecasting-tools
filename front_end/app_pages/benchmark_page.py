@@ -3,9 +3,7 @@ import textwrap
 import dotenv
 import streamlit as st
 
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
+from forecasting_tools.data_models.binary_report import BinaryReport
 from front_end.helpers.app_page import AppPage
 from front_end.helpers.report_displayer import ReportDisplayer
 

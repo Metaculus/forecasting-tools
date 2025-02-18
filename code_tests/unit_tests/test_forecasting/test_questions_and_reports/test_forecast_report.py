@@ -6,21 +6,13 @@ import pytest
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
 )
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
-from forecasting_tools.forecasting.data_models.data_organizer import (
-    DataOrganizer,
-)
-from forecasting_tools.forecasting.data_models.multiple_choice_report import (
+from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.data_organizer import DataOrganizer
+from forecasting_tools.data_models.multiple_choice_report import (
     MultipleChoiceReport,
 )
-from forecasting_tools.forecasting.data_models.numeric_report import (
-    NumericReport,
-)
-from forecasting_tools.forecasting.data_models.report_section import (
-    ReportSection,
-)
+from forecasting_tools.data_models.numeric_report import NumericReport
+from forecasting_tools.data_models.report_section import ReportSection
 
 
 def test_metaculus_report_is_jsonable() -> None:

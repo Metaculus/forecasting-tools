@@ -5,16 +5,16 @@ import pytest
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
-from forecasting_tools.forecasting.sub_question_researchers.base_rate_researcher import (
+from forecasting_tools.sub_question_researchers.base_rate_researcher import (
     BaseRateResearcher,
 )
-from forecasting_tools.forecasting.sub_question_researchers.general_researcher import (
+from forecasting_tools.sub_question_researchers.general_researcher import (
     GeneralResearcher,
 )
-from forecasting_tools.forecasting.sub_question_researchers.question_responder import (
+from forecasting_tools.sub_question_researchers.question_responder import (
     QuestionResponder,
 )
-from forecasting_tools.forecasting.sub_question_researchers.question_router import (
+from forecasting_tools.sub_question_researchers.question_router import (
     QuestionRouter,
 )
 

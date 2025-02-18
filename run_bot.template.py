@@ -15,9 +15,7 @@ dotenv.load_dotenv()
 
 import logging
 
-from forecasting_tools.forecasting.forecast_bots.template_bot import (
-    TemplateBot,
-)
+from forecasting_tools.forecast_bots.template_bot import TemplateBot
 from forecasting_tools.util.custom_logger import CustomLogger
 
 CustomLogger.setup_logging()

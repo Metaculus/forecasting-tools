@@ -2,17 +2,15 @@ import asyncio
 import logging
 from datetime import datetime
 
-from forecasting_tools.forecasting.data_models.questions import (
+from forecasting_tools.data_models.questions import (
     MetaculusQuestion,
     QuestionState,
 )
-from forecasting_tools.forecasting.forecast_helpers.metaculus_api import (
-    MetaculusApi,
-)
-from forecasting_tools.forecasting.sub_question_researchers.general_researcher import (
+from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
+from forecasting_tools.sub_question_researchers.general_researcher import (
     GeneralResearcher,
 )
-from forecasting_tools.forecasting.sub_question_researchers.key_factors_researcher import (
+from forecasting_tools.sub_question_researchers.key_factors_researcher import (
     KeyFactorsResearcher,
     ScoredKeyFactor,
 )

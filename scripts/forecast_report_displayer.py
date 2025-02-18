@@ -1,9 +1,7 @@
 import dotenv
 import streamlit as st
 
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
+from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.util.custom_logger import CustomLogger
 from front_end.helpers.report_displayer import ReportDisplayer
 

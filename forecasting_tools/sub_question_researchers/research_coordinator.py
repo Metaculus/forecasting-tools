@@ -6,23 +6,19 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import (
     clean_indents,
     strip_code_block_markdown,
 )
-from forecasting_tools.forecasting.data_models.questions import (
-    MetaculusQuestion,
-)
-from forecasting_tools.forecasting.forecast_helpers.configured_llms import (
-    BasicLlm,
-)
-from forecasting_tools.forecasting.sub_question_researchers.base_rate_researcher import (
+from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.forecast_helpers.configured_llms import BasicLlm
+from forecasting_tools.sub_question_researchers.base_rate_researcher import (
     BaseRateReport,
     BaseRateResearcher,
 )
-from forecasting_tools.forecasting.sub_question_researchers.general_researcher import (
+from forecasting_tools.sub_question_researchers.general_researcher import (
     GeneralResearcher,
 )
-from forecasting_tools.forecasting.sub_question_researchers.question_responder import (
+from forecasting_tools.sub_question_researchers.question_responder import (
     QuestionResponder,
 )
-from forecasting_tools.forecasting.sub_question_researchers.question_router import (
+from forecasting_tools.sub_question_researchers.question_router import (
     QuestionRouter,
 )
 from forecasting_tools.util import async_batching

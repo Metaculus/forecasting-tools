@@ -8,10 +8,8 @@ from datetime import datetime
 
 import dotenv
 
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
-from forecasting_tools.forecasting.forecast_helpers.forecast_database_manager import (
+from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
 )

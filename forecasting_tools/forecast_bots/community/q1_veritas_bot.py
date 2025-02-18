@@ -1,4 +1,4 @@
-from forecasting_tools.forecasting.forecast_bots.experiments.q1t_w_personas_and_exa import (
+from forecasting_tools.forecast_bots.experiments.q1t_w_personas_and_exa import (
     Q1TemplateWithPersonasAndExa,
 )
 

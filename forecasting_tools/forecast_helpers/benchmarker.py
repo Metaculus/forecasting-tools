@@ -9,27 +9,15 @@ import typeguard
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.forecasting.data_models.benchmark_for_bot import (
-    BenchmarkForBot,
-)
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
-from forecasting_tools.forecasting.data_models.multiple_choice_report import (
+from forecasting_tools.data_models.benchmark_for_bot import BenchmarkForBot
+from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.multiple_choice_report import (
     MultipleChoiceReport,
 )
-from forecasting_tools.forecasting.data_models.numeric_report import (
-    NumericReport,
-)
-from forecasting_tools.forecasting.data_models.questions import (
-    MetaculusQuestion,
-)
-from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
-    ForecastBot,
-)
-from forecasting_tools.forecasting.forecast_helpers.metaculus_api import (
-    MetaculusApi,
-)
+from forecasting_tools.data_models.numeric_report import NumericReport
+from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
+from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 
 logger = logging.getLogger(__name__)
 

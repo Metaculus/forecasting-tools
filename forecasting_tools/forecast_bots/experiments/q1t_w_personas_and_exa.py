@@ -8,31 +8,25 @@ from pydantic import BaseModel
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.general_llm import GeneralLlm
-from forecasting_tools.forecasting.data_models.forecast_report import (
-    ReasonedPrediction,
-)
-from forecasting_tools.forecasting.data_models.multiple_choice_report import (
+from forecasting_tools.data_models.forecast_report import ReasonedPrediction
+from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOptionList,
 )
-from forecasting_tools.forecasting.data_models.numeric_report import (
-    NumericDistribution,
-)
-from forecasting_tools.forecasting.data_models.questions import (
+from forecasting_tools.data_models.numeric_report import NumericDistribution
+from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
 )
-from forecasting_tools.forecasting.forecast_bots.forecast_bot import ScratchPad
-from forecasting_tools.forecasting.forecast_bots.official_bots.q1_template_bot import (
+from forecasting_tools.forecast_bots.forecast_bot import ScratchPad
+from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot,
 )
-from forecasting_tools.forecasting.forecast_helpers.prediction_extractor import (
+from forecasting_tools.forecast_helpers.prediction_extractor import (
     PredictionExtractor,
 )
-from forecasting_tools.forecasting.forecast_helpers.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 
 logger = logging.getLogger(__name__)
 

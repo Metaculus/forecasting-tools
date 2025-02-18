@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from forecasting_tools.forecasting.sub_question_researchers.deduplicator import (
+from forecasting_tools.sub_question_researchers.deduplicator import (
     Deduplicator,
 )
 

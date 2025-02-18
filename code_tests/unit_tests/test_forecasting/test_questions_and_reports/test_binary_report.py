@@ -4,9 +4,7 @@ import pytest
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
 )
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
+from forecasting_tools.data_models.binary_report import BinaryReport
 
 
 def test_prediction_validation() -> None:

@@ -1,12 +1,8 @@
-from forecasting_tools.forecasting.data_models.questions import (
-    MetaculusQuestion,
-)
-from forecasting_tools.forecasting.forecast_bots.official_bots.q3_template_bot import (
+from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot,
 )
-from forecasting_tools.forecasting.forecast_helpers.asknews_searcher import (
-    AskNewsSearcher,
-)
+from forecasting_tools.forecast_helpers.asknews_searcher import AskNewsSearcher
 
 
 class Q3TemplateWithAskNews(Q3TemplateBot):

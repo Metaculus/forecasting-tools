@@ -8,13 +8,11 @@ from pydantic import BaseModel
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.forecasting.forecast_helpers.forecast_database_manager import (
+from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
 )
-from forecasting_tools.forecasting.sub_question_researchers.estimator import (
-    Estimator,
-)
+from forecasting_tools.sub_question_researchers.estimator import Estimator
 from forecasting_tools.util.jsonable import Jsonable
 from front_end.helpers.tool_page import ToolPage
 

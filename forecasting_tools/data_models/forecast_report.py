@@ -6,12 +6,8 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
-from forecasting_tools.forecasting.data_models.questions import (
-    MetaculusQuestion,
-)
-from forecasting_tools.forecasting.data_models.report_section import (
-    ReportSection,
-)
+from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.data_models.report_section import ReportSection
 from forecasting_tools.util.jsonable import Jsonable
 
 logger = logging.getLogger(__name__)

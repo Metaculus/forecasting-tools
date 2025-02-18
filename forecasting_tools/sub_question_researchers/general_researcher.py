@@ -1,14 +1,12 @@
 import logging
 
-from forecasting_tools.forecasting.sub_question_researchers.question_responder import (
+from forecasting_tools.sub_question_researchers.question_responder import (
     QuestionResponder,
 )
 
 logger = logging.getLogger(__name__)
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.forecasting.forecast_helpers.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 
 
 class GeneralResearcher(QuestionResponder):

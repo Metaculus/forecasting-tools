@@ -15,10 +15,8 @@ from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.model_interfaces.outputs_text import (
     OutputsText,
 )
-from forecasting_tools.forecasting.forecast_helpers.configured_llms import (
-    default_llms,
-)
-from forecasting_tools.forecasting.forecast_helpers.works_cited_creator import (
+from forecasting_tools.forecast_helpers.configured_llms import default_llms
+from forecasting_tools.forecast_helpers.works_cited_creator import (
     WorksCitedCreator,
 )
 

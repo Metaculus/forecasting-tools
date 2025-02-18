@@ -6,13 +6,9 @@ import re
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
-from forecasting_tools.forecasting.data_models.questions import BinaryQuestion
-from forecasting_tools.forecasting.data_models.report_section import (
-    ReportSection,
-)
+from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.questions import BinaryQuestion
+from forecasting_tools.data_models.report_section import ReportSection
 
 logger = logging.getLogger(__name__)
 

@@ -5,23 +5,19 @@ import dotenv
 import streamlit as st
 from pydantic import BaseModel, Field
 
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
-from forecasting_tools.forecasting.data_models.questions import (
+from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     QuestionState,
 )
-from forecasting_tools.forecasting.forecast_bots.community.q4_veritas_bot import (
+from forecasting_tools.forecast_bots.community.q4_veritas_bot import (
     Q4VeritasBot,
 )
-from forecasting_tools.forecasting.forecast_helpers.forecast_database_manager import (
+from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
 )
-from forecasting_tools.forecasting.forecast_helpers.metaculus_api import (
-    MetaculusApi,
-)
+from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 from forecasting_tools.util.jsonable import Jsonable
 from front_end.helpers.report_displayer import ReportDisplayer
 from front_end.helpers.tool_page import ToolPage

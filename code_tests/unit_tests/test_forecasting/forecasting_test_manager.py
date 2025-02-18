@@ -3,36 +3,28 @@ from datetime import datetime
 from typing import TypeVar
 from unittest.mock import Mock
 
-from forecasting_tools.forecasting.data_models.binary_report import (
-    BinaryReport,
-)
-from forecasting_tools.forecasting.data_models.forecast_report import (
-    ReasonedPrediction,
-)
-from forecasting_tools.forecasting.data_models.multiple_choice_report import (
+from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.forecast_report import ReasonedPrediction
+from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOption,
     PredictedOptionList,
 )
-from forecasting_tools.forecasting.data_models.numeric_report import (
+from forecasting_tools.data_models.numeric_report import (
     NumericDistribution,
     Percentile,
 )
-from forecasting_tools.forecasting.data_models.questions import (
+from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
     QuestionState,
 )
-from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
-    ForecastBot,
-)
-from forecasting_tools.forecasting.forecast_helpers.forecast_database_manager import (
+from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
+from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
 )
-from forecasting_tools.forecasting.forecast_helpers.metaculus_api import (
-    MetaculusApi,
-)
+from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 
 T = TypeVar("T", bound=MetaculusQuestion)
 

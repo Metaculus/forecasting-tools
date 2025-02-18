@@ -1,31 +1,23 @@
-from forecasting_tools.forecasting.data_models.data_organizer import (
-    DataOrganizer,
-)
-from forecasting_tools.forecasting.data_models.questions import (
-    MetaculusQuestion,
-)
-from forecasting_tools.forecasting.forecast_bots.community.q1_veritas_bot import (
+from forecasting_tools.data_models.data_organizer import DataOrganizer
+from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.forecast_bots.community.q1_veritas_bot import (
     Q1VeritasBot,
 )
-from forecasting_tools.forecasting.forecast_bots.community.q4_veritas_bot import (
+from forecasting_tools.forecast_bots.community.q4_veritas_bot import (
     Q4VeritasBot,
 )
-from forecasting_tools.forecasting.forecast_bots.forecast_bot import (
-    ForecastBot,
-)
-from forecasting_tools.forecasting.forecast_bots.main_bot import MainBot
-from forecasting_tools.forecasting.forecast_bots.official_bots.q1_template_bot import (
+from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
+from forecasting_tools.forecast_bots.main_bot import MainBot
+from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot,
 )
-from forecasting_tools.forecasting.forecast_bots.official_bots.q3_template_bot import (
+from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot,
 )
-from forecasting_tools.forecasting.forecast_bots.official_bots.q4_template_bot import (
+from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
     Q4TemplateBot,
 )
-from forecasting_tools.forecasting.forecast_bots.template_bot import (
-    TemplateBot,
-)
+from forecasting_tools.forecast_bots.template_bot import TemplateBot
 
 
 def get_all_official_bot_classes() -> list[type[ForecastBot]]:
