@@ -6,7 +6,7 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
-from forecasting_tools.sub_question_researchers.key_factors_researcher import (
+from forecasting_tools.research_agents.key_factors_researcher import (
     KeyFactorsResearcher,
     ScoredKeyFactor,
 )

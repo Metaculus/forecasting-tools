@@ -12,15 +12,15 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 from forecasting_tools.forecast_helpers.configured_llms import BasicLlm
-from forecasting_tools.sub_question_researchers.estimator import Estimator
-from forecasting_tools.sub_question_researchers.general_researcher import (
+from forecasting_tools.research_agents.estimator import Estimator
+from forecasting_tools.research_agents.general_researcher import (
     GeneralResearcher,
 )
-from forecasting_tools.sub_question_researchers.niche_list_researcher import (
+from forecasting_tools.research_agents.niche_list_researcher import (
     FactCheckedItem,
     NicheListResearcher,
 )
-from forecasting_tools.sub_question_researchers.question_responder import (
+from forecasting_tools.research_agents.question_responder import (
     QuestionResponder,
 )
 from forecasting_tools.util.jsonable import Jsonable

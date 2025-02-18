@@ -12,7 +12,7 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
 )
-from forecasting_tools.sub_question_researchers.estimator import Estimator
+from forecasting_tools.research_agents.estimator import Estimator
 from forecasting_tools.util.jsonable import Jsonable
 from front_end.helpers.tool_page import ToolPage
 

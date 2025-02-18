@@ -94,21 +94,19 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
 from forecasting_tools.forecast_helpers.smart_searcher import (
     SmartSearcher as SmartSearcher,
 )
-from forecasting_tools.sub_question_researchers.base_rate_researcher import (
+from forecasting_tools.research_agents.base_rate_researcher import (
     BaseRateResearcher as BaseRateResearcher,
 )
-from forecasting_tools.sub_question_researchers.estimator import (
-    Estimator as Estimator,
-)
-from forecasting_tools.sub_question_researchers.key_factors_researcher import (
+from forecasting_tools.research_agents.estimator import Estimator as Estimator
+from forecasting_tools.research_agents.key_factors_researcher import (
     KeyFactorsResearcher as KeyFactorsResearcher,
 )
-from forecasting_tools.sub_question_researchers.key_factors_researcher import (
+from forecasting_tools.research_agents.key_factors_researcher import (
     ScoredKeyFactor as ScoredKeyFactor,
 )
-from forecasting_tools.sub_question_researchers.niche_list_researcher import (
+from forecasting_tools.research_agents.niche_list_researcher import (
     FactCheckedItem as FactCheckedItem,
 )
-from forecasting_tools.sub_question_researchers.niche_list_researcher import (
+from forecasting_tools.research_agents.niche_list_researcher import (
     NicheListResearcher as NicheListResearcher,
 )

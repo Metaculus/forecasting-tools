@@ -9,9 +9,7 @@ from pydantic import BaseModel, field_validator
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.forecast_helpers.configured_llms import BasicLlm
 from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
-from forecasting_tools.sub_question_researchers.deduplicator import (
-    Deduplicator,
-)
+from forecasting_tools.research_agents.deduplicator import Deduplicator
 from forecasting_tools.util import async_batching
 from forecasting_tools.util.misc import (
     extract_url_from_markdown_link,

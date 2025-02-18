@@ -10,7 +10,7 @@ from forecasting_tools.data_models.questions import (
 from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot,
 )
-from forecasting_tools.sub_question_researchers.research_coordinator import (
+from forecasting_tools.research_agents.research_coordinator import (
     ResearchCoordinator,
 )
 

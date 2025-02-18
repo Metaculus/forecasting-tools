@@ -8,7 +8,7 @@ from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.sub_question_researchers.niche_list_researcher import (
+from forecasting_tools.research_agents.niche_list_researcher import (
     FactCheckedItem,
     NicheListResearcher,
 )

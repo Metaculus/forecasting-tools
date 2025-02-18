@@ -4,7 +4,7 @@ from enum import Enum
 from forecasting_tools.questions_and_reports.forecast_report import (
     ForecastReport,
 )
-from forecasting_tools.sub_question_researchers.base_rate_researcher import (
+from forecasting_tools.research_agents.base_rate_researcher import (
     BaseRateReport,
 )
 from forecasting_tools.util.coda_utils import (

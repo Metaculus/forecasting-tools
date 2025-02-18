@@ -10,7 +10,7 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
 )
-from forecasting_tools.sub_question_researchers.niche_list_researcher import (
+from forecasting_tools.research_agents.niche_list_researcher import (
     FactCheckedItem,
     NicheListResearcher,
 )

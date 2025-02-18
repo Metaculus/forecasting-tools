@@ -1,6 +1,6 @@
 import logging
 
-from forecasting_tools.sub_question_researchers.question_responder import (
+from forecasting_tools.research_agents.question_responder import (
     QuestionResponder,
 )
 

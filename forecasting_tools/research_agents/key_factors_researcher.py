@@ -13,10 +13,8 @@ from forecasting_tools.forecast_helpers.configured_llms import (
 )
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusQuestion
 from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
-from forecasting_tools.sub_question_researchers.deduplicator import (
-    Deduplicator,
-)
-from forecasting_tools.sub_question_researchers.research_coordinator import (
+from forecasting_tools.research_agents.deduplicator import Deduplicator
+from forecasting_tools.research_agents.research_coordinator import (
     ResearchCoordinator,
 )
 from forecasting_tools.util import async_batching
