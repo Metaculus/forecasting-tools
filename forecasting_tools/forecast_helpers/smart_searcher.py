@@ -5,6 +5,7 @@ import urllib.parse
 from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.configured_llms import default_llms
 from forecasting_tools.ai_models.exa_searcher import (
     ExaHighlightQuote,
     ExaSearcher,
@@ -15,7 +16,6 @@ from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.model_interfaces.outputs_text import (
     OutputsText,
 )
-from forecasting_tools.forecast_helpers.configured_llms import default_llms
 from forecasting_tools.forecast_helpers.works_cited_creator import (
     WorksCitedCreator,
 )

@@ -6,8 +6,8 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import (
     clean_indents,
     strip_code_block_markdown,
 )
+from forecasting_tools.ai_models.configured_llms import BasicLlm
 from forecasting_tools.data_models.questions import MetaculusQuestion
-from forecasting_tools.forecast_helpers.configured_llms import BasicLlm
 from forecasting_tools.research_agents.base_rate_researcher import (
     BaseRateReport,
     BaseRateResearcher,
