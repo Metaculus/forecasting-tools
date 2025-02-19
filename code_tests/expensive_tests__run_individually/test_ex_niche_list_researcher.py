@@ -118,13 +118,21 @@ def test_large_lists_fail(things_to_generate: str) -> None:
         ),
         (
             "Times Apple was successfully sued by another entity for patent violations before Oct 16 2024",
+            # Consider asking instead whether Apple got money in the case as 'success' is not super clear and how do you define the difference between a string of court cases (Virtenx) versus not
             [
                 "Creative Technology v. Apple, Inc. (menu structure)",  # Settled in 2006 https://en.wikipedia.org/wiki/Litigation_involving_Apple_Inc.#:~:text=In%20August%202006%2C%20Apple%20and%20Creative%20settled%20the%20suit%20with%20Apple%20agreeing%20to%20pay%20Creative%20%24100%20million%20USD%20for%20the%20right%20to%20implement%20Creative%27s%20method%20of%20sorting%20songs%20on%20the%20iPod
-                "Apple vs. Masimo",  # Ban on some watch features https://time.com/6692718/apple-watch-masimo-alivecor-patent-antitrust-legal-explainer/#:~:text=the%20ITC%20imposed,welcomed%20by%20Masimo.
+                "Apple vs. Masimo (watch features)",  # Ban on some watch features https://time.com/6692718/apple-watch-masimo-alivecor-patent-antitrust-legal-explainer/#:~:text=the%20ITC%20imposed,welcomed%20by%20Masimo.
                 "Typhoon Touch Technologies (touch screen)",  # Settled in 2010 https://en.wikipedia.org/wiki/Litigation_involving_Apple_Inc.#:~:text=In%202010%2C%20Apple%20settled%20with%20Typhoon%20for%20an%20undisclosed%20sum%20and%20was%20then%20dismissed%20from%20the%20litigation%20as%20of%20September%202010
                 "Nokia v. Apple (wireless, iPhone)",  # Settled in 2007 https://en.wikipedia.org/wiki/Litigation_involving_Apple_Inc.#:~:text=For%20an%20undisclosed%20amount%20of%20cash%20and%20future%20ongoing%20iPhone%20royalties%20to%20be%20paid%20by%20Apple%2C%20Nokia%20agreed%20to%20settle%2C%20with%20Apple%27s%20royalty%20payments%20retroactively%20back%2Dpayable%20to%20the%20iPhone%27s%20introduction%20in%202007%2C%20but%20with%20no%20broad%20cross%2Dlicensing%20agreement%20made%20between%20the%20companies
+                "Science Applications International Corporation (Virnetx) vs Apple (2014)",  # Virnetx won in 2014 https://caselaw.findlaw.com/court/us-federal-circuit/1678303.html
+                "Apple vs. VirnetX (2012)",
+                "Apple vs. VirnetX (2016)",  # Did this one split into the 2017 and 2018 ones?
+                "Apple vs. VirnetX (2017)",
+                "Apple vs. VirnetX (2018)",
                 "Apple vs. VirnetX (2019)",
-                # VirnetX got money https://en.wikipedia.org/wiki/Litigation_involving_Apple_Inc.#:~:text=The%20first%20case,verdict%20against%20it
+                "Apple vs. VirnetX (2020)",  # Was this just a final trial of a previous case?
+                # Court cases for  2012, 2016, 2017, 2018, 2020 # https://caldwellcc.com/case/virnetx-inc-v-apple-inc/
+                # VirnetX got money in 2019 https://en.wikipedia.org/wiki/Litigation_involving_Apple_Inc.#:~:text=The%20first%20case,verdict%20against%20it
                 # A later 2020 VirnetX case was unsuccessful https://www.macrumors.com/2024/02/20/apple-wins-virnetx-503-million/#:~:text=After%20Apple%20appealed%20the%20initial,on%20or%20license%20its%20patents.
                 "Qualcomm vs. Apple (2017-2019): Power management/Download Speed",
                 # Paid 31million https://www.qualcomm.com/news/releases/2019/03/qualcomm-wins-patent-infringement-case-against-apple-san-diego
@@ -142,6 +150,8 @@ def test_large_lists_fail(things_to_generate: str) -> None:
                 # One claim was revered I think https://law.justia.com/cases/federal/appellate-courts/cafc/17-2102/17-2102-2018-08-16.html#:~:text=The%20court%20reversed%20in%20part%3B%20Core%E2%80%99s%20theory%20of%20infringement%20is%20inadequate%20to%20support%20a%20judgment%20on%20claim%2019.
                 # Might be same case as Nokia v Apple https://www.patentlyapple.com/2018/08/a-federal-appeals-court-has-ruled-that-apple-didnt-infringe-one-of-two-patents-in-case-brought-on-by-core-wireless-licensing.html#:~:text=The%20verdict%20capped%20a%20trial%20that%20kicked%20off%20on%20Dec.%205%20centering%20on%20two%20patents%20that%20were%20Originaly%20owned%20by%20Nokia
                 "Apple vs. Caltech (2016-2020)",  # Paid $838m https://appleinsider.com/articles/23/08/11/caltech-may-finally-settle-848-million-patent-case-against-apple?utm_medium=rss#:~:text=Caltech%20began%20its%20legal%20battle,amounts%20they%20had%20to%20pay.
+                "Ironworks Patents LLC vs Apple Inc (2010)",  # Paid $10million. See filing 749 and filing 8 https://dockets.justia.com/docket/delaware/dedce/1:2010cv00258/43925
+                "WARF vs Apple (2015)",  # $234mill https://news.wisc.edu/warf-wins-patent-infringement-lawsuit-against-apple/
                 # Invalid
                 # Secondar QualComm case
                 # Is this a different one? It was settled... I think Apple initiated? # https://www.reuters.com/technology/apple-loses-second-bid-challenge-qualcomm-patents-us-supreme-court-2022-10-03/#:~:text=The%20companies%20settled%20their%20underlying%20fight%20in%202019%2C%20signing%20an%20agreement%20worth%20billions%20of%20dollars%20that%20let%20Apple%20continue%20using%20Qualcomm%20chips%20in%20iPhones

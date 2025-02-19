@@ -61,7 +61,7 @@ class GeneralLlm(
         model: str,
         allowed_tries: int = RetryableModel._DEFAULT_ALLOWED_TRIES,
         temperature: float | int | None = 0,
-        timeout: float | int | None = 120,
+        timeout: float | int | None = 60,
         **kwargs,
     ) -> None:
         """

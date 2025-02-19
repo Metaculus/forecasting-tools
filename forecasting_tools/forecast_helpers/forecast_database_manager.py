@@ -33,7 +33,8 @@ class ForecastDatabaseManager:
     # TODO: Change database to something more robust
     # and based on environment variables (i.e. not Coda.io)
     # NOTE: Coda was originally used in the mvp due to familiarity
-    # and quickness to make visuals and and a custom dashboard online
+    # and quickness to make visuals and a custom dashboard online
+    # and just hasn't been updated yet
 
     QUESTION_COLUMN = CodaColumn("Question", "c-rDW4kf2dUl")
     BACKGROUND_INFO_COLUMN = CodaColumn("Background Info", "c-eOYV3GdLJL")
@@ -175,7 +176,7 @@ class ForecastDatabaseManager:
         background_info: str | None,
         resolution_criteria: str | None,
         fine_print: str | None,
-        prediction: float | None,
+        prediction: float | str | None,
         explanation: str | None,
         page_url: str | None,
         price_estimate: float | None,

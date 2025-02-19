@@ -15,7 +15,7 @@ T = TypeVar("T")
 
 
 class RetryableModel(AiModel, ABC):
-    _DEFAULT_ALLOWED_TRIES: int = 3
+    _DEFAULT_ALLOWED_TRIES: int = 2
 
     def __init__(
         self, allowed_tries: int = _DEFAULT_ALLOWED_TRIES, **kwargs
