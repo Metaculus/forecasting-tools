@@ -540,20 +540,7 @@ class ForecastBot(ABC):
         errors = []
         for error in results:
             if isinstance(error, BaseException):
-                tb = error.__traceback__
-                while tb and "asyncio" in str(tb.tb_frame.f_code.co_filename):
-                    tb = tb.tb_next
-                if tb:
-                    error_location = (
-                        f"{tb.tb_frame.f_code.co_filename}:"
-                        f"{tb.tb_frame.f_lineno} in "
-                        f"{tb.tb_frame.f_code.co_name}"
-                    )
-                else:
-                    error_location = "Unknown"
-                errors.append(
-                    f"{error.__class__.__name__} in {error_location}: {error}"
-                )
+                errors.append(f"{error.__class__.__name__}: {error}")
         return valid_results, errors
 
     async def _initialize_scratchpad(
