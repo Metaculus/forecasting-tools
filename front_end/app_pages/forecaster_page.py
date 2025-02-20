@@ -6,10 +6,7 @@ import streamlit as st
 from pydantic import BaseModel, Field
 
 from forecasting_tools.data_models.binary_report import BinaryReport
-from forecasting_tools.data_models.questions import (
-    BinaryQuestion,
-    QuestionState,
-)
+from forecasting_tools.data_models.questions import BinaryQuestion
 from forecasting_tools.forecast_bots.community.q4_veritas_bot import (
     Q4VeritasBot,
 )
@@ -100,8 +97,6 @@ class ForecasterPage(ToolPage):
                     return None
                 question = BinaryQuestion(
                     question_text=question_text,
-                    id_of_post=0,
-                    state=QuestionState.OPEN,
                     background_info=background_info,
                     resolution_criteria=resolution_criteria,
                     fine_print=fine_print,

@@ -265,6 +265,10 @@ class NumericReport(ForecastReport):
         cdf_probabilities = [
             percentile.percentile for percentile in self.prediction.cdf
         ]
+        if self.question.id_of_post is None:
+            raise ValueError(
+                "Publishing to Metaculus requires a post ID for the question"
+            )
         MetaculusApi.post_numeric_question_prediction(
             self.question.id_of_question, cdf_probabilities
         )

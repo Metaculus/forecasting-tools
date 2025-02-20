@@ -33,6 +33,10 @@ class MultipleChoiceReport(ForecastReport):
             option.option_name: option.probability
             for option in self.prediction.predicted_options
         }
+        if self.question.id_of_post is None:
+            raise ValueError(
+                "Publishing to Metaculus requires a post ID for the question"
+            )
         MetaculusApi.post_multiple_choice_question_prediction(
             self.question.id_of_question, options_with_probabilities
         )

@@ -106,8 +106,6 @@ async def _process_question(question: int | str | MetaculusQuestion) -> dict:
         metaculus_question = MetaculusQuestion(
             question_text=question,
             background_info=generated_background_info,
-            id_of_post=0,
-            state=QuestionState.OPEN,
             page_url="",
             api_json={},
         )

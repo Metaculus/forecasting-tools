@@ -17,7 +17,7 @@ class BinaryReport(ForecastReport):
     )
 
     @field_validator("prediction")
-    def validate_prediction(cls, v: float) -> float:
+    def validate_prediction(cls: BinaryReport, v: float) -> float:
         if not 0 <= v <= 1:
             raise ValueError("Prediction must be between 0 and 1")
         return v
@@ -25,6 +25,10 @@ class BinaryReport(ForecastReport):
     async def publish_report_to_metaculus(self) -> None:
         if self.question.id_of_question is None:
             raise ValueError("Question ID is None")
+        if self.question.id_of_post is None:
+            raise ValueError(
+                "Publishing to Metaculus requires a post ID for the question"
+            )
         MetaculusApi.post_binary_question_prediction(
             self.question.id_of_question, self.prediction
         )

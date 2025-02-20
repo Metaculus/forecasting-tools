@@ -1,13 +1,103 @@
 import pytest
 
-from forecasting_tools.data_models.numeric_report import Percentile
-from forecasting_tools.data_models.questions import (
-    NumericQuestion,
-    QuestionState,
+from forecasting_tools.data_models.multiple_choice_report import (
+    PredictedOptionList,
 )
+from forecasting_tools.data_models.numeric_report import Percentile
+from forecasting_tools.data_models.questions import NumericQuestion
 from forecasting_tools.forecast_helpers.prediction_extractor import (
     PredictionExtractor,
 )
+
+
+@pytest.mark.parametrize(
+    "reasoning, options, expected_probabilities",
+    [
+        (
+            """
+            Option A: 30
+            Option B: 40
+            Option C: 30
+            """,
+            ["Option A", "Option B", "Option C"],
+            [0.3, 0.4, 0.3],
+        ),
+        (
+            """
+            Option Financial_Growth: 50
+            Option consumer_demand: 25%
+            Option_Government_Spending: 25
+            """,
+            [" Financial Growth ", "Consumer Demand", "Government Spending"],
+            [0.5, 0.25, 0.25],
+        ),
+        (
+            """
+            Introduction text.
+            Option X: 20
+            More stuff.
+            Option Y: 30
+            Some more details.
+            Option Z: 50
+            Final notes.
+            """,
+            ["X", "Y", "Option Z"],
+            [0.2, 0.3, 0.5],
+        ),
+        (
+            """
+            In this forecast, we consider three options: Blue, Green, and Yellow.
+            I think that Blue is 30%
+            And Option Yellow is 20%
+
+            Option Blue: 20
+            Option Green: 30
+            Option Yellow: 50
+            """,
+            ["Blue", "Green", "Yellow"],
+            [0.2, 0.3, 0.5],
+        ),
+        (
+            """
+            Forecast breakdown:
+            Option One: 33.33
+            Option Two: 33.33
+            Option Three: 33.34
+            """,
+            ["One", "Two", "Three"],
+            [33.33 / 100, 33.33 / 100, 33.34 / 100],
+        ),
+    ],
+)
+def test_multiple_choice_extraction_success(
+    reasoning: str, options: list[str], expected_probabilities: list[float]
+) -> None:
+    print("Starting test")
+    predicted_option_list: PredictedOptionList = (
+        PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            reasoning, options
+        )
+    )
+    predicted_options = predicted_option_list.predicted_options
+    assert len(predicted_options) == len(options)
+    for expected_option, expected_probability, predicted_option in zip(
+        options, expected_probabilities, predicted_options
+    ):
+        assert predicted_option.option_name == expected_option
+        assert predicted_option.probability == pytest.approx(
+            expected_probability
+        )
+
+
+def test_multiple_choice_extraction_failure() -> None:
+    reasoning: str = """
+    Option OnlyOne: 60
+    """
+    options: list[str] = ["Option OnlyOne", "Option Missing"]
+    with pytest.raises(ValueError):
+        PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            reasoning, options
+        )
 
 
 def create_numeric_question(
@@ -22,8 +112,6 @@ def create_numeric_question(
 
     return NumericQuestion(
         question_text=question_text,
-        id_of_post=1,
-        state=QuestionState.OPEN,
         upper_bound=1,
         lower_bound=0,
         open_upper_bound=True,

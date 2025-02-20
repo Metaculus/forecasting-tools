@@ -21,8 +21,9 @@ class QuestionState(Enum):
 
 class MetaculusQuestion(BaseModel, Jsonable):
     question_text: str
-    id_of_post: int = Field(
-        validation_alias=AliasChoices("question_id", "post_id", "id_of_post")
+    id_of_post: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("question_id", "post_id", "id_of_post"),
     )
     page_url: str | None = None
     id_of_question: int | None = None

@@ -98,7 +98,6 @@ question2 = BinaryQuestion(
     background_info="...", # Or 'None'
     resolution_criteria="...", # Or 'None'
     fine_print="...", # Or 'None'
-    id_of_post=0, # The ID and state only matters if using Metaculus API calls so feel free to set it to 0
 )
 
 reports = await bot.forecast_questions([question1, question2])
@@ -479,7 +478,6 @@ question = BinaryQuestion(
     background_info="...", # Or 'None'
     resolution_criteria="...", # Or 'None'
     fine_print="...", # Or 'None'
-    id_of_post=0, # The ID and state only matters if using Metaculus API calls so feel free to set it to 0
 )
 
 # Find key factors
@@ -623,7 +621,6 @@ The `GeneralLlm` class is a wrapper around around litellm's acompletion function
 
 
 ```python
-from forecasting_tools import GeneralLlm
 
 result = await GeneralLlm(model="gpt-4o").invoke(prompt)
 result = await GeneralLlm(model="claude-3-5-sonnet-20241022").invoke(prompt)

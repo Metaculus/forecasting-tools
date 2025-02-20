@@ -36,7 +36,7 @@ def test_prediction_validation() -> None:
 
 
 async def test_aggregate_predictions() -> None:
-    question = ForecastingTestManager.get_fake_binary_questions()
+    question = ForecastingTestManager.get_fake_binary_question()
     predictions = [0.1, 0.2, 0.3, 0.4, 0.5]
 
     result = await BinaryReport.aggregate_predictions(predictions, question)

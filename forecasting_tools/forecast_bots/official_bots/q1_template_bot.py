@@ -92,7 +92,7 @@ class Q1TemplateBot(ForecastBot):
             Question:
             {question}
             """
-        )
+        )  # NOTE: The metac bot in Q1 put everything but the question in the system prompt.
         if use_open_router:
             model_name = "openrouter/perplexity/sonar-reasoning"
         else:

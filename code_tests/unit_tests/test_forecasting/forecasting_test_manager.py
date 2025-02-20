@@ -18,7 +18,6 @@ from forecasting_tools.data_models.questions import (
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
-    QuestionState,
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_helpers.forecast_database_manager import (
@@ -42,14 +41,11 @@ class ForecastingTestManager:
     )
 
     @classmethod
-    def get_fake_binary_questions(
+    def get_fake_binary_question(
         cls, community_prediction: float | None = 0.7
     ) -> BinaryQuestion:
         question = BinaryQuestion(
             question_text="Will TikTok be banned in the US?",
-            id_of_post=0,
-            id_of_question=0,
-            state=QuestionState.OPEN,
             community_prediction_at_access_time=community_prediction,
         )
         return question
@@ -59,7 +55,7 @@ class ForecastingTestManager:
         community_prediction: float | None = 0.7, prediction: float = 0.5
     ) -> BinaryReport:
         return BinaryReport(
-            question=ForecastingTestManager.get_fake_binary_questions(
+            question=ForecastingTestManager.get_fake_binary_question(
                 community_prediction
             ),
             prediction=prediction,
@@ -95,7 +91,7 @@ class ForecastingTestManager:
         subclass: type[ForecastBot], mocker: Mock
     ) -> Mock:
         test_binary_question = (
-            ForecastingTestManager.get_fake_binary_questions()
+            ForecastingTestManager.get_fake_binary_question()
         )
         mock_function = mocker.patch(
             f"{subclass._run_individual_question_with_error_propagation.__module__}.{subclass._run_individual_question_with_error_propagation.__qualname__}"
@@ -131,7 +127,7 @@ class ForecastingTestManager:
             f"{MetaculusApi.get_benchmark_questions.__module__}.{MetaculusApi.get_benchmark_questions.__qualname__}"
         )
         mock_function.return_value = [
-            ForecastingTestManager.get_fake_binary_questions()
+            ForecastingTestManager.get_fake_binary_question()
         ]
         return mock_function
 

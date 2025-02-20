@@ -6,7 +6,6 @@ import typeguard
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import (
@@ -309,11 +308,11 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot):
 
             Please come up with {number_of_personas} different personas of experts that would be relevant to this question.
             Return your answer as a list of Persona objects. Remember to give a JSON list even if there is only one item.
-            {Gpt4o.get_schema_format_instructions_for_pydantic_type(Persona)}
+            {GeneralLlm.get_schema_format_instructions_for_pydantic_type(Persona)}
             """
         )
-        personas = await Gpt4o(
-            temperature=0.8
+        personas = await GeneralLlm(
+            model="gpt-4o", temperature=0.8
         ).invoke_and_return_verified_type(prompt, list[Persona])
         logger.debug(f"Personas Chosen:\n{personas}")
         if len(personas) != number_of_personas:

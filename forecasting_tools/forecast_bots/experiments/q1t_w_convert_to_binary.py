@@ -29,7 +29,6 @@ class Q1TemplateBotWithConvertToBinary(Q1TemplateBot):
         for option in question.options:
             new_question = BinaryQuestion(
                 question_text=f'Will the outcome be option "{option}" for the question "{question.question_text}"?',
-                id_of_post=0,
                 background_info=question.background_info,
                 resolution_criteria=f'The question resolves yes if the below criteria resolves for the option "{option}". Here is the overall question criteria:\n{question.resolution_criteria}',
                 fine_print=question.fine_print,
@@ -137,7 +136,6 @@ class Q1TemplateBotWithConvertToBinary(Q1TemplateBot):
                 background_info=f"{question.background_info}\n{upper_bound_message}\n{lower_bound_message}",
                 resolution_criteria=f"The question resolves yes if the value is less than or equal to {percentile.value} (assume the units inferred below). Here is the overall question criteria:\n{question.resolution_criteria}",
                 fine_print=question.fine_print,
-                id_of_post=0,
             )
             new_questions.append(new_question)
 

@@ -44,6 +44,7 @@ class PredictionExtractor:
 
         # Iterate through each line in the text
         for expected_option in options:
+            expected_option = expected_option.strip()
             probability_found = False
             matching_lines = []
             for line in reasoning.split("\n"):

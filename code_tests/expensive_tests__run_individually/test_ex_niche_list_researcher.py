@@ -153,8 +153,6 @@ def test_large_lists_fail(things_to_generate: str) -> None:
                 "Ironworks Patents LLC vs Apple Inc (2010)",  # Paid $10million. See filing 749 and filing 8 https://dockets.justia.com/docket/delaware/dedce/1:2010cv00258/43925
                 "WARF vs Apple (2015)",  # $234mill https://news.wisc.edu/warf-wins-patent-infringement-lawsuit-against-apple/
                 # Invalid
-                # Secondar QualComm case
-                # Is this a different one? It was settled... I think Apple initiated? # https://www.reuters.com/technology/apple-loses-second-bid-challenge-qualcomm-patents-us-supreme-court-2022-10-03/#:~:text=The%20companies%20settled%20their%20underlying%20fight%20in%202019%2C%20signing%20an%20agreement%20worth%20billions%20of%20dollars%20that%20let%20Apple%20continue%20using%20Qualcomm%20chips%20in%20iPhones
                 # "Brazilian SEP Litigation",
                 # There was a case ruled in Brazil in Ericcson's favor, but this was part of the larger Apple v Ericcson dispute
                 # https://www.lickslegal.com/articles/ericsson-apple-settlement-came-hot-on-the-heels-of-landmark-brazilian-ruling-2#:~:text=In%20one%20of,in%20Ericsson%E2%80%99s%20favour.
@@ -166,7 +164,9 @@ def test_large_lists_fail(things_to_generate: str) -> None:
                 # https://natlawreview.com/article/some-touch-needed-federal-circuit-partially-confirms-ptabs-view-analogous-art#:~:text=After%20Corephotonics%20sued,with%20other%20references).
                 # https://cafc.uscourts.gov/opinions-orders/22-1350.OPINION.9-11-2023_2188207.pdf
                 # https://cafc.uscourts.gov/opinions-orders/22-1340.OPINION.10-16-2023_2205991.pdf
-                # Qualcomm vs. Apple : Modems - Apple Sued Qualcomm. They settled  https://www.inquartik.com/blog/case-intel-apple-qualcomm/#:~:text=Apple%20initially%20sued%20Qualcomm%20for%20%241%20billion%2C%20in%20China%2C%20it%20was%20for%20%24145%20million.%20During%20the%20period%20of%20legal%20action%2C%20Apple%20used%20Intel%E2%80%99s%20modems%20to%20build%20the%20iPhone%20XS.
+                # "Second QualComm case"
+                # Is this a different one? It was settled... I think Apple initiated? # https://www.reuters.com/technology/apple-loses-second-bid-challenge-qualcomm-patents-us-supreme-court-2022-10-03/#:~:text=The%20companies%20settled%20their%20underlying%20fight%20in%202019%2C%20signing%20an%20agreement%20worth%20billions%20of%20dollars%20that%20let%20Apple%20continue%20using%20Qualcomm%20chips%20in%20iPhones
+                # "Qualcomm vs. Apple : Modems - Apple Sued Qualcomm" # They settled  https://www.inquartik.com/blog/case-intel-apple-qualcomm/#:~:text=Apple%20initially%20sued%20Qualcomm%20for%20%241%20billion%2C%20in%20China%2C%20it%20was%20for%20%24145%20million.%20During%20the%20period%20of%20legal%20action%2C%20Apple%20used%20Intel%E2%80%99s%20modems%20to%20build%20the%20iPhone%20XS.
                 # List of other cases (valid ones have been processed) https://en.wikipedia.org/w/index.php?title=Litigation_involving_Apple_Inc.
             ],
         ),

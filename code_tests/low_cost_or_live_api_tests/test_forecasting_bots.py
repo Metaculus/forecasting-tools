@@ -48,6 +48,7 @@ async def test_predicts_test_question(
     assert report.price_estimate is not None
     assert report.minutes_taken is not None
     assert report.question is not None
+    assert question.id_of_post is not None
 
     updated_question = MetaculusApi.get_question_by_post_id(
         question.id_of_post
@@ -80,7 +81,7 @@ async def test_no_reports_when_questions_already_forecasted(
     bot_type = TemplateBot
     bot = bot_type(skip_previously_forecasted_questions=True)
     ForecastingTestManager.mock_forecast_bot_run_forecast(bot_type, mocker)
-    questions = [ForecastingTestManager.get_fake_binary_questions()]
+    questions = [ForecastingTestManager.get_fake_binary_question()]
     questions = typeguard.check_type(questions, list[MetaculusQuestion])
 
     for question in questions:

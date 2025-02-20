@@ -84,7 +84,10 @@ class ReportDisplayer:
         assert all(section.section_content is not None for section in sections)
 
         tab_names = [section.title or "Untitled" for section in sections]
-        show_question_details = report.question.id_of_post > 0
+        show_question_details = (
+            report.question.id_of_post is not None
+            and report.question.id_of_post > 0
+        )
         if show_question_details:
             tab_names.append("Question Details")
         tabs = st.tabs(tab_names)

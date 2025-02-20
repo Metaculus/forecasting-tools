@@ -31,3 +31,12 @@ def test_timeout_works() -> None:
     model = GeneralLlm(model="gpt-4o-mini", timeout=50)
     response = asyncio.run(model.invoke(model_input))
     assert response is not None, "Response is None"
+
+
+def test_litellm_params_work() -> None:
+    # Make sure it doesn't raise an exception
+    GeneralLlm(model="gpt-4o", temperature=0.1, max_tokens=100)
+
+    # Make sure it raises an exception if a non-litellm param is passed
+    with pytest.raises(Exception):
+        GeneralLlm(model="gpt-4o", temperature=0.1, non_litellm_param=100)

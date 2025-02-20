@@ -119,7 +119,7 @@ def test_post_binary_prediction_on_question() -> None:
 
 
 def test_post_binary_prediction_error_when_out_of_range() -> None:
-    question = ForecastingTestManager.get_fake_binary_questions()
+    question = ForecastingTestManager.get_fake_binary_question()
     question_id = question.id_of_post
     with pytest.raises(ValueError):
         MetaculusApi.post_binary_question_prediction(question_id, 0)
