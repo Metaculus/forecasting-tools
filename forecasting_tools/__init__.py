@@ -73,6 +73,15 @@ from forecasting_tools.forecast_bots.forecast_bot import (
     ForecastBot as ForecastBot,
 )
 from forecasting_tools.forecast_bots.main_bot import MainBot as MainBot
+from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
+    Q1TemplateBot2025 as Q1TemplateBot2025,
+)
+from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
+    Q3TemplateBot2024 as Q3TemplateBot2024,
+)
+from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
+    Q4TemplateBot2024 as Q4TemplateBot2024,
+)
 from forecasting_tools.forecast_bots.template_bot import (
     TemplateBot as TemplateBot,
 )

@@ -13,14 +13,14 @@ from forecasting_tools.data_models.questions import (
     NumericQuestion,
 )
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
-    Q1TemplateBot,
+    Q1TemplateBot2025,
 )
 from forecasting_tools.forecast_helpers.prediction_extractor import (
     PredictionExtractor,
 )
 
 
-class Q1TemplateBotWithConvertToBinary(Q1TemplateBot):
+class Q1TemplateBotWithConvertToBinary(Q1TemplateBot2025):
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str

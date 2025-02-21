@@ -1,12 +1,12 @@
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
-    Q3TemplateBot,
+    Q3TemplateBot2024,
 )
 from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 
 
-class Q3TemplateWithExa(Q3TemplateBot):
+class Q3TemplateWithExa(Q3TemplateBot2024):
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         prompt = clean_indents(

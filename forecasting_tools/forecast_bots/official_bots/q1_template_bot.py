@@ -26,7 +26,7 @@ from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 logger = logging.getLogger(__name__)
 
 
-class Q1TemplateBot(ForecastBot):
+class Q1TemplateBot2025(ForecastBot):
     """
     This is a copy of the template bot for Q1 2025 Metaculus AI Tournament.
     The official bots on the leaderboard use AskNews in Q1.

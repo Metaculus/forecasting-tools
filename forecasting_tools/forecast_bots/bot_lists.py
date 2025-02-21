@@ -9,13 +9,13 @@ from forecasting_tools.forecast_bots.community.q4_veritas_bot import (
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.main_bot import MainBot
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
-    Q1TemplateBot,
+    Q1TemplateBot2025,
 )
 from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
-    Q3TemplateBot,
+    Q3TemplateBot2024,
 )
 from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
-    Q4TemplateBot,
+    Q4TemplateBot2024,
 )
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
 
@@ -24,9 +24,9 @@ def get_all_important_bot_classes() -> list[type[ForecastBot]]:
     return [
         MainBot,
         TemplateBot,
-        Q1TemplateBot,
-        Q3TemplateBot,
-        Q4TemplateBot,
+        Q1TemplateBot2025,
+        Q3TemplateBot2024,
+        Q4TemplateBot2024,
         Q4VeritasBot,
         Q1VeritasBot,
     ]

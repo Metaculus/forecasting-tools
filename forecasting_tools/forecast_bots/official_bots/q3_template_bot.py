@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.deprecated_model_classes.perplexity import (
     Perplexity,
 )
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOptionList,
@@ -22,7 +22,7 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
 )
 
 
-class Q3TemplateBot(ForecastBot):
+class Q3TemplateBot2024(ForecastBot):
     """
     This is the template bot for the Q3 2024 Metaculus AI Tournament.
     It should be exactly the same except for Perplexity running on a new model (the original model was deprecated)
@@ -30,8 +30,8 @@ class Q3TemplateBot(ForecastBot):
     This comment was last updated on Jan 20 2025
     """
 
-    FINAL_DECISION_LLM = Gpt4o(
-        temperature=0.1
+    FINAL_DECISION_LLM = GeneralLlm(
+        model="gpt-4o", temperature=0.1
     )  # Q3 Bot used the default llama index temperature which as of Dec 21 2024 is 0.1
 
     async def run_research(self, question: MetaculusQuestion) -> str:

@@ -8,14 +8,14 @@ from forecasting_tools.data_models.questions import (
     MetaculusQuestion,
 )
 from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
-    Q3TemplateBot,
+    Q3TemplateBot2024,
 )
 from forecasting_tools.research_agents.research_coordinator import (
     ResearchCoordinator,
 )
 
 
-class Q4VeritasBot(Q3TemplateBot):
+class Q4VeritasBot(Q3TemplateBot2024):
     FINAL_DECISION_LLM = Gpt4o(temperature=0.7)
 
     def __init__(

@@ -20,7 +20,7 @@ from forecasting_tools.data_models.questions import (
 )
 from forecasting_tools.forecast_bots.forecast_bot import ScratchPad
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
-    Q1TemplateBot,
+    Q1TemplateBot2025,
 )
 from forecasting_tools.forecast_helpers.prediction_extractor import (
     PredictionExtractor,
@@ -55,7 +55,7 @@ class PersonaScratchpad(ScratchPad):
         return random_persona
 
 
-class Q1TemplateWithPersonasAndExa(Q1TemplateBot):
+class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
 
     def __init__(
         self,
