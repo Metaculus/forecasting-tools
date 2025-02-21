@@ -24,11 +24,11 @@ class BenchmarkForBot(BaseModel, Jsonable):
     forecast_reports: list[BinaryReport | NumericReport | MultipleChoiceReport]
 
     @property
-    def average_inverse_expected_log_score(self) -> float:
+    def average_expected_baseline_score(self) -> float:
         reports = typeguard.check_type(
             self.forecast_reports,
             list[ForecastReport],
         )
-        return ForecastReport.calculate_average_inverse_expected_log_score(
+        return ForecastReport.calculate_average_expected_baseline_score(
             reports
         )

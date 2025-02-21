@@ -110,5 +110,5 @@ def assert_all_benchmark_object_fields_are_not_none(
         len(benchmark.forecast_reports) == num_questions
     ), "Forecast reports is not set"
     assert (
-        benchmark.average_inverse_expected_log_score > 0
+        benchmark.average_expected_baseline_score > 0
     ), "Average inverse expected log score is not set"

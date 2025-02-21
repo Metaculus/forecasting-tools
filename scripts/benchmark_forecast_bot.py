@@ -52,7 +52,7 @@ async def benchmark_forecast_bot() -> None:
                 f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}"
             )
             logger.info(
-                f"- Final Score: {benchmark.average_inverse_expected_log_score}"
+                f"- Final Score: {benchmark.average_expected_baseline_score}"
             )
             logger.info(f"- Total Cost: {benchmark.total_cost}")
             logger.info(f"- Time taken: {benchmark.time_taken_in_minutes}")

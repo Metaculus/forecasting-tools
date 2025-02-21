@@ -54,14 +54,22 @@ class BinaryReport(ForecastReport):
         return self.question.community_prediction_at_access_time
 
     @property
+    def expected_baseline_score(self) -> float | None:
+        c = self.community_prediction
+        p = self.prediction
+        if c is None:
+            return None
+        return 100.0 * (
+            c * (np.log(p) + 1.0) + (1.0 - c) * (np.log(1.0 - p) + 1.0)
+        )
+
+    @property
     def inversed_expected_log_score(self) -> float | None:
         c = self.community_prediction
         p = self.prediction
         if c is None:
             return None
-        # TODO: Run a simulation using ln rather than log2
-        # since Metaculus uses ln for log scores https://www.metaculus.com/help/scores-faq/#log-score
-        expected_log_score = c * np.log2(p) + (1 - c) * np.log2(1 - p)
+        expected_log_score = c * np.log(p) + (1 - c) * np.log(1 - p)
         inversed_expected_log_score = -1 * expected_log_score
         return inversed_expected_log_score
 

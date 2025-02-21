@@ -82,7 +82,7 @@ class BenchmarkPage(AppPage):
         cls, reports: list[BinaryReport], title: str
     ) -> None:
         average_expected_log_score = (
-            BinaryReport.calculate_average_inverse_expected_log_score(reports)
+            BinaryReport.calculate_average_expected_baseline_score(reports)
         )
         average_deviation = BinaryReport.calculate_average_deviation_points(
             reports
@@ -135,16 +135,16 @@ class BenchmarkPage(AppPage):
         sorted_reports = sorted(
             report_list,
             key=lambda r: (
-                r.inversed_expected_log_score
-                if r.inversed_expected_log_score is not None
+                r.expected_baseline_score
+                if r.expected_baseline_score is not None
                 else -1
             ),
             reverse=True,
         )
         for report in sorted_reports:
             deviation = (
-                report.inversed_expected_log_score
-                if report.inversed_expected_log_score is not None
+                report.expected_baseline_score
+                if report.expected_baseline_score is not None
                 else -1
             )
             st.write(

@@ -61,36 +61,28 @@ class ForecastReport(BaseModel, Jsonable, ABC):
         return self._get_section_content(index=2, expected_word="forecast")
 
     @property
-    def inversed_expected_log_score(self) -> float | None:
+    def expected_baseline_score(self) -> float | None:
         """
-        Expected log score is evaluated to correlate closest to the baseline score
-        when assuming the community prediction is the true probability.
-        (see scripts/simulate_a_tournament.ipynb).
-        We invert the expected log score so it behaves like a brier score
-        (where it is positive and lower is better).
+        Uses the community prediction to calculate the expected value of the baseline score
+        by assuming the community prediction is the true probability. Can be used as
+        a proxy score for comparing forecasters on the same set of questions, enabling
+        faster feedback loops.
 
-        The score for a perfect predictor for a set of binary questions with
-        community predictions distributed
-        - Uniformly between 0 and 1 is 0.723
-        - Closer to 0 or 1 is 0.553
-        - Closer to 0.5 is 0.932
-        - Uniformly between 0.1 and 0.9 is 0.834
-        - Uniformly between (0 and 0.1) union (0.9 and 1) is 0.270
-
-        Someone who predicts 0.5 always gets a value of 1
+        See https://www.metaculus.com/help/scores-faq/#baseline-score
+        and scripts/simulate_a_tournament.ipynb for more details.
         """
-        raise NotImplementedError("Not implemented")
+        raise NotImplementedError("Not yet implemented")
 
     @property
     def community_prediction(self) -> Any | None:
         raise NotImplementedError("Not implemented")
 
     @staticmethod
-    def calculate_average_inverse_expected_log_score(
+    def calculate_average_expected_baseline_score(
         reports: list[ForecastReport],
     ) -> float:
         deviation_scores: list[float | None] = [
-            report.inversed_expected_log_score for report in reports
+            report.expected_baseline_score for report in reports
         ]
         validated_deviation_scores: list[float] = []
         for score in deviation_scores:

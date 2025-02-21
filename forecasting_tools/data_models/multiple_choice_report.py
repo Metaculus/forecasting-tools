@@ -19,7 +19,7 @@ class MultipleChoiceReport(ForecastReport):
     prediction: PredictedOptionList
 
     @property
-    def inversed_expected_log_score(self) -> float | None:
+    def expected_baseline_score(self) -> float | None:
         raise NotImplementedError("Not implemented")
 
     @property
