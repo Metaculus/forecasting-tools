@@ -68,6 +68,8 @@ class ForecastReport(BaseModel, Jsonable, ABC):
         a proxy score for comparing forecasters on the same set of questions, enabling
         faster feedback loops.
 
+        Higher is better.
+
         See https://www.metaculus.com/help/scores-faq/#baseline-score
         and scripts/simulate_a_tournament.ipynb for more details.
         """

@@ -36,6 +36,7 @@ typeguard = "^4.3.0"
 scikit-learn = ">=1.5.2,<1.7.0"
 litellm = "^1.59.1"
 numpy = ">=1.26.0,<3.0.0"
+exceptiongroup = "^1.2.2"
 
 [tool.poetry.group.dev.dependencies]
 pipreqs = "^0.4.13"

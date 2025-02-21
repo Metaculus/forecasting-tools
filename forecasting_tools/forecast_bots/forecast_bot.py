@@ -249,7 +249,7 @@ class ForecastBot(ABC):
             return await self._run_individual_question(question)
         except Exception as e:
             error_message = (
-                f"Error while processing question '{question.page_url}'"
+                f"Error while processing question url: '{question.page_url}'"
             )
             logger.error(f"{error_message}: {e}")
             self._reraise_exception_with_prepended_message(e, error_message)
@@ -387,7 +387,7 @@ class ForecastBot(ABC):
             assert exception_group, "Exception group should not be None"
             self._reraise_exception_with_prepended_message(
                 exception_group,
-                f"Error while processing question '{question.page_url}'",
+                "Error while running research and predictions",
             )
         return ResearchWithPredictions(
             research_report=research,

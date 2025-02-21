@@ -50,14 +50,16 @@ async def test_aggregate_predictions() -> None:
         await BinaryReport.aggregate_predictions([1.1, 0.5], question)
 
 
-def test_inversed_expected_log_score() -> None:
+def test_expected_baseline_score() -> None:
     # Test with valid community prediction
     report = ForecastingTestManager.get_fake_forecast_report(
         prediction=0.6, community_prediction=0.7
     )
     score = report.expected_baseline_score
     assert score is not None
-    expected_score = -1 * (0.7 * np.log2(0.6) + 0.3 * np.log2(0.4))
+    expected_score = 100.0 * (
+        0.7 * (np.log(0.6) + 1.0) + (1.0 - 0.7) * (np.log(1.0 - 0.6) + 1.0)
+    )
     assert score == pytest.approx(expected_score)
     assert score > 0
 
@@ -72,7 +74,7 @@ def test_inversed_expected_log_score() -> None:
     worse_score = worse_report.expected_baseline_score
     assert better_score is not None
     assert worse_score is not None
-    assert better_score < worse_score
+    assert better_score > worse_score
 
     # Test with None community prediction
     report = ForecastingTestManager.get_fake_forecast_report(

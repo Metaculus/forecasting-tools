@@ -41,10 +41,10 @@ async def test_forecast_questions_returns_exceptions_when_specified() -> None:
     )
     assert len(results) == 2
     assert isinstance(results[0], ForecastReport)
-    assert isinstance(results[1], RuntimeError)
+    assert isinstance(results[1], Exception)
     assert "Test error" in str(results[1])
 
-    with pytest.raises(RuntimeError, match="Test error"):
+    with pytest.raises(Exception):
         await bot.forecast_questions(test_questions, return_exceptions=False)
 
 
@@ -58,10 +58,10 @@ async def test_forecast_question_returns_exception_when_specified() -> None:
     bot.run_research = mock_research
 
     result = await bot.forecast_question(test_question, return_exceptions=True)
-    assert isinstance(result, RuntimeError)
+    assert isinstance(result, Exception)
     assert "Test error" in str(result)
 
-    with pytest.raises(RuntimeError, match="Test error"):
+    with pytest.raises(Exception):
         await bot.forecast_question(test_question, return_exceptions=False)
 
 
@@ -114,7 +114,7 @@ async def test_forecast_fails_with_all_predictions_erroring() -> None:
 
     bot._run_forecast_on_binary = mock_forecast
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(Exception):
         await bot.forecast_question(test_question)
 
 
