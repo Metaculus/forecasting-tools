@@ -5,6 +5,7 @@ from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
 
 class MainBot(Q1TemplateBot):
     """
+    The verified highest accuracy bot available.
     Main bot is the template bot for now till we can confirm other bots are better.
     """
 

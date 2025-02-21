@@ -25,14 +25,19 @@ class ResourceUseEntry:
 class RefreshingBucketRateLimiter:
     """
     The refreshing bucket rate limiter is a way of limiting resource use over time.
+    - It sets up a capacity and a refresh rate.
+    - Refresh rate is per second.
+    - It will wait to fill up when the bucket is emptied.
+
 
     For example:
     - requests per minute
     - tokens per second
     - etc.
 
-    It sets up a capacity and a refresh rate. Refresh rate is per second.
-    The capacity acts as a burst limit. You can spend X resources in a short interval before being forced to slow down.
+    The capacity acts as a burst limit. You can spend X resources before
+    being forced to slow down as the bottom of the bucket is hit and you
+    can't use more resources.
     If you use only X capacity, it will take the (refresh rate * X) to get back to full capacity.
     If you reach the bottom of the bucket, the bucket will fill all the way up before you can use resources again.
     This is to make sure something like a "requests per minute" limit is not exceeded even after a burst

@@ -9,7 +9,7 @@ from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.questions import BinaryQuestion
 from forecasting_tools.forecast_bots.bot_lists import (
-    get_all_official_bot_classes,
+    get_all_important_bot_classes,
 )
 from forecasting_tools.forecast_bots.forecast_bot import (
     ForecastBot,
@@ -219,7 +219,7 @@ async def test_skip_previously_forecasted_questions() -> None:
         await bot.forecast_question(forecasted_question)
 
 
-@pytest.mark.parametrize("bot", get_all_official_bot_classes())
+@pytest.mark.parametrize("bot", get_all_important_bot_classes())
 def test_bot_has_config(bot: type[ForecastBot]):
     probable_minimum_number_of_bot_params = 3
     bot_config = bot().get_config()

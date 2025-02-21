@@ -55,6 +55,32 @@ class GeneralLlm(
     """
 
     _model_trackers: dict[str, ModelTracker] = {}
+    _defaults: dict[str, Any] = {
+        "gpt-4o": {
+            "timeout": 40,
+        },
+        "gpt-4o-mini": {
+            "timeout": 40,
+        },
+        "o1-preview": {
+            "timeout": 80,
+        },
+        "o1": {
+            "timeout": 80,
+        },
+        "o3-mini": {
+            "timeout": 80,
+        },
+        "perplexity/": {
+            "timeout": 120,
+        },
+        "claude": {
+            "timeout": 40,
+        },
+        "deepseek/": {
+            "timeout": 80,
+        },
+    }
 
     def __init__(
         self,
@@ -114,10 +140,12 @@ class GeneralLlm(
             if self._use_metaculus_proxy
             else model
         )
+        default_timeout = self._get_default_timeout(self._litellm_model)
+
         self.litellm_kwargs = kwargs
         self.litellm_kwargs["model"] = self._litellm_model
         self.litellm_kwargs["temperature"] = temperature
-        self.litellm_kwargs["timeout"] = timeout
+        self.litellm_kwargs["timeout"] = timeout or default_timeout
 
         if self._use_metaculus_proxy:
             assert (
@@ -152,6 +180,14 @@ class GeneralLlm(
             )
 
         self._give_cost_tracking_warning_if_needed()
+
+    @classmethod
+    def _get_default_timeout(cls, model: str) -> int:
+        all_keys = cls._defaults.keys()
+        matching_keys = [key for key in all_keys if key in model]
+        if not matching_keys:
+            return 60
+        return cls._defaults[matching_keys[0]]["timeout"]
 
     def _give_cost_tracking_warning_if_needed(self) -> None:
         model = self._litellm_model
@@ -215,7 +251,9 @@ class GeneralLlm(
         choices = response.choices
         choices = typeguard.check_type(choices, list[Choices])
         answer = choices[0].message.content
-        assert isinstance(answer, str)
+        assert isinstance(
+            answer, str
+        ), f"Answer is not a string and is of type: {type(answer)}. Answer: {answer}"
         usage = response.usage  # type: ignore
         assert isinstance(usage, Usage)
         prompt_tokens = usage.prompt_tokens

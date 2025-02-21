@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Coroutine, Sequence, TypeVar, cast, overload
 
+from exceptiongroup import ExceptionGroup
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
@@ -247,9 +248,14 @@ class ForecastBot(ABC):
         try:
             return await self._run_individual_question(question)
         except Exception as e:
-            raise type(e)(
-                f"Error while processing question '{question.page_url}': {str(e)}"
-            ) from e
+            error_message = (
+                f"Error while processing question '{question.page_url}'"
+            )
+            logger.error(f"{error_message}: {e}")
+            self._reraise_exception_with_prepended_message(e, error_message)
+            assert (
+                False
+            ), "This is to satisfy type checker. The previous function should raise an exception"
 
     async def _run_individual_question(
         self, question: MetaculusQuestion
@@ -263,12 +269,18 @@ class ForecastBot(ABC):
                 self._research_and_make_predictions(question)
                 for _ in range(self.research_reports_per_question)
             ]
-            valid_prediction_set, research_errors = (
+            valid_prediction_set, research_errors, exception_group = (
                 await self._gather_results_and_exceptions(prediction_tasks)
             )
             if research_errors:
                 logger.warning(
                     f"Encountered errors while researching: {research_errors}"
+                )
+            if len(valid_prediction_set) == 0:
+                assert exception_group, "Exception group should not be None"
+                self._reraise_exception_with_prepended_message(
+                    exception_group,
+                    f"All {self.research_reports_per_question} research reports/predictions failed",
                 )
             prediction_errors = [
                 error
@@ -277,12 +289,6 @@ class ForecastBot(ABC):
             ]
             all_errors = research_errors + prediction_errors
 
-            if len(valid_prediction_set) == 0:
-                raise RuntimeError(
-                    f"All {self.research_reports_per_question} research reports/predictions failed. "
-                    f"Research errors: {research_errors if research_errors else 'None'}, "
-                    f"Prediction errors: {prediction_errors if prediction_errors else 'None'}"
-                )
             report_type = DataOrganizer.get_report_type_for_question_type(
                 type(question)
             )
@@ -321,9 +327,16 @@ class ForecastBot(ABC):
 
     async def _aggregate_predictions(
         self,
-        predictions: list[ReasonedPrediction[PredictionTypes]],
+        predictions: list[PredictionTypes],
         question: MetaculusQuestion,
-    ) -> ReasonedPrediction[PredictionTypes]:
+    ) -> PredictionTypes:
+        if not predictions:
+            raise ValueError("Cannot aggregate empty list of predictions")
+        prediction_types = {type(pred) for pred in predictions}
+        if len(prediction_types) > 1:
+            raise TypeError(
+                f"All predictions must be of the same type. Found types: {prediction_types}"
+            )
         report_type = DataOrganizer.get_report_type_for_question_type(
             type(question)
         )
@@ -334,7 +347,7 @@ class ForecastBot(ABC):
 
     async def _research_and_make_predictions(
         self, question: MetaculusQuestion
-    ) -> ResearchWithPredictions:
+    ) -> ResearchWithPredictions[PredictionTypes]:
         research = await self.run_research(question)
         summary_report = await self.summarize_research(question, research)
         research_to_use = (
@@ -365,14 +378,16 @@ class ForecastBot(ABC):
                 for _ in range(self.predictions_per_research_report)
             ],
         )
-        valid_predictions, errors = await self._gather_results_and_exceptions(
-            tasks
+        valid_predictions, errors, exception_group = (
+            await self._gather_results_and_exceptions(tasks)
         )
         if errors:
             logger.warning(f"Encountered errors while predicting: {errors}")
         if len(valid_predictions) == 0:
-            raise RuntimeError(
-                f"All {self.predictions_per_research_report} predictions failed. Errors: {errors}"
+            assert exception_group, "Exception group should not be None"
+            self._reraise_exception_with_prepended_message(
+                exception_group,
+                f"Error while processing question '{question.page_url}'",
             )
         return ResearchWithPredictions(
             research_report=research,
@@ -403,7 +418,7 @@ class ForecastBot(ABC):
         self,
         question: MetaculusQuestion,
         research_prediction_collections: list[ResearchWithPredictions],
-        aggregated_prediction: ReasonedPrediction[PredictionTypes],
+        aggregated_prediction: PredictionTypes,
         final_cost: float,
         time_spent_in_minutes: float,
     ) -> str:
@@ -530,18 +545,35 @@ class ForecastBot(ABC):
 
     async def _gather_results_and_exceptions(
         self, coroutines: list[Coroutine[Any, Any, T]]
-    ) -> tuple[list[T], list[str]]:
+    ) -> tuple[list[T], list[str], ExceptionGroup | None]:
         results = await asyncio.gather(*coroutines, return_exceptions=True)
         valid_results = [
             result
             for result in results
             if not isinstance(result, BaseException)
         ]
-        errors = []
+        error_messages = []
+        exceptions = []
         for error in results:
             if isinstance(error, BaseException):
-                errors.append(f"{error.__class__.__name__}: {error}")
-        return valid_results, errors
+                error_messages.append(f"{error.__class__.__name__}: {error}")
+                exceptions.append(error)
+        exception_group = (
+            ExceptionGroup(f"Errors: {error_messages}", exceptions)
+            if exceptions
+            else None
+        )
+        return valid_results, error_messages, exception_group
+
+    def _reraise_exception_with_prepended_message(
+        self, exception: Exception | ExceptionGroup, message: str
+    ) -> None:
+        if isinstance(exception, ExceptionGroup):
+            raise ExceptionGroup(
+                f"{message}: {exception.message}", exception.exceptions
+            )
+        else:
+            raise type(exception)(f"{message}: {exception}") from exception
 
     async def _initialize_scratchpad(
         self, question: MetaculusQuestion

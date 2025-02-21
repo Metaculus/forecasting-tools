@@ -20,7 +20,7 @@ from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
 
 
-def get_all_official_bot_classes() -> list[type[ForecastBot]]:
+def get_all_important_bot_classes() -> list[type[ForecastBot]]:
     return [
         MainBot,
         TemplateBot,
