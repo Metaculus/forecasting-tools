@@ -8,7 +8,7 @@ on:
 
 # Daily job to run the forecast bot
 jobs:
-  run_bot:
+  test-proxy:
     runs-on: ubuntu-latest # determines the machine that will run the job - keep as is
     steps: # sets up the steps that will be run in order
       # setup repository with all necessary dependencies - keep as is
