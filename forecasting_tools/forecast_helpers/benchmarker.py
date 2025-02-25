@@ -3,6 +3,7 @@ import logging
 import subprocess
 import time
 from datetime import datetime
+from typing import Sequence
 
 import typeguard
 
@@ -10,11 +11,7 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 from forecasting_tools.data_models.benchmark_for_bot import BenchmarkForBot
-from forecasting_tools.data_models.binary_report import BinaryReport
-from forecasting_tools.data_models.multiple_choice_report import (
-    MultipleChoiceReport,
-)
-from forecasting_tools.data_models.numeric_report import NumericReport
+from forecasting_tools.data_models.data_organizer import ReportTypes
 from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
@@ -26,8 +23,6 @@ class Benchmarker:
     """
     For an idea of how many questions are 'enough' to test with read:
     https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world
-    Also see the results of a rough (and probably flawed) simulation here:
-    https://chatgpt.com/share/3fbc8106-829d-4fb3-a9e6-af0badf266df
 
     TLDR: 100-200 questions is a decent starting point, but 500+ would be ideal.
     Lower than 100 can differentiate between bots of large skill differences,
@@ -38,12 +33,26 @@ class Benchmarker:
     def __init__(
         self,
         forecast_bots: list[ForecastBot],
-        number_of_questions_to_use: int,
+        number_of_questions_to_use: int | None = None,
+        questions_to_use: Sequence[MetaculusQuestion] | None = None,
         file_path_to_save_reports: str | None = None,
         concurrent_question_batch_size: int = 10,
     ) -> None:
+        if (
+            number_of_questions_to_use is not None
+            and questions_to_use is not None
+        ):
+            raise ValueError(
+                "Either number_of_questions_to_use or questions_to_use must be provided, not both"
+            )
+        if number_of_questions_to_use is None and questions_to_use is None:
+            raise ValueError(
+                "Either number_of_questions_to_use or questions_to_use must be provided"
+            )
+
         self.forecast_bots = forecast_bots
         self.number_of_questions_to_use = number_of_questions_to_use
+        self.questions_to_use = questions_to_use
         if (
             file_path_to_save_reports is not None
             and not file_path_to_save_reports.endswith("/")
@@ -54,12 +63,20 @@ class Benchmarker:
         self.concurrent_question_batch_size = concurrent_question_batch_size
 
     async def run_benchmark(self) -> list[BenchmarkForBot]:
-        questions = MetaculusApi.get_benchmark_questions(
-            self.number_of_questions_to_use,
-        )
+        if self.questions_to_use is None:
+            assert (
+                self.number_of_questions_to_use is not None
+            ), "number_of_questions_to_use must be provided if questions_to_use is not provided"
+            chosen_questions = MetaculusApi.get_benchmark_questions(
+                self.number_of_questions_to_use,
+            )
+        else:
+            chosen_questions = self.questions_to_use
 
-        questions = typeguard.check_type(questions, list[MetaculusQuestion])
-        assert len(questions) == self.number_of_questions_to_use
+        chosen_questions = typeguard.check_type(
+            chosen_questions, list[MetaculusQuestion]
+        )
+        assert len(chosen_questions) == self.number_of_questions_to_use
 
         benchmarks: list[BenchmarkForBot] = []
         for bot in self.forecast_bots:
@@ -86,7 +103,7 @@ class Benchmarker:
             with MonetaryCostManager() as cost_manager:
                 start_time = time.time()
                 for batch in self._batch_questions(
-                    questions, self.concurrent_question_batch_size
+                    chosen_questions, self.concurrent_question_batch_size
                 ):
                     reports = await bot.forecast_questions(
                         batch, return_exceptions=True
@@ -107,9 +124,7 @@ class Benchmarker:
                     ]
                     valid_reports = typeguard.check_type(
                         valid_reports,
-                        list[
-                            BinaryReport | MultipleChoiceReport | NumericReport
-                        ],
+                        list[ReportTypes],
                     )
                     benchmark.forecast_reports.extend(valid_reports)
                     self._save_benchmarks_to_file_if_configured(benchmarks)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import statistics
+from typing import Sequence
 
 import numpy as np
 from pydantic import AliasChoices, Field, field_validator
@@ -81,7 +82,7 @@ class BinaryReport(ForecastReport):
 
     @staticmethod
     def calculate_average_deviation_points(
-        reports: list[BinaryReport],
+        reports: Sequence[BinaryReport],
     ) -> float:
         validated_deviation_points: list[float] = []
         for report in reports:

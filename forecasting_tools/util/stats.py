@@ -1,6 +1,8 @@
 from math import sqrt
 
-from scipy.stats import norm
+import numpy as np
+from pydantic import BaseModel
+from scipy.stats import norm, shapiro, t
 
 
 class ProportionStatCalculator:
@@ -68,3 +70,40 @@ class ProportionStatCalculator:
         else:
             written_conclusion = f"If the null hypothesis is true (the proportion is equal to and not greater than {p0*100:.2f}%), then there is a {p_value*100:.2f}% probability that the sample (estimated) proportion is {sample_proportion*100:.2f}% or more (the success percentage found in the sample). Thus, we fail to reject the null hypothesis since at the {alpha*100:.2f}% level of significance, the sample data do not give enough evidence to conclude that the proportion is greater than {p0*100:.2f}%. There were {self.number_of_successes} successes in {self.number_of_trials} trials."
         return p_value, hypothesis_rejected, written_conclusion
+
+
+class ConfidenceInterval(BaseModel):
+    mean: float
+    margin_of_error: float
+    lower_bound: float
+    upper_bound: float
+
+
+def determine_confidence_interval(
+    observations: list[float], confidence: float = 0.9
+) -> ConfidenceInterval:
+    assert 0 <= confidence <= 1, "Confidence must be between 0 and 1"
+    sample_size = len(observations)
+    if sample_size < 2:
+        raise ValueError("Not enough data for T-based confidence interval")
+
+    if sample_size < 30:
+        _, normality_pvalue = shapiro(observations)
+        if normality_pvalue < 0.05:
+            raise ValueError(
+                "Data fails normality assumption for T-based confidence interval"
+            )
+
+    sample_mean = np.mean(observations)
+    sample_std = np.std(observations, ddof=1)
+    standard_error = sample_std / np.sqrt(sample_size)
+    alpha = 1 - confidence
+    critical_value = t.ppf(1 - alpha / 2, sample_size - 1)
+    margin_of_error = critical_value * standard_error
+
+    return ConfidenceInterval(
+        mean=float(sample_mean),
+        margin_of_error=margin_of_error,
+        lower_bound=sample_mean - margin_of_error,
+        upper_bound=sample_mean + margin_of_error,
+    )

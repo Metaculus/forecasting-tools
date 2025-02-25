@@ -22,7 +22,7 @@ async def test_file_is_made_for_benchmark(mocker: Mock) -> None:
 
     ForecastingTestManager.mock_forecast_bot_run_forecast(bot_type, mocker)
 
-    file_path_to_save_reports = "logs/forecasts/benchmarks/"
+    file_path_to_save_reports = "temp/benchmarks/"
     absolute_path = file_manipulation.get_absolute_path(
         file_path_to_save_reports
     )
@@ -112,3 +112,63 @@ def assert_all_benchmark_object_fields_are_not_none(
     assert (
         benchmark.average_expected_baseline_score > 0
     ), "Average inverse expected log score is not set"
+
+
+async def test_benchmarks_run_properly_with_provided_questions(
+    mocker: Mock,
+) -> None:
+    bot_type = TemplateBot
+    bot = TemplateBot()
+    mock_run_forecast = ForecastingTestManager.mock_forecast_bot_run_forecast(
+        bot_type, mocker
+    )
+
+    test_questions = [
+        ForecastingTestManager.get_fake_binary_question() for _ in range(4)
+    ]
+
+    benchmarks = await Benchmarker(
+        forecast_bots=[bot],
+        questions_to_use=test_questions,
+    ).run_benchmark()
+
+    assert isinstance(benchmarks, list)
+    assert all(
+        isinstance(benchmark, BenchmarkForBot) for benchmark in benchmarks
+    )
+    assert mock_run_forecast.call_count == len(test_questions)
+
+    for benchmark in benchmarks:
+        assert_all_benchmark_object_fields_are_not_none(
+            benchmark, len(test_questions)
+        )
+
+
+def test_benchmarker_initialization_errors() -> None:
+    bot = TemplateBot()
+
+    with pytest.raises(
+        ValueError,
+    ):
+        Benchmarker(forecast_bots=[bot])
+
+    with pytest.raises(
+        ValueError,
+    ):
+        Benchmarker(
+            forecast_bots=[bot],
+            number_of_questions_to_use=10,
+            questions_to_use=[
+                ForecastingTestManager.get_fake_binary_question()
+            ],
+        )
+
+    # Make sure these do not error
+    Benchmarker(
+        forecast_bots=[bot],
+        number_of_questions_to_use=10,
+    )
+    Benchmarker(
+        forecast_bots=[bot],
+        questions_to_use=[ForecastingTestManager.get_fake_binary_question()],
+    )

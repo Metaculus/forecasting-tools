@@ -2,9 +2,7 @@ import logging
 
 import pytest
 
-from code_tests.utilities_for_tests.proportion_calculator import (
-    ProportionStatCalculator,
-)
+from forecasting_tools.util.stats import ProportionStatCalculator
 
 logger = logging.getLogger(__name__)
 

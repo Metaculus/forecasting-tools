@@ -26,3 +26,6 @@ which python
 # Install playwright
 # playwright install
 # playwright install-deps
+
+# Used for sonar extension code analysis
+nvm install 18
