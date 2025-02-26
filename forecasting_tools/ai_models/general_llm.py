@@ -167,6 +167,7 @@ class GeneralLlm(
                 "Content-Type": "application/json",
                 "Authorization": f"Token {METACULUS_TOKEN}",
             }
+            self.litellm_kwargs["api_key"] = METACULUS_TOKEN
 
         valid_acompletion_params = set(
             inspect.signature(acompletion).parameters.keys()
