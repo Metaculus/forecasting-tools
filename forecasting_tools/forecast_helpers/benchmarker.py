@@ -76,7 +76,9 @@ class Benchmarker:
         chosen_questions = typeguard.check_type(
             chosen_questions, list[MetaculusQuestion]
         )
-        assert len(chosen_questions) == self.number_of_questions_to_use
+
+        if self.number_of_questions_to_use is not None:
+            assert len(chosen_questions) == self.number_of_questions_to_use
 
         benchmarks: list[BenchmarkForBot] = []
         for bot in self.forecast_bots:

@@ -35,8 +35,26 @@ def test_timeout_works() -> None:
 
 def test_litellm_params_work() -> None:
     # Make sure it doesn't raise an exception
-    GeneralLlm(model="gpt-4o", temperature=0.1, max_tokens=100)
+    GeneralLlm(
+        model="gpt-4o",
+        temperature=0.1,
+        max_tokens=100,
+        pass_through_unknown_kwargs=False,
+    )
 
     # Make sure it raises an exception if a non-litellm param is passed
     with pytest.raises(Exception):
-        GeneralLlm(model="gpt-4o", temperature=0.1, non_litellm_param=100)
+        GeneralLlm(
+            model="gpt-4o",
+            temperature=0.1,
+            non_litellm_param=100,
+            pass_through_unknown_kwargs=False,
+        )
+
+    # Make sure it doesn't raise an exception if a non-litellm param is passed
+    GeneralLlm(
+        model="gpt-4o",
+        temperature=0.1,
+        non_litellm_param=100,
+        pass_through_unknown_kwargs=True,
+    )
