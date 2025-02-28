@@ -88,6 +88,7 @@ class GeneralLlm(
         allowed_tries: int = RetryableModel._DEFAULT_ALLOWED_TRIES,
         temperature: float | int | None = 0,
         timeout: float | int | None = None,
+        pass_through_unknown_kwargs: bool = True,
         **kwargs,
     ) -> None:
         """
@@ -175,7 +176,7 @@ class GeneralLlm(
         invalid_params = (
             set(self.litellm_kwargs.keys()) - valid_acompletion_params
         )
-        if invalid_params:
+        if invalid_params and not pass_through_unknown_kwargs:
             raise ValueError(
                 f"The following parameters are not valid for litellm's acompletion: {invalid_params}"
             )

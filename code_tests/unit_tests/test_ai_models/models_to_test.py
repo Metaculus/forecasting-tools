@@ -130,6 +130,10 @@ class GeneralLlmInstancesToTest:
                 self._get_cheap_user_message(),
             ),
             ModelTest(
+                GeneralLlm(model="metaculus/claude-3-7-sonnet-latest"),
+                self._get_cheap_vision_message_data(),
+            ),
+            ModelTest(
                 GeneralLlm(model="claude-3-5-sonnet-20241022"),
                 self._get_cheap_user_message(),
             ),
