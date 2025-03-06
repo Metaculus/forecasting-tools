@@ -1,3 +1,5 @@
+import logging
+
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -6,6 +8,8 @@ from forecasting_tools.research_agents.question_generator import (
     QuestionGenerator,
     SimpleQuestion,
 )
+
+logger = logging.getLogger(__name__)
 
 
 async def test_question_generator_returns_necessary_number_and_stays_within_cost() -> (
@@ -20,7 +24,7 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
         generator = QuestionGenerator(model=model)
         questions = await generator.generate_questions(
             number_of_questions=number_of_questions_to_generate,
-            topic_guideline=f"Generate questions about {topic}",
+            topic=f"Generate questions about {topic}",
         )
 
         assert (
@@ -36,6 +40,7 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
             assert topic.lower() in str(question).lower()
 
         final_cost = cost_manager.current_usage
+        logger.info(f"Cost: ${final_cost:.4f}")
         assert (
             final_cost < cost_threshold
         ), f"Cost exceeded threshold: ${final_cost:.4f} > ${cost_threshold:.4f}"
