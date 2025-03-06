@@ -55,14 +55,16 @@ class QuestionGenerator:
         else:
             self.smart_searcher = researcher
 
-        self.resolution_criteria_explanation = clean_indents(
+        self.field_descriptions = clean_indents(
             """
-            Resolution criteria are highly specific way to resolve this that will always be super obvious in retrospect.
-            Resolution criteria should pass the clairvoyance test such that after the event happens there is no debate about whether it happened or not.
-            It should be meaningful and pertain to the intent of the question.
-            Ideally you give a link for where this information can be found.
+            • question_text: A clear question about a future event
+            • resolution_criteria: Specific criteria for how the question will resolve
+            • fine_print: Additional information covering every edge case that could happen. This should reduce the change of an ambiguous resolution to 0
+            • background_information: Relevant context and historical information to help understand the question
+            • expected_resolution_date: The date when the question is expected to resolve
             """
         )
+
         self.example_full_questions = DataOrganizer.load_questions_from_file_path(
             "forecasting_tools/research_agents/q3_q4_quarterly_questions.json"
         )
@@ -100,10 +102,15 @@ class QuestionGenerator:
 
             Questions should resolve between {resolve_after_date} and {resolve_before_date} (end date is {num_weeks_till_resolution} weeks from now).
 
+            Field descriptions:
+            {self.field_descriptions}
 
             Please create {number_of_questions} questions following the same format:
             Pay especially close attention to the resolution criteria:
-            {self.resolution_criteria_explanation}
+            Resolution criteria are highly specific way to resolve this that will always be super obvious in retrospect.
+            Resolution criteria + fine print should pass the clairvoyance test such that after the event happens there is no debate about whether it happened or not.
+            It should be meaningful and pertain to the intent of the question.
+            Ideally you give a link for where this information can be found.
 
             # Examples
             Here are some example questions:
@@ -141,15 +148,22 @@ class QuestionGenerator:
                 # Instructions
                 The below question has not been reviewed yet and the resolution criteria may need improvement.
 
+
+
                 Here is the question:
                 {question.model_dump_json()}
 
-                Please improve the resolution criteria and ideally add a link to it.
+                Please improve the fine print and ideally add a link to it (only if there is a clear place that could help resolve the question).
                 Look for clear places that could help resolve the question.
-                You have to be more than 100% confident that the resolution criteria will be unambiguous in retrospect.
-                Consider ways that this could go wrong.
+                You have to be more than 100% confident that the resolution criteria/fine print will be unambiguous in retrospect.
+                Walk through ways that this could go wrong such as:
+                - The resolution source doesn't update
+                - The resolution source retracts or changes information
+                - One of your assumptions was wrong
+                - A key date changes
 
-                {self.resolution_criteria_explanation}
+                Field descriptions:
+                {self.field_descriptions}
 
                 # Examples
                 Here are some example questions with good resolution criteria:

@@ -25,6 +25,7 @@ class ForecastRunType(Enum):
     WEB_APP_NICHE_LIST = "web_app_niche_list"
     WEB_APP_KEY_FACTORS = "web_app_key_factors"
     WEB_APP_ESTIMATOR = "web_app_estimator"
+    WEB_APP_QUESTION_GENERATOR = "web_app_question_generator"
 
 
 class ForecastDatabaseManager:

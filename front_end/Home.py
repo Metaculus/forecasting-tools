@@ -17,6 +17,7 @@ from front_end.app_pages.key_factors_page import KeyFactorsPage
 from front_end.app_pages.niche_list_researcher_page import (
     NicheListResearchPage,
 )
+from front_end.app_pages.question_generation_page import QuestionGeneratorPage
 from front_end.helpers.app_page import AppPage
 
 
@@ -30,12 +31,14 @@ class HomePage(AppPage):
     NICHE_LIST_RESEARCH_PAGE: type[AppPage] = NicheListResearchPage
     ESTIMATOR_PAGE: type[AppPage] = EstimatorPage
     KEY_FACTORS_PAGE: type[AppPage] = KeyFactorsPage
+    QUESTION_GENERATION_PAGE: type[AppPage] = QuestionGeneratorPage
     NON_HOME_PAGES: list[type[AppPage]] = [
         FORECASTER_PAGE,
         KEY_FACTORS_PAGE,
         BASE_RATE_PAGE,
         NICHE_LIST_RESEARCH_PAGE,
         ESTIMATOR_PAGE,
+        QUESTION_GENERATION_PAGE,
     ]
 
     @classmethod
