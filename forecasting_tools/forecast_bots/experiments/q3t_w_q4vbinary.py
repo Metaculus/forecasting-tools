@@ -6,6 +6,9 @@ from forecasting_tools.data_models.questions import BinaryQuestion
 from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot2024,
 )
+from forecasting_tools.forecast_helpers.prediction_extractor import (
+    PredictionExtractor,
+)
 
 
 class Q3TemplatePlusQ4VeritasBinaryPrompt(Q3TemplateBot2024):
@@ -53,7 +56,7 @@ class Q3TemplatePlusQ4VeritasBinaryPrompt(Q3TemplateBot2024):
             """
         )
         gpt_forecast = await self.FINAL_DECISION_LLM.invoke(prompt)
-        prediction = self._extract_forecast_from_binary_rationale(
+        prediction = PredictionExtractor.extract_last_percentage_value(
             gpt_forecast, max_prediction=0.99, min_prediction=0.01
         )
         return ReasonedPrediction(

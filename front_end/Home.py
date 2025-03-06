@@ -53,7 +53,7 @@ def run_forecasting_streamlit_app() -> None:
         [page.convert_to_streamlit_page() for page in all_pages]
     )
     st.set_page_config(
-        page_title="Moko Research", page_icon=":material/explore:"
+        page_title="Forecasting-Tools", page_icon=":material/explore:"
     )
     navigation.run()
 
