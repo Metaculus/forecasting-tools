@@ -10,7 +10,8 @@
 Install this package with `pip install forecasting-tools`
 
 # Overview
-Demo website: https://mokoresearch.streamlit.app/
+Demo website: https://forecasting-tools.streamlit.app/
+
 Demo repo: https://github.com/Metaculus/metac-bot-template
 
 This repository contains forecasting and research tools built with Python and Streamlit. The project aims to assist users in making predictions, conducting research, and analyzing data related to hard to answer questions (especially those from Metaculus).
@@ -18,7 +19,7 @@ This repository contains forecasting and research tools built with Python and St
 Here are the tools most likely to be useful to you:
 - 🎯 **Forecasting Bot:** General forecaster that integrates with the Metaculus AI benchmarking competition and provides a number of utilities. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the API code, etc)
 - 🔌 **Metaculus API Wrapper:** for interacting with questions and tournaments
-- 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run you bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected log scores.
+- 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run you bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction.
 - 🔍 **Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and GPT. Its a better (but slightly more expensive) alternative to Perplexity.ai that is configurable, more accurate, able to decide on filters, able to link to exact paragraphs, etc.
 - 🔑 **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
 
@@ -249,7 +250,7 @@ benchmarks: list[BenchmarkForBot] = await benchmarker.run_benchmark()
 for benchmark in benchmarks[:2]:
     print("--------------------------------")
     print(f"Bot: {benchmark.name}")
-    print(f"Score: {benchmark.average_inverse_expected_log_score}") # Lower is better
+    print(f"Score: {benchmark.average_expected_baseline_score}") # Lower is better
     print(f"Num reports in benchmark: {len(benchmark.forecast_reports)}")
     print(f"Time: {benchmark.time_taken_in_minutes}min")
     print(f"Cost: ${benchmark.total_cost}")
@@ -257,13 +258,13 @@ for benchmark in benchmarks[:2]:
 
     --------------------------------
     Bot: Benchmark for TemplateBot
-    Score: 0.771654061941104
+    Score: 46.0834
     Num reports in benchmark: 2
     Time: 0.5136146903038025min
     Cost: $0.0332325
     --------------------------------
     Bot: Benchmark for CustomBot
-    Score: 0.7516094970590276
+    Score: 52.1924
     Num reports in benchmark: 2
     Time: 0.4508770227432251min
     Cost: $0.03279
