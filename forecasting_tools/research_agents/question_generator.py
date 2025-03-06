@@ -1,14 +1,19 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pydantic import BaseModel
 
+from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.data_models.data_organizer import DataOrganizer
+from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
+from forecasting_tools.util.jsonable import Jsonable
 
 logger = logging.getLogger(__name__)
 
 
-class SimpleQuestion(BaseModel):
+class SimpleQuestion(BaseModel, Jsonable):
     question_text: str
     resolution_criteria: str
     background_information: str
@@ -24,9 +29,95 @@ class QuestionGenerator:
             self.model = model
 
     async def generate_questions(
-        self, number_of_questions: int = 3, prompt: str = ""
+        self,
+        number_of_questions: int = 3,
+        topic_guideline: str = "",
+        resolve_before_date: datetime = datetime.now() + timedelta(days=30),
+        resolve_after_date: datetime = datetime.now(),
     ) -> list[SimpleQuestion]:
-        pass
+        example_full_questions = DataOrganizer.load_questions_from_file_path(
+            "forecasting_tools/research_agents/question_examples.json"
+        )
+        example_simple_questions = self.full_questions_to_simple_questions(
+            example_full_questions
+        )
+
+        resolution_criteria_explanation = clean_indents(
+            """
+            Resolution criteria are highly specific way to resolve this that will always be super obvious in retrospect.
+            Resolution criteria should pass the clairvoyance test such that after the event happens there is no debate about whether it happened or not.
+            It should be meaningful and pertain to the intent of the question.
+            Ideally you give a link for where this information can be found.
+            """
+        )
+
+        num_weeks_till_resolution = (
+            resolve_before_date - datetime.now()
+        ).days / 7
+
+        prompt = clean_indents(
+            f"""
+            Search the web and find {number_of_questions} important news items that a forecasting question could be written about and make questions about them.
+
+            When choosing topics, try to hold to this topic guideline:
+            {topic_guideline}
+
+            Questions should resolve between {resolve_after_date} and {resolve_before_date} (end date is {num_weeks_till_resolution} weeks from now).
+
+
+            Please create {number_of_questions} questions following the same format, with:
+            - question_text: A clear question about a future event
+            - resolution_criteria: Specific criteria for how the question will resolve
+            - background_information: Relevant context for the question
+            - expected_resolution_date: When the question is expected to resolve (ISO format)
+
+            Pay especially close attention to the resolution criteria:
+            {resolution_criteria_explanation}
+
+
+            Here are some example questions:
+            {example_simple_questions}
+
+            Return only a list of dictionaries in valid JSON format.
+            """
+        )
+
+        logger.debug(f"Question Generation Prompt\n{prompt}")
+        logger.info(f"Attempting to generate {number_of_questions} questions")
+
+        smart_searcher = SmartSearcher(
+            model=self.model,
+            num_searches_to_run=5,
+            num_sites_per_search=10,
+            use_brackets_around_citations=False,
+        )
+        questions = await smart_searcher.invoke_and_return_verified_type(
+            prompt, list[SimpleQuestion]
+        )
+        logger.info(
+            f"Generated {len(questions)} questions: {[question.question_text for question in questions]}"
+        )
+        logger.debug(f"Questions: {questions}")
+        return questions
+
+    @classmethod
+    def full_questions_to_simple_questions(
+        cls, full_questions: list[MetaculusQuestion]
+    ) -> list[SimpleQuestion]:
+        simple_questions = []
+        for question in full_questions:
+            assert question.question_text is not None
+            assert question.resolution_criteria is not None
+            assert question.background_info is not None
+            assert question.scheduled_resolution_time is not None
+            simple_question = SimpleQuestion(
+                question_text=question.question_text,
+                resolution_criteria=question.resolution_criteria,
+                background_information=question.background_info,
+                expected_resolution_date=question.scheduled_resolution_time,
+            )
+            simple_questions.append(simple_question)
+        return simple_questions
 
 
 # class QuestionGenerator:

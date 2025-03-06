@@ -20,7 +20,7 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
         generator = QuestionGenerator(model=model)
         questions = await generator.generate_questions(
             number_of_questions=number_of_questions_to_generate,
-            prompt=f"Generate questions about {topic}",
+            topic_guideline=f"Generate questions about {topic}",
         )
 
         assert (

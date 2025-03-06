@@ -31,7 +31,7 @@ class SmartSearcher(OutputsText, AiModel):
     def __init__(
         self,
         include_works_cited_list: bool = False,
-        use_brackets_around_citations: bool = True,
+        use_brackets_around_citations: bool = False,
         num_searches_to_run: int = 2,
         num_sites_per_search: int = 10,
         model: str | GeneralLlm = default_llms["basic"],
