@@ -20,6 +20,7 @@ def test_general_llm_instances_run(
     model_input = test.model_input
     response = asyncio.run(model.invoke(model_input))
     assert response is not None, "Response is None"
+    assert response != "", "Response is an empty string"
 
 
 def test_timeout_works() -> None:

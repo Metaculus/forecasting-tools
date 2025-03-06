@@ -187,12 +187,25 @@ def get_benchmark_display_name(benchmark: BenchmarkForBot, index: int) -> str:
     return f"{index}: {benchmark.name} ({reports_per_q}x{preds_per_r})"
 
 
+def add_star_annotations(
+    fig: px.bar, df: pd.DataFrame, x_col: str, y_col: str, is_starred_col: str
+) -> None:
+    """Add star annotations to bars meeting the starred condition."""
+    for idx, row in df[df[is_starred_col]].iterrows():
+        fig.add_annotation(
+            x=row[x_col],
+            y=row[y_col],
+            text="★",
+            showarrow=False,
+            yshift=10,
+            font=dict(size=20),
+        )
+
+
 def display_benchmark_comparison_graphs(
     benchmarks: list[BenchmarkForBot],
 ) -> None:
     st.markdown("# Benchmark Score Comparisons")
-    st.markdown("Lower score is better for both metrics.")
-
     data_by_benchmark = []
 
     for index, benchmark in enumerate(benchmarks):
@@ -262,12 +275,15 @@ def display_benchmark_comparison_graphs(
         df = pd.DataFrame(data_by_benchmark)
 
         st.markdown("### Expected Baseline Scores")
-        st.markdown("Lower score indicates better performance.")
+        st.markdown(
+            "Higher score indicates better performance. Read more [here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.)"
+        )
 
-        min_scores = df.groupby("Category")[
+        # Mark highest scores with stars (higher is better for baseline score)
+        max_scores = df.groupby("Category")[
             "Expected Baseline Score"
-        ].transform("min")
-        df["Is Min Expected"] = df["Expected Baseline Score"] == min_scores
+        ].transform("max")
+        df["Is Best Expected"] = df["Expected Baseline Score"] == max_scores
 
         fig = px.bar(
             df,
@@ -279,15 +295,9 @@ def display_benchmark_comparison_graphs(
         )
         fig.update_layout(yaxis_title="Expected Baseline Score")
 
-        for idx, row in df[df["Is Min Expected"]].iterrows():
-            fig.add_annotation(
-                x=row["Benchmark"],
-                y=row["Expected Baseline Score"],
-                text="★",
-                showarrow=False,
-                yshift=10,
-                font=dict(size=20),
-            )
+        add_star_annotations(
+            fig, df, "Benchmark", "Expected Baseline Score", "Is Best Expected"
+        )
 
         st.plotly_chart(fig)
 
@@ -296,10 +306,11 @@ def display_benchmark_comparison_graphs(
             "Lower score indicates predictions closer to community consensus. Shown as difference in percentage points between bot and community."
         )
 
+        # Mark lowest deviations with stars (lower is better for deviation score)
         min_deviations = df.groupby("Category")["Deviation Score"].transform(
             "min"
         )
-        df["Is Min Deviation"] = df["Deviation Score"] == min_deviations
+        df["Is Best Deviation"] = df["Deviation Score"] == min_deviations
 
         fig = px.bar(
             df,
@@ -311,15 +322,9 @@ def display_benchmark_comparison_graphs(
         )
         fig.update_layout(yaxis_title="Deviation Score (percentage points)")
 
-        for idx, row in df[df["Is Min Deviation"]].iterrows():
-            fig.add_annotation(
-                x=row["Benchmark"],
-                y=row["Deviation Score"],
-                text="★",
-                showarrow=False,
-                yshift=10,
-                font=dict(size=20),
-            )
+        add_star_annotations(
+            fig, df, "Benchmark", "Deviation Score", "Is Best Deviation"
+        )
 
         st.plotly_chart(fig)
 

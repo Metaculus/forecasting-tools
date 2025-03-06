@@ -11,7 +11,6 @@ sys.path.append(top_level_dir)
 
 from forecasting_tools.util.custom_logger import CustomLogger
 from front_end.app_pages.base_rate_page import BaseRatePage
-from front_end.app_pages.benchmark_page import BenchmarkPage
 from front_end.app_pages.estimator_page import EstimatorPage
 from front_end.app_pages.forecaster_page import ForecasterPage
 from front_end.app_pages.key_factors_page import KeyFactorsPage
@@ -31,14 +30,12 @@ class HomePage(AppPage):
     NICHE_LIST_RESEARCH_PAGE: type[AppPage] = NicheListResearchPage
     ESTIMATOR_PAGE: type[AppPage] = EstimatorPage
     KEY_FACTORS_PAGE: type[AppPage] = KeyFactorsPage
-    BENCHMARKS_PAGE: type[AppPage] = BenchmarkPage
     NON_HOME_PAGES: list[type[AppPage]] = [
         FORECASTER_PAGE,
         KEY_FACTORS_PAGE,
         BASE_RATE_PAGE,
         NICHE_LIST_RESEARCH_PAGE,
         ESTIMATOR_PAGE,
-        BENCHMARKS_PAGE,
     ]
 
     @classmethod

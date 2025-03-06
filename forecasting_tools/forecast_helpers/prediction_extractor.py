@@ -15,12 +15,22 @@ class PredictionExtractor:
 
     @staticmethod
     def extract_last_percentage_value(
-        reasoning: str, max_prediction: float, min_prediction: float
+        text: str, max_prediction: float, min_prediction: float
     ) -> float:
-        assert 0 <= max_prediction <= 1
-        assert 0 <= min_prediction <= 1
-        assert max_prediction >= min_prediction
-        matches = re.findall(r"(\d+)%", reasoning)
+        if not text or text.strip() == "":
+            raise ValueError(
+                "While trying to extract last percentage value found that the text is None or an empty string"
+            )
+        assert (
+            0 <= max_prediction <= 1
+        ), f"Max prediction {max_prediction} is not between 0 and 1"
+        assert (
+            0 <= min_prediction <= 1
+        ), f"Min prediction {min_prediction} is not between 0 and 1"
+        assert (
+            max_prediction >= min_prediction
+        ), f"Max prediction {max_prediction} is not greater than or equal to min prediction {min_prediction}"
+        matches = re.findall(r"(\d+)%", text)
         if matches:
             # Return the last number found before a '%'
             original_number = int(matches[-1]) / 100
@@ -33,13 +43,18 @@ class PredictionExtractor:
             return clamped_number
         else:
             raise ValueError(
-                f"Could not extract prediction from response: {reasoning}"
+                f"Could not extract prediction from response. The text was: {text}"
             )
 
     @staticmethod
     def extract_option_list_with_percentage_afterwards(
-        reasoning: str, options: list[str]
+        text: str, options: list[str]
     ) -> PredictedOptionList:
+        if not text or text.strip() == "":
+            raise ValueError(
+                "While trying to extract option list found that the text is None or an empty string"
+            )
+
         option_probabilities = []
 
         # Iterate through each line in the text
@@ -47,7 +62,7 @@ class PredictionExtractor:
             expected_option = expected_option.strip()
             probability_found = False
             matching_lines = []
-            for line in reasoning.split("\n"):
+            for line in text.split("\n"):
                 expected_option_with_underscores = expected_option.replace(
                     " ", "_"
                 )
@@ -116,13 +131,19 @@ class PredictionExtractor:
 
     @staticmethod
     def extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-        reasoning: str, question: NumericQuestion
+        text: str, question: NumericQuestion
     ) -> NumericDistribution:
+
+        if not text or text.strip() == "":
+            raise ValueError(
+                "While trying to extract numeric distribution from response found that the reasoning is None or an empty string"
+            )
+
         pattern = r"^.*[Pp]ercentile.*$"
         number_pattern = r"-\s*(?:[^\d\-]*\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)|(\d+(?:,\d{3})*(?:\.\d+)?)"
         results = []
 
-        for line in reasoning.split("\n"):
+        for line in text.split("\n"):
             if re.match(pattern, line):
                 numbers = re.findall(number_pattern, line)
                 numbers_no_commas = [
@@ -151,7 +172,7 @@ class PredictionExtractor:
 
         if not percentiles:
             raise ValueError(
-                f"Could not extract prediction from response: {reasoning}"
+                f"Couldn't extract numeric distribution from response. The text was: {text}"
             )
 
         return NumericDistribution(
