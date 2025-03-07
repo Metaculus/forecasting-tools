@@ -149,12 +149,9 @@ class QuestionGeneratorPage(ToolPage):
             )
             for question in output.questions:
                 with st.expander(question.question_text):
-                    st.markdown(f"**Question:** {question.question_text}")
-                    st.markdown("### Background Information")
+                    st.markdown("### Question")
                     st.markdown(
-                        ReportDisplayer.clean_markdown(
-                            question.background_information
-                        )
+                        ReportDisplayer.clean_markdown(question.question_text)
                     )
                     st.markdown("### Resolution Criteria")
                     st.markdown(
@@ -165,6 +162,12 @@ class QuestionGeneratorPage(ToolPage):
                     st.markdown("### Fine Print")
                     st.markdown(
                         ReportDisplayer.clean_markdown(question.fine_print)
+                    )
+                    st.markdown("### Background Information")
+                    st.markdown(
+                        ReportDisplayer.clean_markdown(
+                            question.background_information
+                        )
                     )
                     st.markdown("### Expected Resolution Date")
                     st.markdown(

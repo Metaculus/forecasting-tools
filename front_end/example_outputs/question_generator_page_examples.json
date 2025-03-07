@@ -1,1 +1,90 @@
-[]
+[
+    {
+        "short_name": "Lithuania (using o1)",
+        "notes": null,
+        "input": {
+            "topic": "Lithuanian politics and technology",
+            "number_of_questions": 3,
+            "resolve_before_date": "2025-06-05T00:00:00",
+            "resolve_after_date": "2025-03-07T00:00:00",
+            "model": "o1"
+        },
+        "output": {
+            "questions": [
+                {
+                    "question_text": "Will the newly established 'Dawn of Nemunas' party become part of Lithuania\u2019s ruling coalition before June 5, 2025?",
+                    "resolution_criteria": "This question will resolve as Yes if, on or before June 5, 2025, the 'Dawn of Nemunas' party is officially recognized as part of a ruling coalition in the Seimas, as indicated by an announcement from the Lithuanian government (for instance, from the Office of the Prime Minister or the Speaker of the Seimas) or by a major reputable news source clearly stating that they have joined the governing coalition. Otherwise, this question resolves as No.",
+                    "fine_print": "\u2022 If 'Dawn of Nemunas' merges with another party or changes its name, it will still count towards a Yes resolution if it is recognized by the government as the same entity that has joined the ruling coalition. \n\u2022 If an official coalition agreement including 'Dawn of Nemunas' is announced and later revoked before June 5, 2025, the question will still resolve as Yes if the party was validly part of the ruling coalition for any period prior to revocation. \n\u2022 If no explicit statement of coalition membership is made by the Lithuanian government (e.g., at https://lrv.lt or https://www.lrs.lt) or by a major credible media outlet before the deadline, the question will resolve as No. \n\u2022 In case the official government website or a major news source retracts or corrects earlier announcements, resolution will be based on the best available evidence at the time of final verification. \n\u2022 If the date of government formation shifts but 'Dawn of Nemunas' is recognized as part of a ruling coalition on or before June 5, 2025, it will still resolve as Yes. \n\u2022 If the parliamentary term is dissolved or replaced, the question still resolves based on whether 'Dawn of Nemunas' was recognized as coalition member at any point before June 5, 2025.",
+                    "background_information": "'Dawn of Nemunas' was established in November 2023 and performed well in the 2024 parliamentary elections [1](https://en.wikipedia.org/wiki/Seimas#:~:text=The%20Seimas%20constitutes%20the%20legislative,and%20the%20Freedom%20Party%20.). Coalitions in Lithuania typically form after protracted negotiations, so official confirmation of joining a coalition is usually announced by the Prime Minister or through official Seimas channels. Lithuania\u2019s legislative body (the Seimas) has 141 members, and a party typically needs to be part of a majority coalition to govern. Past coalition announcements have been covered in both government press releases and major Lithuanian news outlets.",
+                    "expected_resolution_date": "2025-06-05T00:00:00"
+                },
+                {
+                    "question_text": "Will the Lithuanian government announce a new 5G network partnership with a foreign telecommunications provider before June 5, 2025?",
+                    "resolution_criteria": "**Yes** if, on or before June 5, 2025, the Lithuanian government (for example, via its Ministry of Transport and Communications, Ministry of the Economy and Innovation, or an official government press release) publicly confirms a newly established 5G partnership with a foreign telecom provider. If no such announcement is made by that date, the question resolves as **No**.",
+                    "fine_print": "\u2022 The announcement must be a clearly worded, official statement, press release, or joint declaration by the Lithuanian government indicating a newly formed 5G partnership with a foreign telecommunications provider. A general memorandum of cooperation without explicit mention of a 5G partnership does not count. An extension or revamping of an existing partnership also does not count, unless it is explicitly presented by the Lithuanian government as a distinct new 5G program or agreement.\n\u2022 The partnership must be publicly verifiable, for instance through the Ministry of Transport and Communications website (https://sumin.lrv.lt/en/) or other official governmental channels and press releases.\n\u2022 If there is any ambiguity regarding whether the announcement meets these criteria, it will be ruled on according to direct statements from government sources. If the relevant source retracts or revises the announcement such that it no longer affirms a new 5G partnership prior to June 5, 2025, the question will resolve as **No**.\n\u2022 The date of final determination is based on the first official government statement confirming the new 5G partnership. If that statement is publicly dated on or before June 5, 2025 (in Lithuania local time), the question resolves as **Yes**.\n\u2022 If official websites are inaccessible or stop displaying the relevant material for any reason, credible archiving services or reputable news outlets referencing the original content can be used to confirm that the announcement happened.\n\u2022 No partial or tentative announcements count. Language such as \u201cpotential partnership,\u201d \u201cin negotiation,\u201d or \u201cexploratory discussions\u201d will not be sufficient without a formal confirmation.\n\u2022 If the Lithuanian government delays the announcement until after June 5, 2025, or if no announcement can be verified, the question resolves as **No**.\n\u2022 If the effective date of the agreement or the date of any official signing is different from the date on which the new partnership is publicly announced, the date of public announcement governs the resolution of this question.",
+                    "background_information": "Lithuania has actively pursued policies to develop its 5G network, evidenced by initiatives from the Ministry of Transport and Communications [4](https://digital-strategy.ec.europa.eu/en/policies/broadband-lithuania#:~:text=In%20the%20area%20of%20broadband,of%205G%20in%20Lithuania%2C%20e.g.). Prior agreements have focused on secure and efficient deployment of infrastructure, including bilateral memoranda with other nations [9](https://2017-2021.state.gov/united-states-republic-of-lithuania-memorandum-of-understanding-on-5g-security/#:~:text=The%20Republic%20of%20Lithuania%20and,Atlantic%20Treaty%20Organization%20%28NATO%29%20Allies.). As part of these advancements, the Lithuanian government continues to expand fast broadband and next-generation connectivity, with strategic goals running through at least 2025 [4](https://digital-strategy.ec.europa.eu/en/policies/broadband-lithuania#:~:text=In%20the%20area%20of%20broadband,of%205G%20in%20Lithuania%2C%20e.g.).",
+                    "expected_resolution_date": "2025-06-05T00:00:00"
+                },
+                {
+                    "question_text": "Will the Bank of Lithuania grant at least six new Fintech licenses from March 7, 2025, to June 5, 2025?",
+                    "resolution_criteria": "This question resolves as Yes if, according to official announcements or publications from the Bank of Lithuania, six or more distinct new Fintech licenses are granted during the period starting on March 7, 2025, and ending at the close of June 5, 2025. If fewer than six such Fintech licenses are granted within that time window, this question resolves as No.",
+                    "fine_print": "1. Each newly granted license must be for a distinct Fintech entity; additional branch or subsidiary licenses for an already licensed Fintech do not count as separate.\n2. The controlling factor is the official announcement date by the Bank of Lithuania. If the license is granted or dated earlier or later but announced during the window, it does not count. The announcement must explicitly state that the license has been granted.\n3. Acceptable sources include:\n   \u2022 Official statements and press releases posted on the Bank of Lithuania\u2019s website (https://www.lb.lt/).\n   \u2022 Credible business or economic media outlets referencing the Bank of Lithuania\u2019s official data.\n4. If any official announcement is retracted or updated in a way that materially changes the count, the most recent official information from the Bank of Lithuania at the time of resolution will prevail.\n5. If no data from official sources can be found or verified, this question will resolve as No.\n6. In the event of unexpected changes (for example, the Bank of Lithuania does not update its public data, or the timeline of announcements changes), Metaculus admins will rely on the documentation that was available and credible at the time of resolution. They will confirm license details with the best publicly available records.\n7. The question aims to cover every edge case so that, in retrospect, the final outcome is unambiguous: it must hinge on whether or not six clear grants were announced within the specified timeframe and meet the criteria above.",
+                    "background_information": "Lithuania has become a hub for Fintech startups, with a reputation for streamlined licensing procedures under the oversight of the Bank of Lithuania [14](https://www.imf.org/en/News/Articles/2024/02/05/pr2437-lithuania-imf-staff-concludes-visit#:~:text=Ministry%20of%20Finance%2C%20the%20Ministry,visit%2C%20Mr.%20Gracia%20issued%20the). This environment has led to an increase in new licenses granted, attracting foreign and local companies alike. For an example of how swiftly Lithuania processes Fintech-related licenses, see [8](https://investlithuania.com/news/bank-of-lithuania-promises-fastest-financial-institution-licence-response-for-fintech-companies-in-eu/#:~:text=The%20Central%20Bank%20of%20Lithuania,of%20the%20Brexit%20referendum%20vote.), which references fast licensing turnarounds and promotional efforts by the Bank of Lithuania to attract businesses. The outcome of this question depends on how many new Fintech entities officially receive a license announcement during the specified period.",
+                    "expected_resolution_date": "2025-06-05T00:00:00"
+                }
+            ],
+            "original_input": {
+                "topic": "Lithuanian politics and technology",
+                "number_of_questions": 3,
+                "resolve_before_date": "2025-06-05T00:00:00",
+                "resolve_after_date": "2025-03-07T00:00:00",
+                "model": "o1"
+            },
+            "cost": 2.0698999999999996
+        }
+    },
+    {
+        "short_name": "IKEA (using gpt-4o-mini)",
+        "notes": null,
+        "input": {
+            "topic": "IKEA and competition",
+            "number_of_questions": 3,
+            "resolve_before_date": "2025-06-05T00:00:00",
+            "resolve_after_date": "2025-03-07T00:00:00",
+            "model": "gpt-4o-mini"
+        },
+        "output": {
+            "questions": [
+                {
+                    "question_text": "Will IKEA's global market share increase from 5.7% to at least 6% by the end of Q2 2025?",
+                    "resolution_criteria": "This question will resolve as 'Yes' if IKEA's reported global market share as of June 5, 2025, according to reputable financial sources such as Ingka Group, is at least 6% or more; it will resolve as 'No' if the reported market share is below 6%.",
+                    "fine_print": "* Market share data must be published in an official report or press release by the Ingka Group or a reputable financial news outlet before the resolution date.\n* Data provided must be dated on or before June 5, 2025, and specifically cover the global market share as of the end of Q2 2025.\n* If any source retracts or changes its reported market share figures within the resolution timeframe, the latest available and sustained figure will be used for resolution.\n* If no reports from the Ingka Group or reputable financial news outlets are available by the resolution date, this question will be annulled.\n* Resolution will be based on figures as reported in a context that clearly identifies the percentage as representing the global market share of IKEA.",
+                    "background_information": "IKEA has been experiencing a competitive landscape, with its market share showing signs of fluctuating due to strategic pricing and an overall downturn in the home furnishings market. Recent reports indicate IKEA has maintained a 5.7% global market share as of late 2024 [5](https://www.statista.com/statistics/264433/annual-sales-of-ikea-worldwide/#:~:text=IKEA%20is%20a%20Dutch%2Dbased%20Swedish,recognized%20for%20its%20Scandinavian%20style.).",
+                    "expected_resolution_date": "2025-06-05T00:00:00"
+                },
+                {
+                    "question_text": "How many new IKEA City stores will open globally between March 7, 2025, and June 5, 2025?",
+                    "resolution_criteria": "This question will resolve as the total number of newly opened IKEA City stores worldwide reported in official press releases from IKEA or the Ingka Group during the stated period. If no new stores are opened, the question will resolve as zero.",
+                    "fine_print": "Only openings officially reported by IKEA or its affiliates will count. Announcements about planned openings will not affect resolution unless the store has officially opened. Data must be corroborated by credible sources like IKEA's newsroom or annual reports.",
+                    "background_information": "IKEA has been focusing on expanding its presence in urban areas with smaller store formats to cater to city dwellers who may have limited space, thus increasing the rollout of its City store format [8](https://grabon.com/blog/ikea-statistics/#:~:text=The%20United%20States%20follows%20closely,9.1%25%20of%20its%20total%20sales.).",
+                    "expected_resolution_date": "2025-06-05T00:00:00"
+                },
+                {
+                    "question_text": "What will be the percentage growth in IKEA's online sales in North America by June 5, 2025, compared to the last fiscal year?",
+                    "resolution_criteria": "This question will resolve as the reported percentage change in IKEA's online sales in North America for the fiscal year ending April 30, 2025, compared to the previous fiscal year ending April 30, 2024. This figure will be taken from credible financial reports or press releases issued by IKEA.",
+                    "fine_print": "The reported sales figures must be sourced from official IKEA releases and financial reports. These documents must clearly delineate the sales growth percentage for IKEA's online sales in North America. If IKEA fails to report these figures by June 5, 2025, or if the source is no longer available or trustworthy, this question will be **annulled**. Any discrepancies in reported figures or changes in the reporting criteria will not be considered. The statement must explicitly mention North American sales data rather than global or other regions. Should IKEA revise their growth figures after the initial release, the first official percentage reported will be used for resolution. A reliable link to the financial report or release must be provided with the resolution.",
+                    "background_information": "IKEA has emphasized digital transformation and e-commerce growth recently, seeing significant increases in online sales in North American markets as preferences shift towards online shopping [3](https://www.statista.com/statistics/264433/annual-sales-of-ikea-worldwide/#:~:text=Today%20it%20is%20the%20world%27s,efficiently%20and%20cost%2Deffective%20as%20possible.).",
+                    "expected_resolution_date": "2025-06-05T00:00:00"
+                }
+            ],
+            "original_input": {
+                "topic": "IKEA and competition",
+                "number_of_questions": 3,
+                "resolve_before_date": "2025-06-05T00:00:00",
+                "resolve_after_date": "2025-03-07T00:00:00",
+                "model": "gpt-4o-mini"
+            },
+            "cost": 0.33760635000000017
+        }
+    }
+]

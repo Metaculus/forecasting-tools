@@ -41,7 +41,7 @@ class QuestionGenerator:
         researcher: SmartSearcher | None = None,
     ):
         if isinstance(model, str):
-            self.model = GeneralLlm(model=model)
+            self.model = GeneralLlm(model=model, temperature=1)
         else:
             self.model = model
 
@@ -117,7 +117,7 @@ class QuestionGenerator:
             {self.random_example_question_sample}
 
             # Schema
-            Return only a list of dictionaries in valid JSON format. Use markdown for each question field.
+            Return only a list of dictionaries in valid JSON format. Use markdown for each question field (e.g. dashes for bullet points).
             {SmartSearcher.get_schema_format_instructions_for_pydantic_type(SimpleQuestion)}
             """
         )
@@ -168,7 +168,7 @@ class QuestionGenerator:
                 {self.random_example_question_sample}
 
                 # Schema
-                Return only a single dictionary in valid JSON format. Use markdown for each question field.
+                Return only a single dictionary in valid JSON format. Use markdown for each question field (e.g. dashes for bullet points).
                 {SmartSearcher.get_schema_format_instructions_for_pydantic_type(SimpleQuestion)}
                 """
             )
