@@ -49,6 +49,7 @@ class QuestionGeneratorPage(ToolPage):
 
     @classmethod
     async def _display_intro_text(cls) -> None:
+        # No intro text for this page
         pass
 
     @classmethod
@@ -153,6 +154,12 @@ class QuestionGeneratorPage(ToolPage):
                     st.markdown(
                         ReportDisplayer.clean_markdown(question.question_text)
                     )
+                    st.markdown("### Question Type")
+                    st.markdown(question.question_type)
+                    if question.question_type == "multiple_choice":
+                        st.markdown("### Options")
+                        for option in question.options:
+                            st.markdown(f"- {option}")
                     st.markdown("### Resolution Criteria")
                     st.markdown(
                         ReportDisplayer.clean_markdown(

@@ -258,6 +258,18 @@ class QuestionGenerator:
                 )
             )
 
+            removed_questions = [
+                question
+                for question in refined_questions
+                if question not in uncertainty_filtered_questions
+            ]
+            logger.info(
+                f"Removed {len(removed_questions)} questions that didn't match criteria: {[removed_question.question_text for removed_question in removed_questions]}"
+            )
+            logger.debug(
+                f"Removed questions: {[removed_question for removed_question in removed_questions]}"
+            )
+
             final_questions.extend(uncertainty_filtered_questions)
 
             questions_needed = number_of_questions - len(final_questions)
@@ -319,56 +331,18 @@ class QuestionGenerator:
         if isinstance(question, BinaryQuestion):
             # For binary questions, check if probability is between 10% and 90%
             probability = prediction
-            return 0.1 <= probability <= 0.9
-
+            is_uncertain = 0.1 <= probability <= 0.9
         elif isinstance(question, NumericQuestion):
-            # For numeric questions, check spread between percentiles
-            distribution = prediction
-
-            if hasattr(distribution, "declared_percentiles"):
-                percentiles = distribution.declared_percentiles
-
-                # Get the 10th and 90th percentiles
-                p10 = next(
-                    (p.value for p in percentiles if p.percentile == 10), None
-                )
-                p90 = next(
-                    (p.value for p in percentiles if p.percentile == 90), None
-                )
-
-                if p10 is None or p90 is None:
-                    logger.warning(
-                        f"Missing percentiles for numeric question: {question.question_text}"
-                    )
-                    return False
-
-                # If the percentiles are very close, the question is too certain
-                if abs(p10) < 1e-10 and abs(p90) < 1e-10:
-                    return False
-
-                # Calculate relative range
-                average = (abs(p10) + abs(p90)) / 2
-                if average < 1e-10:  # Avoid division by near-zero
-                    relative_range = 0
-                else:
-                    relative_range = abs((p90 - p10) / average)
-
-                return (
-                    relative_range > 0.2
-                )  # Consider uncertain if the range is >20% of the mean
-
+            is_uncertain = True
         elif isinstance(question, MultipleChoiceQuestion):
             # For multiple choice, no option should have >90% or <5% probability
             option_probs = prediction.options
-
             for option in option_probs:
                 if option.probability > 0.9 or option.probability < 0.05:
-                    return False
-
-            return True
-
-        # Default to True if we can't determine
-        return True
+                    is_uncertain = False
+                    break
+            is_uncertain = True
+        return is_uncertain
 
     async def refine_questions(
         self, questions: list[SimpleQuestion]
