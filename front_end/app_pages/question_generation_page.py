@@ -29,6 +29,7 @@ class QuestionGeneratorInput(Jsonable, BaseModel):
     number_of_questions: int
     resolve_before_date: datetime
     resolve_after_date: datetime
+    model: str
 
 
 class QuestionGeneratorOutput(Jsonable, BaseModel):
@@ -53,7 +54,7 @@ class QuestionGeneratorPage(ToolPage):
     async def _get_input(cls) -> QuestionGeneratorInput | None:
         with st.form("question_generator_form"):
             topic = st.text_input(
-                "Topic (optional - leave blank for diverse topics)",
+                "Topic (optional)",
                 value="",
             )
             number_of_questions = st.number_input(
@@ -61,6 +62,10 @@ class QuestionGeneratorPage(ToolPage):
                 min_value=1,
                 max_value=10,
                 value=3,
+            )
+            model = st.text_input(
+                "Litellm Model (e.g.: o1, claude-3-7-latest, openrouter/deepseek/deepseek-r1)",
+                value="o1",
             )
             col1, col2 = st.columns(2)
             with col1:
@@ -85,6 +90,7 @@ class QuestionGeneratorPage(ToolPage):
                     resolve_after_date=datetime.combine(
                         resolve_after_date, datetime.min.time()
                     ),
+                    model=model,
                 )
         return None
 
@@ -96,7 +102,7 @@ class QuestionGeneratorPage(ToolPage):
             "Generating questions... This may take a few minutes..."
         ):
             with MonetaryCostManager() as cost_manager:
-                generator = QuestionGenerator()
+                generator = QuestionGenerator(model=input.model)
                 questions = await generator.generate_questions(
                     number_of_questions=input.number_of_questions,
                     topic=input.topic,
@@ -119,18 +125,17 @@ class QuestionGeneratorPage(ToolPage):
     ) -> None:
         if is_premade:
             output.cost = 0
-        for question in output.questions:
-            ForecastDatabaseManager.add_general_report_to_database(
-                question_text=question.question_text,
-                background_info=question.background_information,
-                resolution_criteria=question.resolution_criteria,
-                fine_print=question.fine_print,
-                prediction=None,
-                explanation=None,
-                page_url=None,
-                price_estimate=output.cost / len(output.questions),
-                run_type=ForecastRunType.WEB_APP_QUESTION_GENERATOR,
-            )
+        ForecastDatabaseManager.add_general_report_to_database(
+            question_text=f"Topic: {input_to_tool.topic}",
+            background_info=str(input_to_tool),
+            resolution_criteria=None,
+            fine_print=None,
+            prediction=None,
+            explanation=str(output.questions),
+            page_url=None,
+            price_estimate=output.cost,
+            run_type=ForecastRunType.WEB_APP_QUESTION_GENERATOR,
+        )
 
     @classmethod
     async def _display_outputs(
