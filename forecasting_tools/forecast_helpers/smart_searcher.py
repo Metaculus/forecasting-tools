@@ -106,6 +106,7 @@ class SmartSearcher(OutputsText, AiModel):
             {self.llm.get_schema_format_instructions_for_pydantic_type(SearchInput)}
 
             Make sure to return a list of the search inputs as a list of JSON objects in this schema.
+            This should be a list, not a dict that contains a list. The list can be of one item.
             """
         )
         search_terms = await self.llm.invoke_and_return_verified_type(
