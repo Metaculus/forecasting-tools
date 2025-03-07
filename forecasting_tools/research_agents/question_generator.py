@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 
 class SimpleQuestion(BaseModel, Jsonable):
     question_text: str = Field(
-        description="A clear question about a future event"
+        description="A clear question about a future event",
     )
     resolution_criteria: str = Field(
-        description="Specific criteria for how the question will resolve"
+        description="Specific criteria for how the question will resolve",
     )
     fine_print: str = Field(
         description="Additional information covering every edge case that could happen. This should reduce the change of an ambiguous resolution to 0"
@@ -34,6 +34,15 @@ class SimpleQuestion(BaseModel, Jsonable):
 
 
 class QuestionGenerator:
+    FIELD_DESCRIPTIONS = clean_indents(
+        """
+        - question_text: A clear question about a future event
+        - resolution_criteria: Specific criteria for how the question will resolve
+        - fine_print: Additional information covering every edge case that could happen. This should reduce the change of an ambiguous resolution to 0
+        - background_information: Relevant context and historical information to help understand the question
+        - expected_resolution_date: The date when the question is expected to resolve
+        """
+    )
 
     def __init__(
         self,
@@ -55,16 +64,6 @@ class QuestionGenerator:
         else:
             self.smart_searcher = researcher
 
-        self.field_descriptions = clean_indents(
-            """
-            - question_text: A clear question about a future event
-            - resolution_criteria: Specific criteria for how the question will resolve
-            - fine_print: Additional information covering every edge case that could happen. This should reduce the change of an ambiguous resolution to 0
-            - background_information: Relevant context and historical information to help understand the question
-            - expected_resolution_date: The date when the question is expected to resolve
-            """
-        )
-
         self.example_full_questions = DataOrganizer.load_questions_from_file_path(
             "forecasting_tools/research_agents/q3_q4_quarterly_questions.json"
         )
@@ -84,6 +83,12 @@ class QuestionGenerator:
         resolve_before_date: datetime = datetime.now() + timedelta(days=30),
         resolve_after_date: datetime = datetime.now(),
     ) -> list[SimpleQuestion]:
+        if resolve_before_date <= resolve_after_date:
+            raise ValueError(
+                "resolve_before_date must be after resolve_after_date"
+            )
+        if number_of_questions < 1:
+            raise ValueError("number_of_questions must be positive")
 
         num_weeks_till_resolution = (
             resolve_before_date - datetime.now()
@@ -103,7 +108,7 @@ class QuestionGenerator:
             Questions should resolve between {resolve_after_date} and {resolve_before_date} (end date is {num_weeks_till_resolution} weeks from now).
 
             Field descriptions:
-            {self.field_descriptions}
+            {self.FIELD_DESCRIPTIONS}
 
             Please create {number_of_questions} questions following the same format:
             Pay especially close attention to the resolution criteria:
@@ -135,6 +140,20 @@ class QuestionGenerator:
         refined_questions = await self.refine_questions(questions)
         logger.info(f"Refined {len(refined_questions)} questions")
         logger.debug(f"Questions: {questions}")
+
+        invalid_questions = [
+            question
+            for question in refined_questions
+            if not (
+                resolve_before_date
+                > question.expected_resolution_date
+                > resolve_after_date
+            )
+        ]
+        for question in invalid_questions:
+            logger.warning(
+                f"Question {question.question_text} has an expected resolution date ({question.expected_resolution_date}) that is not between {resolve_after_date} and {resolve_before_date}"
+            )
         return refined_questions
 
     async def refine_questions(
@@ -161,7 +180,7 @@ class QuestionGenerator:
                 - A key date changes
 
                 Field descriptions:
-                {self.field_descriptions}
+                {self.FIELD_DESCRIPTIONS}
 
                 # Examples
                 Here are some example questions with good resolution criteria:
@@ -212,142 +231,3 @@ class QuestionGenerator:
             )
             simple_questions.append(simple_question)
         return simple_questions
-
-
-# class QuestionGenerator:
-
-#     @classmethod
-#     async def get_example_questions(cls) -> list[ShortQuestion]:
-#         q1_filter = ApiFilter(
-#             allowed_tournaments=[MetaculusApi.Q3_2024_QUARTERLY_CUP],
-#             allowed_statuses=["open", "closed", "resolved"],
-#         )
-#         q4_filter = ApiFilter(
-#             allowed_tournaments=[MetaculusApi.Q4_2024_QUARTERLY_CUP],
-#             allowed_statuses=["open", "closed", "resolved"],
-#         )
-#         q1_questions = await MetaculusApi.get_questions_matching_filter(
-#             q1_filter
-#         )
-#         q4_questions = await MetaculusApi.get_questions_matching_filter(
-#             q4_filter
-#         )
-#         questions = q1_questions + q4_questions
-#         short_questions = []
-#         for question in questions:
-#             assert question.resolution_criteria is not None
-#             assert question.background_info is not None
-#             assert question.scheduled_resolution_time is not None
-#             short_questions.append(
-#                 ShortQuestion(
-#                     question_text=question.question_text,
-#                     resolution_criteria=question.resolution_criteria,
-#                     background_information=question.background_info,
-#                     expected_resolution_date=question.scheduled_resolution_time,
-#                 )
-#             )
-#         return short_questions
-
-#     @classmethod
-#     async def run(cls) -> None:
-#         number_of_questions = 3
-#         use_perplexity = False
-#         short_questions = await cls.get_example_questions()
-
-#         resolution_criteria_explanation = clean_indents(
-#             """
-#             Resolution criteria are highly specific way to resolve this that will always be super obvious in retrospect.
-#             Resolution criteria should pass the clairvoynce test such that after the event happens there is no debate about whether it happened or not.
-#             It should be meaningful and pertain to the intent of the question
-#             Ideally you give a link for where this information can be found (i.e. something on a page that is clearly a 'yes' or 'no' because of a number shown or text shown).
-#             However other methods apply.
-#             """
-#         )
-#         prompt = clean_indents(
-#             f"""
-#             Search the web and find {number_of_questions} of important news items that a Metaculus question could be written about and make questions about them.
-#             Please list out the questions. This should be a json list parsable in python.
-#             Questions should resolve between 1 week and 3 months from now.
-
-#             {resolution_criteria_explanation}
-
-#             Here are some example questions:
-#             {short_questions}
-
-#             Here is the schema for the questions you should return. Remember to make it parsable in python:
-#             {SmartSearcher.get_schema_format_instructions_for_pydantic_type(ShortQuestion)}
-#             """
-#         )
-
-#         logger.info(
-#             "Prompt:-----------------------------------------------------"
-#         )
-#         logger.info(prompt)
-#         model = None
-#         if use_perplexity:
-#             model = GeneralLlm(model="perplexity/sonar-deep-research")
-#         else:
-#             # smart_searcher_model = GeneralLlm(
-#             #     model="claude-3-7-sonnet-latest",
-#             #     temperature=1,
-#             #     max_tokens=64000,
-#             #     timeout=240,
-#             #     thinking={
-#             #         "type": "enabled",
-#             #         "budget_tokens": 20000
-#             #     },
-#             # )
-#             smart_searcher_model = GeneralLlm(model="o1", temperature=0)
-#             model = SmartSearcher(
-#                 model=smart_searcher_model,
-#                 num_searches_to_run=5,
-#                 num_sites_per_search=10,
-#                 use_brackets_around_citations=False,
-#             )
-#         questions = await model.invoke_and_return_verified_type(
-#             prompt, list[ShortQuestion]
-#         )
-
-#         logger.info(
-#             "Questions:-----------------------------------------------------"
-#         )
-#         for question in questions:
-#             logger.info(question.model_dump_json())
-
-#         tasks: list[Coroutine[Any, Any, ShortQuestion]] = []
-#         for question in questions:
-#             prompt = clean_indents(  # TODO: Try with resolution criteria prompt instructions
-#                 f"""
-#                 The below question has not been reviewed yet and the resolution criteria is probably not very good.
-
-#                 Here is the question:
-#                 {question.model_dump_json()}
-
-#                 Please improve the resolution criteria and ideally add a link to it.
-#                 Look for clear places that could help resolve the question.
-#                 You have to be more than 100% confident that the resolution criteria will be unambiguous in retrospect.
-#                 Consider ways that this could go wrong.
-
-#                 Here is the schema for the question you should return:
-#                 {SmartSearcher.get_schema_format_instructions_for_pydantic_type(ShortQuestion)}
-#                 """
-#             )
-#             logger.info(
-#                 "Prompt:-----------------------------------------------------"
-#             )
-#             logger.info(prompt)
-#             tasks.append(
-#                 model.invoke_and_return_verified_type(prompt, ShortQuestion)
-#             )
-
-#         refined_question = await asyncio.gather(*tasks, return_exceptions=True)
-#         logger.info(
-#             "Refined Question:-----------------------------------------------------"
-#         )
-#         for result in refined_question:
-#             if isinstance(result, Exception):
-#                 logger.error(f"Error: {result}")
-#             else:
-#                 logger.info(result.model_dump_json())
-
-#     asyncio.run(run())

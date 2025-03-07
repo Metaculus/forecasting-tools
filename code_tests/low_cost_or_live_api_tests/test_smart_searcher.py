@@ -14,6 +14,7 @@ async def test_ask_question_basic() -> None:
         include_works_cited_list=True,
         num_searches_to_run=1,
         num_sites_per_search=3,
+        use_brackets_around_citations=True,
     )
     question = "What is the recent news on SpaceX?"
     report = await searcher.invoke(question)
@@ -30,6 +31,7 @@ async def test_ask_question_with_different_llm() -> None:
         num_searches_to_run=1,
         num_sites_per_search=3,
         temperature=temperature,
+        use_brackets_around_citations=True,
     )
 
     assert isinstance(searcher.llm, GeneralLlm)
