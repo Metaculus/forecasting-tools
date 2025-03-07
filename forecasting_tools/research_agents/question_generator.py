@@ -57,11 +57,11 @@ class QuestionGenerator:
 
         self.field_descriptions = clean_indents(
             """
-            • question_text: A clear question about a future event
-            • resolution_criteria: Specific criteria for how the question will resolve
-            • fine_print: Additional information covering every edge case that could happen. This should reduce the change of an ambiguous resolution to 0
-            • background_information: Relevant context and historical information to help understand the question
-            • expected_resolution_date: The date when the question is expected to resolve
+            - question_text: A clear question about a future event
+            - resolution_criteria: Specific criteria for how the question will resolve
+            - fine_print: Additional information covering every edge case that could happen. This should reduce the change of an ambiguous resolution to 0
+            - background_information: Relevant context and historical information to help understand the question
+            - expected_resolution_date: The date when the question is expected to resolve
             """
         )
 
@@ -117,7 +117,7 @@ class QuestionGenerator:
             {self.random_example_question_sample}
 
             # Schema
-            Return only a list of dictionaries in valid JSON format.
+            Return only a list of dictionaries in valid JSON format. Use markdown for each question field.
             {SmartSearcher.get_schema_format_instructions_for_pydantic_type(SimpleQuestion)}
             """
         )
@@ -148,8 +148,6 @@ class QuestionGenerator:
                 # Instructions
                 The below question has not been reviewed yet and the resolution criteria may need improvement.
 
-
-
                 Here is the question:
                 {question.model_dump_json()}
 
@@ -170,7 +168,7 @@ class QuestionGenerator:
                 {self.random_example_question_sample}
 
                 # Schema
-                Return only a single dictionary in valid JSON format.
+                Return only a single dictionary in valid JSON format. Use markdown for each question field.
                 {SmartSearcher.get_schema_format_instructions_for_pydantic_type(SimpleQuestion)}
                 """
             )

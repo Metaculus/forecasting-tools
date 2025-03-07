@@ -34,6 +34,7 @@ class QuestionGeneratorInput(Jsonable, BaseModel):
 
 class QuestionGeneratorOutput(Jsonable, BaseModel):
     questions: list[SimpleQuestion]
+    original_input: QuestionGeneratorInput
     cost: float
 
 
@@ -55,16 +56,16 @@ class QuestionGeneratorPage(ToolPage):
         with st.form("question_generator_form"):
             topic = st.text_input(
                 "Topic (optional)",
-                value="",
+                value="Lithuanian politics and technology",
             )
             number_of_questions = st.number_input(
                 "Number of questions to generate",
                 min_value=1,
                 max_value=10,
-                value=3,
+                value=5,
             )
             model = st.text_input(
-                "Litellm Model (e.g.: o1, claude-3-7-latest, openrouter/deepseek/deepseek-r1)",
+                "Litellm Model (e.g.: o1, claude-3-7-sonnet-latest, openrouter/deepseek/deepseek-r1)",
                 value="o1",
             )
             col1, col2 = st.columns(2)
@@ -113,6 +114,7 @@ class QuestionGeneratorPage(ToolPage):
 
                 return QuestionGeneratorOutput(
                     questions=questions,
+                    original_input=input,
                     cost=cost,
                 )
 
@@ -142,9 +144,12 @@ class QuestionGeneratorPage(ToolPage):
         cls, outputs: list[QuestionGeneratorOutput]
     ) -> None:
         for output in outputs:
-            st.markdown(f"**Cost:** ${output.cost:.2f}")
+            st.markdown(
+                f"**Cost of below questions:** ${output.cost:.2f} | **Topic:** {output.original_input.topic if output.original_input.topic else 'N/A'}"
+            )
             for question in output.questions:
                 with st.expander(question.question_text):
+                    st.markdown(f"**Question:** {question.question_text}")
                     st.markdown("### Background Information")
                     st.markdown(
                         ReportDisplayer.clean_markdown(
