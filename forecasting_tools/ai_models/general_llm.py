@@ -74,7 +74,7 @@ class GeneralLlm(
         "perplexity/": {
             "timeout": 120,
         },
-        "claude": {
+        "claude-3-5-sonnet": {
             "timeout": 40,
         },
         "deepseek/": {

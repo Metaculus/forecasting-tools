@@ -50,7 +50,7 @@ class QuestionGenerator:
         researcher: SmartSearcher | None = None,
     ):
         if isinstance(model, str):
-            self.model = GeneralLlm(model=model, temperature=1)
+            self.model = GeneralLlm(model=model, temperature=1, timeout=120)
         else:
             self.model = model
 
