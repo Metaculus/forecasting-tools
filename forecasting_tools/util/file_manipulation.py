@@ -1,9 +1,10 @@
+import csv
 import datetime as dat
 import functools
 import json
 import os
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from PIL import Image
 
@@ -170,6 +171,53 @@ def write_image_file(
 
 def current_date_time_string() -> str:
     return dat.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+
+@skip_if_file_writing_not_allowed
+def write_csv_file(
+    file_path_in_package: str, data: list[dict[str, Any]]
+) -> None:
+    """
+    Writes a list of dictionaries to a CSV file, using the keys of the first dictionary as headers.
+    Validates that all dictionaries have the same keys.
+    """
+    full_file_path = get_absolute_path(file_path_in_package)
+    os.makedirs(os.path.dirname(full_file_path), exist_ok=True)
+
+    if not data:
+        create_or_overwrite_file(file_path_in_package, "")
+        return
+
+    fieldnames = list(data[0].keys())
+
+    # Ensure all dictionaries have the same keys
+    for i, entry in enumerate(data):
+        if set(entry.keys()) != set(fieldnames):
+            missing_keys = set(fieldnames) - set(entry.keys())
+            extra_keys = set(entry.keys()) - set(fieldnames)
+            error_msg = f"Dictionary at index {i} has different keys than the first dictionary."
+            if missing_keys:
+                error_msg += f" Missing keys: {missing_keys}."
+            if extra_keys:
+                error_msg += f" Extra keys: {extra_keys}."
+            raise ValueError(error_msg)
+
+    with open(full_file_path, "w", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(data)
+
+
+def load_csv_file(file_path_in_package: str) -> list[dict[str, str]]:
+    """
+    Loads a CSV file and returns its contents as a list of dictionaries.
+    Each row becomes a dictionary with the column headers as keys.
+    """
+    full_file_path = get_absolute_path(file_path_in_package)
+
+    with open(full_file_path, "r", newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        return list(reader)
 
 
 if __name__ == "__main__":

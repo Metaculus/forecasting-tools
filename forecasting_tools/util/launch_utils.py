@@ -1,16 +1,22 @@
 from __future__ import annotations
 
-import csv
+import logging
 from datetime import datetime, timedelta
 from typing import Any, Literal
 
 from pydantic import BaseModel, field_validator, model_validator
 
+from forecasting_tools.util.file_manipulation import (
+    load_csv_file,
+    write_csv_file,
+)
 from forecasting_tools.util.jsonable import Jsonable
 
 full_datetime_format = "%m/%d/%Y %H:%M:%S"
 sheet_date_format1 = "%m/%d/%Y"
 sheet_date_format2 = "%m/%d/%y"
+
+logger = logging.getLogger(__name__)
 
 
 class LaunchQuestion(BaseModel, Jsonable):
@@ -164,24 +170,19 @@ class SheetOrganizer:
 
     @classmethod
     def load_questions_from_csv(cls, file_path: str) -> list[LaunchQuestion]:
-        with open(file_path, "r") as f:
-            reader = csv.DictReader(f)
-            questions = [
-                LaunchQuestion.from_csv_row(row, i)
-                for i, row in enumerate(reader)
-            ]
-        return questions
+        questions = load_csv_file(file_path)
+        return [
+            LaunchQuestion.from_csv_row(row, i)
+            for i, row in enumerate(questions)
+        ]
 
     @classmethod
     def save_questions_to_csv(
         cls, questions: list[LaunchQuestion], file_path: str
     ) -> None:
-        with open(file_path, "w") as f:
-            writer = csv.DictWriter(
-                f, fieldnames=LaunchQuestion.model_fields.keys()
-            )
-            writer.writeheader()
-            writer.writerows([question.to_csv_row() for question in questions])
+        write_csv_file(
+            file_path, [question.to_csv_row() for question in questions]
+        )
 
     @classmethod
     def find_overlapping_windows(
@@ -733,8 +734,6 @@ class SheetOrganizer:
         proposed_open_time = start_date.replace(
             hour=0, minute=0, second=0, microsecond=0
         )
-
-        # Schedule each question without existing times
         newly_scheduled_questions = []
         current_question = questions_to_schedule.pop(0)
         while questions_to_schedule:
@@ -763,15 +762,26 @@ class SheetOrganizer:
 
     @classmethod
     def schedule_questions_from_file(
-        cls, input_file_path: str, output_file_path: str, start_date: datetime
+        cls,
+        input_file_path: str,
+        output_file_path: str,
+        start_date: datetime,
+        end_date: datetime,
+        question_type: Literal["bots", "pros"],
     ) -> None:
-        # Load questions from CSV
         questions = cls.load_questions_from_csv(input_file_path)
 
-        # Schedule the questions
         scheduled_questions = cls.schedule_questions(questions, start_date)
+        warnings = cls.find_processing_errors(
+            questions,
+            scheduled_questions,
+            start_date,
+            end_date,
+            question_type,
+        )
+        for warning in warnings:
+            logger.warning(warning)
 
-        # Save the scheduled questions to the output file
         cls.save_questions_to_csv(scheduled_questions, output_file_path)
 
     @staticmethod
@@ -795,3 +805,19 @@ class SheetOrganizer:
 
         target_date = today + timedelta(days=days_to_add)
         return datetime(target_date.year, target_date.month, target_date.day)
+
+
+if __name__ == "__main__":
+    from forecasting_tools.util.custom_logger import CustomLogger
+
+    CustomLogger.setup_logging()
+
+    start_date = SheetOrganizer.compute_upcoming_day("monday")
+    end_date = SheetOrganizer.compute_upcoming_day("friday")
+    SheetOrganizer.schedule_questions_from_file(
+        "temp/input_launch_questions.csv",
+        "temp/ordered_questions.csv",
+        start_date,
+        end_date,
+        "bots",
+    )
