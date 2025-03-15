@@ -77,7 +77,7 @@ class LaunchQuestion(BaseModel, Jsonable):
 
     @field_validator("open_lower_bound", "open_upper_bound", mode="before")
     @classmethod
-    def parse_boolean_fields(cls, value: Any) -> bool | None:
+    def parse_boolean_fields(cls, value: Any) -> bool | None:  # NOSONAR
         if value is None or (isinstance(value, str) and value.strip() == ""):
             return None
         if isinstance(value, bool):
@@ -217,13 +217,29 @@ class SheetOrganizer:
                     continue
 
                 # Check for overlap
-                if start1 < end2 and start2 < end1:
+                if cls._open_window_overlaps_for_questions(q1, q2):
                     overlapping_pairs.append((q1, q2))
 
         return overlapping_pairs
 
+    @staticmethod
+    def _open_window_overlaps_for_questions(
+        question_1: LaunchQuestion, question_2: LaunchQuestion
+    ) -> bool:
+        if (
+            question_1.open_time is None
+            or question_1.scheduled_close_time is None
+            or question_2.open_time is None
+            or question_2.scheduled_close_time is None
+        ):
+            raise ValueError("Question has no open or close time")
+        return (
+            question_1.open_time < question_2.scheduled_close_time
+            and question_2.open_time < question_1.scheduled_close_time
+        )
+
     @classmethod
-    def find_processing_errors(
+    def find_processing_errors(  # NOSONAR
         cls,
         original_questions: list[LaunchQuestion],
         new_questions: list[LaunchQuestion],
@@ -231,7 +247,7 @@ class SheetOrganizer:
         end_date: datetime,
         question_type: Literal["bots", "pros"],
     ) -> list[LaunchWarning]:
-        failed_tests = []
+        final_warnings = []
 
         # Some questions will already have a open and close time. These must be respected and stay the same
         def _check_existing_times_preserved() -> list[LaunchWarning]:
@@ -654,50 +670,109 @@ class SheetOrganizer:
             for i in range(1, len(new_questions)):
                 previous_question = new_questions[i - 1]
                 current_question = new_questions[i]
-                if previous_question.open_time and current_question.open_time:
-                    if (
-                        previous_question.open_time
-                        > current_question.open_time
-                    ):
-                        warnings.append(
-                            LaunchWarning(
-                                relevant_question=current_question,
-                                warning=f"Questions not ordered by open time. {previous_question.title} opens after {current_question.title}",
-                            )
+                if (
+                    previous_question.open_time
+                    and current_question.open_time
+                    and previous_question.open_time
+                    > current_question.open_time
+                ):
+                    warnings.append(
+                        LaunchWarning(
+                            relevant_question=current_question,
+                            warning=f"Questions not ordered by open time. {previous_question.title} opens after {current_question.title}",
                         )
+                    )
             return warnings
 
-        failed_tests.extend(_check_existing_times_preserved())
-        failed_tests.extend(_check_no_new_overlapping_windows())
-        failed_tests.extend(_check_window_duration())
-        failed_tests.extend(_check_unique_windows())
-        failed_tests.extend(_check_required_fields())
-        failed_tests.extend(_check_numeric_fields())
-        failed_tests.extend(_check_mc_fields())
-        failed_tests.extend(_check_no_field_changes())
-        failed_tests.extend(_check_parent_url_fields())
-        failed_tests.extend(_check_earliest_open_time())
-        failed_tests.extend(_check_open_time_bounds())
-        failed_tests.extend(_check_bridgewater_tournament())
-        failed_tests.extend(_check_numeric_range())
-        failed_tests.extend(_check_duplicate_titles())
-        failed_tests.extend(_check_question_type_distribution())
-        failed_tests.extend(_check_average_weight())
-        failed_tests.extend(_check_order_changed())
-        failed_tests.extend(_check_ordered_by_open_time())
+        final_warnings.extend(_check_existing_times_preserved())
+        final_warnings.extend(_check_no_new_overlapping_windows())
+        final_warnings.extend(_check_window_duration())
+        final_warnings.extend(_check_unique_windows())
+        final_warnings.extend(_check_required_fields())
+        final_warnings.extend(_check_numeric_fields())
+        final_warnings.extend(_check_mc_fields())
+        final_warnings.extend(_check_no_field_changes())
+        final_warnings.extend(_check_parent_url_fields())
+        final_warnings.extend(_check_earliest_open_time())
+        final_warnings.extend(_check_open_time_bounds())
+        final_warnings.extend(_check_bridgewater_tournament())
+        final_warnings.extend(_check_numeric_range())
+        final_warnings.extend(_check_duplicate_titles())
+        final_warnings.extend(_check_question_type_distribution())
+        final_warnings.extend(_check_average_weight())
+        final_warnings.extend(_check_order_changed())
+        final_warnings.extend(_check_ordered_by_open_time())
 
-        return failed_tests
+        return final_warnings
 
     @classmethod
     def schedule_questions(
         cls, questions: list[LaunchQuestion], start_date: datetime
     ) -> list[LaunchQuestion]:
-        # I want to make a script to automatically choose valid open times for a set of questions and order these questions in terms of open time. Here are the constraints:
-        # - I need to launch 50 questions a week
-        # - The process should error if a question can't find valid open time that is before its resolution date
-        # - The function in SheetOrganizer should take in a file path to the csv and an output file path.
-        # - For questions without a preexisting open time, you should pick the earliest 2hr slot in the week that does not already have a question. There should only be 1 question per 2hr slot
-        return questions
+        copied_input_questions = [
+            question.model_copy(deep=True) for question in questions
+        ]
+        prescheduled_questions = [
+            q
+            for q in copied_input_questions
+            if q.open_time is not None and q.scheduled_close_time is not None
+        ]
+        questions_to_schedule = [
+            q
+            for q in copied_input_questions
+            if q not in prescheduled_questions
+        ]
+        questions_to_schedule.sort(
+            key=lambda q: (
+                q.scheduled_resolve_time
+                if q.scheduled_resolve_time
+                else datetime.max
+            )
+        )
+
+        proposed_open_time = start_date.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+
+        # Schedule each question without existing times
+        newly_scheduled_questions = []
+        current_question = questions_to_schedule.pop(0)
+        while questions_to_schedule:
+            proposed_open_time += timedelta(hours=2)
+            proposed_closed_time = proposed_open_time + timedelta(hours=2)
+            current_question.open_time = proposed_open_time
+            current_question.scheduled_close_time = proposed_closed_time
+
+            prescheduled_question_overlaps = any(
+                cls._open_window_overlaps_for_questions(
+                    prescheduled_question, current_question
+                )
+                for prescheduled_question in prescheduled_questions
+            )
+
+            if not prescheduled_question_overlaps:
+                newly_scheduled_questions.append(current_question)
+                current_question = questions_to_schedule.pop(0)
+
+        all_questions = prescheduled_questions + newly_scheduled_questions
+        all_questions.sort(
+            key=lambda q: q.open_time if q.open_time else datetime.max
+        )
+
+        return all_questions
+
+    @classmethod
+    def schedule_questions_from_file(
+        cls, input_file_path: str, output_file_path: str, start_date: datetime
+    ) -> None:
+        # Load questions from CSV
+        questions = cls.load_questions_from_csv(input_file_path)
+
+        # Schedule the questions
+        scheduled_questions = cls.schedule_questions(questions, start_date)
+
+        # Save the scheduled questions to the output file
+        cls.save_questions_to_csv(scheduled_questions, output_file_path)
 
     @staticmethod
     def compute_upcoming_day(
