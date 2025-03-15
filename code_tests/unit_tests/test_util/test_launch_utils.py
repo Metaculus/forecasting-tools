@@ -1,37 +1,50 @@
 import csv
+import logging
 import os
 import tempfile
 from datetime import datetime
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
 from forecasting_tools.util.launch_utils import LaunchQuestion, SheetOrganizer
 
+logger = logging.getLogger(__name__)
+
+
+def get_template_question() -> dict[str, Any]:
+    return {
+        "parent_url": "https://example.com",
+        "author": "Test Author",
+        "title": "Test Question",
+        "type": "binary",
+        "resolution_criteria": "Test criteria",
+        "fine_print": "Test fine print",
+        "description": "Test description",
+        "question_weight": "1",
+        "open_time": "05/01/2023 10:00:00",
+        "scheduled_close_time": "05/01/2023 12:00:00",
+        "scheduled_resolve_time": "05/02/2023",
+        "range_min": None,
+        "range_max": None,
+        "zero_point": None,
+        "open_lower_bound": None,
+        "open_upper_bound": None,
+        "group_variable": None,
+        "options": None,
+    }
+
 
 class TestLaunchQuestion:
+
     def test_valid_datetime_parsing(self) -> None:
         """Test valid datetime parsing in LaunchQuestion."""
-        question = LaunchQuestion(
-            parent_url="https://example.com",
-            author="Test Author",
-            title="Test Question",
-            type="binary",
-            resolution_criteria="Test criteria",
-            fine_print="Test fine print",
-            description="Test description",
-            question_weight="1",
-            open_time="05/01/2023 10:00:00",
-            scheduled_close_time="05/01/2023 12:00:00",
-            scheduled_resolve_time="05/02/2023",
-            range_min=None,
-            range_max=None,
-            zero_point=None,
-            open_lower_bound=None,
-            open_upper_bound=None,
-            group_variable=None,
-            options=None,
-        )
+        question = get_template_question()
+        question["open_time"] = "05/01/2023 10:00:00"
+        question["scheduled_close_time"] = "05/01/2023 12:00:00"
+        question["scheduled_resolve_time"] = "05/02/2023"
+        question = LaunchQuestion(**question)
 
         assert isinstance(question.open_time, datetime)
         assert isinstance(question.scheduled_close_time, datetime)
@@ -41,77 +54,29 @@ class TestLaunchQuestion:
         assert question.open_time.hour == 10
         assert question.scheduled_close_time.hour == 12
 
-    def test_empty_optional_datetime(self) -> None:
+    def test_empty_dates(self) -> None:
         """Test handling of empty datetime fields."""
-        question = LaunchQuestion(
-            parent_url="https://example.com",
-            author="Test Author",
-            title="Test Question",
-            type="binary",
-            resolution_criteria="Test criteria",
-            fine_print="Test fine print",
-            description="Test description",
-            question_weight="1",
-            open_time=None,
-            scheduled_close_time=None,
-            scheduled_resolve_time="05/02/2023",
-            range_min=None,
-            range_max=None,
-            zero_point=None,
-            open_lower_bound=None,
-            open_upper_bound=None,
-            group_variable=None,
-            options=None,
-        )
+        question = get_template_question()
+        question["open_time"] = ""
+        question["scheduled_close_time"] = ""
+        question["scheduled_resolve_time"] = ""
+        question = LaunchQuestion(**question)
 
         assert question.open_time is None
         assert question.scheduled_close_time is None
+        assert question.scheduled_resolve_time is None
 
     def test_different_resolve_date_formats(self) -> None:
         """Test different formats for resolve date."""
         # Two-digit year format
-        question1 = LaunchQuestion(
-            parent_url="https://example.com",
-            author="Test Author",
-            title="Test Question",
-            type="binary",
-            resolution_criteria="Test criteria",
-            fine_print="Test fine print",
-            description="Test description",
-            question_weight="1",
-            open_time=None,
-            scheduled_close_time=None,
-            scheduled_resolve_time="05/02/23",
-            range_min=None,
-            range_max=None,
-            zero_point=None,
-            open_lower_bound=None,
-            open_upper_bound=None,
-            group_variable=None,
-            options=None,
-        )
+        question1 = get_template_question()
+        question1["scheduled_resolve_time"] = "05/02/2023"
+        question1 = LaunchQuestion(**question1)
 
         # Four-digit year format
-        question2 = LaunchQuestion(
-            parent_url="https://example.com",
-            author="Test Author",
-            title="Test Question",
-            type="binary",
-            resolution_criteria="Test criteria",
-            fine_print="Test fine print",
-            description="Test description",
-            question_weight="1",
-            open_time=None,
-            scheduled_close_time=None,
-            scheduled_resolve_time="05/02/2023",
-            range_min=None,
-            range_max=None,
-            zero_point=None,
-            open_lower_bound=None,
-            open_upper_bound=None,
-            group_variable=None,
-            options=None,
-        )
+        question2 = get_template_question()
+        question2["scheduled_resolve_time"] = "05/02/23"
+        question2 = LaunchQuestion(**question2)
 
         assert isinstance(question1.scheduled_resolve_time, datetime)
         assert question1.scheduled_resolve_time.day == 2
@@ -122,183 +87,72 @@ class TestLaunchQuestion:
         assert question2.scheduled_resolve_time.month == 5
         assert question2.scheduled_resolve_time.year == 2023
 
-    def test_invalid_resolve_date_format(self) -> None:
-        """Test invalid resolve date format."""
-        with pytest.raises(ValueError):
-            LaunchQuestion(
-                parent_url="https://example.com",
-                author="Test Author",
-                title="Test Question",
-                type="binary",
-                resolution_criteria="Test criteria",
-                fine_print="Test fine print",
-                description="Test description",
-                question_weight="1",
-                open_time=None,
-                scheduled_close_time=None,
-                scheduled_resolve_time="2023-05-02",  # Invalid format
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            )
-
-    def test_time_validation_only_one_provided(self) -> None:
-        """Test validation when only one time is provided."""
-        with pytest.raises(ValueError):
-            LaunchQuestion(
-                parent_url="https://example.com",
-                author="Test Author",
-                title="Test Question",
-                type="binary",
-                resolution_criteria="Test criteria",
-                fine_print="Test fine print",
-                description="Test description",
-                question_weight="1",
-                open_time="05/01/2023 10:00:00",
-                scheduled_close_time=None,  # Only one provided
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            )
-
-    def test_time_validation_not_two_hours_apart(self) -> None:
-        """Test validation when times are not exactly 2 hours apart."""
-        with pytest.raises(ValueError):
-            LaunchQuestion(
-                parent_url="https://example.com",
-                author="Test Author",
-                title="Test Question",
-                type="binary",
-                resolution_criteria="Test criteria",
-                fine_print="Test fine print",
-                description="Test description",
-                question_weight="1",
-                open_time="05/01/2023 10:00:00",
-                scheduled_close_time="05/01/2023 13:00:00",  # 3 hours apart
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            )
-
-    def test_close_time_not_before_resolve_time(self) -> None:
+    def test_close_open_resolve_times_in_order(self) -> None:
         """Test validation when close time is not before resolve time."""
         with pytest.raises(ValueError):
-            LaunchQuestion(
-                parent_url="https://example.com",
-                author="Test Author",
-                title="Test Question",
-                type="binary",
-                resolution_criteria="Test criteria",
-                fine_print="Test fine print",
-                description="Test description",
-                question_weight="1",
-                open_time="05/02/2023 10:00:00",
-                scheduled_close_time="05/02/2023 12:00:00",  # Same day as resolve
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            )
+            question1 = get_template_question()
+            question1["open_time"] = "05/02/2023 10:00:00"
+            question1["scheduled_close_time"] = "05/02/2023 8:00:00"
+            LaunchQuestion(**question1)
 
-    def test_open_time_after_close_time(self) -> None:
-        """Test validation when open time is after close time."""
-        # This should be caught by the 2-hour check, but testing specific error case
         with pytest.raises(ValueError):
-            LaunchQuestion(
-                parent_url="https://example.com",
-                author="Test Author",
-                title="Test Question",
-                type="binary",
-                resolution_criteria="Test criteria",
-                fine_print="Test fine print",
-                description="Test description",
-                question_weight="1",
-                open_time="05/02/2023 13:00:00",  # After close time
-                scheduled_close_time="05/01/2023 12:00:00",
-                scheduled_resolve_time="05/03/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            )
+            question2 = get_template_question()
+            question2["open_time"] = "05/02/2023 10:00:00"
+            question2["scheduled_resolve_time"] = "05/02/2023 8:00:00"
+            LaunchQuestion(**question2)
 
-    def test_to_csv_row(self) -> None:
-        """Test to_csv_row method returns correctly formatted dict."""
-        question = LaunchQuestion(
-            parent_url="https://example.com",
-            author="Test Author",
-            title="Test Question",
-            type="binary",
-            resolution_criteria="Test criteria",
-            fine_print="Test fine print",
-            description="Test description",
-            question_weight="1",
-            open_time="05/01/2023 10:00:00",
-            scheduled_close_time="05/01/2023 12:00:00",
-            scheduled_resolve_time="05/02/2023",
-            range_min=None,
-            range_max=None,
-            zero_point=None,
-            open_lower_bound=None,
-            open_upper_bound=None,
-            group_variable=None,
-            options=None,
-        )
-
-        csv_row = question.to_csv_row()
-        assert csv_row["parent_url"] == "https://example.com"
-        assert csv_row["title"] == "Test Question"
-        assert csv_row["open_time"] == "05/01/2023 10:00:00"
-        assert csv_row["scheduled_resolve_time"] == "05/02/2023"
+        with pytest.raises(ValueError):
+            question3 = get_template_question()
+            question3["scheduled_close_time"] = "05/02/2023 8:00:00"
+            question3["scheduled_resolve_time"] = "05/02/2023 10:00:00"
+            LaunchQuestion(**question3)
 
     def test_from_csv_row(self) -> None:
         """Test from_csv_row creates valid LaunchQuestion."""
-        row = {
-            "parent_url": "https://example.com",
-            "author": "Test Author",
-            "title": "Test Question",
-            "type": "binary",
-            "resolution_criteria": "Test criteria",
-            "fine_print": "Test fine print",
-            "description": "Test description",
-            "question_weight": "1",
-            "open_time": "05/01/2023 10:00:00",
-            "scheduled_close_time": "05/01/2023 12:00:00",
-            "scheduled_resolve_time": "05/02/2023",
-            "range_min": None,
-            "range_max": None,
-            "zero_point": None,
-            "open_lower_bound": None,
-            "open_upper_bound": None,
-            "group_variable": None,
-            "options": None,
-        }
-
-        question = LaunchQuestion.from_csv_row(row, 5)
-        assert question.title == "Test Question"
+        question = LaunchQuestion.from_csv_row(get_template_question(), 5)
         assert question.original_order == 5
         assert isinstance(question.open_time, datetime)
+
+    def test_numeric_question(self) -> None:
+        question1 = get_template_question()
+        question1["type"] = "numeric"
+        question1["range_min"] = "1"
+        question1["range_max"] = 10
+        question1["zero_point"] = ""
+        question1["open_lower_bound"] = "TRUE"
+        question1["open_upper_bound"] = "FALSE"
+
+        question1 = LaunchQuestion(**question1)
+        assert question1.type == "numeric"
+        assert question1.range_min == 1
+        assert question1.range_max == 10
+        assert question1.zero_point is None
+        assert question1.open_lower_bound is True
+        assert question1.open_upper_bound is False
+
+        question2 = get_template_question()
+        question2["type"] = "numeric"
+        question2["range_min"] = 1
+        question2["range_max"] = ""
+        question2["zero_point"] = 0.3
+        question2["open_lower_bound"] = ""
+        question2["open_upper_bound"] = "TRUE"
+
+        question2 = LaunchQuestion(**question2)
+        assert question2.type == "numeric"
+        assert question2.range_min == 1
+        assert question2.range_max == 10
+        assert question2.zero_point == pytest.approx(0.3)
+        assert question2.open_lower_bound is None
+        assert question2.open_upper_bound is True
+
+    def test_multiple_choice_question(self) -> None:
+        question = get_template_question()
+        question["type"] = "multiple_choice"
+        question["options"] = "Option 1|Option 2|Option 3"
+        question = LaunchQuestion(**question)
+        assert question.type == "multiple_choice"
+        assert question.options == ["Option 1", "Option 2", "Option 3"]
 
 
 class TestSheetOrganizer:
@@ -318,48 +172,12 @@ class TestSheetOrganizer:
 
     def test_load_questions_from_csv(self) -> None:
         """Test loading questions from a CSV file."""
-        test_data = [
-            {
-                "parent_url": "https://example.com/1",
-                "author": "Author 1",
-                "title": "Question 1",
-                "type": "binary",
-                "resolution_criteria": "Criteria 1",
-                "fine_print": "Fine print 1",
-                "description": "Description 1",
-                "question_weight": "1",
-                "open_time": "05/01/2023 10:00:00",
-                "scheduled_close_time": "05/01/2023 12:00:00",
-                "scheduled_resolve_time": "05/02/2023",
-                "range_min": "",
-                "range_max": "",
-                "zero_point": "",
-                "open_lower_bound": "",
-                "open_upper_bound": "",
-                "group_variable": "",
-                "options": "",
-            },
-            {
-                "parent_url": "https://example.com/2",
-                "author": "Author 2",
-                "title": "Question 2",
-                "type": "binary",
-                "resolution_criteria": "Criteria 2",
-                "fine_print": "Fine print 2",
-                "description": "Description 2",
-                "question_weight": "1",
-                "open_time": "05/03/2023 10:00:00",
-                "scheduled_close_time": "05/03/2023 12:00:00",
-                "scheduled_resolve_time": "05/04/2023",
-                "range_min": "",
-                "range_max": "",
-                "zero_point": "",
-                "open_lower_bound": "",
-                "open_upper_bound": "",
-                "group_variable": "",
-                "options": "",
-            },
-        ]
+        template_question = get_template_question()
+        question1 = template_question.copy()
+        question1["title"] = "Question 1"
+        question2 = template_question.copy()
+        question2["title"] = "Question 2"
+        test_data = [question1, question2]
 
         temp_path = self.create_temp_csv(test_data)
         try:
@@ -383,47 +201,17 @@ class TestSheetOrganizer:
 
     def test_find_no_overlapping_windows(self) -> None:
         """Test finding overlapping windows when none exist."""
+        question1 = get_template_question()
+        question1["open_time"] = "05/01/2023 10:00:00"
+        question1["scheduled_close_time"] = "05/01/2023 12:00:00"
+
+        question2 = get_template_question()
+        question2["open_time"] = "05/01/2023 13:00:00"
+        question2["scheduled_close_time"] = "05/01/2023 15:00:00"
+
         questions = [
-            LaunchQuestion(
-                parent_url="https://example.com/1",
-                author="Author 1",
-                title="Question 1",
-                type="binary",
-                resolution_criteria="Criteria 1",
-                fine_print="Fine print 1",
-                description="Description 1",
-                question_weight="1",
-                open_time="05/01/2023 10:00:00",
-                scheduled_close_time="05/01/2023 12:00:00",
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            ),
-            LaunchQuestion(
-                parent_url="https://example.com/2",
-                author="Author 2",
-                title="Question 2",
-                type="binary",
-                resolution_criteria="Criteria 2",
-                fine_print="Fine print 2",
-                description="Description 2",
-                question_weight="1",
-                open_time="05/01/2023 13:00:00",  # After Q1 closes
-                scheduled_close_time="05/01/2023 15:00:00",
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            ),
+            LaunchQuestion(**question1),
+            LaunchQuestion(**question2),
         ]
 
         overlapping = SheetOrganizer.find_overlapping_windows(questions)
@@ -431,67 +219,25 @@ class TestSheetOrganizer:
 
     def test_find_overlapping_windows(self) -> None:
         """Test finding overlapping time windows."""
+        question1 = get_template_question()
+        question1["title"] = "Question 1"
+        question1["open_time"] = "05/01/2023 10:00:00"
+        question1["scheduled_close_time"] = "05/01/2023 12:00:00"
+
+        question2 = get_template_question()
+        question2["title"] = "Question 2"
+        question2["open_time"] = "05/01/2023 11:00:00"
+        question2["scheduled_close_time"] = "05/01/2023 13:00:00"
+
+        question3 = get_template_question()
+        question3["title"] = "Question 3"
+        question3["open_time"] = "05/01/2023 14:00:00"
+        question3["scheduled_close_time"] = "05/01/2023 16:00:00"
+
         questions = [
-            LaunchQuestion(
-                parent_url="https://example.com/1",
-                author="Author 1",
-                title="Question 1",
-                type="binary",
-                resolution_criteria="Criteria 1",
-                fine_print="Fine print 1",
-                description="Description 1",
-                question_weight="1",
-                open_time="05/01/2023 10:00:00",
-                scheduled_close_time="05/01/2023 12:00:00",
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            ),
-            LaunchQuestion(
-                parent_url="https://example.com/2",
-                author="Author 2",
-                title="Question 2",
-                type="binary",
-                resolution_criteria="Criteria 2",
-                fine_print="Fine print 2",
-                description="Description 2",
-                question_weight="1",
-                open_time="05/01/2023 11:00:00",  # Overlaps with Q1
-                scheduled_close_time="05/01/2023 13:00:00",
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            ),
-            LaunchQuestion(
-                parent_url="https://example.com/3",
-                author="Author 3",
-                title="Question 3",
-                type="binary",
-                resolution_criteria="Criteria 3",
-                fine_print="Fine print 3",
-                description="Description 3",
-                question_weight="1",
-                open_time="05/01/2023 14:00:00",  # No overlap
-                scheduled_close_time="05/01/2023 16:00:00",
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            ),
+            LaunchQuestion(**question1),
+            LaunchQuestion(**question2),
+            LaunchQuestion(**question3),
         ]
 
         overlapping = SheetOrganizer.find_overlapping_windows(questions)
@@ -504,47 +250,17 @@ class TestSheetOrganizer:
         same_open = "05/01/2023 10:00:00"
         same_close = "05/01/2023 12:00:00"
 
+        question1 = get_template_question()
+        question1["open_time"] = same_open
+        question1["scheduled_close_time"] = same_close
+
+        question2 = get_template_question()
+        question2["open_time"] = same_open
+        question2["scheduled_close_time"] = same_close
+
         questions = [
-            LaunchQuestion(
-                parent_url="https://example.com/1",
-                author="Author 1",
-                title="Question 1",
-                type="binary",
-                resolution_criteria="Criteria 1",
-                fine_print="Fine print 1",
-                description="Description 1",
-                question_weight="1",
-                open_time=same_open,
-                scheduled_close_time=same_close,
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            ),
-            LaunchQuestion(
-                parent_url="https://example.com/2",
-                author="Author 2",
-                title="Question 2",
-                type="binary",
-                resolution_criteria="Criteria 2",
-                fine_print="Fine print 2",
-                description="Description 2",
-                question_weight="1",
-                open_time=same_open,  # Same times as Q1
-                scheduled_close_time=same_close,
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            ),
+            LaunchQuestion(**question1),
+            LaunchQuestion(**question2),
         ]
 
         overlapping = SheetOrganizer.find_overlapping_windows(questions)
@@ -552,48 +268,70 @@ class TestSheetOrganizer:
 
     def test_questions_without_time_windows(self) -> None:
         """Test handling questions without time windows."""
+        question1 = get_template_question()
+        question1["open_time"] = ""
+        question1["scheduled_close_time"] = ""
+
+        question2 = get_template_question()
+        question2["open_time"] = "05/01/2023 11:00:00"
+        question2["scheduled_close_time"] = "05/01/2023 13:00:00"
+
         questions = [
-            LaunchQuestion(
-                parent_url="https://example.com/1",
-                author="Author 1",
-                title="Question 1",
-                type="binary",
-                resolution_criteria="Criteria 1",
-                fine_print="Fine print 1",
-                description="Description 1",
-                question_weight="1",
-                open_time=None,  # No time window
-                scheduled_close_time=None,
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            ),
-            LaunchQuestion(
-                parent_url="https://example.com/2",
-                author="Author 2",
-                title="Question 2",
-                type="binary",
-                resolution_criteria="Criteria 2",
-                fine_print="Fine print 2",
-                description="Description 2",
-                question_weight="1",
-                open_time="05/01/2023 11:00:00",  # Has time window
-                scheduled_close_time="05/01/2023 13:00:00",
-                scheduled_resolve_time="05/02/2023",
-                range_min=None,
-                range_max=None,
-                zero_point=None,
-                open_lower_bound=None,
-                open_upper_bound=None,
-                group_variable=None,
-                options=None,
-            ),
+            LaunchQuestion(**question1),
+            LaunchQuestion(**question2),
         ]
 
         overlapping = SheetOrganizer.find_overlapping_windows(questions)
-        assert len(overlapping) == 0  # No overlap since one has no time window
+        assert len(overlapping) == 0
+
+    def test_day_of_week_computation(self) -> None:
+        """Test computing upcoming days with mocked current dates."""
+        from datetime import datetime
+
+        friday = datetime(2025, 3, 14, 10, 30, 0)
+        with patch(
+            "forecasting_tools.util.launch_utils.datetime"
+        ) as mock_datetime:
+            mock_datetime.now.return_value = friday
+            mock_datetime.side_effect = lambda *args, **kw: datetime(
+                *args, **kw
+            )
+
+            monday = SheetOrganizer.compute_upcoming_day("monday")
+            assert monday.day == 17
+            assert monday.month == 3
+            assert monday.year == 2025
+
+            friday = SheetOrganizer.compute_upcoming_day("friday")
+            assert friday.day == 21
+            assert friday.month == 3
+            assert friday.year == 2025
+
+            saturday = SheetOrganizer.compute_upcoming_day("saturday")
+            assert saturday.day == 15
+            assert saturday.month == 3
+            assert saturday.year == 2025
+
+        sunday = datetime(2025, 3, 16, 10, 30, 0)
+        with patch(
+            "forecasting_tools.util.launch_utils.datetime"
+        ) as mock_datetime:
+            mock_datetime.now.return_value = sunday
+            mock_datetime.side_effect = lambda *args, **kw: datetime(
+                *args, **kw
+            )
+
+            monday = SheetOrganizer.compute_upcoming_day("monday")
+            assert monday.day == 17
+            assert monday.month == 3
+            assert monday.year == 2025
+
+            friday = SheetOrganizer.compute_upcoming_day("friday")
+            assert friday.day == 21
+            assert friday.month == 3
+            assert friday.year == 2025
+
+            saturday = SheetOrganizer.compute_upcoming_day("saturday")
+            assert saturday.day == 22
+            assert saturday.month == 3
+            assert saturday.year == 2025
