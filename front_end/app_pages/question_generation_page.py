@@ -66,8 +66,8 @@ class QuestionGeneratorPage(ToolPage):
                 value=5,
             )
             model = st.text_input(
-                "Litellm Model (e.g.: o1, claude-3-7-sonnet-latest, openrouter/deepseek/deepseek-r1)",
-                value="o1",
+                "Litellm Model (e.g.: openai/o1, anthropic/claude-3-7-sonnet-latest, openrouter/deepseek/deepseek-r1)",
+                value="gpt-4o",
             )
             col1, col2 = st.columns(2)
             with col1:

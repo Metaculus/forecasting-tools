@@ -14,6 +14,7 @@ from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
+    DateQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
@@ -49,7 +50,10 @@ class SimpleQuestion(BaseModel, Jsonable):
             assert question.scheduled_resolution_time is not None
             assert question.fine_print is not None
 
-            if isinstance(question, NumericQuestion):
+            if isinstance(question, NumericQuestion) or isinstance(
+                question, DateQuestion
+            ):
+                # TODO: Give more direct support for date questions
                 question_type = "numeric"
                 options = []
             elif isinstance(question, BinaryQuestion):
@@ -117,6 +121,12 @@ class SimpleQuestion(BaseModel, Jsonable):
 
 
 class QuestionGenerator:
+    """
+    Question writing guidelines:
+    https://www.metaculus.com/question-writing/
+    https://metaculus.notion.site/Public-Facing-Question-Writing-Guide-9e7374d638e749a2ae40b093ce619a9a?pvs=73
+    """
+
     FIELD_DESCRIPTIONS = clean_indents(
         """
         - question_text: A clear question about a future event
