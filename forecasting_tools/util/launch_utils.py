@@ -27,7 +27,7 @@ class LaunchQuestion(BaseModel, Jsonable):
     resolution_criteria: str
     fine_print: str
     description: str
-    question_weight: int
+    question_weight: float | None = None
     open_time: datetime | None = None
     scheduled_close_time: datetime | None = None
     scheduled_resolve_time: datetime | None = None
@@ -107,6 +107,20 @@ class LaunchQuestion(BaseModel, Jsonable):
             return [opt.strip() for opt in value.split("|") if opt.strip()]
         raise ValueError(f"Invalid options format: {value}")
 
+    @field_validator("question_weight", mode="before")
+    @classmethod
+    def parse_question_weight(cls, value: Any) -> float | None:
+        if value is None or (isinstance(value, str) and value.strip() == ""):
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            try:
+                return float(value)
+            except ValueError:
+                pass
+        raise ValueError(f"Invalid question weight value: {value}")
+
     @model_validator(mode="after")
     def validate_times(self: LaunchQuestion) -> LaunchQuestion:
         open_time = self.open_time
@@ -162,8 +176,8 @@ class LaunchQuestion(BaseModel, Jsonable):
 
 
 class LaunchWarning(BaseModel, Jsonable):
-    relevant_question: LaunchQuestion | None = None
     warning: str
+    relevant_question: LaunchQuestion | None = None
 
 
 class SheetOrganizer:
@@ -351,7 +365,6 @@ class SheetOrganizer:
             warnings = []
             for question in new_questions:
                 try:
-                    assert question.parent_url, "parent_url is required"
                     assert question.author, "author is required"
                     assert question.title, "title is required"
                     assert question.type, "type is required"
@@ -633,7 +646,9 @@ class SheetOrganizer:
 
             if new_questions:
                 avg_weight = sum(
-                    q.question_weight for q in new_questions
+                    q.question_weight
+                    for q in new_questions
+                    if q.question_weight is not None
                 ) / len(new_questions)
                 if avg_weight <= 0.8:
                     warnings.append(
@@ -646,9 +661,6 @@ class SheetOrganizer:
         # The original order is different than the new ordering
         def _check_order_changed() -> list[LaunchWarning]:
             warnings = []
-            assert len(original_questions) == len(
-                new_questions
-            ), "Question lengths must be the same"
             same_order = True
             for i in range(len(original_questions)):
                 if original_questions[i].title != new_questions[i].title:
@@ -658,7 +670,7 @@ class SheetOrganizer:
             if same_order:
                 warnings.append(
                     LaunchWarning(
-                        relevant_question=new_questions[0],
+                        relevant_question=None,
                         warning="Question order has not changed from original",
                     )
                 )
@@ -685,6 +697,27 @@ class SheetOrganizer:
                     )
             return warnings
 
+        # Same number of questions as original
+        def _check_same_number_of_questions() -> list[LaunchWarning]:
+            warnings = []
+            if len(original_questions) != len(new_questions):
+                # Find missing questions by comparing titles
+                original_titles = {q.title for q in original_questions}
+                new_titles = {q.title for q in new_questions}
+
+                missing_from_new = original_titles - new_titles
+                missing_from_original = new_titles - original_titles
+
+                warning_msg = f"Number of questions is different from original -> Original: {len(original_questions)} != New: {len(new_questions)}"
+
+                if missing_from_new:
+                    warning_msg += f"\nMissing from new: {', '.join(sorted(missing_from_new))}"
+                if missing_from_original:
+                    warning_msg += f"\nNew questions not in original: {', '.join(sorted(missing_from_original))}"
+
+                warnings.append(LaunchWarning(warning=warning_msg))
+            return warnings
+
         final_warnings.extend(_check_existing_times_preserved())
         final_warnings.extend(_check_no_new_overlapping_windows())
         final_warnings.extend(_check_window_duration())
@@ -703,7 +736,7 @@ class SheetOrganizer:
         final_warnings.extend(_check_average_weight())
         final_warnings.extend(_check_order_changed())
         final_warnings.extend(_check_ordered_by_open_time())
-
+        final_warnings.extend(_check_same_number_of_questions())
         return final_warnings
 
     @classmethod
@@ -735,8 +768,17 @@ class SheetOrganizer:
             hour=0, minute=0, second=0, microsecond=0
         )
         newly_scheduled_questions = []
+
+        # Handle the case when there are no questions to schedule
+        if not questions_to_schedule:
+            all_questions = prescheduled_questions
+            all_questions.sort(
+                key=lambda q: q.open_time if q.open_time else datetime.max
+            )
+            return all_questions
+
         current_question = questions_to_schedule.pop(0)
-        while questions_to_schedule:
+        while True:
             proposed_open_time += timedelta(hours=2)
             proposed_closed_time = proposed_open_time + timedelta(hours=2)
             current_question.open_time = proposed_open_time
@@ -750,7 +792,23 @@ class SheetOrganizer:
             )
 
             if not prescheduled_question_overlaps:
-                newly_scheduled_questions.append(current_question)
+                if (
+                    current_question.scheduled_resolve_time is not None
+                    and current_question.scheduled_resolve_time
+                    < current_question.scheduled_close_time
+                ):
+                    raise RuntimeError(
+                        f"Question {current_question.title} has a scheduled resolve time that can't find a valid close time"
+                    )
+                new_question = LaunchQuestion(
+                    **current_question.model_dump(),
+                )  # For model validation purposes
+                newly_scheduled_questions.append(new_question)
+
+                # Break out of the loop if there are no more questions to schedule
+                if not questions_to_schedule:
+                    break
+
                 current_question = questions_to_schedule.pop(0)
 
         all_questions = prescheduled_questions + newly_scheduled_questions
@@ -770,8 +828,8 @@ class SheetOrganizer:
         question_type: Literal["bots", "pros"],
     ) -> None:
         questions = cls.load_questions_from_csv(input_file_path)
-
         scheduled_questions = cls.schedule_questions(questions, start_date)
+        cls.save_questions_to_csv(scheduled_questions, output_file_path)
         warnings = cls.find_processing_errors(
             questions,
             scheduled_questions,
@@ -781,8 +839,6 @@ class SheetOrganizer:
         )
         for warning in warnings:
             logger.warning(warning)
-
-        cls.save_questions_to_csv(scheduled_questions, output_file_path)
 
     @staticmethod
     def compute_upcoming_day(
@@ -814,6 +870,7 @@ if __name__ == "__main__":
 
     start_date = SheetOrganizer.compute_upcoming_day("monday")
     end_date = SheetOrganizer.compute_upcoming_day("friday")
+    logger.info(f"Start date: {start_date}, End date: {end_date}")
     SheetOrganizer.schedule_questions_from_file(
         "temp/input_launch_questions.csv",
         "temp/ordered_questions.csv",
