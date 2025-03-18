@@ -8,6 +8,7 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 from forecasting_tools.research_agents.question_generator import (
+    GeneratedQuestion,
     QuestionGenerator,
     SimpleQuestion,
 )
@@ -15,11 +16,14 @@ from forecasting_tools.research_agents.question_generator import (
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.skip(
+    reason="Skipping question generator test since its expensive"
+)
 async def test_question_generator_returns_necessary_number_and_stays_within_cost() -> (
     None
 ):
-    number_of_questions_to_generate = 3
-    cost_threshold = 0.5
+    number_of_questions_to_generate = 2
+    cost_threshold = 2
     topic = "Lithuania"
     model = GeneralLlm(model="gpt-4o-mini")
     before_date = datetime.now() + timedelta(days=14)
@@ -37,12 +41,8 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
             resolve_after_date=after_date,
         )
 
-        assert (
-            len(questions) == number_of_questions_to_generate
-        ), f"Expected {number_of_questions_to_generate} questions, got {len(questions)}"
-
         for question in questions:
-            assert isinstance(question, SimpleQuestion)
+            assert isinstance(question, GeneratedQuestion)
             assert question.question_text is not None
             assert question.resolution_criteria is not None
             assert question.background_information is not None
@@ -50,16 +50,25 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
             assert (
                 topic.lower() in str(question).lower()
             ), f"Expected topic {topic} to be in question {question}"
+            assert question.forecast_report is not None
             # assert (
             #     before_date > question.expected_resolution_date > after_date
             # ), f"Expected resolution date {question.expected_resolution_date} to be between {before_date} and {after_date}"
 
+        assert (
+            len(questions) >= number_of_questions_to_generate
+        ), f"Expected {number_of_questions_to_generate} questions, got {len(questions)}"
+        assert (
+            len([question for question in questions if question.is_uncertain])
+            >= number_of_questions_to_generate
+        ), f"Expected {number_of_questions_to_generate} uncertain questions, got {len([question for question in questions if question.is_uncertain])}. Questions: {questions}"
+
         final_cost = cost_manager.current_usage
         logger.info(f"Cost: ${final_cost:.4f}")
+        assert final_cost > 0, "Cost should be greater than 0"
         assert (
             final_cost < cost_threshold
         ), f"Cost exceeded threshold: ${final_cost:.4f} > ${cost_threshold:.4f}"
-        assert final_cost > 0, "Cost should be greater than 0"
 
 
 async def test_question_generator_raises_on_invalid_dates() -> None:

@@ -76,7 +76,9 @@ class Q1TemplateBot2025(ForecastBot):
                 )
             else:
                 research = ""
-            logger.info(f"Found Research for {question.page_url}:\n{research}")
+            logger.info(
+                f"Found Research for URL {question.page_url}:\n{research}"
+            )
             return research
 
     async def _call_perplexity(
@@ -183,7 +185,7 @@ class Q1TemplateBot2025(ForecastBot):
             reasoning, max_prediction=1, min_prediction=0
         )
         logger.info(
-            f"Forecasted {question.page_url} as {prediction} with reasoning:\n{reasoning}"
+            f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
         )
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
@@ -236,7 +238,7 @@ class Q1TemplateBot2025(ForecastBot):
             )
         )
         logger.info(
-            f"Forecasted {question.page_url} as {prediction} with reasoning:\n{reasoning}"
+            f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
         )
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
@@ -304,7 +306,7 @@ class Q1TemplateBot2025(ForecastBot):
             )
         )
         logger.info(
-            f"Forecasted {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
+            f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
         )
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning

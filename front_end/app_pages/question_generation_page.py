@@ -14,8 +14,8 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastRunType,
 )
 from forecasting_tools.research_agents.question_generator import (
+    GeneratedQuestion,
     QuestionGenerator,
-    SimpleQuestion,
 )
 from forecasting_tools.util.jsonable import Jsonable
 from front_end.helpers.report_displayer import ReportDisplayer
@@ -33,7 +33,7 @@ class QuestionGeneratorInput(Jsonable, BaseModel):
 
 
 class QuestionGeneratorOutput(Jsonable, BaseModel):
-    questions: list[SimpleQuestion]
+    questions: list[GeneratedQuestion]
     original_input: QuestionGeneratorInput
     cost: float
 
@@ -113,11 +113,12 @@ class QuestionGeneratorPage(ToolPage):
                 )
                 cost = cost_manager.current_usage
 
-                return QuestionGeneratorOutput(
+                question_output = QuestionGeneratorOutput(
                     questions=questions,
                     original_input=input,
                     cost=cost,
                 )
+                return question_output
 
     @classmethod
     async def _save_run_to_coda(
@@ -146,10 +147,13 @@ class QuestionGeneratorPage(ToolPage):
     ) -> None:
         for output in outputs:
             st.markdown(
-                f"**Cost of below questions:** ${output.cost:.2f} | **Topic:** {output.original_input.topic if output.original_input.topic else 'N/A'}"
+                f"**Cost of below questions:** \${output.cost:.2f} | **Topic:** {output.original_input.topic if output.original_input.topic else 'N/A'}"  # NOSONAR
             )
             for question in output.questions:
-                with st.expander(question.question_text):
+                uncertainty_emoji = "🔮✅" if question.is_uncertain else ""
+                with st.expander(
+                    f"{uncertainty_emoji} {question.question_text}"
+                ):
                     st.markdown("### Question")
                     st.markdown(
                         ReportDisplayer.clean_markdown(question.question_text)
@@ -180,6 +184,14 @@ class QuestionGeneratorPage(ToolPage):
                     st.markdown(
                         question.expected_resolution_date.strftime("%Y-%m-%d")
                     )
+                    st.markdown("### Prediction & Summary of Bot Report")
+                    st.markdown("---")
+                    if question.forecast_report is None:
+                        st.markdown("No forecast report available")
+                    elif isinstance(question.forecast_report, Exception):
+                        st.markdown(f"Error: {question.forecast_report}")
+                    else:
+                        st.markdown(question.forecast_report.summary)
 
 
 if __name__ == "__main__":

@@ -3,15 +3,23 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
-from pydantic import BaseModel, Field
+import typeguard
+from pydantic import BaseModel, Field, field_validator
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
-from forecasting_tools.data_models.data_organizer import DataOrganizer
-from forecasting_tools.data_models.forecast_report import ForecastReport
+from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.data_organizer import (
+    DataOrganizer,
+    ReportTypes,
+)
+from forecasting_tools.data_models.multiple_choice_report import (
+    MultipleChoiceReport,
+)
+from forecasting_tools.data_models.numeric_report import NumericReport
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     DateQuestion,
@@ -37,6 +45,22 @@ class SimpleQuestion(BaseModel, Jsonable):
     expected_resolution_date: datetime
     question_type: Literal["binary", "numeric", "multiple_choice"] = "binary"
     options: list[str] = Field(default_factory=list)
+
+    def is_within_date_range(
+        self, resolve_before_date: datetime, resolve_after_date: datetime
+    ) -> bool:
+        return (
+            resolve_before_date
+            >= self.expected_resolution_date
+            >= resolve_after_date
+        )
+
+    @field_validator("expected_resolution_date", mode="after")
+    @classmethod
+    def ensure_utc_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
 
     @classmethod
     def full_questions_to_simple_questions(
@@ -78,7 +102,7 @@ class SimpleQuestion(BaseModel, Jsonable):
         return simple_questions
 
     @classmethod
-    def simple_questions_to_full_questions(
+    def simple_questions_to_metaculus_question(
         cls, simple_questions: list[SimpleQuestion]
     ) -> list[MetaculusQuestion]:
         full_questions = []
@@ -97,8 +121,8 @@ class SimpleQuestion(BaseModel, Jsonable):
                     background_info=question.background_information,
                     resolution_criteria=question.resolution_criteria,
                     fine_print=question.fine_print,
-                    upper_bound=1000000000,
-                    lower_bound=-1000000000,
+                    upper_bound=1000000000000,
+                    lower_bound=-1000000000000,
                     open_upper_bound=True,
                     open_lower_bound=True,
                     scheduled_resolution_time=question.expected_resolution_date,
@@ -120,6 +144,36 @@ class SimpleQuestion(BaseModel, Jsonable):
         return full_questions
 
 
+class GeneratedQuestion(SimpleQuestion):
+    forecast_report: ReportTypes | None = None
+    error_message: str | None = None
+
+    @property
+    def is_uncertain(self) -> bool:
+        """Determines if a forecast shows sufficient uncertainty."""
+        report = self.forecast_report
+        if report is None or isinstance(report, Exception):
+            return False
+
+        if isinstance(report, BinaryReport):
+            # For binary questions, check if probability is between 10% and 90%
+            probability = report.prediction
+            is_uncertain = 0.1 <= probability <= 0.9
+        elif isinstance(report, NumericReport):
+            is_uncertain = True
+        elif isinstance(report, MultipleChoiceReport):
+            # For multiple choice, no option should have >90% or <5% probability
+            for option in report.prediction.predicted_options:
+                if option.probability > 0.8 or option.probability < 0.05:
+                    is_uncertain = False
+                    break
+            else:
+                is_uncertain = True
+        else:
+            is_uncertain = False
+        return is_uncertain
+
+
 class QuestionGenerator:
     """
     Question writing guidelines:
@@ -131,7 +185,7 @@ class QuestionGenerator:
         """
         - question_text: A clear question about a future event
         - resolution_criteria: Specific criteria for how the question will resolve. If possible include a link to a status page (e.g. a website with a live number or condition that is easy to resolve)
-        - fine_print: Additional information covering every edge case that could happen. This should reduce the change of an ambiguous resolution to 0. Resolution criteria + fine print should pass the clairvoyance test such that after the event happens there is no debate about whether it happened or not.
+        - fine_print: Additional information covering *every* edge case that could happen. There should be no chance of an ambiguous resolution. Resolution criteria + fine print should pass the clairvoyance test such that after the event happens there is no debate about whether it happened or not no matter how it resolves.
         - background_information: Relevant context and historical information to help understand the question
         - expected_resolution_date: The date when the question is expected to resolve
         - question_type: The type of question, either binary, numeric, or multiple_choice based on how the forecaster should answer (with yes/no, a number, or a choice from a list)
@@ -141,7 +195,7 @@ class QuestionGenerator:
 
     def __init__(
         self,
-        model: GeneralLlm | str = "o1",
+        model: GeneralLlm | str = "gpt-4o",
         forecaster: ForecastBot | None = None,
         researcher: SmartSearcher | None = None,
     ) -> None:
@@ -187,7 +241,7 @@ class QuestionGenerator:
         topic: str = "",  # e.g. "Lithuanian elections"
         resolve_before_date: datetime = datetime.now() + timedelta(days=30),
         resolve_after_date: datetime = datetime.now(),
-    ) -> list[SimpleQuestion]:
+    ) -> list[GeneratedQuestion]:
         if resolve_before_date <= resolve_after_date:
             raise ValueError(
                 "resolve_before_date must be after resolve_after_date"
@@ -195,8 +249,73 @@ class QuestionGenerator:
         if number_of_questions < 1:
             raise ValueError("number_of_questions must be positive")
 
+        resolve_before_date = resolve_before_date.astimezone(timezone.utc)
+        resolve_after_date = resolve_after_date.astimezone(timezone.utc)
+
+        logger.info(f"Attempting to generate {number_of_questions} questions")
+
+        final_questions: list[GeneratedQuestion] = []
+        max_iterations = 3
+        iteration = 0
+        questions_needed = number_of_questions
+
+        while iteration < max_iterations and questions_needed > 0:
+            logger.info(
+                f"Starting iteration {iteration + 1} of question generation"
+            )
+            new_questions = await self._generate_draft_questions(
+                number_of_questions,
+                topic,
+                resolve_before_date,
+                resolve_after_date,
+            )
+            new_questions_with_forecasts = (
+                await self._add_forecast_to_questions(new_questions)
+            )
+            final_questions.extend(new_questions_with_forecasts)
+            logger.debug(
+                f"Generated {len(new_questions_with_forecasts)} new questions for iteration {iteration + 1}: {new_questions_with_forecasts}"
+            )
+
+            number_bad_questions = len(
+                [
+                    question
+                    for question in final_questions
+                    if question.is_within_date_range(
+                        resolve_before_date, resolve_after_date
+                    )
+                    or not question.is_uncertain
+                ]
+            )
+            questions_needed = (
+                number_of_questions
+                - len(final_questions)
+                + number_bad_questions
+            )
+            logger.info(
+                f"At iteration {iteration + 1}, there are {number_bad_questions} bad questions (not within date range or not uncertain) out of {len(final_questions)} questions generated and {questions_needed} questions left to generate"
+            )
+
+            if questions_needed <= 0:
+                break
+            iteration += 1
+
+        logger.info(
+            f"Generated {len(final_questions)} questions after {iteration + 1} iterations"
+        )
+        logger.debug(f"Final questions: {final_questions}")
+        return final_questions
+
+    async def _generate_draft_questions(
+        self,
+        number_of_questions: int,
+        topic: str,
+        resolve_before_date: datetime,
+        resolve_after_date: datetime,
+    ) -> list[SimpleQuestion]:
         num_weeks_till_resolution = (
-            resolve_before_date - datetime.now()
+            resolve_before_date.astimezone(timezone.utc)
+            - datetime.now().astimezone(timezone.utc)
         ).days / 7
 
         if topic == "":
@@ -215,8 +334,8 @@ class QuestionGenerator:
             Please create {number_of_questions} questions following the same format:
             Pay especially close attention to making sure that the questions are uncertain:
             - For binary, probabilities should be between 10% and 90%
-            - For numeric, the range should not be an obvious number (i.e. one that will not change)
-            - For multiple choice, probability for each option should not be more than 90% or less than 5%
+            - For numeric, the range should not be an obvious number (i.e. there needs to be uncertainty)
+            - For multiple choice, probability for each option should not be more than 80% or less than 5%
 
             # Field descriptions:
             {self.FIELD_DESCRIPTIONS}
@@ -231,130 +350,51 @@ class QuestionGenerator:
             """
         )
 
-        logger.debug(f"Question Generation Prompt\n{prompt}")
-        logger.info(f"Attempting to generate {number_of_questions} questions")
-
-        final_questions = []
-        max_iterations = 3
-        iteration = 0
-        questions_needed = number_of_questions
-
-        # Create a forecast bot instance for evaluating question certainty
-        while iteration < max_iterations and questions_needed > 0:
-            iteration += 1
-            logger.info(
-                f"Starting iteration {iteration} of question generation"
-            )
-
-            new_questions = (
-                await self.smart_searcher.invoke_and_return_verified_type(
-                    prompt,
-                    list[SimpleQuestion],
-                )
-            )
-
-            refined_questions = await self.refine_questions(new_questions)
-
-            date_filtered_questions = [
-                question
-                for question in refined_questions
-                if resolve_before_date
-                > question.expected_resolution_date
-                > resolve_after_date
-            ]
-            uncertainty_filtered_questions = (
-                await self._filter_questions_by_certainty(
-                    date_filtered_questions
-                )
-            )
-
-            removed_questions = [
-                question
-                for question in refined_questions
-                if question not in uncertainty_filtered_questions
-            ]
-            logger.info(
-                f"Removed {len(removed_questions)} questions that didn't match criteria: {[removed_question.question_text for removed_question in removed_questions]}"
-            )
-            logger.debug(
-                f"Removed questions: {[removed_question for removed_question in removed_questions]}"
-            )
-
-            final_questions.extend(uncertainty_filtered_questions)
-
-            questions_needed = number_of_questions - len(final_questions)
-
-            if questions_needed <= 0:
-                break
-
-            logger.info(
-                f"Need {questions_needed} more questions. Starting next iteration."
-            )
-
-        logger.info(
-            f"Generated {len(final_questions)} valid questions after {iteration} iterations"
+        questions = await self.smart_searcher.invoke_and_return_verified_type(
+            prompt, list[SimpleQuestion]
         )
+        return questions
 
-        return final_questions
-
-    async def _filter_questions_by_certainty(
+    async def _add_forecast_to_questions(
         self, questions: list[SimpleQuestion]
-    ) -> list[SimpleQuestion]:
-        """Filters out questions that are too certain based on forecasts."""
-        uncertain_questions = []
+    ) -> list[GeneratedQuestion]:
+        extended_questions = []
 
         # Convert simple questions to MetaculusQuestion format
-        full_questions = SimpleQuestion.simple_questions_to_full_questions(
-            questions
+        metaculus_questions = (
+            SimpleQuestion.simple_questions_to_metaculus_question(questions)
         )
 
-        for i, question in enumerate(full_questions):
+        for simple_question, metaculus_question in zip(
+            questions, metaculus_questions
+        ):
             try:
-                # Run forecast on question
                 forecast_report = await self.forecaster.forecast_question(
-                    question
+                    metaculus_question
                 )
-
-                # Check if question is sufficiently uncertain
-                is_uncertain = self._is_forecast_uncertain(forecast_report)
-
-                if is_uncertain:
-                    uncertain_questions.append(questions[i])
-                else:
-                    logger.info(
-                        f"Removed too certain question: {questions[i].question_text}"
-                    )
+                error_message = None
             except Exception as e:
                 logger.warning(
-                    f"Error forecasting question {questions[i].question_text}: {str(e)}"
+                    f"Error forecasting question {simple_question.question_text}: {str(e)}"
                 )
-                # If we can't forecast it, we'll keep it to be safe
-                uncertain_questions.append(questions[i])
+                forecast_report = None
+                error_message = str(e)
 
-        return uncertain_questions
+            forecast_report = typeguard.check_type(
+                forecast_report, ReportTypes
+            )
 
-    def _is_forecast_uncertain(self, forecast_report: ForecastReport) -> bool:
-        """Determines if a forecast shows sufficient uncertainty."""
-        question = forecast_report.question
-        prediction = forecast_report.prediction
+            extended_questions.append(
+                GeneratedQuestion(
+                    **simple_question.model_dump(),
+                    forecast_report=forecast_report,
+                    error_message=error_message,
+                )
+            )
 
-        if isinstance(question, BinaryQuestion):
-            # For binary questions, check if probability is between 10% and 90%
-            probability = prediction
-            is_uncertain = 0.1 <= probability <= 0.9
-        elif isinstance(question, NumericQuestion):
-            is_uncertain = True
-        elif isinstance(question, MultipleChoiceQuestion):
-            # For multiple choice, no option should have >90% or <5% probability
-            option_probs = prediction.options
-            for option in option_probs:
-                if option.probability > 0.9 or option.probability < 0.05:
-                    is_uncertain = False
-                    break
-            is_uncertain = True
-        return is_uncertain
+        return extended_questions
 
-    async def refine_questions(
+    async def _refine_questions(
         self, questions: list[SimpleQuestion]
     ) -> list[SimpleQuestion]:
         tasks = []
