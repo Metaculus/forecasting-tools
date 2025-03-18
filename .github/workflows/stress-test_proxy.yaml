@@ -3,7 +3,7 @@ name: Stress Test Proxy
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *" # runs every 30 minutes
+    - cron: "0 18 * * 5" # runs every Friday at 6:00pm
 
 
 # Daily job to run the forecast bot
