@@ -45,15 +45,10 @@ class SimpleQuestion(BaseModel, Jsonable):
     expected_resolution_date: datetime
     question_type: Literal["binary", "numeric", "multiple_choice"] = "binary"
     options: list[str] = Field(default_factory=list)
-
-    def is_within_date_range(
-        self, resolve_before_date: datetime, resolve_after_date: datetime
-    ) -> bool:
-        return (
-            resolve_before_date
-            >= self.expected_resolution_date
-            >= resolve_after_date
-        )
+    upper_bound: float | None = None
+    lower_bound: float | None = None
+    open_upper_bound: bool | None = None
+    open_lower_bound: bool | None = None
 
     @field_validator("expected_resolution_date", mode="after")
     @classmethod
@@ -61,6 +56,32 @@ class SimpleQuestion(BaseModel, Jsonable):
         if value.tzinfo is None:
             return value.replace(tzinfo=timezone.utc)
         return value.astimezone(timezone.utc)
+
+    @field_validator(
+        "options",
+        "upper_bound",
+        "lower_bound",
+        "open_upper_bound",
+        "open_lower_bound",
+        mode="after",
+    )
+    def validate_question_type_fields(self: SimpleQuestion) -> SimpleQuestion:
+        if self.question_type == "numeric":
+            assert self.upper_bound is not None
+            assert self.lower_bound is not None
+            assert self.open_upper_bound is not None
+            assert self.open_lower_bound is not None
+        else:
+            assert self.upper_bound is None
+            assert self.lower_bound is None
+            assert self.open_upper_bound is None
+            assert self.open_lower_bound is None
+
+        if self.question_type == "multiple_choice":
+            assert len(self.options) > 0
+        else:
+            assert len(self.options) == 0
+        return self
 
     @classmethod
     def full_questions_to_simple_questions(
@@ -143,6 +164,15 @@ class SimpleQuestion(BaseModel, Jsonable):
             full_questions.append(full_question)
         return full_questions
 
+    def is_within_date_range(
+        self, resolve_before_date: datetime, resolve_after_date: datetime
+    ) -> bool:
+        return (
+            resolve_before_date
+            >= self.expected_resolution_date
+            >= resolve_after_date
+        )
+
 
 class GeneratedQuestion(SimpleQuestion):
     forecast_report: ReportTypes | None = None
@@ -190,6 +220,10 @@ class QuestionGenerator:
         - expected_resolution_date: The date when the question is expected to resolve
         - question_type: The type of question, either binary, numeric, or multiple_choice based on how the forecaster should answer (with yes/no, a number, or a choice from a list)
         - options: The options for the question, only used for multiple_choice questions. Empty list for other question types.
+        - upper_bound: The reasonable upper bound for the question, only used for numeric questions.
+        - lower_bound: The reasonable lower bound for the question, only used for numeric questions.
+        - open_upper_bound: Whether there can be a value higher than upper bound (e.g. some indexes can't go above 100), only used for numeric questions.
+        - open_lower_bound: Whether there can be a value lower than lower bound (e.g. a distance can't be negative), only used for numeric questions.
         """
     )
 
@@ -353,6 +387,16 @@ class QuestionGenerator:
         questions = await self.smart_searcher.invoke_and_return_verified_type(
             prompt, list[SimpleQuestion]
         )
+        for question in questions:
+            if question.question_type == "numeric":
+                assert question.upper_bound is not None
+                assert question.lower_bound is not None
+                distance = question.upper_bound - question.lower_bound
+                buffer_room = distance * 1.5
+                if question.open_lower_bound is True:
+                    question.upper_bound = question.lower_bound + buffer_room
+                if question.open_upper_bound is True:
+                    question.lower_bound = question.upper_bound - buffer_room
         return questions
 
     async def _add_forecast_to_questions(
@@ -416,6 +460,9 @@ class QuestionGenerator:
                 - One of your assumptions was wrong
                 - A key date changes
 
+                Before giving your final answer in a json code block, please walk through at least 3 possible situations that could happen and how you would resolve them.
+                Compare to ways that similar things have happened in the past that surprised people.
+
                 # Field descriptions:
                 {self.FIELD_DESCRIPTIONS}
 
@@ -424,7 +471,7 @@ class QuestionGenerator:
                 {self.random_example_question_sample}
 
                 # Schema
-                Return only a single dictionary in valid JSON format. Use markdown for each question field (e.g. dashes for bullet points).
+                After your reasoning please return only a single dictionary in valid JSON code blockformat. Use markdown for each question field (e.g. dashes for bullet points).
                 {SmartSearcher.get_schema_format_instructions_for_pydantic_type(SimpleQuestion)}
                 """
             )

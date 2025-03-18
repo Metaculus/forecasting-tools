@@ -56,6 +56,9 @@ class NumericDistribution(BaseModel):
     def cdf(self) -> list[Percentile]:
         """
         Turns a list of percentiles into a full distribution with 201 points
+        between upper and lower bound (taking into account probability assigned above and below the bounds)
+        that is compatible with Metaculus questions.
+
         cdf stands for 'continuous distribution function'
         """
         # TODO: This function needs to be cleaned up and made more readable
