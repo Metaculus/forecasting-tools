@@ -134,6 +134,18 @@ class GeneralLlmInstancesToTest:
                 self._get_cheap_vision_message_data(),
             ),
             ModelTest(
+                GeneralLlm(
+                    model="metaculus/claude-3-7-sonnet-latest",
+                    thinking={
+                        "type": "enabled",
+                        "budget_tokens": 16000,
+                    },
+                    max_tokens=20000,
+                    temperature=1,
+                ),
+                self._get_cheap_user_message(),
+            ),
+            ModelTest(
                 GeneralLlm(model="claude-3-5-sonnet-20241022"),
                 self._get_cheap_user_message(),
             ),

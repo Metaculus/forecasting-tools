@@ -1,0 +1,39 @@
+name: Test Proxy Basic
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *" # runs every 30 minutes
+
+
+# Daily job to run the forecast bot
+jobs:
+  test-proxy:
+    runs-on: ubuntu-latest # determines the machine that will run the job - keep as is
+    steps: # sets up the steps that will be run in order
+      # setup repository with all necessary dependencies - keep as is
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+      - name: Run bot
+        run: |
+          poetry run python .github/scripts/basic_test_proxy.py
+        env:
+          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+          PYTHONPATH: .

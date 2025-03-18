@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import pytest
 
@@ -7,6 +8,11 @@ from code_tests.unit_tests.test_ai_models.models_to_test import (
     ModelTest,
 )
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
@@ -18,9 +24,12 @@ def test_general_llm_instances_run(
 ) -> None:
     model = test.llm
     model_input = test.model_input
-    response = asyncio.run(model.invoke(model_input))
-    assert response is not None, "Response is None"
-    assert response != "", "Response is an empty string"
+    with MonetaryCostManager(100) as cost_manager:
+        response = asyncio.run(model.invoke(model_input))
+        assert response is not None, "Response is None"
+        assert response != "", "Response is an empty string"
+        logger.info(f"Cost for {test_name}: {cost_manager.current_usage}")
+        assert cost_manager.current_usage > 0, "No cost was incurred"
 
 
 def test_timeout_works() -> None:

@@ -1,4 +1,4 @@
-name: Test Proxy
+name: Stress Test Proxy
 
 on:
   workflow_dispatch:
@@ -33,7 +33,7 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run bot
         run: |
-          poetry run python .github/scripts/test_proxy.py
+          poetry run python .github/scripts/stress_test_proxy.py
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           PYTHONPATH: .
