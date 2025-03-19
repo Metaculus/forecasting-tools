@@ -16,6 +16,7 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
 from forecasting_tools.research_agents.question_generator import (
     GeneratedQuestion,
     QuestionGenerator,
+    TopicGenerator,
 )
 from forecasting_tools.util.jsonable import Jsonable
 from front_end.helpers.report_displayer import ReportDisplayer
@@ -54,10 +55,20 @@ class QuestionGeneratorPage(ToolPage):
 
     @classmethod
     async def _get_input(cls) -> QuestionGeneratorInput | None:
+        with st.expander("🎲 Generate random topic ideas"):
+            st.markdown(
+                "This tool selects random countries/cities/jobs/stocks/words to seed gpt's brainstorming"
+            )
+            if st.button("Generate random topics"):
+                with st.spinner("Generating random topics..."):
+                    topics = await TopicGenerator.generate_random_topic()
+                    topic_bullets = [f"- {topic}" for topic in topics]
+                    st.markdown("\n".join(topic_bullets))
+
         with st.form("question_generator_form"):
             topic = st.text_area(
-                "Topic (optional)",
-                value="Lithuanian politics and technology",
+                "Topic or question idea (optional)",
+                value="'Lithuanian politics and technology' OR 'Questions related to <question rough draft>'",
             )
             number_of_questions = st.number_input(
                 "Number of questions to generate",
@@ -177,8 +188,8 @@ class QuestionGeneratorPage(ToolPage):
                             st.markdown(f"- {option}")
                     elif question.question_type == "numeric":
                         st.markdown("### Numeric Question")
-                        st.markdown(f"Lower Bound: {question.lower_bound}")
-                        st.markdown(f"Upper Bound: {question.upper_bound}")
+                        st.markdown(f"Lower Bound: {question.min_value}")
+                        st.markdown(f"Upper Bound: {question.max_value}")
                         st.markdown(
                             f"Open Lower Bound: {question.open_lower_bound}"
                         )

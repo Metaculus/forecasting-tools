@@ -135,18 +135,24 @@ class GeneralLlm(
         self.model = model
 
         metaculus_prefix = "metaculus/"
+        openai_prefix = "openai/"
+        anthropic_prefix = "anthropic/"
         self._use_metaculus_proxy = model.startswith(metaculus_prefix)
-        self._litellm_model = (
-            model[len(metaculus_prefix) :]
-            if self._use_metaculus_proxy
-            else model
-        )
-        default_timeout = self._get_default_timeout(self._litellm_model)
+
+        self._litellm_model = model
+        if self._use_metaculus_proxy:
+            self._litellm_model = self._litellm_model[len(metaculus_prefix) :]
+        if self._litellm_model.startswith(openai_prefix):
+            self._litellm_model = self._litellm_model[len(openai_prefix) :]
+        if self._litellm_model.startswith(anthropic_prefix):
+            self._litellm_model = self._litellm_model[len(anthropic_prefix) :]
 
         self.litellm_kwargs = kwargs
         self.litellm_kwargs["model"] = self._litellm_model
         self.litellm_kwargs["temperature"] = temperature
-        self.litellm_kwargs["timeout"] = timeout or default_timeout
+        self.litellm_kwargs["timeout"] = timeout or self._get_default_timeout(
+            self._litellm_model
+        )
 
         if self._use_metaculus_proxy:
             assert (
@@ -393,6 +399,7 @@ class GeneralLlm(
 
     @classmethod
     def calculate_per_request_cost(cls, model: str) -> float:
+        # TODO: Make sure this doesn't get outdated (litellm might implement this locally)
         cost = 0
         if "perplexity" in model:
             cost += 0.005  # There is at least one search costing $0.005 per perplexity request

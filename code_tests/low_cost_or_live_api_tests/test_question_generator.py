@@ -52,8 +52,8 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
             ), f"Expected topic {topic} to be in question {question}"
             assert question.forecast_report is not None
             if question.question_type == "numeric":
-                assert question.lower_bound is not None
-                assert question.upper_bound is not None
+                assert question.min_value is not None
+                assert question.max_value is not None
                 assert question.open_lower_bound is not None
                 assert question.open_upper_bound is not None
             if question.question_type == "multiple_choice":

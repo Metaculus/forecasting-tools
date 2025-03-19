@@ -46,10 +46,10 @@ class SimpleQuestion(BaseModel, Jsonable):
     expected_resolution_date: datetime
     question_type: Literal["binary", "numeric", "multiple_choice"] = "binary"
     options: list[str] = Field(default_factory=list)
-    upper_bound: float | None = None
-    lower_bound: float | None = None
     open_upper_bound: bool | None = None
     open_lower_bound: bool | None = None
+    max_value: float | None = None
+    min_value: float | None = None
 
     @field_validator("expected_resolution_date", mode="after")
     @classmethod
@@ -64,10 +64,10 @@ class SimpleQuestion(BaseModel, Jsonable):
     def validate_question_type_fields(self: SimpleQuestion) -> SimpleQuestion:
         if self.question_type == "numeric":
             assert (
-                self.upper_bound is not None
+                self.max_value is not None
             ), "Upper bound must be provided for numeric questions"
             assert (
-                self.lower_bound is not None
+                self.min_value is not None
             ), "Lower bound must be provided for numeric questions"
             assert (
                 self.open_upper_bound is not None
@@ -77,10 +77,10 @@ class SimpleQuestion(BaseModel, Jsonable):
             ), "Open lower bound must be provided for numeric questions"
         else:
             assert (
-                self.upper_bound is None
+                self.max_value is None
             ), "Upper bound must not be provided for non-numeric questions"
             assert (
-                self.lower_bound is None
+                self.min_value is None
             ), "Lower bound must not be provided for non-numeric questions"
             assert (
                 self.open_upper_bound is None
@@ -148,8 +148,8 @@ class SimpleQuestion(BaseModel, Jsonable):
                 expected_resolution_date=question.scheduled_resolution_time,
                 question_type=question_type,
                 options=options,
-                upper_bound=upper_bound,
-                lower_bound=lower_bound,
+                max_value=upper_bound,
+                min_value=lower_bound,
                 open_upper_bound=open_upper_bound,
                 open_lower_bound=open_lower_bound,
             )
@@ -171,8 +171,8 @@ class SimpleQuestion(BaseModel, Jsonable):
                     scheduled_resolution_time=question.expected_resolution_date,
                 )
             elif question.question_type == "numeric":
-                assert question.upper_bound is not None
-                assert question.lower_bound is not None
+                assert question.max_value is not None
+                assert question.min_value is not None
                 assert question.open_upper_bound is not None
                 assert question.open_lower_bound is not None
                 full_question = NumericQuestion(
@@ -180,8 +180,8 @@ class SimpleQuestion(BaseModel, Jsonable):
                     background_info=question.background_information,
                     resolution_criteria=question.resolution_criteria,
                     fine_print=question.fine_print,
-                    upper_bound=question.upper_bound,
-                    lower_bound=question.lower_bound,
+                    upper_bound=question.max_value,
+                    lower_bound=question.min_value,
                     open_upper_bound=question.open_upper_bound,
                     open_lower_bound=question.open_lower_bound,
                     scheduled_resolution_time=question.expected_resolution_date,
@@ -253,16 +253,16 @@ class QuestionGenerator:
     FIELD_DESCRIPTIONS = clean_indents(
         """
         - question_text: A clear question about a future event
-        - resolution_criteria: Specific criteria for how the question will resolve. If possible include a link to a status page (e.g. a website with a live number or condition that is easy to resolve)
+        - resolution_criteria: Specific criteria for how the question will resolve. If possible include a link to a status page (e.g. a website with a live number or condition that is easy to resolve). Mention the units/scale expected (will 1 million of income resolve as 1 or 1000000?)
         - fine_print: Additional information covering *every* edge case that could happen. There should be no chance of an ambiguous resolution. Resolution criteria + fine print should pass the clairvoyance test such that after the event happens there is no debate about whether it happened or not no matter how it resolves.
         - background_information: Relevant context and historical information to help understand the question
         - expected_resolution_date: The date when the question is expected to resolve
         - question_type: The type of question, either binary, numeric, or multiple_choice based on how the forecaster should answer (with yes/no, a number, or a choice from a list)
         - options: The options for the question, only used for multiple_choice questions. Empty list for other question types.
-        - open_upper_bound: Whether there can be a value higher than upper bound (e.g. if the value is a percentage 100 is the max the bound is closed, but number of certifications in a population has an open upper bound), only used for numeric questions.
+        - open_upper_bound: Whether there can be a value higher than upper bound (e.g. if the value is a percentag, 100 is the max the bound is closed, but number of certifications in a population has an open upper bound), only used for numeric questions.
         - open_lower_bound: Whether there can be a value lower than lower bound (e.g. distances can't be negative the bound is closed at 0, but profit margins can be negative so the bound is open), only used for numeric questions.
-        - upper_bound: The max value that the question can be. If bound is open then pick a really really big number. Only used for numeric questions.
-        - lower_bound: The min value that the question can be. If bound is open then pick a really really negative number. Only used for numeric questions.
+        - max_value: The max value that the question can be. If bound is closed then choose the max number. If bound is open then pick a really really big number. Only used for numeric questions. (e.g. 100 for a percentage, 1000 for a number of certifications from an small org, 100000 for a number of new houses built in a large city in a year)
+        - min_value: The min value that the question can be. If bound is closed then choose the min number. If bound is open then pick a really really negative number. Only used for numeric questions. (e.g. 0 for a percentage, 0 for a number of certifications from a small org, -10000000 for a medium company net profit)
         """
     )
 
@@ -429,53 +429,15 @@ class QuestionGenerator:
         )
         for question in questions:
             if question.question_type == "numeric":
-                assert question.upper_bound is not None
-                assert question.lower_bound is not None
-                distance = question.upper_bound - question.lower_bound
+                assert question.max_value is not None
+                assert question.min_value is not None
+                distance = question.max_value - question.min_value
                 buffer_room = distance * 1.5
                 if question.open_lower_bound is True:
-                    question.upper_bound = question.lower_bound + buffer_room
+                    question.max_value = question.min_value + buffer_room
                 if question.open_upper_bound is True:
-                    question.lower_bound = question.upper_bound - buffer_room
+                    question.min_value = question.max_value - buffer_room
         return questions
-
-    async def _add_forecast_to_questions(
-        self, questions: list[SimpleQuestion]
-    ) -> list[GeneratedQuestion]:
-        extended_questions = []
-
-        # Convert simple questions to MetaculusQuestion format
-        metaculus_questions = (
-            SimpleQuestion.simple_questions_to_metaculus_question(questions)
-        )
-
-        for simple_question, metaculus_question in zip(
-            questions, metaculus_questions
-        ):
-            try:
-                forecast_report = await self.forecaster.forecast_question(
-                    metaculus_question
-                )
-                forecast_report = typeguard.check_type(
-                    forecast_report, ReportTypes
-                )
-                error_message = None
-            except Exception as e:
-                logger.warning(
-                    f"Error forecasting question {simple_question.question_text}: {str(e)}"
-                )
-                forecast_report = None
-                error_message = str(e)
-
-            extended_questions.append(
-                GeneratedQuestion(
-                    **simple_question.model_dump(),
-                    forecast_report=forecast_report,
-                    error_message=error_message,
-                )
-            )
-
-        return extended_questions
 
     async def _refine_questions(
         self, questions: list[SimpleQuestion]
@@ -534,13 +496,51 @@ class QuestionGenerator:
 
         return refined_questions
 
+    async def _add_forecast_to_questions(
+        self, questions: list[SimpleQuestion]
+    ) -> list[GeneratedQuestion]:
+        extended_questions = []
+
+        # Convert simple questions to MetaculusQuestion format
+        metaculus_questions = (
+            SimpleQuestion.simple_questions_to_metaculus_question(questions)
+        )
+
+        for simple_question, metaculus_question in zip(
+            questions, metaculus_questions
+        ):
+            try:
+                forecast_report = await self.forecaster.forecast_question(
+                    metaculus_question
+                )
+                forecast_report = typeguard.check_type(
+                    forecast_report, ReportTypes
+                )
+                error_message = None
+            except Exception as e:
+                logger.warning(
+                    f"Error forecasting question {simple_question.question_text}: {str(e)}"
+                )
+                forecast_report = None
+                error_message = str(e)
+
+            extended_questions.append(
+                GeneratedQuestion(
+                    **simple_question.model_dump(),
+                    forecast_report=forecast_report,
+                    error_message=error_message,
+                )
+            )
+
+        return extended_questions
+
 
 class TopicGenerator:
 
     @classmethod
     async def generate_random_topic(
-        cls, model: GeneralLlm | str = "gpt-4o"
-    ) -> str:
+        cls, model: GeneralLlm | str = "gpt-4o", number_of_topics: int = 10
+    ) -> list[str]:
         if isinstance(model, str):
             model = GeneralLlm(model=model, temperature=1, timeout=40)
 
@@ -567,14 +567,14 @@ class TopicGenerator:
             Job: {fake.job()}
             Country: {fake.country()}
             Country code: {fake.country_code()}
-            City: {fake.city()}
-            State/Province: {fake.state()}
+            State/Province (not necessarily in above country): {fake.state()}
+            City (not necessarily in above state): {fake.city()}
             Word: {fake.word()}
             Sentence: {fake.sentence()}
             Paragraph: {fake.paragraph()}
             Text: {fake.text(max_nb_chars=50)}
             News headline: {fake.sentence().rstrip('.')}
-            Stock ticker symbol: {fake.lexify(text='???', letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ')}
+            Company ticker symbol: {fake.lexify(text='???', letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ')}
             """
         )
 
@@ -582,7 +582,10 @@ class TopicGenerator:
             f"""
             # Instructions
             Using the ideas below (some of which are abstract or randomly generated)
-            come up with 1-2 topics for a forecasting question about the future
+            come up with {number_of_topics} topics for a forecasting questions about the future.
+            These will be used to make questions for superforecasters
+            Make sure all ideas come from the material below (do not copy the initial ideas)
+            Make sure to put everything in English (except for proper nouns)
 
             Try to choose something interesting and meaningful.
 
@@ -591,10 +594,11 @@ class TopicGenerator:
             [
                 "Lithuanian politics",
                 "Gun violence in Olklahoma",
-                "Japenese elections",
-                "Sports results in Russian Hockey",
+                "News on Japenese elections",
+                "Sports results and news in Russian Hockey",
                 "Number of new houses built in the US"
-                "Mining jobs in Canada"
+                "Mining jobs in Canada and related news"
+                "News related to company with ticker symbol XYZ"
             ]
             ```
 
@@ -606,7 +610,5 @@ class TopicGenerator:
         )
 
         topics = await model.invoke_and_return_verified_type(prompt, list[str])
-        top_topics = random.sample(topics, 2)
-        topics_str = " OR ".join(top_topics)
 
-        return topics_str
+        return topics
