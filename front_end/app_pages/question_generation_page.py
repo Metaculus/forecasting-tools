@@ -40,7 +40,7 @@ class QuestionGeneratorOutput(Jsonable, BaseModel):
     questions: list[GeneratedQuestion]
     original_input: QuestionGeneratorInput
     cost: float
-    generation_time_seconds: float = 0.0
+    generation_time_seconds: float | None = None
 
 
 class QuestionGeneratorPage(ToolPage):
@@ -89,6 +89,17 @@ class QuestionGeneratorPage(ToolPage):
                     )
                     topic_bullets = [f"- {topic}" for topic in topics]
                     st.markdown("\n".join(topic_bullets))
+
+            if st.button("Generate random news items"):
+                with st.spinner("Generating random news items..."):
+                    news_items = (
+                        await TopicGenerator.generate_random_news_items(
+                            number_of_items=10,
+                            model="gpt-4o",
+                        )
+                    )
+                    news_item_bullets = [f"- {item}" for item in news_items]
+                    st.markdown("\n".join(news_item_bullets))
 
         with st.form("question_generator_form"):
             topic = st.text_area(
@@ -198,9 +209,14 @@ class QuestionGeneratorPage(ToolPage):
         cls, outputs: list[QuestionGeneratorOutput]
     ) -> None:
         for output in outputs:
+            generation_minutes = (
+                f"{output.generation_time_seconds / 60:.1f}m"
+                if output.generation_time_seconds
+                else None
+            )
             st.markdown(
                 ReportDisplayer.clean_markdown(
-                    f"**Cost of below questions:** ${output.cost:.2f} | **Time:** {output.generation_time_seconds/60:.1f}m | **Topic:** {output.original_input.topic if output.original_input.topic else 'N/A'}"
+                    f"**Cost of below questions:** ${output.cost:.2f} | **Time:** {generation_minutes} | **Topic:** {output.original_input.topic if output.original_input.topic else 'N/A'}"
                 )
             )
             for question in output.questions:

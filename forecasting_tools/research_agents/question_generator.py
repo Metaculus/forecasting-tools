@@ -644,12 +644,12 @@ class TopicGenerator:
     async def generate_random_news_items(
         cls,
         model: GeneralLlm | str = "gpt-4o",
-        number_of_items: int = 5,
+        number_of_items: int = 10,
     ) -> list[str]:
-        if isinstance(model, str):
-            model = GeneralLlm(model=model, temperature=1, timeout=40)
+        num_topics = 2
+        num_news_items_per_topic = number_of_items // num_topics
 
-        original_topics = await cls.generate_random_topic(
+        topics = await cls.generate_random_topic(
             model=model,
             additional_instructions=(
                 "Pick topics related to breaking news"
@@ -659,44 +659,68 @@ class TopicGenerator:
                 " Consider searching for 'latest news in <place>' or 'news related to <upcoming holidays/tournaments/events>'."
                 f" Today is {datetime.now().strftime('%Y-%m-%d')} if you already know of something specific in an area to find juice."
             ),
+            number_of_topics=num_topics,
         )
 
-        news_items = []
-        for topic in original_topics:
-            ask_news_results = (
-                await AskNewsSearcher().get_formatted_news_async(topic)
-            )
-            prompt = clean_indents(
-                f"""
-                # Instructions
-                Please extract {number_of_items} news items from the following text:
-
-                Return your response as a list of strings with the related url
-
-                # Example result:
-                ```json
-                [
-                    {{"topic": "Senator Joe Shmoe joins the race for presidency in the US", "url": "https://www.nyt.com/breaking-news/us/senator-joe-shmoe-joins-the-race-for-presidency"}},
-                    {{"topic": "Russia attacks Ukraine with new drone technology", "url": "https://www.bbc.com/events/russia-attacks-ukraine"}},
-                    {{"topic": "Nicuragua start first nuclear power plant", "url": "https://www.nuclearnews.com/events/nicuragua-starts-first-nuclear-power-plant"}},
-                    {{"topic": "Deadly outbreak of disease spreading through Europe", "url": "https://www.outbreaknews.com/events/deadly-outbreak-of-disease-spreading-through-europe"}},
-                    {{"topic": "Chinese officials visit Lebanon to discuss trade", "url": "https://www.tradeinkorea.com/events/chinese-officials-visit-lebanon-to-discuss-trade"}},
-                ]
-                ```
-
-                # Search results
-                {ask_news_results}
-
-                # Final instructions
-                Now return a json list of topics please
-                """
-            )
-            topic_dicts = await model.invoke_and_return_verified_type(
-                prompt, list[dict[str, str]]
-            )
-            for topic_dict in topic_dicts:
-                news_items.append(
-                    f"{topic_dict['topic']} [link]({topic_dict['url']})"
+        results = await asyncio.gather(
+            *[
+                cls.topic_to_news_item(
+                    topic,
+                    number_of_items=num_news_items_per_topic,
+                    model=model,
                 )
+                for topic in topics
+            ]
+        )
+        news_items = []
+        for topic_results in results:
+            news_items.extend(topic_results)
 
         return news_items
+
+    @classmethod
+    async def topic_to_news_item(
+        cls,
+        topic: str,
+        number_of_items: int = 5,
+        model: GeneralLlm | str = "gpt-4o",
+    ) -> list[str]:
+        if isinstance(model, str):
+            model = GeneralLlm(model=model, temperature=1, timeout=40)
+
+        ask_news_results = await AskNewsSearcher().get_formatted_news_async(
+            topic
+        )
+        prompt = clean_indents(
+            f"""
+            # Instructions
+            Please extract {number_of_items} news items from the following text:
+
+            Return your response as a list of strings with the related url
+
+            # Example result:
+            ```json
+            [
+                {{"topic": "Senator Joe Shmoe joins the race for presidency in the US", "url": "https://www.nyt.com/breaking-news/us/senator-joe-shmoe-joins-the-race-for-presidency"}},
+                {{"topic": "Russia attacks Ukraine with new drone technology", "url": "https://www.bbc.com/events/russia-attacks-ukraine"}},
+                {{"topic": "Nicuragua start first nuclear power plant", "url": "https://www.nuclearnews.com/events/nicuragua-starts-first-nuclear-power-plant"}},
+                {{"topic": "Deadly outbreak of disease spreading through Europe", "url": "https://www.outbreaknews.com/events/deadly-outbreak-of-disease-spreading-through-europe"}},
+                {{"topic": "Chinese officials visit Lebanon to discuss trade", "url": "https://www.tradeinkorea.com/events/chinese-officials-visit-lebanon-to-discuss-trade"}},
+            ]
+            ```
+
+            # Search results
+            {ask_news_results}
+
+            # Final instructions
+            Now return a json list of topics please
+            """
+        )
+        topic_dicts = await model.invoke_and_return_verified_type(
+            prompt, list[dict[str, str]]
+        )
+        topics = [
+            f"{topic_dict['topic']} [link]({topic_dict['url']})"
+            for topic_dict in topic_dicts
+        ]
+        return topics
