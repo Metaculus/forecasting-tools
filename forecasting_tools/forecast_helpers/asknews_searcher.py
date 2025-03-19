@@ -82,29 +82,28 @@ class OAuth2ClientCredentials(Auth):
 class AskNewsSearcher:
 
     def get_formatted_news(self, query: str) -> str:
+        return asyncio.run(self.get_formatted_news_async(query))
+
+    async def get_formatted_news_async(self, query: str) -> str:
         """
         Use the AskNews `news` endpoint to get news context for your query.
         The full API reference can be found here: https://docs.asknews.app/en/reference#get-/v1/news/search
         """
 
         # get the latest news related to the query (within the past 48 hours)
-        hot_response = asyncio.run(
-            self.search_news(
-                query=query,  # your natural language query
-                n_articles=6,  # control the number of articles to include in the context, originally 5
-                return_type="both",
-                strategy="latest news",  # enforces looking at the latest news only
-            )
+        hot_response = await self.search_news(
+            query=query,  # your natural language query
+            n_articles=6,  # control the number of articles to include in the context, originally 5
+            return_type="both",
+            strategy="latest news",  # enforces looking at the latest news only
         )
 
         # get context from the "historical" database that contains a news archive going back to 2023
-        historical_response = asyncio.run(
-            self.search_news(
-                query=query,
-                n_articles=10,
-                return_type="both",
-                strategy="news knowledge",  # looks for relevant news within the past 60 days
-            )
+        historical_response = await self.search_news(
+            query=query,
+            n_articles=10,
+            return_type="both",
+            strategy="news knowledge",  # looks for relevant news within the past 60 days
         )
 
         hot_articles = hot_response.as_dicts

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timedelta
 
 import streamlit as st
 from pydantic import BaseModel
 
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
@@ -13,6 +15,7 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
 )
+from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 from forecasting_tools.research_agents.question_generator import (
     GeneratedQuestion,
     QuestionGenerator,
@@ -37,6 +40,7 @@ class QuestionGeneratorOutput(Jsonable, BaseModel):
     questions: list[GeneratedQuestion]
     original_input: QuestionGeneratorInput
     cost: float
+    generation_time_seconds: float = 0.0
 
 
 class QuestionGeneratorPage(ToolPage):
@@ -65,9 +69,30 @@ class QuestionGeneratorPage(ToolPage):
                     topic_bullets = [f"- {topic}" for topic in topics]
                     st.markdown("\n".join(topic_bullets))
 
+            if st.button("Generate random topics w/ search"):
+                with st.spinner("Generating random topics..."):
+                    smart_searcher = SmartSearcher(
+                        model="gpt-4o",
+                        num_searches_to_run=3,
+                        num_sites_per_search=10,
+                    )
+                    topics = await TopicGenerator.generate_random_topic(
+                        model=smart_searcher,
+                        additional_instructions=(
+                            "Pick topics related to breaking news"
+                            " (e.g. if your material is related to basketball"
+                            " and march madness is happening choose this as a topic)."
+                            " Add citations to show the topic is recent and relevant."
+                            " Consider searching for 'latest news in <place>' or 'news related to <upcoming holidays/tournaments/events>'."
+                            f" Today is {datetime.now().strftime('%Y-%m-%d')} if you already know of something specific in an area to find juice."
+                        ),
+                    )
+                    topic_bullets = [f"- {topic}" for topic in topics]
+                    st.markdown("\n".join(topic_bullets))
+
         with st.form("question_generator_form"):
             topic = st.text_area(
-                "Topic or question idea (optional)",
+                "Topic/question idea and additional context (optional)",
                 value="'Lithuanian politics and technology' OR 'Questions related to <question rough draft>'",
             )
             number_of_questions = st.number_input(
@@ -77,7 +102,7 @@ class QuestionGeneratorPage(ToolPage):
                 value=5,
             )
             model = st.text_input(
-                "Litellm Model (e.g.: openai/o1, anthropic/claude-3-7-sonnet-latest, openrouter/deepseek/deepseek-r1)",
+                "Litellm Model (e.g.: o1, claude-3-7-sonnet-latest, gpt-4o, openrouter/<openrouter-model-path>)",
                 value="gpt-4o",
             )
             col1, col2 = st.columns(2)
@@ -114,8 +139,22 @@ class QuestionGeneratorPage(ToolPage):
         with st.spinner(
             "Generating questions... This may take a few minutes..."
         ):
+            start_time = time.time()
             with MonetaryCostManager() as cost_manager:
-                generator = QuestionGenerator(model=input.model)
+                if "claude-3-7-sonnet-latest" in input.model:
+                    llm = GeneralLlm(
+                        model="claude-3-7-sonnet-latest",
+                        thinking={
+                            "type": "enabled",
+                            "budget_tokens": 16000,
+                        },
+                        max_tokens=20000,
+                        temperature=1,
+                        timeout=160,
+                    )
+                else:
+                    llm = GeneralLlm(model=input.model)
+                generator = QuestionGenerator(model=llm)
                 questions = await generator.generate_questions(
                     number_of_questions=input.number_of_questions,
                     topic=input.topic,
@@ -123,11 +162,13 @@ class QuestionGeneratorPage(ToolPage):
                     resolve_after_date=input.resolve_after_date,
                 )
                 cost = cost_manager.current_usage
+                generation_time = time.time() - start_time
 
                 question_output = QuestionGeneratorOutput(
                     questions=questions,
                     original_input=input,
                     cost=cost,
+                    generation_time_seconds=generation_time,
                 )
                 return question_output
 
@@ -159,7 +200,7 @@ class QuestionGeneratorPage(ToolPage):
         for output in outputs:
             st.markdown(
                 ReportDisplayer.clean_markdown(
-                    f"**Cost of below questions:** ${output.cost:.2f} | **Topic:** {output.original_input.topic if output.original_input.topic else 'N/A'}"
+                    f"**Cost of below questions:** ${output.cost:.2f} | **Time:** {output.generation_time_seconds/60:.1f}m | **Topic:** {output.original_input.topic if output.original_input.topic else 'N/A'}"
                 )
             )
             for question in output.questions:

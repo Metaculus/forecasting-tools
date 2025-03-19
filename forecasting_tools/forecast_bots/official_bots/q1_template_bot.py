@@ -61,7 +61,7 @@ class Q1TemplateBot2025(ForecastBot):
         async with self._concurrency_limiter:
             research = ""
             if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
-                research = AskNewsSearcher().get_formatted_news(
+                research = await AskNewsSearcher().get_formatted_news_async(
                     question.question_text
                 )
             elif os.getenv("EXA_API_KEY"):

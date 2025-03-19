@@ -32,6 +32,7 @@ from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025,
 )
+from forecasting_tools.forecast_helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 from forecasting_tools.util.jsonable import Jsonable
 
@@ -253,7 +254,7 @@ class QuestionGenerator:
     FIELD_DESCRIPTIONS = clean_indents(
         """
         - question_text: A clear question about a future event
-        - resolution_criteria: Specific criteria for how the question will resolve. If possible include a link to a status page (e.g. a website with a live number or condition that is easy to resolve). Mention the units/scale expected (will 1 million of income resolve as 1 or 1000000?)
+        - resolution_criteria: Specific criteria for how the question will resolve. If possible include a link to a status page (e.g. a website with a live number or condition that is easy to resolve). Mention the units/scale expected (give an example like "a value of $1.2 million of income will resolve as '1.2'")
         - fine_print: Additional information covering *every* edge case that could happen. There should be no chance of an ambiguous resolution. Resolution criteria + fine print should pass the clairvoyance test such that after the event happens there is no debate about whether it happened or not no matter how it resolves.
         - background_information: Relevant context and historical information to help understand the question
         - expected_resolution_date: The date when the question is expected to resolve
@@ -432,11 +433,11 @@ class QuestionGenerator:
                 assert question.max_value is not None
                 assert question.min_value is not None
                 distance = question.max_value - question.min_value
-                buffer_room = distance * 1.5
+                buffer_room = distance * 0.9
                 if question.open_lower_bound is True:
-                    question.max_value = question.min_value + buffer_room
+                    question.min_value -= buffer_room
                 if question.open_upper_bound is True:
-                    question.min_value = question.max_value - buffer_room
+                    question.max_value += buffer_room
         return questions
 
     async def _refine_questions(
@@ -539,7 +540,10 @@ class TopicGenerator:
 
     @classmethod
     async def generate_random_topic(
-        cls, model: GeneralLlm | str = "gpt-4o", number_of_topics: int = 10
+        cls,
+        model: GeneralLlm | SmartSearcher | str = "gpt-4o",
+        number_of_topics: int = 10,
+        additional_instructions: str = "",
     ) -> list[str]:
         if isinstance(model, str):
             model = GeneralLlm(model=model, temperature=1, timeout=40)
@@ -589,26 +593,110 @@ class TopicGenerator:
 
             Try to choose something interesting and meaningful.
 
-            # Example result:
-            ```
+            {additional_instructions}
+
+            Return your response as a list of dictionaries with a "topic" key.
+
+            # Example result w/o citations:
+            ```json
             [
-                "Lithuanian politics",
-                "Gun violence in Olklahoma",
-                "News on Japenese elections",
-                "Sports results and news in Russian Hockey",
-                "Number of new houses built in the US"
-                "Mining jobs in Canada and related news"
-                "News related to company with ticker symbol XYZ"
+                {{"topic": "Lithuanian politics"}},
+                {{"topic": "Gun violence in Olklahoma"}},
+                {{"topic": "News on Japenese elections"}},
+                {{"topic": "Sports results and news in Russian Hockey"}},
+                {{"topic": "Number of new houses built in the US"}},
+                {{"topic": "Mining jobs in Canada and related news"}},
+                {{"topic": "News related to company with ticker symbol XYZ"}},
+            ]
+            ```
+
+            # Example result w/ citations:
+            ```json
+            [
+                {{"topic": "March Madness", "citations": "[1] [2] [7]"}},
+                {{"topic": "Japenese Obon Festival", "citations": "[3] [8] [9]"}},
+                {{"topic": "National Hocky tournament in Russia", "citations": "[4] [11] [12]"}},
+                {{"topic": "Current Housing Crisis in Oklahoma", "citations": "[13] [14] [15]"}},
+                {{"topic": "Corona Outbreak in Europe", "citations": "[13] [14] [15]"}},
+                {{"topic": "Recent AI initiative of the TransFord Institute", "citations": "[19] [20] [21]"}},
             ]
             ```
 
             # Material to adapt:
             {random_text}
 
-            Now please generate a list of topics that could be interesting and meaningful.
+            Now please generate a list of topics (in json format) that could be interesting and meaningful.
             """
         )
 
-        topics = await model.invoke_and_return_verified_type(prompt, list[str])
+        topic_dicts = await model.invoke_and_return_verified_type(
+            prompt, list[dict[str, str]]
+        )
+        final_topics = []
+        for topic in topic_dicts:
+            text = topic["topic"]
+            citations = topic.get("citations", "")
+            final_topics.append(f"{text} {citations}")
 
-        return topics
+        return final_topics
+
+    @classmethod
+    async def generate_random_news_items(
+        cls,
+        model: GeneralLlm | str = "gpt-4o",
+        number_of_items: int = 5,
+    ) -> list[str]:
+        if isinstance(model, str):
+            model = GeneralLlm(model=model, temperature=1, timeout=40)
+
+        original_topics = await cls.generate_random_topic(
+            model=model,
+            additional_instructions=(
+                "Pick topics related to breaking news"
+                " (e.g. if your material is related to basketball"
+                " and march madness is happening choose this as a topic)."
+                " Add citations to show the topic is recent and relevant."
+                " Consider searching for 'latest news in <place>' or 'news related to <upcoming holidays/tournaments/events>'."
+                f" Today is {datetime.now().strftime('%Y-%m-%d')} if you already know of something specific in an area to find juice."
+            ),
+        )
+
+        news_items = []
+        for topic in original_topics:
+            ask_news_results = (
+                await AskNewsSearcher().get_formatted_news_async(topic)
+            )
+            prompt = clean_indents(
+                f"""
+                # Instructions
+                Please extract {number_of_items} news items from the following text:
+
+                Return your response as a list of strings with the related url
+
+                # Example result:
+                ```json
+                [
+                    {{"topic": "Senator Joe Shmoe joins the race for presidency in the US", "url": "https://www.nyt.com/breaking-news/us/senator-joe-shmoe-joins-the-race-for-presidency"}},
+                    {{"topic": "Russia attacks Ukraine with new drone technology", "url": "https://www.bbc.com/events/russia-attacks-ukraine"}},
+                    {{"topic": "Nicuragua start first nuclear power plant", "url": "https://www.nuclearnews.com/events/nicuragua-starts-first-nuclear-power-plant"}},
+                    {{"topic": "Deadly outbreak of disease spreading through Europe", "url": "https://www.outbreaknews.com/events/deadly-outbreak-of-disease-spreading-through-europe"}},
+                    {{"topic": "Chinese officials visit Lebanon to discuss trade", "url": "https://www.tradeinkorea.com/events/chinese-officials-visit-lebanon-to-discuss-trade"}},
+                ]
+                ```
+
+                # Search results
+                {ask_news_results}
+
+                # Final instructions
+                Now return a json list of topics please
+                """
+            )
+            topic_dicts = await model.invoke_and_return_verified_type(
+                prompt, list[dict[str, str]]
+            )
+            for topic_dict in topic_dicts:
+                news_items.append(
+                    f"{topic_dict['topic']} [link]({topic_dict['url']})"
+                )
+
+        return news_items
