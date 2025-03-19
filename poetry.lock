@@ -994,6 +994,21 @@ files = [
 tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipython", "littleutils", "pytest", "rich ; python_version >= \"3.11\""]
 
 [[package]]
+name = "faker"
+version = "37.0.1"
+description = "Faker is a Python package that generates fake data for you."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "faker-37.0.1-py3-none-any.whl", hash = "sha256:92bb009dcc708244b446be2f0c11a843fca90ea6e412a2addfef0cf2849c94f9"},
+    {file = "faker-37.0.1.tar.gz", hash = "sha256:3a71763f28d796c1d770b90e6b7519d75120a84b5dc4cdd27237870cc0451ff7"},
+]
+
+[package.dependencies]
+tzdata = "*"
+
+[[package]]
 name = "fastjsonschema"
 version = "2.21.1"
 description = "Fastest Python implementation of JSON schema"
@@ -2051,14 +2066,14 @@ files = [
 
 [[package]]
 name = "litellm"
-version = "1.63.2"
+version = "1.63.11"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 groups = ["main"]
 files = [
-    {file = "litellm-1.63.2-py3-none-any.whl", hash = "sha256:1224e15b351a0f194bd5d908ccf4ff5d0e16b583f120519a5e68158bd44da071"},
-    {file = "litellm-1.63.2.tar.gz", hash = "sha256:cf9ab581198a12a5584571e0b2ad83869c7621684936ed26d7bf59015d0a8d2b"},
+    {file = "litellm-1.63.11-py3-none-any.whl", hash = "sha256:f3915dc35309b164ef2419ad05e5241ddd97f3f47aa036df28365bf889d8ea23"},
+    {file = "litellm-1.63.11.tar.gz", hash = "sha256:89930895121d0cbf5553e560ed886c45be480ceec0eca3c53ae441473d5d46a4"},
 ]
 
 [package.dependencies]
@@ -2068,7 +2083,7 @@ httpx = ">=0.23.0"
 importlib-metadata = ">=6.8.0"
 jinja2 = ">=3.1.2,<4.0.0"
 jsonschema = ">=4.22.0,<5.0.0"
-openai = ">=1.61.0"
+openai = ">=1.66.1"
 pydantic = ">=2.0.0,<3.0.0"
 python-dotenv = ">=0.2.0"
 tiktoken = ">=0.7.0"
@@ -5009,7 +5024,7 @@ version = "2025.1"
 description = "Provider of IANA time zone data"
 optional = false
 python-versions = ">=2"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "tzdata-2025.1-py2.py3-none-any.whl", hash = "sha256:7e127113816800496f027041c570f50bcd464a020098a3b6b199517772303639"},
     {file = "tzdata-2025.1.tar.gz", hash = "sha256:24894909e88cdb28bd1636c6887801df64cb485bd593f2fd83ef29075a81d694"},
@@ -5301,4 +5316,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "12211dc6ea522ee3a32081ce7d32cf3e59d6dea0a26567f661dc2cbb6ff5bec7"
+content-hash = "1529bfb9e6d0d9017e9f7868c0a90e0da33721343acac91752b3b17c76860e82"

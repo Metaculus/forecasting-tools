@@ -51,9 +51,14 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
                 topic.lower() in str(question).lower()
             ), f"Expected topic {topic} to be in question {question}"
             assert question.forecast_report is not None
-            # assert (
-            #     before_date > question.expected_resolution_date > after_date
-            # ), f"Expected resolution date {question.expected_resolution_date} to be between {before_date} and {after_date}"
+            if question.question_type == "numeric":
+                assert question.lower_bound is not None
+                assert question.upper_bound is not None
+                assert question.open_lower_bound is not None
+                assert question.open_upper_bound is not None
+            if question.question_type == "multiple_choice":
+                assert question.options is not None
+                assert len(question.options) > 0
 
         assert (
             len(questions) >= number_of_questions_to_generate
@@ -62,6 +67,18 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
             len([question for question in questions if question.is_uncertain])
             >= number_of_questions_to_generate
         ), f"Expected {number_of_questions_to_generate} uncertain questions, got {len([question for question in questions if question.is_uncertain])}. Questions: {questions}"
+        assert (
+            len(
+                [
+                    question
+                    for question in questions
+                    if before_date
+                    > question.expected_resolution_date
+                    > after_date
+                ]
+            )
+            >= number_of_questions_to_generate
+        ), f"Expected {number_of_questions_to_generate} questions to be resolved between {before_date} and {after_date}, got {len([question for question in questions if before_date > question.expected_resolution_date > after_date])}"
 
         final_cost = cost_manager.current_usage
         logger.info(f"Cost: ${final_cost:.4f}")

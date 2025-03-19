@@ -7,7 +7,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 import typeguard
-from pydantic import BaseModel, Field, field_validator
+from faker import Faker
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
@@ -57,30 +58,45 @@ class SimpleQuestion(BaseModel, Jsonable):
             return value.replace(tzinfo=timezone.utc)
         return value.astimezone(timezone.utc)
 
-    @field_validator(
-        "options",
-        "upper_bound",
-        "lower_bound",
-        "open_upper_bound",
-        "open_lower_bound",
+    @model_validator(
         mode="after",
     )
     def validate_question_type_fields(self: SimpleQuestion) -> SimpleQuestion:
         if self.question_type == "numeric":
-            assert self.upper_bound is not None
-            assert self.lower_bound is not None
-            assert self.open_upper_bound is not None
-            assert self.open_lower_bound is not None
+            assert (
+                self.upper_bound is not None
+            ), "Upper bound must be provided for numeric questions"
+            assert (
+                self.lower_bound is not None
+            ), "Lower bound must be provided for numeric questions"
+            assert (
+                self.open_upper_bound is not None
+            ), "Open upper bound must be provided for numeric questions"
+            assert (
+                self.open_lower_bound is not None
+            ), "Open lower bound must be provided for numeric questions"
         else:
-            assert self.upper_bound is None
-            assert self.lower_bound is None
-            assert self.open_upper_bound is None
-            assert self.open_lower_bound is None
+            assert (
+                self.upper_bound is None
+            ), "Upper bound must not be provided for non-numeric questions"
+            assert (
+                self.lower_bound is None
+            ), "Lower bound must not be provided for non-numeric questions"
+            assert (
+                self.open_upper_bound is None
+            ), "Open upper bound must not be provided for non-numeric questions"
+            assert (
+                self.open_lower_bound is None
+            ), "Open lower bound must not be provided for non-numeric questions"
 
         if self.question_type == "multiple_choice":
-            assert len(self.options) > 0
+            assert (
+                len(self.options) > 0
+            ), "Options must be provided for multiple choice questions"
         else:
-            assert len(self.options) == 0
+            assert (
+                len(self.options) == 0
+            ), "Options must not be provided for non-multiple choice questions"
         return self
 
     @classmethod
@@ -89,24 +105,38 @@ class SimpleQuestion(BaseModel, Jsonable):
     ) -> list[SimpleQuestion]:
         simple_questions = []
         for question in full_questions:
+            if isinstance(question, DateQuestion):
+                # TODO: Give more direct support for date questions
+                continue
+
             assert question.question_text is not None
             assert question.resolution_criteria is not None
             assert question.background_info is not None
             assert question.scheduled_resolution_time is not None
             assert question.fine_print is not None
 
-            if isinstance(question, NumericQuestion) or isinstance(
-                question, DateQuestion
-            ):
+            if isinstance(question, NumericQuestion):
                 # TODO: Give more direct support for date questions
                 question_type = "numeric"
                 options = []
+                upper_bound = question.upper_bound
+                lower_bound = question.lower_bound
+                open_upper_bound = question.open_upper_bound
+                open_lower_bound = question.open_lower_bound
             elif isinstance(question, BinaryQuestion):
                 question_type = "binary"
                 options = []
+                upper_bound = None
+                lower_bound = None
+                open_upper_bound = None
+                open_lower_bound = None
             elif isinstance(question, MultipleChoiceQuestion):
                 question_type = "multiple_choice"
                 options = question.options
+                upper_bound = None
+                lower_bound = None
+                open_upper_bound = None
+                open_lower_bound = None
             else:
                 raise ValueError(f"Unknown question type: {type(question)}")
 
@@ -118,6 +148,10 @@ class SimpleQuestion(BaseModel, Jsonable):
                 expected_resolution_date=question.scheduled_resolution_time,
                 question_type=question_type,
                 options=options,
+                upper_bound=upper_bound,
+                lower_bound=lower_bound,
+                open_upper_bound=open_upper_bound,
+                open_lower_bound=open_lower_bound,
             )
             simple_questions.append(simple_question)
         return simple_questions
@@ -137,15 +171,19 @@ class SimpleQuestion(BaseModel, Jsonable):
                     scheduled_resolution_time=question.expected_resolution_date,
                 )
             elif question.question_type == "numeric":
+                assert question.upper_bound is not None
+                assert question.lower_bound is not None
+                assert question.open_upper_bound is not None
+                assert question.open_lower_bound is not None
                 full_question = NumericQuestion(
                     question_text=question.question_text,
                     background_info=question.background_information,
                     resolution_criteria=question.resolution_criteria,
                     fine_print=question.fine_print,
-                    upper_bound=1000000000000,
-                    lower_bound=-1000000000000,
-                    open_upper_bound=True,
-                    open_lower_bound=True,
+                    upper_bound=question.upper_bound,
+                    lower_bound=question.lower_bound,
+                    open_upper_bound=question.open_upper_bound,
+                    open_lower_bound=question.open_lower_bound,
                     scheduled_resolution_time=question.expected_resolution_date,
                 )
             elif question.question_type == "multiple_choice":
@@ -167,10 +205,11 @@ class SimpleQuestion(BaseModel, Jsonable):
     def is_within_date_range(
         self, resolve_before_date: datetime, resolve_after_date: datetime
     ) -> bool:
+
         return (
-            resolve_before_date
-            >= self.expected_resolution_date
-            >= resolve_after_date
+            resolve_before_date.astimezone(timezone.utc)
+            >= self.expected_resolution_date.astimezone(timezone.utc)
+            >= resolve_after_date.astimezone(timezone.utc)
         )
 
 
@@ -220,10 +259,10 @@ class QuestionGenerator:
         - expected_resolution_date: The date when the question is expected to resolve
         - question_type: The type of question, either binary, numeric, or multiple_choice based on how the forecaster should answer (with yes/no, a number, or a choice from a list)
         - options: The options for the question, only used for multiple_choice questions. Empty list for other question types.
-        - upper_bound: The reasonable upper bound for the question, only used for numeric questions.
-        - lower_bound: The reasonable lower bound for the question, only used for numeric questions.
-        - open_upper_bound: Whether there can be a value higher than upper bound (e.g. some indexes can't go above 100), only used for numeric questions.
-        - open_lower_bound: Whether there can be a value lower than lower bound (e.g. a distance can't be negative), only used for numeric questions.
+        - open_upper_bound: Whether there can be a value higher than upper bound (e.g. if the value is a percentage 100 is the max the bound is closed, but number of certifications in a population has an open upper bound), only used for numeric questions.
+        - open_lower_bound: Whether there can be a value lower than lower bound (e.g. distances can't be negative the bound is closed at 0, but profit margins can be negative so the bound is open), only used for numeric questions.
+        - upper_bound: The max value that the question can be. If bound is open then pick a really really big number. Only used for numeric questions.
+        - lower_bound: The min value that the question can be. If bound is open then pick a really really negative number. Only used for numeric questions.
         """
     )
 
@@ -232,6 +271,7 @@ class QuestionGenerator:
         model: GeneralLlm | str = "gpt-4o",
         forecaster: ForecastBot | None = None,
         researcher: SmartSearcher | None = None,
+        max_iterations: int = 3,
     ) -> None:
         if isinstance(model, str):
             self.model = GeneralLlm(model=model, temperature=1, timeout=120)
@@ -268,6 +308,7 @@ class QuestionGenerator:
         self.random_example_question_sample = random.sample(
             self.example_simple_questions, 10
         )
+        self.max_iterations = max_iterations
 
     async def generate_questions(
         self,
@@ -289,11 +330,10 @@ class QuestionGenerator:
         logger.info(f"Attempting to generate {number_of_questions} questions")
 
         final_questions: list[GeneratedQuestion] = []
-        max_iterations = 3
         iteration = 0
         questions_needed = number_of_questions
 
-        while iteration < max_iterations and questions_needed > 0:
+        while iteration < self.max_iterations and questions_needed > 0:
             logger.info(
                 f"Starting iteration {iteration + 1} of question generation"
             )
@@ -315,7 +355,7 @@ class QuestionGenerator:
                 [
                     question
                     for question in final_questions
-                    if question.is_within_date_range(
+                    if not question.is_within_date_range(
                         resolve_before_date, resolve_after_date
                     )
                     or not question.is_uncertain
@@ -352,7 +392,7 @@ class QuestionGenerator:
             - datetime.now().astimezone(timezone.utc)
         ).days / 7
 
-        if topic == "":
+        if not topic:
             about_prompt = "The questions must be about general diverse hot news items (they should not all be in the same industry/field/etc.)"
         else:
             about_prompt = f"The questions must be about: {topic}"
@@ -416,6 +456,9 @@ class QuestionGenerator:
                 forecast_report = await self.forecaster.forecast_question(
                     metaculus_question
                 )
+                forecast_report = typeguard.check_type(
+                    forecast_report, ReportTypes
+                )
                 error_message = None
             except Exception as e:
                 logger.warning(
@@ -423,10 +466,6 @@ class QuestionGenerator:
                 )
                 forecast_report = None
                 error_message = str(e)
-
-            forecast_report = typeguard.check_type(
-                forecast_report, ReportTypes
-            )
 
             extended_questions.append(
                 GeneratedQuestion(
@@ -494,3 +533,80 @@ class QuestionGenerator:
                 refined_questions.append(result)
 
         return refined_questions
+
+
+class TopicGenerator:
+
+    @classmethod
+    async def generate_random_topic(
+        cls, model: GeneralLlm | str = "gpt-4o"
+    ) -> str:
+        if isinstance(model, str):
+            model = GeneralLlm(model=model, temperature=1, timeout=40)
+
+        fake = Faker(
+            [
+                "en_US",
+                "ja_JP",
+                "de_DE",
+                "en_GB",
+                "fr_FR",
+                "es_ES",
+                "it_IT",
+                "pt_BR",
+                "ru_RU",
+                "zh_CN",
+                "ar_EG",
+                "hi_IN",
+                "ko_KR",
+            ]
+        )
+
+        random_text = clean_indents(
+            f"""
+            Job: {fake.job()}
+            Country: {fake.country()}
+            Country code: {fake.country_code()}
+            City: {fake.city()}
+            State/Province: {fake.state()}
+            Word: {fake.word()}
+            Sentence: {fake.sentence()}
+            Paragraph: {fake.paragraph()}
+            Text: {fake.text(max_nb_chars=50)}
+            News headline: {fake.sentence().rstrip('.')}
+            Stock ticker symbol: {fake.lexify(text='???', letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ')}
+            """
+        )
+
+        prompt = clean_indents(
+            f"""
+            # Instructions
+            Using the ideas below (some of which are abstract or randomly generated)
+            come up with 1-2 topics for a forecasting question about the future
+
+            Try to choose something interesting and meaningful.
+
+            # Example result:
+            ```
+            [
+                "Lithuanian politics",
+                "Gun violence in Olklahoma",
+                "Japenese elections",
+                "Sports results in Russian Hockey",
+                "Number of new houses built in the US"
+                "Mining jobs in Canada"
+            ]
+            ```
+
+            # Material to adapt:
+            {random_text}
+
+            Now please generate a list of topics that could be interesting and meaningful.
+            """
+        )
+
+        topics = await model.invoke_and_return_verified_type(prompt, list[str])
+        top_topics = random.sample(topics, 2)
+        topics_str = " OR ".join(top_topics)
+
+        return topics_str

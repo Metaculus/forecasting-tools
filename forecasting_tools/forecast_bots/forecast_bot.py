@@ -230,6 +230,10 @@ class ForecastBot(ABC):
 
                 Only summarize the research. Do not answer the question. Just say what the research says w/o any opinions added.
 
+                If there are links in the research, please cite your sources using markdown links (copy the link exactly).
+                For instance if you want to cite www.example.com/news-headline, you should cite it as [example.com](www.example.com/news-headline).
+                Do not make up links.
+
                 The research is:
                 {research}
                 """

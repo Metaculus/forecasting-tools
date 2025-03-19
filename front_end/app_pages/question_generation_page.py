@@ -55,7 +55,7 @@ class QuestionGeneratorPage(ToolPage):
     @classmethod
     async def _get_input(cls) -> QuestionGeneratorInput | None:
         with st.form("question_generator_form"):
-            topic = st.text_input(
+            topic = st.text_area(
                 "Topic (optional)",
                 value="Lithuanian politics and technology",
             )
@@ -147,12 +147,23 @@ class QuestionGeneratorPage(ToolPage):
     ) -> None:
         for output in outputs:
             st.markdown(
-                f"**Cost of below questions:** \${output.cost:.2f} | **Topic:** {output.original_input.topic if output.original_input.topic else 'N/A'}"  # NOSONAR
+                ReportDisplayer.clean_markdown(
+                    f"**Cost of below questions:** ${output.cost:.2f} | **Topic:** {output.original_input.topic if output.original_input.topic else 'N/A'}"
+                )
             )
             for question in output.questions:
-                uncertainty_emoji = "🔮✅" if question.is_uncertain else ""
+                uncertainty_emoji = "🔮✅" if question.is_uncertain else "🔮❌"
+                date_range_emoji = (
+                    "📅✅"
+                    if question.is_within_date_range(
+                        output.original_input.resolve_before_date,
+                        output.original_input.resolve_after_date,
+                    )
+                    else "📅❌"
+                )
+
                 with st.expander(
-                    f"{uncertainty_emoji} {question.question_text}"
+                    f"{uncertainty_emoji} {date_range_emoji} {question.question_text}"
                 ):
                     st.markdown("### Question")
                     st.markdown(
@@ -164,6 +175,17 @@ class QuestionGeneratorPage(ToolPage):
                         st.markdown("### Options")
                         for option in question.options:
                             st.markdown(f"- {option}")
+                    elif question.question_type == "numeric":
+                        st.markdown("### Numeric Question")
+                        st.markdown(f"Lower Bound: {question.lower_bound}")
+                        st.markdown(f"Upper Bound: {question.upper_bound}")
+                        st.markdown(
+                            f"Open Lower Bound: {question.open_lower_bound}"
+                        )
+                        st.markdown(
+                            f"Open Upper Bound: {question.open_upper_bound}"
+                        )
+
                     st.markdown("### Resolution Criteria")
                     st.markdown(
                         ReportDisplayer.clean_markdown(
