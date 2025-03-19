@@ -90,8 +90,8 @@ class QuestionGeneratorPage(ToolPage):
                     topic_bullets = [f"- {topic}" for topic in topics]
                     st.markdown("\n".join(topic_bullets))
 
-            if st.button("Generate random news items"):
-                with st.spinner("Generating random news items..."):
+            if st.button("Random news headline search"):
+                with st.spinner("Searching randomly for news items..."):
                     news_items = (
                         await TopicGenerator.generate_random_news_items(
                             number_of_items=10,
@@ -113,7 +113,7 @@ class QuestionGeneratorPage(ToolPage):
                 value=5,
             )
             model = st.text_input(
-                "Litellm Model (e.g.: o1, claude-3-7-sonnet-latest, gpt-4o, openrouter/<openrouter-model-path>)",
+                "Litellm Model (e.g.: claude-3-7-sonnet-latest, gpt-4o, openrouter/<openrouter-model-path>)",
                 value="gpt-4o",
             )
             col1, col2 = st.columns(2)

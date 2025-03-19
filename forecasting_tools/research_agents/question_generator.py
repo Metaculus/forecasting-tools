@@ -569,8 +569,8 @@ class TopicGenerator:
         random_text = clean_indents(
             f"""
             Job: {fake.job()}
-            Country: {fake.country()}
-            Country code: {fake.country_code()}
+            Country 1: {fake.country()}
+            Country 2: {fake.country()}
             State/Province (not necessarily in above country): {fake.state()}
             City (not necessarily in above state): {fake.city()}
             Word: {fake.word()}

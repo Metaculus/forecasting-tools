@@ -1,6 +1,6 @@
 [
     {
-        "short_name": "General search (w/ 3.7 sonnet)",
+        "short_name": "No Topic Chosen (w/ 3.7 sonnet)",
         "notes": "Run on Mar 19, 2025",
         "input": {
             "topic": "",
@@ -2022,11 +2022,12 @@
                 "resolve_after_date": "2025-03-19T00:00:00",
                 "model": "claude-3-7-sonnet-latest"
             },
-            "cost": 1.10487825
+            "cost": 1.10487825,
+            "generation_time_seconds": 384
         }
     },
     {
-        "short_name": "Lithuanian topic (w/ gpt-4o)",
+        "short_name": "Lithuania Topic (w/ gpt-4o)",
         "notes": "Run on Mar 19, 2025",
         "input": {
             "topic": "Lithuanian politics and technology",

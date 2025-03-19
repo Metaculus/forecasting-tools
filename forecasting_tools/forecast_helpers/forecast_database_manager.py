@@ -100,18 +100,36 @@ class ForecastDatabaseManager:
         price_estimate: float | None,
         run_type: ForecastRunType,
     ) -> None:
-        coda_row = cls.__create_coda_row_from_column_values(
-            question_text,
-            background_info,
-            resolution_criteria,
-            fine_print,
-            prediction,
-            explanation,
-            page_url,
-            price_estimate,
-            run_type,
-        )
-        cls.REPORTS_TABLE.add_row_to_table(coda_row)
+        if explanation is None:
+            explanation = ""
+        try:
+            coda_row = cls.__create_coda_row_from_column_values(
+                question_text,
+                background_info,
+                resolution_criteria,
+                fine_print,
+                prediction,
+                explanation,
+                page_url,
+                price_estimate,
+                run_type,
+            )
+            cls.REPORTS_TABLE.add_row_to_table(coda_row)
+        except Exception as e:
+            logger.warning(f"Error while uploading to coda: {e}")
+            explanation = f"ERROR while uploading to Coda. Here is shortened version: {explanation[:10000]}..."
+            coda_row = cls.__create_coda_row_from_column_values(
+                question_text,
+                background_info,
+                resolution_criteria,
+                fine_print,
+                prediction,
+                explanation,
+                page_url,
+                price_estimate,
+                run_type,
+            )
+            cls.REPORTS_TABLE.add_row_to_table(coda_row)
 
     @classmethod
     def add_base_rate_report_to_database(
