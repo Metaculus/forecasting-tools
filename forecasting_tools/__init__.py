@@ -122,3 +122,6 @@ from forecasting_tools.research_agents.niche_list_researcher import (
 from forecasting_tools.research_agents.question_generator import (
     QuestionGenerator as QuestionGenerator,
 )
+from forecasting_tools.research_agents.question_generator import (
+    TopicGenerator as TopicGenerator,
+)

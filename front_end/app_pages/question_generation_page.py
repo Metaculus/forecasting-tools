@@ -103,7 +103,7 @@ class QuestionGeneratorPage(ToolPage):
 
         with st.form("question_generator_form"):
             topic = st.text_area(
-                "Topic/question idea and additional context (optional)",
+                "Topic(s)/question idea(s) and additional context (optional)",
                 value="'Lithuanian politics and technology' OR 'Questions related to <question rough draft>'",
             )
             number_of_questions = st.number_input(

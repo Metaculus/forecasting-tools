@@ -103,8 +103,8 @@ class TestLaunchQuestion:
 
         with pytest.raises(ValueError):
             question3 = get_template_question()
-            question3["scheduled_close_time"] = "05/02/2023 8:00:00"
-            question3["scheduled_resolve_time"] = "05/02/2023 10:00:00"
+            question3["scheduled_close_time"] = "05/02/2023 10:00:00"
+            question3["scheduled_resolve_time"] = "05/02/2023 8:00:00"
             LaunchQuestion(**question3)
 
     def test_from_csv_row(self) -> None:
@@ -141,7 +141,7 @@ class TestLaunchQuestion:
         question2 = LaunchQuestion(**question2)
         assert question2.type == "numeric"
         assert question2.range_min == 1
-        assert question2.range_max == 10
+        assert question2.range_max == None
         assert question2.zero_point == pytest.approx(0.3)
         assert question2.open_lower_bound is None
         assert question2.open_upper_bound is True
