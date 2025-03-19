@@ -71,10 +71,10 @@ async def stress_test_proxy() -> None:
 
         print("Finished")
         if number_of_errors > 0:
-            raise Exception("There were errors")
+            raise RuntimeError("There were errors")
 
         if cost_manager.current_usage > 3:
-            raise Exception("Cost is too high")
+            raise RuntimeError("Cost is too high")
 
 
 if __name__ == "__main__":
