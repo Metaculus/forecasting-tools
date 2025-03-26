@@ -189,6 +189,13 @@ class GeneralLlm(
 
         self._give_cost_tracking_warning_if_needed()
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "original_model": self.model,
+            "allowed_tries": self.allowed_tries,
+            **{k: v for k, v in self.litellm_kwargs.items()},
+        }
+
     @classmethod
     def _get_default_timeout(cls, model: str) -> int:
         all_keys = cls._defaults.keys()

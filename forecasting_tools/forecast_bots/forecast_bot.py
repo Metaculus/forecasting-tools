@@ -90,6 +90,12 @@ class ForecastBot(ABC):
         self._scratch_pads: list[ScratchPad] = []
         self._scratch_pad_lock = asyncio.Lock()
         self._llms = llms or self._default_llms()
+        for purpose, llm in self._default_llms().items():
+            if purpose not in self._llms:
+                logger.warning(
+                    f"User forgot to set an llm for purpose: '{purpose}'. Using default llm: '{llm}'"
+                )
+                self._llms[purpose] = llm
 
     @classmethod
     def _default_llms(cls) -> dict[str, str | GeneralLlm]:
@@ -110,11 +116,22 @@ class ForecastBot(ABC):
 
     def get_config(self) -> dict[str, Any]:
         params = inspect.signature(self.__init__).parameters
-        return {
+        config: dict[str, Any] = {
             name: str(getattr(self, name))
             for name in params.keys()
-            if name != "self" and name != "kwargs" and name != "args"
+            if name != "self"
+            and name != "kwargs"
+            and name != "args"
+            and name != "llms"
         }
+        llm_dict: dict[str, str | dict[str, Any]] = {}
+        for key, value in self._llms.items():
+            if isinstance(value, str):
+                llm_dict[key] = value
+            else:
+                llm_dict[key] = value.to_dict()
+        config["llms"] = llm_dict
+        return config
 
     @overload
     async def forecast_on_tournament(
@@ -234,15 +251,9 @@ class ForecastBot(ABC):
         if len(research) < default_summary_size:
             return research
 
-        if os.getenv("OPENAI_API_KEY"):
-            model = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
-        elif os.getenv("METACULUS_TOKEN"):
-            model = GeneralLlm(model="metaculus/gpt-4o-mini", temperature=0.3)
-        else:
-            return default_summary
-
         return_value = default_summary
         try:
+            model = self.get_llm("summarizer", guarantee_type=GeneralLlm)
             prompt = clean_indents(
                 f"""
                 Please summarize the following research in 1-2 paragraphs. The report tries to help answer the following question:
@@ -293,7 +304,15 @@ class ForecastBot(ABC):
         guarantee_type: type[GeneralLlm] | type[str] | None = None,
     ) -> str | GeneralLlm | None:
         if purpose not in self._llms:
-            return None
+            if guarantee_type is None:
+                logger.warning(
+                    f"Unknown llm requested from llm dict: '{purpose}'"
+                )
+                return None
+            else:
+                raise ValueError(
+                    f"Unknown llm requested from llm dict: '{purpose}'"
+                )
 
         llm = self._llms[purpose]
         return_value = None
@@ -473,7 +492,7 @@ class ForecastBot(ABC):
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
-        raise NotImplementedError("Subclass must implement this method")
+        raise NotImplementedError("Subclass should implement this method")
 
     @abstractmethod
     async def _run_forecast_on_multiple_choice(

@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Any
 
@@ -209,7 +210,7 @@ async def test_skip_previously_forecasted_questions() -> None:
 
     research_call_count = 0
 
-    async def count_research(*args, **kwargs):
+    async def count_research(*args, **kwargs) -> str:
         nonlocal research_call_count
         research_call_count += 1
         return "test research"
@@ -224,16 +225,18 @@ async def test_skip_previously_forecasted_questions() -> None:
 
 
 @pytest.mark.parametrize("bot", get_all_important_bot_classes())
-def test_bot_has_config(bot: type[ForecastBot]):
+def test_bot_has_config(bot: type[ForecastBot]) -> None:
     probable_minimum_number_of_bot_params = 3
     bot_config = bot().get_config()
     assert bot_config is not None
     assert len(bot_config.keys()) > probable_minimum_number_of_bot_params
 
+    # Verify config can be JSON serialized
 
-async def test_error_thrown_for_missing_llm_key() -> None:
-    with pytest.raises(Exception):
-        MockBot(llms={"non_defined_key": "gpt-4o"})
+    try:
+        json.dumps(bot_config)
+    except Exception as e:
+        pytest.fail(f"Bot config is not JSON serializable: {e}")
 
 
 async def test_llm_returns_general_llm_when_llm_is_str() -> None:
@@ -289,3 +292,23 @@ async def test_get_config_includes_default_llms_when_not_set() -> None:
     assert llm_dict["default"] == "gpt-4o"
     assert "temperature" in llm_dict["summarizer"]
     assert "model" in llm_dict["summarizer"]
+
+
+async def test_get_llm_edge_case_behavior() -> None:
+    bot = MockBot()
+    non_existent_purpose = "non_existent_purpose"
+
+    # Should return None when guarantee_type is None
+    assert bot.get_llm(non_existent_purpose, guarantee_type=None) is None
+
+    # Should raise ValueError when guarantee_type is specified
+    with pytest.raises(Exception):
+        bot.get_llm(non_existent_purpose, guarantee_type=str)
+
+    with pytest.raises(Exception):
+        bot.get_llm(non_existent_purpose, guarantee_type=GeneralLlm)
+
+
+async def test_default_used_for_missing_llm_key() -> None:
+    bot = MockBot(llms={"non_defined_key": "gpt-4o"})
+    assert bot.get_llm("default") is not None
