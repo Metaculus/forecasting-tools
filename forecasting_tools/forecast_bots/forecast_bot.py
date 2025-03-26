@@ -42,9 +42,11 @@ T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
-class ScratchPad(BaseModel):
+class NotePad(BaseModel):
     """
-    Context object that is available while forecasting on a question
+    Context object that is available while forecasting on a question and that persists
+    across multiple forecasts on the same question.
+
     You can keep tally's, todos, notes, or other organizational information here
     that other parts of the forecasting bot needs to access
 
@@ -87,51 +89,24 @@ class ForecastBot(ABC):
         self.skip_previously_forecasted_questions = (
             skip_previously_forecasted_questions
         )
-        self._scratch_pads: list[ScratchPad] = []
-        self._scratch_pad_lock = asyncio.Lock()
-        self._llms = llms or self._default_llms()
-        for purpose, llm in self._default_llms().items():
+        self._note_pads: list[NotePad] = []
+        self._note_pad_lock = asyncio.Lock()
+        self._llms = llms or self._llm_config_defaults()
+        assert "default" in self._llms, "Must have a default llm"
+
+        for purpose, llm in self._llm_config_defaults().items():
             if purpose not in self._llms:
                 logger.warning(
                     f"User forgot to set an llm for purpose: '{purpose}'. Using default llm: '{llm}'"
                 )
                 self._llms[purpose] = llm
 
-    @classmethod
-    def _default_llms(cls) -> dict[str, str | GeneralLlm]:
-
-        if os.getenv("OPENAI_API_KEY"):
-            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
-        elif os.getenv("METACULUS_TOKEN"):
-            summarizer = GeneralLlm(
-                model="metaculus/gpt-4o-mini", temperature=0.3
-            )
-        else:
-            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
-
-        return {
-            "default": GeneralLlm(model="gpt-4o", temperature=0.3),
-            "summarizer": summarizer,
-        }
-
-    def get_config(self) -> dict[str, Any]:
-        params = inspect.signature(self.__init__).parameters
-        config: dict[str, Any] = {
-            name: str(getattr(self, name))
-            for name in params.keys()
-            if name != "self"
-            and name != "kwargs"
-            and name != "args"
-            and name != "llms"
-        }
-        llm_dict: dict[str, str | dict[str, Any]] = {}
-        for key, value in self._llms.items():
-            if isinstance(value, str):
-                llm_dict[key] = value
-            else:
-                llm_dict[key] = value.to_dict()
-        config["llms"] = llm_dict
-        return config
+        for purpose, llm in self._llms.items():
+            if purpose not in self._llm_config_defaults():
+                logger.warning(
+                    f"There is no default for llm: '{purpose}'."
+                    f"Please override and add it to the {self._llm_config_defaults.__name__} method"
+                )
 
     @overload
     async def forecast_on_tournament(
@@ -282,7 +257,7 @@ class ForecastBot(ABC):
         self,
         purpose: str = "default",
         guarantee_type: None = None,
-    ) -> str | GeneralLlm | None: ...
+    ) -> str | GeneralLlm: ...
 
     @overload
     def get_llm(
@@ -302,17 +277,11 @@ class ForecastBot(ABC):
         self,
         purpose: str = "default",
         guarantee_type: type[GeneralLlm] | type[str] | None = None,
-    ) -> str | GeneralLlm | None:
+    ) -> str | GeneralLlm:
         if purpose not in self._llms:
-            if guarantee_type is None:
-                logger.warning(
-                    f"Unknown llm requested from llm dict: '{purpose}'"
-                )
-                return None
-            else:
-                raise ValueError(
-                    f"Unknown llm requested from llm dict: '{purpose}'"
-                )
+            raise ValueError(
+                f"Unknown llm requested from llm dict for purpose: '{purpose}'"
+            )
 
         llm = self._llms[purpose]
         return_value = None
@@ -334,6 +303,48 @@ class ForecastBot(ABC):
 
         return return_value
 
+    @classmethod
+    def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm]:
+        """
+        Returns a dictionary of default llms for the bot.
+        The keys are the purpose of the llm and the values are the llms (model name or GeneralLlm object).
+        Consider adding:
+        - researcher
+        - reasoner
+        - etc.
+        """
+
+        if os.getenv("OPENAI_API_KEY"):
+            main_default_llm = GeneralLlm(model="gpt-4o", temperature=0.3)
+        elif os.getenv("ANTHROPIC_API_KEY"):
+            main_default_llm = GeneralLlm(
+                model="claude-3-5-sonnet-20241022", temperature=0.3
+            )
+        elif os.getenv("OPENROUTER_API_KEY"):
+            main_default_llm = GeneralLlm(
+                model="openrouter/openai/gpt-4o", temperature=0.3
+            )
+        elif os.getenv("METACULUS_TOKEN"):
+            main_default_llm = GeneralLlm(
+                model="metaculus/gpt-4o", temperature=0.3
+            )
+        else:
+            main_default_llm = GeneralLlm(model="gpt-4o", temperature=0.3)
+
+        if os.getenv("OPENAI_API_KEY"):
+            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+        elif os.getenv("METACULUS_TOKEN"):
+            summarizer = GeneralLlm(
+                model="metaculus/gpt-4o-mini", temperature=0.3
+            )
+        else:
+            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+
+        return {
+            "default": main_default_llm,
+            "summarizer": summarizer,
+        }
+
     async def _run_individual_question_with_error_propagation(
         self, question: MetaculusQuestion
     ) -> ForecastReport:
@@ -349,12 +360,31 @@ class ForecastBot(ABC):
                 False
             ), "This is to satisfy type checker. The previous function should raise an exception"
 
+    def get_config(self) -> dict[str, Any]:
+        params = inspect.signature(self.__init__).parameters
+        config: dict[str, Any] = {
+            name: str(getattr(self, name))
+            for name in params.keys()
+            if name != "self"
+            and name != "kwargs"
+            and name != "args"
+            and name != "llms"
+        }
+        llm_dict: dict[str, str | dict[str, Any]] = {}
+        for key, value in self._llms.items():
+            if isinstance(value, str):
+                llm_dict[key] = value
+            else:
+                llm_dict[key] = value.to_dict()
+        config["llms"] = llm_dict
+        return config
+
     async def _run_individual_question(
         self, question: MetaculusQuestion
     ) -> ForecastReport:
-        scratchpad = await self._initialize_scratchpad(question)
-        async with self._scratch_pad_lock:
-            self._scratch_pads.append(scratchpad)
+        notepad = await self._initialize_notepad(question)
+        async with self._note_pad_lock:
+            self._note_pads.append(notepad)
         with MonetaryCostManager() as cost_manager:
             start_time = time.time()
             prediction_tasks = [
@@ -414,7 +444,7 @@ class ForecastBot(ABC):
         )
         if self.publish_reports_to_metaculus:
             await report.publish_report_to_metaculus()
-        await self._remove_scratchpad(question)
+        await self._remove_notepad(question)
         return report
 
     async def _aggregate_predictions(
@@ -667,27 +697,27 @@ class ForecastBot(ABC):
         else:
             raise type(exception)(f"{message}: {exception}") from exception
 
-    async def _initialize_scratchpad(
+    async def _initialize_notepad(
         self, question: MetaculusQuestion
-    ) -> ScratchPad:
-        new_scratchpad = ScratchPad(question=question)
-        return new_scratchpad
+    ) -> NotePad:
+        new_notepad = NotePad(question=question)
+        return new_notepad
 
-    async def _remove_scratchpad(self, question: MetaculusQuestion) -> None:
-        async with self._scratch_pad_lock:
-            self._scratch_pads = [
-                scratchpad
-                for scratchpad in self._scratch_pads
-                if scratchpad.question != question
+    async def _remove_notepad(self, question: MetaculusQuestion) -> None:
+        async with self._note_pad_lock:
+            self._note_pads = [
+                notepad
+                for notepad in self._note_pads
+                if notepad.question != question
             ]
 
-    async def _get_scratchpad(self, question: MetaculusQuestion) -> ScratchPad:
-        async with self._scratch_pad_lock:
-            for scratchpad in self._scratch_pads:
-                if scratchpad.question == question:
-                    return scratchpad
+    async def _get_notepad(self, question: MetaculusQuestion) -> NotePad:
+        async with self._note_pad_lock:
+            for notepad in self._note_pads:
+                if notepad.question == question:
+                    return notepad
         raise ValueError(
-            f"No scratchpad found for question: ID: {question.id_of_post} Text: {question.question_text}"
+            f"No notepad found for question: ID: {question.id_of_post} Text: {question.question_text}"
         )
 
     @staticmethod

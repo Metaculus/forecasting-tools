@@ -270,8 +270,8 @@ async def test_get_llm_returns_correct_type_when_set() -> None:
 
 async def test_get_llm_returns_none_when_not_set() -> None:
     bot = MockBot()
-    llm = bot.get_llm("non_existent_llm")
-    assert llm is None
+    with pytest.raises(ValueError):
+        bot.get_llm("non_existent_llm")
 
 
 async def test_get_config_includes_default_llms_when_not_set() -> None:
@@ -299,7 +299,8 @@ async def test_get_llm_edge_case_behavior() -> None:
     non_existent_purpose = "non_existent_purpose"
 
     # Should return None when guarantee_type is None
-    assert bot.get_llm(non_existent_purpose, guarantee_type=None) is None
+    with pytest.raises(ValueError):
+        bot.get_llm(non_existent_purpose, guarantee_type=None)
 
     # Should raise ValueError when guarantee_type is specified
     with pytest.raises(Exception):
@@ -310,5 +311,5 @@ async def test_get_llm_edge_case_behavior() -> None:
 
 
 async def test_default_used_for_missing_llm_key() -> None:
-    bot = MockBot(llms={"non_defined_key": "gpt-4o"})
+    bot = MockBot(llms={})
     assert bot.get_llm("default") is not None

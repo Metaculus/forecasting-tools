@@ -18,7 +18,7 @@ from forecasting_tools.data_models.questions import (
     MultipleChoiceQuestion,
     NumericQuestion,
 )
-from forecasting_tools.forecast_bots.forecast_bot import ScratchPad
+from forecasting_tools.forecast_bots.forecast_bot import NotePad
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025,
 )
@@ -46,7 +46,7 @@ class Persona(BaseModel):
         )
 
 
-class PersonaScratchpad(ScratchPad):
+class PersonaNotePad(NotePad):
     question: MetaculusQuestion
     personas: list[Persona | None]
 
@@ -75,20 +75,20 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
             folder_to_save_reports_to=folder_to_save_reports_to,
             skip_previously_forecasted_questions=skip_previously_forecasted_questions,
         )
-        self.scratch_pads: list[PersonaScratchpad] = []
+        self.scratch_pads: list[PersonaNotePad] = []
 
     def _get_final_decision_llm(self) -> GeneralLlm:
         return GeneralLlm(model="gpt-4o", temperature=0.3)
 
-    async def _initialize_scratchpad(
+    async def _initialize_notepad(
         self, question: MetaculusQuestion
-    ) -> PersonaScratchpad:
+    ) -> PersonaNotePad:
         personas = await self._create_personas(question)
         personas_with_none = personas + [None]
-        new_scratchpad = PersonaScratchpad(
+        new_notepad = PersonaNotePad(
             question=question, personas=personas_with_none
         )
-        return new_scratchpad
+        return new_notepad
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         searcher = SmartSearcher(
@@ -322,7 +322,7 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
         return personas
 
     async def _get_persona_message(self, question: MetaculusQuestion) -> str:
-        scratch_pad = await self._get_scratchpad(question)
+        scratch_pad = await self._get_notepad(question)
         persona = scratch_pad.get_random_persona()
         if persona is None:
             persona_message = ""
@@ -337,8 +337,8 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
                 )
         return persona_message
 
-    async def _get_scratchpad(
+    async def _get_notepad(
         self, question: MetaculusQuestion
-    ) -> PersonaScratchpad:
-        scratchpad = await super()._get_scratchpad(question)
-        return typeguard.check_type(scratchpad, PersonaScratchpad)
+    ) -> PersonaNotePad:
+        scratchpad = await super()._get_notepad(question)
+        return typeguard.check_type(scratchpad, PersonaNotePad)
