@@ -69,6 +69,7 @@ class ForecastBot(ABC):
         publish_reports_to_metaculus: bool = False,
         folder_to_save_reports_to: str | None = None,
         skip_previously_forecasted_questions: bool = False,
+        llms: dict[str, str | GeneralLlm] | None = None,
     ) -> None:
         assert (
             research_reports_per_question > 0
@@ -88,8 +89,26 @@ class ForecastBot(ABC):
         )
         self._scratch_pads: list[ScratchPad] = []
         self._scratch_pad_lock = asyncio.Lock()
+        self._llms = llms or self._default_llms()
 
-    def get_config(self) -> dict[str, str]:
+    @classmethod
+    def _default_llms(cls) -> dict[str, str | GeneralLlm]:
+
+        if os.getenv("OPENAI_API_KEY"):
+            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+        elif os.getenv("METACULUS_TOKEN"):
+            summarizer = GeneralLlm(
+                model="metaculus/gpt-4o-mini", temperature=0.3
+            )
+        else:
+            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+
+        return {
+            "default": GeneralLlm(model="gpt-4o", temperature=0.3),
+            "summarizer": summarizer,
+        }
+
+    def get_config(self) -> dict[str, Any]:
         params = inspect.signature(self.__init__).parameters
         return {
             name: str(getattr(self, name))
@@ -203,7 +222,7 @@ class ForecastBot(ABC):
         """
         Researches a question and returns markdown report
         """
-        raise NotImplementedError("Subclass must implement this method")
+        raise NotImplementedError("Subclass should implement this method")
 
     async def summarize_research(
         self, question: MetaculusQuestion, research: str
@@ -222,6 +241,7 @@ class ForecastBot(ABC):
         else:
             return default_summary
 
+        return_value = default_summary
         try:
             prompt = clean_indents(
                 f"""
@@ -239,12 +259,61 @@ class ForecastBot(ABC):
                 """
             )
             summary = await model.invoke(prompt)
-            return summary
+            return_value = summary
         except Exception as e:
             logger.debug(
                 f"Could not summarize research. Defaulting to first {default_summary_size} characters: {e}"
             )
-            return default_summary
+        return return_value
+
+    @overload
+    def get_llm(
+        self,
+        purpose: str = "default",
+        guarantee_type: None = None,
+    ) -> str | GeneralLlm | None: ...
+
+    @overload
+    def get_llm(
+        self,
+        purpose: str = "default",
+        guarantee_type: type[GeneralLlm] = GeneralLlm,
+    ) -> GeneralLlm: ...
+
+    @overload
+    def get_llm(
+        self,
+        purpose: str = "default",
+        guarantee_type: type[str] = str,
+    ) -> str: ...
+
+    def get_llm(
+        self,
+        purpose: str = "default",
+        guarantee_type: type[GeneralLlm] | type[str] | None = None,
+    ) -> str | GeneralLlm | None:
+        if purpose not in self._llms:
+            return None
+
+        llm = self._llms[purpose]
+        return_value = None
+
+        if guarantee_type is None:
+            return_value = llm
+        elif guarantee_type == GeneralLlm:
+            if isinstance(llm, GeneralLlm):
+                return_value = llm
+            else:
+                return_value = GeneralLlm(model=llm)
+        elif guarantee_type == str:
+            if isinstance(llm, str):
+                return_value = llm
+            else:
+                return_value = llm.model
+        else:
+            raise ValueError(f"Unknown guarantee_type: {guarantee_type}")
+
+        return return_value
 
     async def _run_individual_question_with_error_propagation(
         self, question: MetaculusQuestion

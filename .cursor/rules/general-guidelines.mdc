@@ -1,6 +1,10 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# General Guidelines
 Please follow these guidelines:
-- `asyncio_mode = auto` is set in pytest.ini so when making tests don't mark tests with pytest.mark.asyncio
 - all functions should have type hints for parameters and outputs. For built in type hints (like `list`, `dict`, `tuple`) don't import the typing library, just use the more modern type hints built into Python.
 - avoid using comments and rather give descriptive function/variable names. Only use comments when absolutely necessary to communicate something you can't infer from the code or mention design decisions.
-- When testing if errors are thrown do not try to match on exception text
 - Please copy the formatting choices in the file (e.g. don't redistribute lines as these were chosen by black formatter)

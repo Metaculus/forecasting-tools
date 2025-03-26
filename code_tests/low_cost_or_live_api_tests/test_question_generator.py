@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 async def test_question_generator_returns_necessary_number_and_stays_within_cost() -> (
     None
 ):
+    # TODO: Move this to 'expensive' tests and also test small/large date ranges
+
     number_of_questions_to_generate = 2
     cost_threshold = 2
     topic = "Lithuania"
@@ -88,6 +90,27 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
         ), f"Cost exceeded threshold: ${final_cost:.4f} > ${cost_threshold:.4f}"
 
 
+@pytest.mark.skip(
+    reason="Skipping question generator test since its expensive"
+)
+async def test_question_generator_works_with_empty_topic() -> None:
+    model = GeneralLlm(model="gpt-4o-mini")
+    generator = QuestionGenerator(model=model)
+
+    before_date = datetime.now() + timedelta(days=14)
+    after_date = datetime.now()
+
+    questions = await generator.generate_questions(
+        number_of_questions=1,
+        topic="",
+        resolve_before_date=before_date,
+        resolve_after_date=after_date,
+    )
+
+    assert len(questions) == 1
+    assert isinstance(questions[0], SimpleQuestion)
+
+
 async def test_question_generator_raises_on_invalid_dates() -> None:
     model = GeneralLlm(model="gpt-4o-mini")
     generator = QuestionGenerator(model=model)
@@ -127,21 +150,3 @@ async def test_question_generator_raises_on_invalid_question_count() -> None:
             resolve_before_date=before_date,
             resolve_after_date=after_date,
         )
-
-
-async def test_question_generator_works_with_empty_topic() -> None:
-    model = GeneralLlm(model="gpt-4o-mini")
-    generator = QuestionGenerator(model=model)
-
-    before_date = datetime.now() + timedelta(days=14)
-    after_date = datetime.now()
-
-    questions = await generator.generate_questions(
-        number_of_questions=1,
-        topic="",
-        resolve_before_date=before_date,
-        resolve_after_date=after_date,
-    )
-
-    assert len(questions) == 1
-    assert isinstance(questions[0], SimpleQuestion)

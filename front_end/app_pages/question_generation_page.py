@@ -114,7 +114,7 @@ class QuestionGeneratorPage(ToolPage):
             )
             model = st.text_input(
                 "Litellm Model (e.g.: claude-3-7-sonnet-latest, gpt-4o, openrouter/<openrouter-model-path>)",
-                value="gpt-4o",
+                value="claude-3-7-sonnet-latest",
             )
             col1, col2 = st.columns(2)
             with col1:
