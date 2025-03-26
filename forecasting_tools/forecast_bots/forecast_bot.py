@@ -50,10 +50,12 @@ class NotePad(BaseModel):
     You can keep tally's, todos, notes, or other organizational information here
     that other parts of the forecasting bot needs to access
 
-    You will want to inherit from this class to add additional attributes
+    You can inherit from this class to add additional attributes
     """
 
     question: MetaculusQuestion
+    num_research_reports_attempted: int = 0
+    num_predictions_attempted: int = 0
     note_entries: dict[str, str] = {}
 
 
@@ -470,6 +472,8 @@ class ForecastBot(ABC):
     async def _research_and_make_predictions(
         self, question: MetaculusQuestion
     ) -> ResearchWithPredictions[PredictionTypes]:
+        notepad = await self._get_notepad(question)
+        notepad.num_research_reports_attempted += 1
         research = await self.run_research(question)
         summary_report = await self.summarize_research(question, research)
         research_to_use = (
@@ -478,25 +482,10 @@ class ForecastBot(ABC):
             else research
         )
 
-        if isinstance(question, BinaryQuestion):
-            forecast_function = lambda q, r: self._run_forecast_on_binary(q, r)
-        elif isinstance(question, MultipleChoiceQuestion):
-            forecast_function = (
-                lambda q, r: self._run_forecast_on_multiple_choice(q, r)
-            )
-        elif isinstance(question, NumericQuestion):
-            forecast_function = lambda q, r: self._run_forecast_on_numeric(
-                q, r
-            )
-        elif isinstance(question, DateQuestion):
-            raise NotImplementedError("Date questions not supported yet")
-        else:
-            raise ValueError(f"Unknown question type: {type(question)}")
-
         tasks = cast(
             list[Coroutine[Any, Any, ReasonedPrediction[Any]]],
             [
-                forecast_function(question, research_to_use)
+                self._make_prediction(question, research_to_use)
                 for _ in range(self.predictions_per_research_report)
             ],
         )
@@ -517,6 +506,30 @@ class ForecastBot(ABC):
             errors=errors,
             predictions=valid_predictions,
         )
+
+    async def _make_prediction(
+        self, question: MetaculusQuestion, research: str
+    ) -> ReasonedPrediction[PredictionTypes]:
+        notepad = await self._get_notepad(question)
+        notepad.num_predictions_attempted += 1
+
+        if isinstance(question, BinaryQuestion):
+            forecast_function = lambda q, r: self._run_forecast_on_binary(q, r)
+        elif isinstance(question, MultipleChoiceQuestion):
+            forecast_function = (
+                lambda q, r: self._run_forecast_on_multiple_choice(q, r)
+            )
+        elif isinstance(question, NumericQuestion):
+            forecast_function = lambda q, r: self._run_forecast_on_numeric(
+                q, r
+            )
+        elif isinstance(question, DateQuestion):
+            raise NotImplementedError("Date questions not supported yet")
+        else:
+            raise ValueError(f"Unknown question type: {type(question)}")
+
+        prediction = await forecast_function(question, research)
+        return prediction
 
     @abstractmethod
     async def _run_forecast_on_binary(

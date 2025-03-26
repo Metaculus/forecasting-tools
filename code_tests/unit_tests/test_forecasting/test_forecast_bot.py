@@ -313,3 +313,28 @@ async def test_get_llm_edge_case_behavior() -> None:
 async def test_default_used_for_missing_llm_key() -> None:
     bot = MockBot(llms={})
     assert bot.get_llm("default") is not None
+
+
+async def test_notepad_counts_research_and_prediction_attempts() -> None:
+    research_reports = 2
+    predictions_per_report = 3
+    bot = MockBot(
+        research_reports_per_question=research_reports,
+        predictions_per_research_report=predictions_per_report,
+    )
+    test_question = ForecastingTestManager.get_fake_binary_question()
+
+    async def mock_remove_notepad(*args, **kwargs) -> None:
+        # Do nothing
+        pass
+
+    bot._remove_notepad = mock_remove_notepad
+
+    await bot.forecast_question(test_question)
+    notepad = await bot._get_notepad(test_question)
+
+    assert notepad.num_research_reports_attempted == research_reports
+    assert (
+        notepad.num_predictions_attempted
+        == predictions_per_report * research_reports
+    )
