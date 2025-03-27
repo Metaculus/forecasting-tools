@@ -325,6 +325,16 @@ class Q2TemplateBot2025(ForecastBot):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+
+    # Suppress LiteLLM logging
+    litellm_logger = logging.getLogger("LiteLLM")
+    litellm_logger.setLevel(logging.WARNING)
+    litellm_logger.propagate = False
+
     parser = argparse.ArgumentParser(
         description="Run the Q1TemplateBot forecasting system"
     )

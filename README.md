@@ -52,15 +52,19 @@ They both have roughly the same parameters. See below on how to use the Template
 
 
 ```python
-from forecasting_tools import TemplateBot, MetaculusApi
+from forecasting_tools import TemplateBot, MetaculusApi, GeneralLlm
 
 # Initialize the bot
 bot = TemplateBot(
     research_reports_per_question=3,  # Number of separate research attempts per question
     predictions_per_research_report=5,  # Number of predictions to make per research report
     publish_reports_to_metaculus=False,  # Whether to post the forecasts to Metaculus
-    folder_to_save_reports_to="logs/forecasts/",  # Where to save detailed reports (file saving environment variable must be set)
-    skip_previously_forecasted_questions=False
+    folder_to_save_reports_to="logs/forecasts/",  # Where to save detailed reports
+    skip_previously_forecasted_questions=False,
+    llms={ # LLM models to use for different tasks. Will use default llms if not specified. Requires the relevant provider environment variables to be set.
+        "default": GeneralLlm(model="anthropic/claude-3-5-sonnet-20240620", temperature=0),
+        "summarizer": "openai/gpt-4o-mini",
+    }
 )
 
 TOURNAMENT_ID = MetaculusApi.CURRENT_QUARTERLY_CUP_ID
@@ -317,7 +321,7 @@ json_object: dict = single_benchmark.to_json()
 new_benchmark: BenchmarkForBot = BenchmarkForBot.from_json(json_object)
 ```
 
-Once you have benchmark files in your project directory you can run `streamlit run forecasting_tools/forecast_helpers/benchmark_displayer.py` to get a UI with the benchmarks. You can also put `forecasting-tools.run_benchmark_streamlit_page()` into a new file, and run this file with streamlit to achieve the same results. This will allow you to see metrics side by side, explore code of past bots, see the actual bot responses, etc. It will pull in any files in your directory that contain "bench" in the name are json.
+Once you have benchmark files in your project directory you can run `streamlit run forecasting_tools/forecast_helpers/benchmark_displayer.py` to get a UI with the benchmarks. You can also put `forecasting-tools.run_benchmark_streamlit_page()` into a new file, and run this file with streamlit to achieve the same results. This will allow you to see metrics side by side, explore code of past bots, see the actual bot responses, etc. It will pull in any files in your directory that contain "bench" in the name and are json.
 
 ![Benchmark Displayer Top](./docs/images/benchmark_top_screen.png)
 ![Benchmark Displayer Bottom](./docs/images/benchmark_bottom_screen.png)

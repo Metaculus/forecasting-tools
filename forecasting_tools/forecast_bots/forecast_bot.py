@@ -657,25 +657,22 @@ class ForecastBot(ABC):
             report.errors for report in valid_reports if report.errors
         ]
 
+        full_summary = ""
         for report in valid_reports:
             question_summary = clean_indents(
                 f"""
                 URL: {report.question.page_url}
                 Errors: {report.errors}
-                # Summary:
+                <<<<<<<<<<<<<<<<<<<< Summary >>>>>>>>>>>>>>>>>>>>>
                 {report.summary}
 
-                # First 1000 characters of research:
-                {report.research[:1000]}
-
-                # First 1000 characters of rationales:
-                {report.forecast_rationales[:1000]}
-                ---------------------------------------------------------
+                <<<<<<<<<<<<<<<<<<<< First Rationales >>>>>>>>>>>>>>>>>>>>>
+                {report.forecast_rationales.split("##")[1][:10000]}
+                -------------------------------------------------------------------------------------------
             """
             )
-            logger.info(question_summary)
+            full_summary += question_summary + "\n"
 
-        combined_short_summary = ""
         for report in forecast_reports:
             if isinstance(report, ForecastReport):
                 short_summary = f"✅ URL: {report.question.page_url} | Minor Errors: {len(report.errors)}"
@@ -686,8 +683,8 @@ class ForecastBot(ABC):
                     else f"{str(report)[:500]}...{str(report)[-500:]}"
                 )
                 short_summary = f"❌ Exception: {report.__class__.__name__} | Message: {exception_message}"
-            combined_short_summary += short_summary + "\n"
-        logger.info(combined_short_summary)
+            full_summary += short_summary + "\n"
+        logger.info(full_summary)
 
         if minor_exceptions:
             logger.error(

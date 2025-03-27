@@ -19,7 +19,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.10"
 openai = "^1.51.0"
-tiktoken = "^0.8.0"
+tiktoken = ">=0.8.0,<0.10.0"
 aiofiles = "^24.1.0"
 aiohttp = "^3.9.3"
 aiolimiter = "^1.1.0"
@@ -41,18 +41,17 @@ scipy = "^1.12.0"
 faker = "^37.0.1"
 
 [tool.poetry.group.dev.dependencies]
-pipreqs = "^0.4.13"
 pre-commit = "^4.0.1"
 seaborn = "^0.13.2"
 matplotlib = "^3.9.2"
 ipykernel = "^6.29.5"
 notebook = "^7.2.2"
 streamlit = "^1.36.0"
-plotly = "^5.24.1"
+plotly = ">=5.24.1,<7.0.0"
 pytest = "^8.3.2"
 pytest-xdist = "^3.3.1"
 pytest-mock = "^3.14.0"
-pytest-asyncio = "^0.25.0"
+pytest-asyncio = ">=0.25.0,<0.27.0"
 pypistats = "^1.7.0"
 
 [build-system]
