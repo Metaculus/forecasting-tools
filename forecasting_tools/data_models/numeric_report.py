@@ -191,7 +191,7 @@ class NumericDistribution(BaseModel):
                 f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
                 f"at values {percentiles[i].value} and {percentiles[i+1].value}. "
                 "It is possible that your prediction is mostly or completely out of the upper/lower bound range "
-                "Thus making this cdf mostly meaningless. "
+                "Thus making this cdf mostly meaningless."
             )
 
         return percentiles
