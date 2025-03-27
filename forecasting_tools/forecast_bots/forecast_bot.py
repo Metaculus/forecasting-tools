@@ -763,6 +763,13 @@ class ForecastBot(ABC):
             )
             logger.info(question_summary)
 
+        combined_short_summary = ""
+        for report in valid_reports:
+            success_fail_emoji = "✅" if not report.errors else "❌"
+            super_short_summary = f"{success_fail_emoji} | URL: {report.question.page_url} | Errors: {report.errors}"
+            combined_short_summary += super_short_summary + "\n"
+        logger.info(combined_short_summary)
+
         if exceptions:
             raise RuntimeError(
                 f"{len(exceptions)} errors occurred while forecasting: {exceptions}"

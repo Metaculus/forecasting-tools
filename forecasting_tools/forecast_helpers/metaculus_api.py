@@ -39,11 +39,15 @@ class MetaculusApi:
     AI_COMPETITION_ID_Q3 = 3349  # https://www.metaculus.com/tournament/aibq3/
     AI_COMPETITION_ID_Q4 = 32506  # https://www.metaculus.com/tournament/aibq4/
     AI_COMPETITION_ID_Q1 = 32627  # https://www.metaculus.com/tournament/aibq1/
+    AI_COMPETITION_ID_Q2 = (
+        32721  # or aibq2 https://www.metaculus.com/tournament/aibq2/
+    )
     ACX_2025_TOURNAMENT = 32564
     Q3_2024_QUARTERLY_CUP = 3366
     Q4_2024_QUARTERLY_CUP = 3672
     Q1_2025_QUARTERLY_CUP = 32630
-    CURRENT_QUARTERLY_CUP_ID = Q1_2025_QUARTERLY_CUP
+    CURRENT_QUARTERLY_CUP_ID = "quarterly-cup"
+    CURRENT_AI_COMPETITION_ID = AI_COMPETITION_ID_Q2
 
     API_BASE_URL = "https://www.metaculus.com/api"
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
