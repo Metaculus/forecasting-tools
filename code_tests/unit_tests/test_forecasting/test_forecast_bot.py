@@ -241,7 +241,7 @@ def test_bot_has_config(bot: type[ForecastBot]) -> None:
 
 async def test_llm_returns_general_llm_when_llm_is_str() -> None:
     bot = MockBot(llms={"default": "gpt-4o"})
-    assert isinstance(bot._get_llm("default"), str)
+    assert isinstance(bot.get_llm("default"), str)
 
 
 async def test_get_llm_returns_correct_type_when_set() -> None:
@@ -252,18 +252,18 @@ async def test_get_llm_returns_correct_type_when_set() -> None:
         }
     )
 
-    str_llm = bot._get_llm("default")
-    general_llm = bot._get_llm("summarizer")
+    str_llm = bot.get_llm("default")
+    general_llm = bot.get_llm("summarizer")
     assert isinstance(str_llm, str)
     assert isinstance(general_llm, GeneralLlm)
 
-    general_llm_2 = bot._get_llm("default", guarantee_type="llm")
-    str_llm_2 = bot._get_llm("summarizer", guarantee_type="string_name")
+    general_llm_2 = bot.get_llm("default", guarantee_type="llm")
+    str_llm_2 = bot.get_llm("summarizer", guarantee_type="string_name")
     assert isinstance(general_llm_2, GeneralLlm)
     assert isinstance(str_llm_2, str)
 
-    str_llm_3 = bot._get_llm("default", guarantee_type=None)
-    general_llm_3 = bot._get_llm("summarizer", guarantee_type=None)
+    str_llm_3 = bot.get_llm("default", guarantee_type=None)
+    general_llm_3 = bot.get_llm("summarizer", guarantee_type=None)
     assert isinstance(str_llm_3, str)
     assert isinstance(general_llm_3, GeneralLlm)
 
@@ -271,7 +271,7 @@ async def test_get_llm_returns_correct_type_when_set() -> None:
 async def test_get_llm_returns_none_when_not_set() -> None:
     bot = MockBot()
     with pytest.raises(ValueError):
-        bot._get_llm("non_existent_llm")
+        bot.get_llm("non_existent_llm")
 
 
 async def test_get_config_includes_default_llms_when_not_set() -> None:
@@ -300,19 +300,19 @@ async def test_get_llm_edge_case_behavior() -> None:
 
     # Should return None when guarantee_type is None
     with pytest.raises(ValueError):
-        bot._get_llm(non_existent_purpose, guarantee_type=None)
+        bot.get_llm(non_existent_purpose, guarantee_type=None)
 
     # Should raise ValueError when guarantee_type is specified
     with pytest.raises(Exception):
-        bot._get_llm(non_existent_purpose, guarantee_type="string_name")
+        bot.get_llm(non_existent_purpose, guarantee_type="string_name")
 
     with pytest.raises(Exception):
-        bot._get_llm(non_existent_purpose, guarantee_type="llm")
+        bot.get_llm(non_existent_purpose, guarantee_type="llm")
 
 
 async def test_default_used_for_missing_llm_key() -> None:
     bot = MockBot(llms={})
-    assert bot._get_llm("default") is not None
+    assert bot.get_llm("default") is not None
 
 
 async def test_notepad_counts_research_and_prediction_attempts() -> None:

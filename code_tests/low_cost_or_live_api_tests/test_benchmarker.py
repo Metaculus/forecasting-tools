@@ -73,6 +73,12 @@ def assert_all_benchmark_object_fields_are_not_none(
     assert benchmark.name is not None, "Name is not set"
     assert benchmark.description is not None, "Description is not set"
     assert (
+        benchmark.explicit_name is None
+    ), "Explicit name is set without someone explicitly setting it"
+    assert (
+        benchmark.explicit_description is None
+    ), "Explicit description is set without someone explicitly setting it"
+    assert (
         benchmark.timestamp < datetime.now()
         and benchmark.timestamp
         > datetime.now() - timedelta(minutes=expected_time_taken)
@@ -99,6 +105,18 @@ def assert_all_benchmark_object_fields_are_not_none(
     assert (
         benchmark.average_expected_baseline_score > 0
     ), "Average inverse expected log score is not set"
+    assert (
+        benchmark.num_input_questions == num_questions
+    ), "Number of input questions is not set"
+    assert (
+        benchmark.forecast_bot_class_name is not None
+    ), "Forecast bot class name is not set"
+    assert (
+        benchmark.forecast_bot_class_name == "TemplateBot"
+    ), "Forecast bot class name is not set correctly"
+    assert (
+        len(benchmark.forecast_reports) == num_questions
+    ), "Forecast reports is not of the correct length"
 
 
 async def test_benchmarks_run_properly_with_provided_questions(
@@ -159,3 +177,17 @@ def test_benchmarker_initialization_errors() -> None:
         forecast_bots=[bot],
         questions_to_use=[ForecastingTestManager.get_fake_binary_question()],
     )
+
+
+def test_benchmark_for_bot_naming_and_description() -> None:
+    benchmark = BenchmarkForBot(
+        explicit_name="explicit name",
+        explicit_description="explicit description",
+        forecast_reports=[],
+        forecast_bot_config={},
+        time_taken_in_minutes=0,
+        total_cost=0,
+        git_commit_hash="",
+    )
+    assert benchmark.name == "explicit name"
+    assert benchmark.description == "explicit description"

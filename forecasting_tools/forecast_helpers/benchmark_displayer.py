@@ -4,6 +4,7 @@ from typing import Sequence
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objs as go
 import streamlit as st
 import typeguard
 
@@ -187,7 +188,11 @@ def get_benchmark_display_name(benchmark: BenchmarkForBot, index: int) -> str:
 
 
 def add_star_annotations(
-    fig: px.bar, df: pd.DataFrame, x_col: str, y_col: str, is_starred_col: str
+    fig: go.Figure,
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    is_starred_col: str,
 ) -> None:
     """Add star annotations to bars meeting the starred condition."""
     for idx, row in df[df[is_starred_col]].iterrows():
@@ -313,10 +318,10 @@ def display_benchmark_comparison_graphs(
         st.markdown(
             "Higher score indicates better performance. Read more [here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.). "
             "This is a proper score assuming the community prediction is the true probability. "
-            f"Error bars are for {confidence_level} confidence interval. "
-            "If an error bar is 0, then the data probably violated the normality assumption for a T-based confidence interval when num_forecasts < 30."
+            f"Error bars are for {confidence_level*100}% confidence interval. "
+            "If an error bar is 0, then the data probably violated the normality assumption for a T-based confidence interval when num_forecasts < 30. "
             "Note that there are seasonal changes with the certinaty of questions (e.g. there are more certain questions near the end of the year). "
-            "Certain questions score better, so be careful of comparing benchmarks from different time periods."
+            "'Certain' questions score better, so be careful of comparing benchmarks from different time periods. "
         )
 
         # Mark highest scores with stars (higher is better for baseline score)
@@ -391,7 +396,9 @@ def make_perfect_benchmark(
         assert report.community_prediction is not None
         report.prediction = report.community_prediction
     perfect_benchmark.forecast_reports = reports_of_perfect_benchmark
-    perfect_benchmark.name = "Perfect Predictor (questions of benchmark 1)"
+    perfect_benchmark.explicit_name = (
+        "Perfect Predictor (questions of benchmark 1)"
+    )
     return perfect_benchmark
 
 

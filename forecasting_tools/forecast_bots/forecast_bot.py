@@ -232,7 +232,7 @@ class ForecastBot(ABC):
 
         final_summary = default_summary
         try:
-            model = self._get_llm("summarizer", "llm")
+            model = self.get_llm("summarizer", "llm")
             prompt = clean_indents(
                 f"""
                 Please summarize the following research in 1-2 paragraphs. The research tries to help answer the following question:
@@ -699,27 +699,27 @@ class ForecastBot(ABC):
             )
 
     @overload
-    def _get_llm(
+    def get_llm(
         self,
         purpose: str = "default",
         guarantee_type: None = None,
     ) -> str | GeneralLlm: ...
 
     @overload
-    def _get_llm(
+    def get_llm(
         self,
         purpose: str = "default",
         guarantee_type: Literal["llm"] = "llm",
     ) -> GeneralLlm: ...
 
     @overload
-    def _get_llm(
+    def get_llm(
         self,
         purpose: str = "default",
         guarantee_type: Literal["string_name"] = "string_name",
     ) -> str: ...
 
-    def _get_llm(
+    def get_llm(
         self,
         purpose: str = "default",
         guarantee_type: Literal["llm", "string_name"] | None = None,
