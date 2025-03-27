@@ -265,10 +265,10 @@ class ForecastBot(ABC):
         }
         llm_dict: dict[str, str | dict[str, Any]] = {}
         for key, value in self._llms.items():
-            if isinstance(value, str):
-                llm_dict[key] = value
-            else:
+            if isinstance(value, GeneralLlm):
                 llm_dict[key] = value.to_dict()
+            else:
+                llm_dict[key] = value
         config["llms"] = llm_dict
         return config
 

@@ -71,7 +71,13 @@ def assert_all_benchmark_object_fields_are_not_none(
 ) -> None:
     expected_time_taken = 0.5
     assert benchmark.name is not None, "Name is not set"
+    assert (
+        "n/a" not in benchmark.name
+    ), "All fields for name should be set (none should fail)"
     assert benchmark.description is not None, "Description is not set"
+    assert (
+        "n/a" not in benchmark.description
+    ), "All fields for description should be set (none should fail)"
     assert (
         benchmark.explicit_name is None
     ), "Explicit name is set without someone explicitly setting it"
