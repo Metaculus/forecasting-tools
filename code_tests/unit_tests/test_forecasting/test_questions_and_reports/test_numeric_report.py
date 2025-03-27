@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from forecasting_tools.data_models.numeric_report import (
@@ -9,6 +11,8 @@ from forecasting_tools.data_models.questions import (
     NumericQuestion,
     QuestionState,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def test_percentile_validation() -> None:
@@ -222,3 +226,27 @@ def test_close_bound_distribution(percentiles: list[Percentile]) -> None:
         assert (
             distribution.cdf[i + 1].value - distribution.cdf[i].value > 0.00001
         )
+
+
+def test_error_on_too_little_probability_assigned_in_range() -> None:
+    prediction = NumericDistribution(
+        declared_percentiles=[
+            Percentile(percentile=0.1, value=1.1),
+            Percentile(percentile=0.2, value=1.2),
+            Percentile(percentile=0.3, value=1.3),
+            Percentile(percentile=0.4, value=1.4),
+            Percentile(percentile=0.5, value=1.5),
+            Percentile(percentile=0.6, value=1.6),
+            Percentile(percentile=0.7, value=1.7),
+            Percentile(percentile=0.8, value=1.8),
+            Percentile(percentile=0.9, value=1.9),
+        ],
+        lower_bound=14,
+        upper_bound=15,
+        zero_point=None,
+        open_lower_bound=True,
+        open_upper_bound=True,
+    )
+    with pytest.raises(Exception):
+        logger.info(prediction.cdf)
+        prediction.cdf

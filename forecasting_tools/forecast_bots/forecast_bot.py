@@ -717,13 +717,13 @@ class ForecastBot(ABC):
     def _get_llm(
         self,
         purpose: str = "default",
-        guarantee_type: Literal["model_name"] = "model_name",
+        guarantee_type: Literal["string_name"] = "string_name",
     ) -> str: ...
 
     def _get_llm(
         self,
         purpose: str = "default",
-        guarantee_type: Literal["llm", "model_name"] | None = None,
+        guarantee_type: Literal["llm", "string_name"] | None = None,
     ) -> GeneralLlm | str:
         if purpose not in self._llms:
             raise ValueError(
@@ -740,7 +740,7 @@ class ForecastBot(ABC):
                 return_value = llm
             else:
                 return_value = GeneralLlm(model=llm)
-        elif guarantee_type == "model_name":
+        elif guarantee_type == "string_name":
             if isinstance(llm, str):
                 return_value = llm
             else:

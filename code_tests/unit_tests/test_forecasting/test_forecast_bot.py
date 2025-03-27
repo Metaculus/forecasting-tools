@@ -258,7 +258,7 @@ async def test_get_llm_returns_correct_type_when_set() -> None:
     assert isinstance(general_llm, GeneralLlm)
 
     general_llm_2 = bot._get_llm("default", guarantee_type="llm")
-    str_llm_2 = bot._get_llm("summarizer", guarantee_type="model_name")
+    str_llm_2 = bot._get_llm("summarizer", guarantee_type="string_name")
     assert isinstance(general_llm_2, GeneralLlm)
     assert isinstance(str_llm_2, str)
 
@@ -304,7 +304,7 @@ async def test_get_llm_edge_case_behavior() -> None:
 
     # Should raise ValueError when guarantee_type is specified
     with pytest.raises(Exception):
-        bot._get_llm(non_existent_purpose, guarantee_type="model_name")
+        bot._get_llm(non_existent_purpose, guarantee_type="string_name")
 
     with pytest.raises(Exception):
         bot._get_llm(non_existent_purpose, guarantee_type="llm")

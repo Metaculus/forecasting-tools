@@ -11,6 +11,9 @@ from forecasting_tools.forecast_bots.main_bot import MainBot
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025,
 )
+from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
+    Q2TemplateBot2025,
+)
 from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot2024,
 )
@@ -24,6 +27,7 @@ def get_all_important_bot_classes() -> list[type[ForecastBot]]:
     return [
         MainBot,
         TemplateBot,
+        Q2TemplateBot2025,
         Q1TemplateBot2025,
         Q3TemplateBot2024,
         Q4TemplateBot2024,

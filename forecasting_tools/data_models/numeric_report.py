@@ -180,6 +180,20 @@ class NumericDistribution(BaseModel):
             for value, percentile in zip(cdf_xaxis, continuous_cdf)
         ]
         assert len(percentiles) == 201
+
+        # Validate minimum spacing between consecutive values
+        for i in range(len(percentiles) - 1):
+            assert (
+                abs(percentiles[i + 1].percentile - percentiles[i].percentile)
+                >= 5e-05
+            ), (
+                f"Percentiles at indices {i} and {i+1} are too close: "
+                f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
+                f"at values {percentiles[i].value} and {percentiles[i+1].value}. "
+                "It is possible that your prediction is mostly or completely out of the upper/lower bound range "
+                "Thus making this cdf mostly meaningless. "
+            )
+
         return percentiles
 
     def get_representative_percentiles(
