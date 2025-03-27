@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 class Benchmarker:
     """
+    This class is used to benchmark a list of forecast bots
+    by comparing their predictions to the community prediction on a set of questions.
+
     For an idea of how many questions are 'enough' to test with read:
     https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world
 

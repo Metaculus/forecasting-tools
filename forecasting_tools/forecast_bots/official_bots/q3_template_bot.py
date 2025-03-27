@@ -34,6 +34,12 @@ class Q3TemplateBot2024(ForecastBot):
         model="gpt-4o", temperature=0.1
     )  # Q3 Bot used the default llama index temperature which as of Dec 21 2024 is 0.1
 
+    @classmethod
+    def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm]:
+        return {
+            "default": cls.FINAL_DECISION_LLM,
+        }
+
     async def run_research(self, question: MetaculusQuestion) -> str:
         system_prompt = clean_indents(
             """
@@ -82,7 +88,7 @@ class Q3TemplateBot2024(ForecastBot):
             You write your rationale and then the last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self.FINAL_DECISION_LLM.invoke(prompt)
+        reasoning = await self.get_llm("default", "llm").invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=0.99, min_prediction=0.01
         )

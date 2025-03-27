@@ -220,7 +220,12 @@ class MetaculusApi:
         METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
         if METACULUS_TOKEN is None:
             raise ValueError("METACULUS_TOKEN environment variable not set")
-        return {"headers": {"Authorization": f"Token {METACULUS_TOKEN}"}}
+        return {
+            "headers": {
+                "Authorization": f"Token {METACULUS_TOKEN}",
+                "Accept-Language": "en",
+            }
+        }
 
     @classmethod
     def _post_question_prediction(

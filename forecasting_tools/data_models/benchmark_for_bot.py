@@ -25,6 +25,8 @@ class BenchmarkForBot(BaseModel, Jsonable):
 
     @property
     def average_expected_baseline_score(self) -> float:
+        if len(self.forecast_reports) == 0:
+            raise ValueError("No forecast reports in benchmark")
         reports = typeguard.check_type(
             self.forecast_reports,
             list[ForecastReport],

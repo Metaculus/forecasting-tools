@@ -88,6 +88,9 @@ from forecasting_tools.forecast_bots.template_bot import (
 from forecasting_tools.forecast_helpers.asknews_searcher import (
     AskNewsSearcher as AskNewsSearcher,
 )
+from forecasting_tools.forecast_helpers.benchmark_displayer import (
+    run_benchmark_streamlit_page as run_benchmark_streamlit_page,
+)
 from forecasting_tools.forecast_helpers.benchmarker import (
     Benchmarker as Benchmarker,
 )

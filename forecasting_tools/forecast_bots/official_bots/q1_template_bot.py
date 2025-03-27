@@ -111,7 +111,7 @@ class Q1TemplateBot2025(ForecastBot):
         SmartSearcher is a custom class that is a wrapper around an search on Exa.ai
         """
         searcher = SmartSearcher(
-            model=self._get_final_decision_llm(),
+            model=self.get_llm("default", "llm"),
             temperature=0,
             num_searches_to_run=2,
             num_sites_per_search=10,
@@ -125,24 +125,6 @@ class Q1TemplateBot2025(ForecastBot):
         )  # You can ask the searcher to filter by date, exclude/include a domain, and run specific searches for finding sources vs finding highlights within a source
         response = await searcher.invoke(prompt)
         return response
-
-    def _get_final_decision_llm(self) -> GeneralLlm:
-        model = None
-        if os.getenv("OPENAI_API_KEY"):
-            model = GeneralLlm(model="gpt-4o", temperature=0.3)
-        elif os.getenv("ANTHROPIC_API_KEY"):
-            model = GeneralLlm(
-                model="claude-3-5-sonnet-20241022", temperature=0.3
-            )
-        elif os.getenv("OPENROUTER_API_KEY"):
-            model = GeneralLlm(
-                model="openrouter/openai/gpt-4o", temperature=0.3
-            )
-        elif os.getenv("METACULUS_TOKEN"):
-            model = GeneralLlm(model="metaculus/gpt-4o", temperature=0.3)
-        else:
-            raise ValueError("No API key for final_decision_llm found")
-        return model
 
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
@@ -180,7 +162,7 @@ class Q1TemplateBot2025(ForecastBot):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self._get_final_decision_llm().invoke(prompt)
+        reasoning = await self.get_llm("default", "llm").invoke(prompt)
         prediction: float = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0
         )
@@ -231,7 +213,7 @@ class Q1TemplateBot2025(ForecastBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self._get_final_decision_llm().invoke(prompt)
+        reasoning = await self.get_llm("default", "llm").invoke(prompt)
         prediction: PredictedOptionList = (
             PredictionExtractor.extract_option_list_with_percentage_afterwards(
                 reasoning, question.options
@@ -299,7 +281,7 @@ class Q1TemplateBot2025(ForecastBot):
             "
             """
         )
-        reasoning = await self._get_final_decision_llm().invoke(prompt)
+        reasoning = await self.get_llm("default", "llm").invoke(prompt)
         prediction: NumericDistribution = (
             PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
                 reasoning, question

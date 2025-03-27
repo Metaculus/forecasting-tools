@@ -90,7 +90,7 @@ class Q1TemplateBotWithConvertToBinary(Q1TemplateBot2025):
             """
         )
 
-        final_distribution = await self._get_final_decision_llm().invoke(
+        final_distribution = await self.get_llm("default", "llm").invoke(
             consistency_prompt
         )
         prediction = (
@@ -211,7 +211,7 @@ class Q1TemplateBotWithConvertToBinary(Q1TemplateBot2025):
             """
         )
 
-        final_distribution = await self._get_final_decision_llm().invoke(
+        final_distribution = await self.get_llm("default", "llm").invoke(
             consistency_prompt
         )
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(

@@ -5,7 +5,7 @@ import os
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Coroutine, Sequence, TypeVar, cast, overload
+from typing import Any, Coroutine, Literal, Sequence, TypeVar, cast, overload
 
 from exceptiongroup import ExceptionGroup
 from pydantic import BaseModel
@@ -265,21 +265,21 @@ class ForecastBot(ABC):
     def get_llm(
         self,
         purpose: str = "default",
-        guarantee_type: type[GeneralLlm] = GeneralLlm,
+        guarantee_type: Literal["llm"] = "llm",
     ) -> GeneralLlm: ...
 
     @overload
     def get_llm(
         self,
         purpose: str = "default",
-        guarantee_type: type[str] = str,
+        guarantee_type: Literal["model_name"] = "model_name",
     ) -> str: ...
 
     def get_llm(
         self,
         purpose: str = "default",
-        guarantee_type: type[GeneralLlm] | type[str] | None = None,
-    ) -> str | GeneralLlm:
+        guarantee_type: Literal["llm", "model_name"] | None = None,
+    ) -> GeneralLlm | str:
         if purpose not in self._llms:
             raise ValueError(
                 f"Unknown llm requested from llm dict for purpose: '{purpose}'"
@@ -290,12 +290,12 @@ class ForecastBot(ABC):
 
         if guarantee_type is None:
             return_value = llm
-        elif guarantee_type == GeneralLlm:
+        elif guarantee_type == "llm":
             if isinstance(llm, GeneralLlm):
                 return_value = llm
             else:
                 return_value = GeneralLlm(model=llm)
-        elif guarantee_type == str:
+        elif guarantee_type == "model_name":
             if isinstance(llm, str):
                 return_value = llm
             else:
@@ -529,7 +529,7 @@ class ForecastBot(ABC):
             raise ValueError(f"Unknown question type: {type(question)}")
 
         prediction = await forecast_function(question, research)
-        return prediction
+        return prediction  # type: ignore
 
     @abstractmethod
     async def _run_forecast_on_binary(
