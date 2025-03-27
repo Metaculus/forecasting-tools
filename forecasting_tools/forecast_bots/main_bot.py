@@ -44,6 +44,8 @@ class MainBot(Q1TemplateBot2025):
     @classmethod
     def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm]:
         return {
-            "default": "openai/o1",
-            "summarizer": "openai/gpt-4o-mini",
+            "default": GeneralLlm(model="openai/o1", temperature=1),
+            "summarizer": GeneralLlm(
+                model="openai/gpt-4o-mini", temperature=0
+            ),
         }
