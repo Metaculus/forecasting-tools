@@ -314,7 +314,7 @@ def display_benchmark_comparison_graphs(
             "Higher score indicates better performance. Read more [here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.). "
             "This is a proper score assuming the community prediction is the true probability. "
             f"Error bars are for {confidence_level} confidence interval. "
-            "If an error bar is 0, then the data probably violated the normality assumption for a T-based confidence interval."
+            "If an error bar is 0, then the data probably violated the normality assumption for a T-based confidence interval when num_forecasts < 30."
             "Note that there are seasonal changes with the certinaty of questions (e.g. there are more certain questions near the end of the year). "
             "Certain questions score better, so be careful of comparing benchmarks from different time periods."
         )

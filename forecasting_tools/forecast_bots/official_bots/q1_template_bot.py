@@ -111,7 +111,7 @@ class Q1TemplateBot2025(ForecastBot):
         SmartSearcher is a custom class that is a wrapper around an search on Exa.ai
         """
         searcher = SmartSearcher(
-            model=self.get_llm("default", "llm"),
+            model=self._get_llm("default", "llm"),
             temperature=0,
             num_searches_to_run=2,
             num_sites_per_search=10,
@@ -162,7 +162,7 @@ class Q1TemplateBot2025(ForecastBot):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        reasoning = await self._get_llm("default", "llm").invoke(prompt)
         prediction: float = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0
         )
@@ -213,7 +213,7 @@ class Q1TemplateBot2025(ForecastBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        reasoning = await self._get_llm("default", "llm").invoke(prompt)
         prediction: PredictedOptionList = (
             PredictionExtractor.extract_option_list_with_percentage_afterwards(
                 reasoning, question.options
@@ -281,7 +281,7 @@ class Q1TemplateBot2025(ForecastBot):
             "
             """
         )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        reasoning = await self._get_llm("default", "llm").invoke(prompt)
         prediction: NumericDistribution = (
             PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
                 reasoning, question

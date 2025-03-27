@@ -93,6 +93,9 @@ class ConfidenceIntervalCalculator:
         cls, observations: list[float], confidence: float = 0.9
     ) -> ConfidenceInterval:
         """
+        This solves the following stats problem:
+        'estimating population mean with unknown population standard deviation'
+
         Requirements
         - Simple random sample
         - Either the sample is from a normally distributed population or n >30

@@ -88,7 +88,7 @@ class Q3TemplateBot2024(ForecastBot):
             You write your rationale and then the last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        reasoning = await self._get_llm("default", "llm").invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=0.99, min_prediction=0.01
         )

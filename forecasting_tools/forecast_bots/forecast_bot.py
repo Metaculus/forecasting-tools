@@ -230,7 +230,7 @@ class ForecastBot(ABC):
 
         return_value = default_summary
         try:
-            model = self.get_llm("summarizer", guarantee_type=GeneralLlm)
+            model = self._get_llm("summarizer", "llm")
             prompt = clean_indents(
                 f"""
                 Please summarize the following research in 1-2 paragraphs. The report tries to help answer the following question:
@@ -254,114 +254,6 @@ class ForecastBot(ABC):
             )
         return return_value
 
-    @overload
-    def get_llm(
-        self,
-        purpose: str = "default",
-        guarantee_type: None = None,
-    ) -> str | GeneralLlm: ...
-
-    @overload
-    def get_llm(
-        self,
-        purpose: str = "default",
-        guarantee_type: Literal["llm"] = "llm",
-    ) -> GeneralLlm: ...
-
-    @overload
-    def get_llm(
-        self,
-        purpose: str = "default",
-        guarantee_type: Literal["model_name"] = "model_name",
-    ) -> str: ...
-
-    def get_llm(
-        self,
-        purpose: str = "default",
-        guarantee_type: Literal["llm", "model_name"] | None = None,
-    ) -> GeneralLlm | str:
-        if purpose not in self._llms:
-            raise ValueError(
-                f"Unknown llm requested from llm dict for purpose: '{purpose}'"
-            )
-
-        llm = self._llms[purpose]
-        return_value = None
-
-        if guarantee_type is None:
-            return_value = llm
-        elif guarantee_type == "llm":
-            if isinstance(llm, GeneralLlm):
-                return_value = llm
-            else:
-                return_value = GeneralLlm(model=llm)
-        elif guarantee_type == "model_name":
-            if isinstance(llm, str):
-                return_value = llm
-            else:
-                return_value = llm.model
-        else:
-            raise ValueError(f"Unknown guarantee_type: {guarantee_type}")
-
-        return return_value
-
-    @classmethod
-    def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm]:
-        """
-        Returns a dictionary of default llms for the bot.
-        The keys are the purpose of the llm and the values are the llms (model name or GeneralLlm object).
-        Consider adding:
-        - researcher
-        - reasoner
-        - etc.
-        """
-
-        if os.getenv("OPENAI_API_KEY"):
-            main_default_llm = GeneralLlm(model="gpt-4o", temperature=0.3)
-        elif os.getenv("ANTHROPIC_API_KEY"):
-            main_default_llm = GeneralLlm(
-                model="claude-3-5-sonnet-20241022", temperature=0.3
-            )
-        elif os.getenv("OPENROUTER_API_KEY"):
-            main_default_llm = GeneralLlm(
-                model="openrouter/openai/gpt-4o", temperature=0.3
-            )
-        elif os.getenv("METACULUS_TOKEN"):
-            main_default_llm = GeneralLlm(
-                model="metaculus/gpt-4o", temperature=0.3
-            )
-        else:
-            main_default_llm = GeneralLlm(model="gpt-4o", temperature=0.3)
-
-        if os.getenv("OPENAI_API_KEY"):
-            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
-        elif os.getenv("METACULUS_TOKEN"):
-            summarizer = GeneralLlm(
-                model="metaculus/gpt-4o-mini", temperature=0.3
-            )
-        else:
-            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
-
-        return {
-            "default": main_default_llm,
-            "summarizer": summarizer,
-        }
-
-    async def _run_individual_question_with_error_propagation(
-        self, question: MetaculusQuestion
-    ) -> ForecastReport:
-        try:
-            return await self._run_individual_question(question)
-        except Exception as e:
-            error_message = (
-                f"Error while processing question url: '{question.page_url}'"
-            )
-            logger.error(f"{error_message}: {e}")
-            self._reraise_exception_with_prepended_message(e, error_message)
-            assert (
-                False
-            ), "This is to satisfy type checker. The previous function should raise an exception"
-
     def get_config(self) -> dict[str, Any]:
         params = inspect.signature(self.__init__).parameters
         config: dict[str, Any] = {
@@ -380,6 +272,21 @@ class ForecastBot(ABC):
                 llm_dict[key] = value.to_dict()
         config["llms"] = llm_dict
         return config
+
+    async def _run_individual_question_with_error_propagation(
+        self, question: MetaculusQuestion
+    ) -> ForecastReport:
+        try:
+            return await self._run_individual_question(question)
+        except Exception as e:
+            error_message = (
+                f"Error while processing question url: '{question.page_url}'"
+            )
+            logger.error(f"{error_message}: {e}")
+            self._reraise_exception_with_prepended_message(e, error_message)
+            assert (
+                False
+            ), "This is to satisfy type checker. The previous function should raise an exception"
 
     async def _run_individual_question(
         self, question: MetaculusQuestion
@@ -791,3 +698,96 @@ class ForecastBot(ABC):
             raise RuntimeError(
                 f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
             )
+
+    @overload
+    def _get_llm(
+        self,
+        purpose: str = "default",
+        guarantee_type: None = None,
+    ) -> str | GeneralLlm: ...
+
+    @overload
+    def _get_llm(
+        self,
+        purpose: str = "default",
+        guarantee_type: Literal["llm"] = "llm",
+    ) -> GeneralLlm: ...
+
+    @overload
+    def _get_llm(
+        self,
+        purpose: str = "default",
+        guarantee_type: Literal["model_name"] = "model_name",
+    ) -> str: ...
+
+    def _get_llm(
+        self,
+        purpose: str = "default",
+        guarantee_type: Literal["llm", "model_name"] | None = None,
+    ) -> GeneralLlm | str:
+        if purpose not in self._llms:
+            raise ValueError(
+                f"Unknown llm requested from llm dict for purpose: '{purpose}'"
+            )
+
+        llm = self._llms[purpose]
+        return_value = None
+
+        if guarantee_type is None:
+            return_value = llm
+        elif guarantee_type == "llm":
+            if isinstance(llm, GeneralLlm):
+                return_value = llm
+            else:
+                return_value = GeneralLlm(model=llm)
+        elif guarantee_type == "model_name":
+            if isinstance(llm, str):
+                return_value = llm
+            else:
+                return_value = llm.model
+        else:
+            raise ValueError(f"Unknown guarantee_type: {guarantee_type}")
+
+        return return_value
+
+    @classmethod
+    def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm]:
+        """
+        Returns a dictionary of default llms for the bot.
+        The keys are the purpose of the llm and the values are the llms (model name or GeneralLlm object).
+        Consider adding:
+        - researcher
+        - reasoner
+        - etc.
+        """
+
+        if os.getenv("OPENAI_API_KEY"):
+            main_default_llm = GeneralLlm(model="gpt-4o", temperature=0.3)
+        elif os.getenv("ANTHROPIC_API_KEY"):
+            main_default_llm = GeneralLlm(
+                model="claude-3-5-sonnet-20241022", temperature=0.3
+            )
+        elif os.getenv("OPENROUTER_API_KEY"):
+            main_default_llm = GeneralLlm(
+                model="openrouter/openai/gpt-4o", temperature=0.3
+            )
+        elif os.getenv("METACULUS_TOKEN"):
+            main_default_llm = GeneralLlm(
+                model="metaculus/gpt-4o", temperature=0.3
+            )
+        else:
+            main_default_llm = GeneralLlm(model="gpt-4o", temperature=0.3)
+
+        if os.getenv("OPENAI_API_KEY"):
+            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+        elif os.getenv("METACULUS_TOKEN"):
+            summarizer = GeneralLlm(
+                model="metaculus/gpt-4o-mini", temperature=0.3
+            )
+        else:
+            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+
+        return {
+            "default": main_default_llm,
+            "summarizer": summarizer,
+        }

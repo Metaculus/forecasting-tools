@@ -166,7 +166,7 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        reasoning = await self._get_llm("default", "llm").invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0
         )
@@ -218,7 +218,7 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
             Option_N: Probability_N
             """
         )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        reasoning = await self._get_llm("default", "llm").invoke(prompt)
         prediction = (
             PredictionExtractor.extract_option_list_with_percentage_afterwards(
                 reasoning, question.options
@@ -287,7 +287,7 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
             "
             """
         )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        reasoning = await self._get_llm("default", "llm").invoke(prompt)
         reasoning = f"Persona:\n{persona_message}\n\nReasoning:\n{reasoning}"
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question
