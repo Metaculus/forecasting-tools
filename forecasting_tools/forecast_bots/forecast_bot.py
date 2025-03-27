@@ -51,6 +51,8 @@ class NotePad(BaseModel):
     that other parts of the forecasting bot needs to access
 
     You can inherit from this class to add additional attributes
+
+    A notepad for a question within a forecast bot can be obtained by calling `self._get_notepad(question)`
     """
 
     question: MetaculusQuestion
@@ -228,31 +230,28 @@ class ForecastBot(ABC):
         if len(research) < default_summary_size:
             return research
 
-        return_value = default_summary
+        final_summary = default_summary
         try:
             model = self._get_llm("summarizer", "llm")
             prompt = clean_indents(
                 f"""
-                Please summarize the following research in 1-2 paragraphs. The report tries to help answer the following question:
+                Please summarize the following research in 1-2 paragraphs. The research tries to help answer the following question:
                 {question.question_text}
 
                 Only summarize the research. Do not answer the question. Just say what the research says w/o any opinions added.
-
-                If there are links in the research, please cite your sources using markdown links (copy the link exactly).
-                For instance if you want to cite www.example.com/news-headline, you should cite it as [example.com](www.example.com/news-headline).
-                Do not make up links.
+                At the end mention what websites/sources were used (and copy links verbatim if possible)
 
                 The research is:
                 {research}
                 """
             )
             summary = await model.invoke(prompt)
-            return_value = summary
+            final_summary = summary
         except Exception as e:
             logger.debug(
                 f"Could not summarize research. Defaulting to first {default_summary_size} characters: {e}"
             )
-        return return_value
+        return final_summary
 
     def get_config(self) -> dict[str, Any]:
         params = inspect.signature(self.__init__).parameters
@@ -642,7 +641,7 @@ class ForecastBot(ABC):
 
     @staticmethod
     def log_report_summary(
-        forecast_reports: list[ForecastReport | BaseException],
+        forecast_reports: Sequence[ForecastReport | BaseException],
     ) -> None:
         valid_reports = [
             report

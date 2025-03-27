@@ -31,10 +31,6 @@ logger = logging.getLogger(__name__)
 
 
 async def run_forecasts(skip_previous: bool, tournament: int | str) -> None:
-    """
-    Make a copy of this file called run_bot.py (i.e. remove template) and fill in your bot details.
-    This will be run in the workflows
-    """
     forecaster = Q1VeritasBot(
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,

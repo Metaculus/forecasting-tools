@@ -51,9 +51,9 @@ class SmartSearcher(OutputsText, AiModel):
         if isinstance(model, str):
             self.llm = GeneralLlm(model=model, temperature=temperature)
         else:
-            assert (
-                temperature is None
-            ), "Temperature must be None if model is a preconfigured GeneralLlm"
+            logger.warning(
+                "SmartSearcher: Temperature not used if model is a preconfigured GeneralLlm"
+            )
             self.llm = model
         self.include_works_cited_list = include_works_cited_list
         self.use_citation_brackets = use_brackets_around_citations

@@ -6,6 +6,7 @@ temp
 .sandbox/
 sandbox.py
 sandbox.ipynb
+benchmarks/
 
 .DS_Store
 

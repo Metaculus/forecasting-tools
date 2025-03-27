@@ -33,14 +33,17 @@ class Q2TemplateBot2025(ForecastBot):
     """
     This is a copy of the template bot for Q2 2025 Metaculus AI Tournament.
     The official bots on the leaderboard use AskNews in Q2.
-    The main way this bot has changed since Q1 is that the new units parameter was added
+    Main template bot changes since Q1
+    - Support for new units parameter was added
+    - You now set your llms when you initialize the bot (making it easier to switch between and benchmark different models)
 
     The main entry point of this bot is `forecast_on_tournament` in the parent class.
-    However generally the flow is:
+    See the script at the bottom of the file for more details on how to run the bot.
+    Ignoring the finer details, the general flow is:
     - Load questions from Metaculus
     - For each question
-        - Execute run_research for research_reports_per_question runs
-        - Execute respective run_forecast function for `predictions_per_research_report * research_reports_per_question` runs
+        - Execute run_research a number of times equal to research_reports_per_question
+        - Execute respective run_forecast function `predictions_per_research_report * research_reports_per_question` times
         - Aggregate the predictions
         - Submit prediction (if publish_reports_to_metaculus is True)
     - Return a list of ForecastReport objects
@@ -80,6 +83,9 @@ class Q2TemplateBot2025(ForecastBot):
                     question.question_text, use_open_router=True
                 )
             else:
+                logger.warning(
+                    f"No research provider found when processing question URL {question.page_url}. Will pass back empty string."
+                )
                 research = ""
             logger.info(
                 f"Found Research for URL {question.page_url}:\n{research}"
@@ -346,6 +352,15 @@ if __name__ == "__main__":
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=True,
+        # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
+        #     "default": GeneralLlm(
+        #         model="metaculus/anthropic/claude-3-5-sonnet-20241022",
+        #         temperature=0.3,
+        #         timeout=40,
+        #         allowed_tries=2,
+        #     ),
+        #     "summarizer": "openai/gpt-4o-mini",
+        # },
     )
 
     if run_mode == "tournament":

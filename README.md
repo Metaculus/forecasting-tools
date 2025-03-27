@@ -17,9 +17,9 @@ Demo repo: https://github.com/Metaculus/metac-bot-template
 This repository contains forecasting and research tools built with Python and Streamlit. The project aims to assist users in making predictions, conducting research, and analyzing data related to hard to answer questions (especially those from Metaculus).
 
 Here are the tools most likely to be useful to you:
-- 🎯 **Forecasting Bot:** General forecaster that integrates with the Metaculus AI benchmarking competition and provides a number of utilities. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the API code, etc)
+- 🎯 **Forecasting Bot:** General forecaster that integrates with the Metaculus AI benchmarking competition and provides a number of utilities. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the aggregation/API code, etc)
 - 🔌 **Metaculus API Wrapper:** for interacting with questions and tournaments
-- 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run you bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction.
+- 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run you bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected log scores.
 - 🔍 **Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and GPT. Its a better (but slightly more expensive) alternative to Perplexity.ai that is configurable, more accurate, able to decide on filters, able to link to exact paragraphs, etc.
 - 🔑 **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
 
@@ -43,8 +43,8 @@ Note: This package is still in an experimental phase. The goal is to keep the pa
 ## Using the Preexisting Bots
 
 The package comes with two major pre-built bots:
-- **MainBot**: The more sophisticated and expensive bot that does deeper research.
-- **TemplateBot**: A simpler bot that models the Metaculus templates that's cheaper, easier to start with, and faster to run.
+- **MainBot**: The most accurate bot based on testing. May be more expensive.
+- **TemplateBot**: A simple bot that's cheaper, easier to start with, and faster to run.
 
 They both have roughly the same parameters. See below on how to use the TemplateBot to make forecasts.
 
@@ -242,7 +242,8 @@ bots = [TemplateBot(), CustomBot()]  # Add your custom bots here
 benchmarker = Benchmarker(
     forecast_bots=bots,
     number_of_questions_to_use=2,  # Recommended 100+ for meaningful results
-    file_path_to_save_reports="benchmarks/"
+    file_path_to_save_reports="benchmarks/",
+    concurrent_question_batch_size=5,
 )
 benchmarks: list[BenchmarkForBot] = await benchmarker.run_benchmark()
 
@@ -250,31 +251,31 @@ benchmarks: list[BenchmarkForBot] = await benchmarker.run_benchmark()
 for benchmark in benchmarks[:2]:
     print("--------------------------------")
     print(f"Bot: {benchmark.name}")
-    print(f"Score: {benchmark.average_expected_baseline_score}") # Lower is better
+    print(f"Score: {benchmark.average_expected_baseline_score}") # Higher is better
     print(f"Num reports in benchmark: {len(benchmark.forecast_reports)}")
     print(f"Time: {benchmark.time_taken_in_minutes}min")
     print(f"Cost: ${benchmark.total_cost}")
 ```
 
     --------------------------------
-    Bot: Benchmark for TemplateBot
-    Score: 46.0834
+    Bot: TemplateBot
+    Score: 53.24105782939477
     Num reports in benchmark: 2
-    Time: 0.5136146903038025min
-    Cost: $0.0332325
+    Time: 0.23375582297643024min
+    Cost: $0.03020605
     --------------------------------
-    Bot: Benchmark for CustomBot
-    Score: 52.1924
+    Bot: CustomBot
+    Score: 53.24105782939476
     Num reports in benchmark: 2
-    Time: 0.4508770227432251min
-    Cost: $0.03279
+    Time: 0.20734789768854778min
+    Cost: $0.019155650000000003
 
 
-The ideal number of questions to get a good sense of whether one bot is better than another can vary. 100+ should tell your something decent. See [this analysis](https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world) for exploration of the numbers. With two few questions, the results could just be statistical noise.
+The ideal number of questions to get a good sense of whether one bot is better than another can vary. 100+ should tell your something decent. See [this analysis](https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world) for exploration of the numbers. With too few questions, the results could just be statistical noise.
 
-If you use the average inverse expected log score, then a lower score is better. The scoring measures the expected value of your score without needing an actual resolution by assuming that the community prediction is the 'true probability'. This correlates very closely with the baseline score on Metaculus (see analysis in `scripts/simulate_a_tournament.ipynb`)
+If you use the average expected baseline score higher score is better. The scoring measures the expected value of your score without needing an actual resolution by assuming that the community prediction is the 'true probability'. Under this assumption, expected baseline scores are a proper score (see analysis in `scripts/simulate_a_tournament.ipynb`)
 
-As of Feb 17, 2024 the benchmarker automatically selects a random set of questions from Metaculus that:
+As of Mar 27, 2025 the benchmarker automatically selects a random set of questions from Metaculus that:
 - Are binary questions (yes/no)
 - Are currently open
 - Will resolve within the next year
@@ -316,7 +317,10 @@ json_object: dict = single_benchmark.to_json()
 new_benchmark: BenchmarkForBot = BenchmarkForBot.from_json(json_object)
 ```
 
-Once you have benchmark files in your directory you can run `streamlit run scripts/benchmark_displayer.py` to get a UI with the benchmarks. This will allow you to see metrics, code of the bots, the actual bot responses, etc. It will pull in any files in your directory that have the word "bench" in it and are json.
+Once you have benchmark files in your project directory you can run `streamlit run forecasting_tools/forecast_helpers/benchmark_displayer.py` to get a UI with the benchmarks. You can also put `forecasting-tools.run_benchmark_streamlit_page()` into a new file, and run this file with streamlit to achieve the same results. This will allow you to see metrics side by side, explore code of past bots, see the actual bot responses, etc. It will pull in any files in your directory that contain "bench" in the name are json.
+
+![Benchmark Displayer Top](./docs/images/benchmark_top_screen.png)
+![Benchmark Displayer Bottom](./docs/images/benchmark_bottom_screen.png)
 
 ## Metaculus API
 The Metaculus API wrapper helps interact with Metaculus questions and tournaments. Grabbing questions returns a pydantic object, and supports important information for Binary, Multiple Choice, Numeric,and Date questions.
@@ -729,7 +733,7 @@ print(f"Code:\n{code}")
 
 
 ## Monetary Cost Manager
-The `MonetaryCostManager` helps to track AI and API costs. It tracks expenses and errors if it goes over the limit. Leave the limit empty to disable the limit. Any call made within the context of the manager will be logged in the manager. CostManagers are async safe and can nest inside of each other. Please note that cost is only tracked after a call finishes, so if you concurrently batch 1000 calls, they will all go through even if the cost is exceeded during the middle of the execution of the batch.
+The `MonetaryCostManager` helps to track AI and API costs. It tracks expenses and errors if it goes over the limit. Leave the limit empty to disable the limit. Any call made within the context of the manager will be logged in the manager. CostManagers are async safe and can nest inside of each other. Please note that cost is only tracked after a call finishes, so if you concurrently batch 1000 calls, they will all go through even if the cost is exceeded during the middle of the execution of the batch. Additionally not all models support cost tracking. You will get a logger warning if your model is not supported. Litellm models with weird non-token pricing structures may be inaccurate as well.
 
 
 ```python
