@@ -69,7 +69,7 @@ class BenchmarkForBot(BaseModel, Jsonable):
 
         try:
             llms = self.forecast_bot_config["llms"]
-            llms = typeguard.check_type(llms, dict[str, str])
+            llms = typeguard.check_type(llms, dict[str, Any])
             default_llm = f"default: {llms['default']}"
         except Exception:
             default_llm = "n/a"
