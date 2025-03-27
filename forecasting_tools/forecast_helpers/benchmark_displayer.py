@@ -1,4 +1,6 @@
+import logging
 import os
+from typing import Sequence
 
 import pandas as pd
 import plotly.express as px
@@ -9,7 +11,10 @@ from forecasting_tools.data_models.benchmark_for_bot import BenchmarkForBot
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.util import file_manipulation
+from forecasting_tools.util.stats import ConfidenceIntervalCalculator
 from front_end.helpers.report_displayer import ReportDisplayer
+
+logger = logging.getLogger(__name__)
 
 
 def get_json_files(directory: str) -> list[str]:
@@ -196,6 +201,23 @@ def add_star_annotations(
         )
 
 
+def calculate_expected_baseline_margin_of_error(
+    reports: Sequence[ForecastReport | BinaryReport], confidence_level: float
+) -> float | None:
+    scores = [r.expected_baseline_score for r in reports]
+    scores = typeguard.check_type(scores, list[float])
+    try:
+        margin_of_error = (
+            ConfidenceIntervalCalculator.confidence_interval_from_observations(
+                scores, confidence_level
+            ).margin_of_error
+        )
+    except Exception as e:
+        logger.error(f"Error calculating margin of error: {e}")
+        return None
+    return margin_of_error
+
+
 def display_benchmark_comparison_graphs(
     benchmarks: list[BenchmarkForBot],
 ) -> None:
@@ -224,14 +246,17 @@ def display_benchmark_comparison_graphs(
             if r.community_prediction is not None
             and 0.1 <= r.community_prediction <= 0.9
         ]
+
+        reports = typeguard.check_type(reports, Sequence[BinaryReport])
         certain_reports = typeguard.check_type(
-            certain_reports, list[ForecastReport]
+            certain_reports, Sequence[BinaryReport]
         )
         uncertain_reports = typeguard.check_type(
-            uncertain_reports, list[ForecastReport]
+            uncertain_reports, Sequence[BinaryReport]
         )
 
         benchmark_name = get_benchmark_display_name(benchmark, index)
+        confidence_level = 0.90
 
         data_by_benchmark.extend(
             [
@@ -243,6 +268,9 @@ def display_benchmark_comparison_graphs(
                         reports
                     )
                     * 100,
+                    "Baseline Error": calculate_expected_baseline_margin_of_error(
+                        reports, confidence_level
+                    ),
                 },
                 {
                     "Benchmark": benchmark_name,
@@ -254,6 +282,9 @@ def display_benchmark_comparison_graphs(
                         certain_reports
                     )
                     * 100,
+                    "Baseline Error": calculate_expected_baseline_margin_of_error(
+                        certain_reports, confidence_level
+                    ),
                 },
                 {
                     "Benchmark": benchmark_name,
@@ -265,6 +296,9 @@ def display_benchmark_comparison_graphs(
                         uncertain_reports
                     )
                     * 100,
+                    "Baseline Error": calculate_expected_baseline_margin_of_error(
+                        uncertain_reports, confidence_level
+                    ),
                 },
             ]
         )
@@ -279,6 +313,10 @@ def display_benchmark_comparison_graphs(
         st.markdown(
             "Higher score indicates better performance. Read more [here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.). "
             "This is a proper score assuming the community prediction is the true probability. "
+            f"Error bars are for {confidence_level} confidence interval. "
+            "If an error bar is 0, then the data probably violated the normality assumption for a T-based confidence interval."
+            "Note that there are seasonal changes with the certinaty of questions (e.g. there are more certain questions near the end of the year). "
+            "Certain questions score better, so be careful of comparing benchmarks from different time periods."
         )
 
         # Mark highest scores with stars (higher is better for baseline score)
@@ -294,6 +332,7 @@ def display_benchmark_comparison_graphs(
             color="Category",
             barmode="group",
             title="Expected Baseline Scores by Benchmark and Category",
+            error_y="Baseline Error",
         )
         fig.update_layout(yaxis_title="Expected Baseline Score")
 

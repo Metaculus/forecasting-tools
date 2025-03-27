@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Sequence, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -81,7 +81,7 @@ class ForecastReport(BaseModel, Jsonable, ABC):
 
     @staticmethod
     def calculate_average_expected_baseline_score(
-        reports: list[ForecastReport],
+        reports: Sequence[ForecastReport],
     ) -> float:
         deviation_scores: list[float | None] = [
             report.expected_baseline_score for report in reports
