@@ -756,25 +756,38 @@ class ForecastBot(ABC):
                 f"""
                 URL: {report.question.page_url}
                 Errors: {report.errors}
-                Summary:
+                # Summary:
                 {report.summary}
+
+                # First 1000 characters of research:
+                {report.research[:1000]}
+
+                # First 1000 characters of rationales:
+                {report.forecast_rationales[:1000]}
                 ---------------------------------------------------------
             """
             )
             logger.info(question_summary)
 
         combined_short_summary = ""
-        for report in valid_reports:
-            success_fail_emoji = "✅" if not report.errors else "❌"
-            super_short_summary = f"{success_fail_emoji} | URL: {report.question.page_url} | Errors: {report.errors}"
-            combined_short_summary += super_short_summary + "\n"
+        for report in forecast_reports:
+            if isinstance(report, ForecastReport):
+                short_summary = f"✅ URL: {report.question.page_url} | Minor Errors: {len(report.errors)}"
+            else:
+                exception_message = (
+                    str(report)
+                    if len(str(report)) < 1000
+                    else f"{str(report)[:500]}...{str(report)[-500:]}"
+                )
+                short_summary = f"❌ Exception: {report.__class__.__name__} | Message: {exception_message}"
+            combined_short_summary += short_summary + "\n"
         logger.info(combined_short_summary)
 
-        if exceptions:
-            raise RuntimeError(
-                f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
-            )
         if minor_exceptions:
             logger.error(
                 f"{len(minor_exceptions)} minor exceptions occurred while forecasting: {minor_exceptions}"
+            )
+        if exceptions:
+            raise RuntimeError(
+                f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
             )
