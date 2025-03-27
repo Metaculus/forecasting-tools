@@ -33,15 +33,14 @@ class MetaculusApi:
     Documentation for the API can be found at https://www.metaculus.com/api/
     """
 
+    # NOTE: The tourament slug can be used for ID as well (e.g. "aibq2" or "quarterly-cup")
     AI_WARMUP_TOURNAMENT_ID = (
         3294  # https://www.metaculus.com/tournament/ai-benchmarking-warmup/
     )
     AI_COMPETITION_ID_Q3 = 3349  # https://www.metaculus.com/tournament/aibq3/
     AI_COMPETITION_ID_Q4 = 32506  # https://www.metaculus.com/tournament/aibq4/
     AI_COMPETITION_ID_Q1 = 32627  # https://www.metaculus.com/tournament/aibq1/
-    AI_COMPETITION_ID_Q2 = (
-        32721  # or aibq2 https://www.metaculus.com/tournament/aibq2/
-    )
+    AI_COMPETITION_ID_Q2 = 32721  # https://www.metaculus.com/tournament/aibq2/
     ACX_2025_TOURNAMENT = 32564
     Q3_2024_QUARTERLY_CUP = 3366
     Q4_2024_QUARTERLY_CUP = 3672

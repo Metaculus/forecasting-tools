@@ -29,10 +29,11 @@ from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 logger = logging.getLogger(__name__)
 
 
-class Q1TemplateBot2025(ForecastBot):
+class Q2TemplateBot2025(ForecastBot):
     """
-    This is a copy of the template bot for Q1 2025 Metaculus AI Tournament.
-    The official bots on the leaderboard use AskNews in Q1.
+    This is a copy of the template bot for Q2 2025 Metaculus AI Tournament.
+    The official bots on the leaderboard use AskNews in Q2.
+    The main way this bot has changed since Q1 is that the new units parameter was added
 
     The main entry point of this bot is `forecast_on_tournament` in the parent class.
     However generally the flow is:
@@ -55,6 +56,7 @@ class Q1TemplateBot2025(ForecastBot):
     ) # Allows 1 request per second on average with a burst of 2 requests initially. Set this as a class variable
     await self.rate_limiter.wait_till_able_to_acquire_resources(1) # 1 because it's consuming 1 request (use more if you are adding a token limit)
     ```
+    Additionally OpenRouter has large rate limits immediately on account creation
     """
 
     _max_concurrent_questions = 2  # Set this to whatever works for your search-provider/ai-model rate limits
@@ -249,6 +251,7 @@ class Q1TemplateBot2025(ForecastBot):
 
             {question.fine_print}
 
+            Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
 
             Your research assistant says:
             {research}
@@ -259,7 +262,7 @@ class Q1TemplateBot2025(ForecastBot):
             {upper_bound_message}
 
             Formatting Instructions:
-            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1m).
+            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
             - Never use scientific notation.
             - Always start with a smaller number (more negative if negative) and then increase from there
 
@@ -336,7 +339,7 @@ if __name__ == "__main__":
         "test_questions",
     ], "Invalid run mode"
 
-    template_bot = Q1TemplateBot2025(
+    template_bot = Q2TemplateBot2025(
         research_reports_per_question=1,
         predictions_per_research_report=5,
         use_research_summary_to_forecast=False,
@@ -346,20 +349,18 @@ if __name__ == "__main__":
     )
 
     if run_mode == "tournament":
-        Q4_2024_AI_BENCHMARKING_ID = 32506
-        Q1_2025_AI_BENCHMARKING_ID = 32627
         forecast_reports = asyncio.run(
             template_bot.forecast_on_tournament(
-                Q1_2025_AI_BENCHMARKING_ID, return_exceptions=True
+                MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True
             )
         )
     elif run_mode == "quarterly_cup":
         # The quarterly cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564
-        Q1_2025_QUARTERLY_CUP_ID = 32630
+        # The new quarterly cup may not be initialized near the beginning of a quarter
         template_bot.skip_previously_forecasted_questions = False
         forecast_reports = asyncio.run(
             template_bot.forecast_on_tournament(
-                Q1_2025_QUARTERLY_CUP_ID, return_exceptions=True
+                MetaculusApi.CURRENT_QUARTERLY_CUP_ID, return_exceptions=True
             )
         )
     elif run_mode == "test_questions":
@@ -377,4 +378,4 @@ if __name__ == "__main__":
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(questions, return_exceptions=True)
         )
-    Q1TemplateBot2025.log_report_summary(forecast_reports)  # type: ignore
+    Q2TemplateBot2025.log_report_summary(forecast_reports)  # type: ignore

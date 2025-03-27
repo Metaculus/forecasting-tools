@@ -33,6 +33,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     resolution_criteria: str | None = None
     fine_print: str | None = None
     background_info: str | None = None
+    unit_of_measure: str | None = None
     close_time: datetime | None = None
     actual_resolution_time: datetime | None = None
     scheduled_resolution_time: datetime | None = None
@@ -79,6 +80,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             background_info=question_json.get("description", None),
             fine_print=question_json.get("fine_print", None),
             resolution_criteria=question_json.get("resolution_criteria", None),
+            unit_of_measure=question_json.get("unit", None),
             page_url=f"https://www.metaculus.com/questions/{post_id}",
             num_forecasters=post_api_json["nr_forecasters"],
             num_predictions=post_api_json["forecasts_count"],

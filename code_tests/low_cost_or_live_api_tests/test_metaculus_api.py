@@ -54,6 +54,7 @@ def test_get_numeric_question_type_from_id() -> None:
     assert question.upper_bound == 200
     assert not question.open_lower_bound
     assert question.open_upper_bound
+    assert question.unit_of_measure == "years old"
     assert_basic_question_attributes_not_none(question, question_id)
 
 
@@ -101,6 +102,7 @@ def test_post_comment_on_question() -> None:
         BinaryQuestion
     )
     question = MetaculusApi.get_question_by_post_id(post_id)
+    assert question.id_of_post is not None
     MetaculusApi.post_question_comment(
         question.id_of_post, "This is a test comment"
     )
@@ -119,8 +121,11 @@ def test_post_binary_prediction_on_question() -> None:
 
 
 def test_post_binary_prediction_error_when_out_of_range() -> None:
-    question = ForecastingTestManager.get_fake_binary_question()
+    question = MetaculusApi.get_question_by_url(
+        "https://www.metaculus.com/questions/578/human-extinction-by-2100/"
+    )
     question_id = question.id_of_post
+    assert question_id is not None
     with pytest.raises(ValueError):
         MetaculusApi.post_binary_question_prediction(question_id, 0)
     with pytest.raises(ValueError):
@@ -390,6 +395,7 @@ def assert_basic_attributes_at_percentage(
     failing_errors: list[Exception] = []
     failing_questions: list[MetaculusQuestion] = []
     for question in questions:
+        assert question.id_of_post is not None
         try:
             assert_basic_question_attributes_not_none(
                 question, question.id_of_post
@@ -484,6 +490,10 @@ def assert_basic_question_attributes_not_none(
     assert isinstance(
         question.already_forecasted, bool
     ), f"Already forecasted is not a boolean for post ID {post_id}"
+    if isinstance(question, NumericQuestion):
+        assert (
+            question.unit_of_measure is not None
+        ), f"Unit of measure is None for post ID {post_id}"
 
 
 def assert_questions_match_filter(  # NOSONAR
