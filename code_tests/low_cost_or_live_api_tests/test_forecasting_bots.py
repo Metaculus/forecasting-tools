@@ -7,6 +7,7 @@ import typeguard
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
 )
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
@@ -99,3 +100,22 @@ async def test_no_reports_when_questions_already_forecasted(
     assert len(reports) == len(
         questions
     ), "Expected all questions to be forecasted on"
+
+
+async def test_works_with_configured_llm(mocker: Mock) -> None:
+    bot_type = TemplateBot
+    bot = bot_type(
+        llms={
+            "default": GeneralLlm(model="gpt-4o-mini", timeout=42),
+            "summarizer": "gpt-4o-mini",
+        }
+    )
+
+    default_llm = bot.get_llm("default")
+    assert isinstance(default_llm, GeneralLlm)
+    assert default_llm.timeout == 42
+    assert bot.get_llm("summarizer") == "gpt-4o-mini"
+
+    question = ForecastingTestManager.get_fake_binary_question()
+    report = await bot.forecast_question(question)
+    assert report is not None

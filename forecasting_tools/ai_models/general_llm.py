@@ -133,6 +133,7 @@ class GeneralLlm(
         """
         super().__init__(allowed_tries=allowed_tries)
         self.model = model
+        self.timeout = timeout
 
         metaculus_prefix = "metaculus/"
         openai_prefix = "openai/"
