@@ -11,3 +11,4 @@ def test_benchmark_displayer() -> None:
     app_test = AppTest.from_file(project_path, default_timeout=600)
     app_test.run()
     assert not app_test.exception, f"Exception occurred: {app_test.exception}"
+    assert len(app_test.title) > 0
