@@ -6,13 +6,14 @@
 [![PyPI Downloads](https://static.pepy.tech/badge/forecasting-tools)](https://pepy.tech/projects/forecasting-tools)
 
 
-# Quick Install
+# Quick Start
 Install this package with `pip install forecasting-tools`
 
-# Overview
 Demo website: https://forecasting-tools.streamlit.app/
 
-Demo repo: https://github.com/Metaculus/metac-bot-template
+Demo repo (get a Metaculus bot running in 30min): https://github.com/Metaculus/metac-bot-template
+
+# Overview
 
 This repository contains forecasting and research tools built with Python and Streamlit. The project aims to assist users in making predictions, conducting research, and analyzing data related to hard to answer questions (especially those from Metaculus).
 
@@ -139,6 +140,7 @@ The bot will:
 Note: You'll need to have your environment variables set up (see the section below)
 
 ## Customizing the Bot
+### General Customization
 Generally all you have to do to make your own bot is inherit from the TemplateBot and override any combination of the 3 forecasting methods and the 1 research method. This saves you the headache of interacting with the Metaculus API, implementing aggregation of predictions, creating benchmarking interfaces, etc. Below is an example. It may also be helpful to look at the TemplateBot code (forecasting_tools/forecasting/forecast_bots/template_bot.py) for a more complete example.
 
 
@@ -223,6 +225,54 @@ print(f"Research: {report.research[:100]}...")
     To analyze the question of whether humans will go extinct before 2100, we need to consider...
 
 
+### Maintaining state with Notepad
+If you want to maintain state between forecasts, you can use the `Notepad` object. This can be used to alternate forecasts between two different models, decide personalities for a bot up front, etc. There is a `Notepad` object made for every question forecasted.
+
+
+```python
+from forecasting_tools import (
+    TemplateBot,
+    BinaryQuestion,
+    ReasonedPrediction,
+    SmartSearcher,
+    GeneralLlm,
+    PredictionExtractor,
+    Notepad
+)
+from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+import random
+
+class NotepadBot(TemplateBot):
+
+    async def _initialize_notepad(
+        self, question: MetaculusQuestion
+    ) -> Notepad:
+        new_notepad = Notepad(question=question)
+        random_personality = random.choice(["superforecaster", "financial analyst", "political advisor"])
+        new_notepad.note_entries["personality"] = random_personality
+        return new_notepad
+
+    async def _run_forecast_on_binary(
+        self, question: BinaryQuestion, research: str
+    ) -> ReasonedPrediction[float]:
+        notepad = await self._get_notepad(question)
+
+        if notepad.total_predictions_attempted % 2 == 0:
+            model = "metaculus/gpt-4o"
+        else:
+            model = "metaculus/claude-3-5-sonnet-20240620"
+
+        personality = notepad.note_entries["personality"]
+        prompt = f"You are a {personality}. Forecast this question: {question.question_text}. The last thing you write is your final answer as: 'Probability: ZZ%', 0-100"
+        reasoning = await GeneralLlm(model=model, temperature=0).invoke(prompt)
+        prediction = PredictionExtractor.extract_last_percentage_value(
+            reasoning, max_prediction=1, min_prediction=0
+        )
+        return ReasonedPrediction(
+            prediction_value=prediction, reasoning=reasoning
+        )
+```
+
 ## Join the Metaculus tournament using this package
 You can create your own custom bot through the package in your own repo. An example can be found [at this repo](https://github.com/Metaculus/metac-bot-template) which you can fork and edit.
 
@@ -275,7 +325,7 @@ for benchmark in benchmarks[:2]:
     Cost: $0.019155650000000003
 
 
-The ideal number of questions to get a good sense of whether one bot is better than another can vary. 100+ should tell your something decent. See [this analysis](https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world) for exploration of the numbers. With too few questions, the results could just be statistical noise.
+The ideal number of questions to get a good sense of whether one bot is better than another can vary. 100+ should tell your something decent. See [this analysis](https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world) for exploration of the numbers. With too few questions, the results could just be statistical noise, though how many questions you need depends highly on the difference in skill of your bots. There can sometimes be decent skill difference between even top forecasters allowing for less than 100 questions being useful for ranking people with confidence.
 
 If you use the average expected baseline score higher score is better. The scoring measures the expected value of your score without needing an actual resolution by assuming that the community prediction is the 'true probability'. Under this assumption, expected baseline scores are a proper score (see analysis in `scripts/simulate_a_tournament.ipynb`)
 
@@ -287,7 +337,7 @@ As of Mar 27, 2025 the benchmarker automatically selects a random set of questio
 - Have a community prediction
 - Are not part of a group question
 
-As of last edit there are plans to expand this to numeric and multiple choice, but right now it just benchmarks binary questions.
+Note that sometimes there are not many questions matching these filters (e.g. at the beginning of a new year when a good portion questions were just resolved). As of last edit there are plans to expand this to numeric and multiple choice, but right now it just benchmarks binary questions.
 
 You can grab these questions without using the Benchmarker by running the below
 

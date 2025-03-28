@@ -72,6 +72,7 @@ from forecasting_tools.data_models.questions import (
 from forecasting_tools.forecast_bots.forecast_bot import (
     ForecastBot as ForecastBot,
 )
+from forecasting_tools.forecast_bots.forecast_bot import Notepad as Notepad
 from forecasting_tools.forecast_bots.main_bot import MainBot as MainBot
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025 as Q1TemplateBot2025,

@@ -240,7 +240,7 @@ def display_benchmark_comparison_graphs(
 
         - Uncertain Question: Questions with community prediction between 10% and 90%
         - Certain Question: Questions with community prediction greater than 90% or less than 10%
-        - Perfect predictor: automatically created and shows what a perfect score (predicting community prediction) would be.
+        - Perfect predictor: automatically created and shows what a perfect score (predicting community prediction) would be. To calculate this, it uses same questions as the first benchmark in the list.
         """
     )
     data_by_benchmark = []
@@ -347,9 +347,8 @@ def display_benchmark_comparison_graphs(
     st.markdown("### Expected Baseline Scores")
     st.markdown(
         "Higher score indicates better performance. Read more [here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.). "
-        "This is a proper score assuming the community prediction is the true probability.\n\n"
-        f"Error bars are for a {confidence_level*100}% confidence interval. "
-        "If an error bar is 0, then either:\n"
+        "This is a proper score assuming the community prediction is the true probability. "
+        f"Error bars are for a {confidence_level*100}% confidence interval. If an error bar is 0, then either:\n"
         "- You have < 4 forecasts\n"
         "- The data violated the normality assumption for a T-based confidence interval when num_forecasts < 30.\n\n"
     )
@@ -419,9 +418,7 @@ def make_perfect_benchmark(
         assert report.community_prediction is not None
         report.prediction = report.community_prediction
     perfect_benchmark.forecast_reports = reports_of_perfect_benchmark
-    perfect_benchmark.explicit_name = (
-        "Perfect Predictor (uses same questions as benchmark 1)"
-    )
+    perfect_benchmark.explicit_name = "Perfect Predictor"
     return perfect_benchmark
 
 

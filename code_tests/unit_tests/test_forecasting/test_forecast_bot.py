@@ -333,8 +333,8 @@ async def test_notepad_counts_research_and_prediction_attempts() -> None:
     await bot.forecast_question(test_question)
     notepad = await bot._get_notepad(test_question)
 
-    assert notepad.num_research_reports_attempted == research_reports
+    assert notepad.total_research_reports_attempted == research_reports
     assert (
-        notepad.num_predictions_attempted
+        notepad.total_predictions_attempted
         == predictions_per_report * research_reports
     )

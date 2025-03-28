@@ -18,7 +18,7 @@ from forecasting_tools.data_models.questions import (
     MultipleChoiceQuestion,
     NumericQuestion,
 )
-from forecasting_tools.forecast_bots.forecast_bot import NotePad
+from forecasting_tools.forecast_bots.forecast_bot import Notepad
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025,
 )
@@ -46,7 +46,7 @@ class Persona(BaseModel):
         )
 
 
-class PersonaNotePad(NotePad):
+class PersonaNotePad(Notepad):
     question: MetaculusQuestion
     personas: list[Persona | None]
 

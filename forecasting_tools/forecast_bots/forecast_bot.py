@@ -43,7 +43,7 @@ T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
-class NotePad(BaseModel):
+class Notepad(BaseModel):
     """
     Context object that is available while forecasting on a question and that persists
     across multiple forecasts on the same question.
@@ -57,8 +57,8 @@ class NotePad(BaseModel):
     """
 
     question: MetaculusQuestion
-    num_research_reports_attempted: int = 0
-    num_predictions_attempted: int = 0
+    total_research_reports_attempted: int = 0
+    total_predictions_attempted: int = 0
     note_entries: dict[str, str] = {}
 
 
@@ -94,7 +94,7 @@ class ForecastBot(ABC):
         self.skip_previously_forecasted_questions = (
             skip_previously_forecasted_questions
         )
-        self._note_pads: list[NotePad] = []
+        self._note_pads: list[Notepad] = []
         self._note_pad_lock = asyncio.Lock()
         self._llms = llms or self._llm_config_defaults()
         assert "default" in self._llms, "Must have a default llm"
@@ -389,7 +389,7 @@ class ForecastBot(ABC):
         self, question: MetaculusQuestion
     ) -> ResearchWithPredictions[PredictionTypes]:
         notepad = await self._get_notepad(question)
-        notepad.num_research_reports_attempted += 1
+        notepad.total_research_reports_attempted += 1
         research = await self.run_research(question)
         summary_report = await self.summarize_research(question, research)
         research_to_use = (
@@ -427,7 +427,7 @@ class ForecastBot(ABC):
         self, question: MetaculusQuestion, research: str
     ) -> ReasonedPrediction[PredictionTypes]:
         notepad = await self._get_notepad(question)
-        notepad.num_predictions_attempted += 1
+        notepad.total_predictions_attempted += 1
 
         if isinstance(question, BinaryQuestion):
             forecast_function = lambda q, r: self._run_forecast_on_binary(q, r)
@@ -628,8 +628,8 @@ class ForecastBot(ABC):
 
     async def _initialize_notepad(
         self, question: MetaculusQuestion
-    ) -> NotePad:
-        new_notepad = NotePad(question=question)
+    ) -> Notepad:
+        new_notepad = Notepad(question=question)
         return new_notepad
 
     async def _remove_notepad(self, question: MetaculusQuestion) -> None:
@@ -640,7 +640,7 @@ class ForecastBot(ABC):
                 if notepad.question != question
             ]
 
-    async def _get_notepad(self, question: MetaculusQuestion) -> NotePad:
+    async def _get_notepad(self, question: MetaculusQuestion) -> Notepad:
         async with self._note_pad_lock:
             for notepad in self._note_pads:
                 if notepad.question == question:
