@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 class MainBot(Q1TemplateBot2025):
     """
     The verified highest accuracy bot available.
-    Main bot is the template bot for now till we can confirm other bots are better.
     """
 
     def __init__(

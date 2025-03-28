@@ -4,6 +4,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Generic, Sequence, TypeVar
 
+import typeguard
 from pydantic import BaseModel, Field, field_validator
 
 from forecasting_tools.data_models.questions import MetaculusQuestion
@@ -83,16 +84,24 @@ class ForecastReport(BaseModel, Jsonable, ABC):
     def calculate_average_expected_baseline_score(
         reports: Sequence[ForecastReport],
     ) -> float:
-        deviation_scores: list[float | None] = [
-            report.expected_baseline_score for report in reports
-        ]
-        validated_deviation_scores: list[float] = []
-        for score in deviation_scores:
-            assert score is not None
-            validated_deviation_scores.append(score)
-        average_deviation_score = sum(validated_deviation_scores) / len(
-            validated_deviation_scores
-        )
+        assert (
+            len(reports) > 0
+        ), "Must have at least one report to calculate average expected baseline score"
+        try:
+            scores: list[float | None] = [
+                report.expected_baseline_score for report in reports
+            ]
+            validated_scores: list[float] = typeguard.check_type(
+                scores, list[float]
+            )
+            average_deviation_score = sum(validated_scores) / len(
+                validated_scores
+            )
+        except Exception as e:
+            raise ValueError(
+                f"Error calculating average expected baseline score. {len(reports)} reports. "
+                f"There were {len([score for score in scores if score is None])} None scores. Error: {e}"
+            ) from e
         return average_deviation_score
 
     @classmethod

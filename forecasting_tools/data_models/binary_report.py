@@ -84,6 +84,9 @@ class BinaryReport(ForecastReport):
     def calculate_average_deviation_points(
         reports: Sequence[BinaryReport],
     ) -> float:
+        assert (
+            len(reports) > 0
+        ), "Must have at least one report to calculate average deviation points"
         validated_deviation_points: list[float] = []
         for report in reports:
             assert report.deviation_points is not None

@@ -25,8 +25,6 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
 )
 from forecasting_tools.util.custom_logger import CustomLogger
 
-CustomLogger.setup_logging()
-
 logger = logging.getLogger(__name__)
 
 
@@ -59,6 +57,8 @@ async def run_forecasts(skip_previous: bool, tournament: int | str) -> None:
 
 
 if __name__ == "__main__":
+    CustomLogger.setup_logging()
+
     parser = argparse.ArgumentParser(
         description="Run forecasts with specified bot type"
     )

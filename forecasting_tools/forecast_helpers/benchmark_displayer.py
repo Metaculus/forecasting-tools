@@ -58,6 +58,7 @@ def display_deviation_scores(reports: list[BinaryReport]) -> None:
 def display_stats_for_report_type(
     reports: list[BinaryReport], title: str
 ) -> None:
+    assert len(reports) > 0, "Must have at least one report to display stats"
     average_expected_baseline_score = (
         BinaryReport.calculate_average_expected_baseline_score(reports)
     )
@@ -182,13 +183,6 @@ def display_benchmark_list(benchmarks: list[BenchmarkForBot]) -> None:
         ReportDisplayer.display_report_list(reports)
 
 
-def get_benchmark_display_name(benchmark: BenchmarkForBot, index: int) -> str:
-    config = benchmark.forecast_bot_config
-    reports_per_q = config.get("research_reports_per_question", "1")
-    preds_per_r = config.get("predictions_per_research_report", "1")
-    return f"{index}: {benchmark.name} ({reports_per_q}x{preds_per_r})"
-
-
 def add_star_annotations(
     fig: go.Figure,
     df: pd.DataFrame,
@@ -262,7 +256,39 @@ def display_benchmark_comparison_graphs(
             uncertain_reports, Sequence[BinaryReport]
         )
 
-        benchmark_name = get_benchmark_display_name(benchmark, index)
+        if len(certain_reports) > 0:
+            average_certain_expected_baseline_score = (
+                BinaryReport.calculate_average_expected_baseline_score(
+                    certain_reports
+                )
+            )
+            average_certain_deviation_score = (
+                BinaryReport.calculate_average_deviation_points(
+                    certain_reports
+                )
+                * 100
+            )
+        else:
+            average_certain_expected_baseline_score = None
+            average_certain_deviation_score = None
+
+        if len(uncertain_reports) > 0:
+            average_uncertain_expected_baseline_score = (
+                BinaryReport.calculate_average_expected_baseline_score(
+                    uncertain_reports
+                )
+            )
+            average_uncertain_deviation_score = (
+                BinaryReport.calculate_average_deviation_points(
+                    uncertain_reports
+                )
+                * 100
+            )
+        else:
+            average_uncertain_expected_baseline_score = None
+            average_uncertain_deviation_score = None
+
+        benchmark_name = f"{index}: {benchmark.name}"
         confidence_level = 0.90
 
         data_by_benchmark.extend(
@@ -282,13 +308,8 @@ def display_benchmark_comparison_graphs(
                 {
                     "Benchmark": benchmark_name,
                     "Category": "Certain Questions",
-                    "Expected Baseline Score": BinaryReport.calculate_average_expected_baseline_score(
-                        certain_reports
-                    ),
-                    "Deviation Score": BinaryReport.calculate_average_deviation_points(
-                        certain_reports
-                    )
-                    * 100,
+                    "Expected Baseline Score": average_certain_expected_baseline_score,
+                    "Deviation Score": average_certain_deviation_score,
                     "Baseline Error": calculate_expected_baseline_margin_of_error(
                         certain_reports, confidence_level
                     ),
@@ -296,13 +317,8 @@ def display_benchmark_comparison_graphs(
                 {
                     "Benchmark": benchmark_name,
                     "Category": "Uncertain Questions",
-                    "Expected Baseline Score": BinaryReport.calculate_average_expected_baseline_score(
-                        uncertain_reports
-                    ),
-                    "Deviation Score": BinaryReport.calculate_average_deviation_points(
-                        uncertain_reports
-                    )
-                    * 100,
+                    "Expected Baseline Score": average_uncertain_expected_baseline_score,
+                    "Deviation Score": average_uncertain_deviation_score,
                     "Baseline Error": calculate_expected_baseline_margin_of_error(
                         uncertain_reports, confidence_level
                     ),
@@ -321,7 +337,7 @@ def display_benchmark_comparison_graphs(
             "Higher score indicates better performance. Read more [here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.). "
             "This is a proper score assuming the community prediction is the true probability. "
             f"Error bars are for {confidence_level*100}% confidence interval. "
-            "If an error bar is 0, then the data probably violated the normality assumption for a T-based confidence interval when num_forecasts < 30. "
+            "If an error bar is 0, then you have < 4 forecasts or the data probably violated the normality assumption for a T-based confidence interval when num_forecasts < 30. "
             "Note that there are seasonal changes with the certinaty of questions (e.g. there are more certain questions near the end of the year). "
             "'Certain' questions score better, so be careful of comparing benchmarks from different time periods. "
         )

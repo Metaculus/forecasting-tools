@@ -103,6 +103,10 @@ class ConfidenceIntervalCalculator:
         """
         assert 0 <= confidence <= 1, "Confidence must be between 0 and 1"
         assert len(observations) > 0, "Observations must be non-empty"
+        assert (
+            len(observations) > 3
+        ), "Must have at least 3 observations to check for normality"
+
         sample_size = len(observations)
         if sample_size < 2:
             raise ValueError("Not enough data for T-based confidence interval")

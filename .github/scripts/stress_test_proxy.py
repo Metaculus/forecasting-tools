@@ -7,12 +7,6 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-
 logger = logging.getLogger(__name__)
 
 
@@ -78,4 +72,9 @@ async def stress_test_proxy() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     asyncio.run(stress_test_proxy())

@@ -23,6 +23,7 @@ class BenchmarkForBot(BaseModel, Jsonable):
         validation_alias=AliasChoices("description", "explicit_description"),
     )
     forecast_bot_class_name: str | None = None
+    num_input_questions: int | None = None
     timestamp: datetime = Field(default_factory=datetime.now)
     time_taken_in_minutes: float | None
     total_cost: float | None
@@ -32,7 +33,6 @@ class BenchmarkForBot(BaseModel, Jsonable):
     forecast_reports: Sequence[
         BinaryReport | NumericReport | MultipleChoiceReport
     ]
-    num_input_questions: int | None = None
 
     @property
     def average_expected_baseline_score(self) -> float:
@@ -70,12 +70,16 @@ class BenchmarkForBot(BaseModel, Jsonable):
         try:
             llms = self.forecast_bot_config["llms"]
             llms = typeguard.check_type(llms, dict[str, Any])
-            default_llm = f"default: {llms['default']}"
+            try:
+                default_llm = llms["default"]["original_model"]
+            except Exception:
+                default_llm = llms["default"]
+            default_llm_display = default_llm[:50]
         except Exception:
             default_llm = "n/a"
 
-        name = f"{class_name} | {num_runs_name} | {default_llm}"
-        return name
+        name = f"{class_name} | {num_runs_name} | {default_llm_display}"
+        return name[:75]
 
     @property
     def description(self) -> str:

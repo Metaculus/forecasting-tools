@@ -5,13 +5,14 @@ import logging
 
 import typeguard
 
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.forecast_bots.community.q1_veritas_bot import (
-    Q1VeritasBot,
-)
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
+from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
+    Q2TemplateBot2025,
+)
 from forecasting_tools.forecast_helpers.benchmarker import Benchmarker
 from forecasting_tools.util.custom_logger import CustomLogger
 
@@ -19,25 +20,24 @@ logger = logging.getLogger(__name__)
 
 
 async def benchmark_forecast_bot() -> None:
-    questions_to_use = 1
+    questions_to_use = 3
     with MonetaryCostManager() as cost_manager:
         bots = [
-            # Q3TemplateBot(),
-            # Q4VeritasWithExaAndDeepSeekR1(
-            #     research_reports_per_question=1,
-            #     predictions_per_research_report=1,
-            # ),
-            # Q4VeritasWithExaAndDeepSeekR1(
-            #     research_reports_per_question=5,
-            #     predictions_per_research_report=5,
-            # ),
-            # Q1VeritasBot(
-            #     research_reports_per_question=1,
-            #     predictions_per_research_report=1,
-            # ),
-            Q1VeritasBot(
-                research_reports_per_question=5,
-                predictions_per_research_report=5,
+            Q2TemplateBot2025(
+                llms={
+                    "default": GeneralLlm(
+                        model="gpt-4o",
+                        temperature=0.3,
+                    ),
+                },
+            ),
+            Q2TemplateBot2025(
+                llms={
+                    "default": GeneralLlm(
+                        model="gpt-4o-mini",
+                        temperature=0.3,
+                    ),
+                },
             ),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])

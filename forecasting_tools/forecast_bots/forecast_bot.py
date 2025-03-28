@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import json
 import logging
 import os
 import time
@@ -101,7 +102,7 @@ class ForecastBot(ABC):
         for purpose, llm in self._llm_config_defaults().items():
             if purpose not in self._llms:
                 logger.warning(
-                    f"User forgot to set an llm for purpose: '{purpose}'. Using default llm: '{llm}'"
+                    f"User forgot to set an llm for purpose: '{purpose}'. Using default llm: '{llm.model if isinstance(llm, GeneralLlm) else llm}'"
                 )
                 self._llms[purpose] = llm
 
@@ -255,14 +256,23 @@ class ForecastBot(ABC):
 
     def get_config(self) -> dict[str, Any]:
         params = inspect.signature(self.__init__).parameters
-        config: dict[str, Any] = {
-            name: str(getattr(self, name))
-            for name in params.keys()
-            if name != "self"
-            and name != "kwargs"
-            and name != "args"
-            and name != "llms"
-        }
+
+        config: dict[str, Any] = {}
+        for name in params.keys():
+            if (
+                name == "self"
+                or name == "kwargs"
+                or name == "args"
+                or name == "llms"
+            ):
+                continue
+            value = getattr(self, name)
+            try:
+                json.dumps({name: value})
+                config[name] = value
+            except Exception:
+                config[name] = str(value)
+
         llm_dict: dict[str, str | dict[str, Any]] = {}
         for key, value in self._llms.items():
             if isinstance(value, GeneralLlm):
