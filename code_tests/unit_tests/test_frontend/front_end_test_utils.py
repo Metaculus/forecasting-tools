@@ -2,7 +2,7 @@ import logging
 
 from streamlit.testing.v1 import AppTest
 
-from front_end.Home import AppPage
+from forecasting_tools.front_end.Home import AppPage
 
 logger = logging.getLogger(__name__)
 

@@ -17,13 +17,15 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
 )
+from forecasting_tools.front_end.helpers.report_displayer import (
+    ReportDisplayer,
+)
+from forecasting_tools.front_end.helpers.tool_page import ToolPage
 from forecasting_tools.research_agents.base_rate_researcher import (
     BaseRateReport,
     BaseRateResearcher,
 )
 from forecasting_tools.util.jsonable import Jsonable
-from front_end.helpers.report_displayer import ReportDisplayer
-from front_end.helpers.tool_page import ToolPage
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +39,7 @@ class BaseRatePage(ToolPage):
     URL_PATH: str = "/base-rate-generator"
     INPUT_TYPE = BaseRateInput
     OUTPUT_TYPE = BaseRateReport
-    EXAMPLES_FILE_PATH = (
-        "front_end/example_outputs/base_rate_page_examples.json"
-    )
+    EXAMPLES_FILE_PATH = "forecasting_tools/front_end/example_outputs/base_rate_page_examples.json"
     QUESTION_TEXT_BOX = "base_rate_question_text"
 
     @classmethod

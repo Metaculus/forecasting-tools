@@ -8,8 +8,8 @@ from typing import Any
 import streamlit as st
 from pydantic import BaseModel
 
+from forecasting_tools.front_end.helpers.app_page import AppPage
 from forecasting_tools.util.jsonable import Jsonable
-from front_end.helpers.app_page import AppPage
 
 logger = logging.getLogger(__name__)
 

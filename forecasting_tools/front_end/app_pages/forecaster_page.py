@@ -15,9 +15,11 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastRunType,
 )
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
+from forecasting_tools.front_end.helpers.report_displayer import (
+    ReportDisplayer,
+)
+from forecasting_tools.front_end.helpers.tool_page import ToolPage
 from forecasting_tools.util.jsonable import Jsonable
-from front_end.helpers.report_displayer import ReportDisplayer
-from front_end.helpers.tool_page import ToolPage
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +35,7 @@ class ForecasterPage(ToolPage):
     URL_PATH: str = "/forecast"
     INPUT_TYPE = ForecastInput
     OUTPUT_TYPE = BinaryReport
-    EXAMPLES_FILE_PATH = (
-        "front_end/example_outputs/forecast_page_examples.json"
-    )
+    EXAMPLES_FILE_PATH = "forecasting_tools/front_end/example_outputs/forecast_page_examples.json"
 
     # Form input keys
     QUESTION_TEXT_BOX = "question_text_box"

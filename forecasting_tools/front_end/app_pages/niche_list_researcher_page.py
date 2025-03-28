@@ -10,13 +10,15 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
 )
+from forecasting_tools.front_end.helpers.report_displayer import (
+    ReportDisplayer,
+)
+from forecasting_tools.front_end.helpers.tool_page import ToolPage
 from forecasting_tools.research_agents.niche_list_researcher import (
     FactCheckedItem,
     NicheListResearcher,
 )
 from forecasting_tools.util.jsonable import Jsonable
-from front_end.helpers.report_displayer import ReportDisplayer
-from front_end.helpers.tool_page import ToolPage
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +44,7 @@ class NicheListResearchPage(ToolPage):
     URL_PATH: str = "/niche-list-researcher"
     INPUT_TYPE = NicheListInput
     OUTPUT_TYPE = NicheListOutput
-    EXAMPLES_FILE_PATH = (
-        "front_end/example_outputs/niche_list_page_examples.json"
-    )
+    EXAMPLES_FILE_PATH = "forecasting_tools/front_end/example_outputs/niche_list_page_examples.json"
 
     @classmethod
     async def _display_intro_text(cls) -> None:

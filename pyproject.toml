@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "forecasting-tools"
-version = "0.2.22"
+version = "0.2.23"
 description = "AI forecasting and research tools to help humans reason about and forecast the future"
 authors = ["Benjamin Wilson <mokoresearch@gmail.com>"]
 license = "MIT"
@@ -41,6 +41,7 @@ scipy = "^1.12.0"
 faker = "^37.0.1"
 plotly = ">=5.24.1,<7.0.0"
 pandas = "^2.2.3"
+streamlit = "^1.36.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.1"
@@ -48,7 +49,6 @@ seaborn = "^0.13.2"
 matplotlib = "^3.9.2"
 ipykernel = "^6.29.5"
 notebook = "^7.2.2"
-streamlit = "^1.36.0"
 pytest = "^8.3.2"
 pytest-xdist = "^3.3.1"
 pytest-mock = "^3.14.0"

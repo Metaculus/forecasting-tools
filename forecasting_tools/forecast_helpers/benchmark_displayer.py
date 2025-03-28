@@ -11,9 +11,11 @@ import typeguard
 from forecasting_tools.data_models.benchmark_for_bot import BenchmarkForBot
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.forecast_report import ForecastReport
+from forecasting_tools.front_end.helpers.report_displayer import (
+    ReportDisplayer,
+)
 from forecasting_tools.util import file_manipulation
 from forecasting_tools.util.stats import ConfidenceIntervalCalculator
-from front_end.helpers.report_displayer import ReportDisplayer
 
 logger = logging.getLogger(__name__)
 

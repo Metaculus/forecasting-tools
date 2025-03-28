@@ -1,6 +1,8 @@
 import pytest
 
-from front_end.helpers.report_displayer import ReportDisplayer
+from forecasting_tools.front_end.helpers.report_displayer import (
+    ReportDisplayer,
+)
 
 
 @pytest.mark.parametrize(

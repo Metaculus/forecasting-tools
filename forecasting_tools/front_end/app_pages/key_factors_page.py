@@ -22,13 +22,15 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastRunType,
 )
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
+from forecasting_tools.front_end.helpers.report_displayer import (
+    ReportDisplayer,
+)
+from forecasting_tools.front_end.helpers.tool_page import ToolPage
 from forecasting_tools.research_agents.key_factors_researcher import (
     KeyFactorsResearcher,
     ScoredKeyFactor,
 )
 from forecasting_tools.util.jsonable import Jsonable
-from front_end.helpers.report_displayer import ReportDisplayer
-from front_end.helpers.tool_page import ToolPage
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +51,7 @@ class KeyFactorsPage(ToolPage):
     URL_PATH: str = "/key-factors"
     INPUT_TYPE = KeyFactorsInput
     OUTPUT_TYPE = KeyFactorsOutput
-    EXAMPLES_FILE_PATH = (
-        "front_end/example_outputs/key_factors_page_examples.json"
-    )
+    EXAMPLES_FILE_PATH = "forecasting_tools/front_end/example_outputs/key_factors_page_examples.json"
 
     @classmethod
     async def _display_intro_text(cls) -> None:

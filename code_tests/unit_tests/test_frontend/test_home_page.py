@@ -3,8 +3,8 @@ import logging
 from code_tests.unit_tests.test_frontend.front_end_test_utils import (
     FrontEndTestUtils,
 )
-from front_end.helpers.app_page import AppPage
-from front_end.Home import HomePage
+from forecasting_tools.front_end.helpers.app_page import AppPage
+from forecasting_tools.front_end.Home import HomePage
 
 logger = logging.getLogger(__name__)
 import pytest
