@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
@@ -50,18 +49,38 @@ async def test_aggregate_predictions() -> None:
         await BinaryReport.aggregate_predictions([1.1, 0.5], question)
 
 
-def test_expected_baseline_score() -> None:
-    # Test with valid community prediction
+@pytest.mark.parametrize(
+    "prediction, community_prediction, greater_than_zero",
+    [
+        (0.8, 0.9, True),
+        (0.85, 0.8, True),
+        (0.1, 0.2, True),
+        (0.6, 0.1, False),
+        (0.2, 0.5, False),
+        (0.9, 0.6, False),
+    ],
+)
+def test_zero_based_expected_baseline_score(
+    prediction: float, community_prediction: float, greater_than_zero: bool
+) -> None:
+    # Test with expected positive
     report = ForecastingTestManager.get_fake_forecast_report(
-        prediction=0.6, community_prediction=0.7
+        prediction=prediction, community_prediction=community_prediction
     )
-    score = report.expected_baseline_score
-    assert score is not None
-    expected_score = 100.0 * (
-        0.7 * (np.log(0.6) + 1.0) + (1.0 - 0.7) * (np.log(1.0 - 0.6) + 1.0)
+    assert report.expected_baseline_score is not None
+    assert (
+        report.expected_baseline_score > 0
+        if greater_than_zero
+        else report.expected_baseline_score < 0
     )
-    assert score == pytest.approx(expected_score)
-    assert score > 0
+
+
+def test_expected_baseline_score() -> None:
+    # Test with expectation of 0
+    report = ForecastingTestManager.get_fake_forecast_report(
+        prediction=0.5, community_prediction=0.5
+    )
+    assert report.expected_baseline_score == pytest.approx(0)
 
     # Test better prediction less than worse prediction
     better_report = ForecastingTestManager.get_fake_forecast_report(

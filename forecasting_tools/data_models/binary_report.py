@@ -61,7 +61,7 @@ class BinaryReport(ForecastReport):
         if c is None:
             return None
         return 100.0 * (
-            c * (np.log(p) + 1.0) + (1.0 - c) * (np.log(1.0 - p) + 1.0)
+            c * (np.log2(p) + 1.0) + (1.0 - c) * (np.log2(1.0 - p) + 1.0)
         )
 
     @property

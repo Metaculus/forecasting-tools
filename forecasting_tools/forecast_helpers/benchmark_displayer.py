@@ -30,8 +30,8 @@ def get_json_files(directory: str) -> list[str]:
     return sorted(json_files)
 
 
-def display_deviation_scores(reports: list[BinaryReport]) -> None:
-    with st.expander("Scores", expanded=False):
+def display_score_overview(reports: list[BinaryReport]) -> None:
+    with st.expander("Scores by category", expanded=False):
         certain_reports = [
             r
             for r in reports
@@ -70,14 +70,19 @@ def display_stats_for_report_type(
         #### {title}
         - Number of Questions: {len(reports)}
         - Expected Baseline Score (lower is better): {average_expected_baseline_score:.4f}
-        - Average Deviation: On average, there is a {average_deviation:.2%} percentage point difference between community and bot
+        - Average Deviation: On average, there is a difference of {average_deviation:.2%} percentage points between community and bot predictions
         """
     )
 
 
 def display_questions_and_forecasts(reports: list[BinaryReport]) -> None:
-    with st.expander("Questions and Forecasts", expanded=False):
-        st.subheader("Question List")
+    with st.expander("Scores and forecasts by question", expanded=False):
+        st.subheader("Score list")
+        st.write(
+            "- **🎯:** Expected Baseline Score\n"
+            "- **🤖:** Bot Prediction\n"
+            "- **👥:** Community Prediction\n"
+        )
         certain_reports = [
             r
             for r in reports
@@ -115,13 +120,18 @@ def display_question_stats_in_list(
         reverse=True,
     )
     for report in sorted_reports:
-        deviation = (
+        score = (
             report.expected_baseline_score
             if report.expected_baseline_score is not None
             else -1
         )
+        if report.question.page_url:
+            question_text = f"[{report.question.question_text}]({report.question.page_url})"
+        else:
+            question_text = report.question.question_text
         st.write(
-            f"- **Δ:** {deviation:.4f} | **🤖:** {report.prediction:.2%} | **👥:** {report.community_prediction:.2%} | **Question:** {report.question.question_text}"
+            f"- **🎯:** {score:.4f} | **🤖:** {report.prediction:.2%} | "
+            f"**👥:** {report.community_prediction:.2%} | **Question:** {question_text}"
         )
 
 
@@ -178,7 +188,7 @@ def display_benchmark_list(benchmarks: list[BenchmarkForBot]) -> None:
     reports = benchmark.forecast_reports
     if isinstance(reports[0], BinaryReport):
         reports = typeguard.check_type(reports, list[BinaryReport])
-        display_deviation_scores(reports)
+        display_score_overview(reports)
         display_questions_and_forecasts(reports)
         ReportDisplayer.display_report_list(reports)
 
@@ -225,6 +235,9 @@ def display_benchmark_comparison_graphs(
     st.markdown("# Benchmark Score Comparisons")
     st.markdown(
         """
+        Note that there are seasonal changes with the certainty of questions (e.g. there are more certain questions near the end of the year).
+        'Certain' questions score better, so be careful of comparing benchmarks from different time periods.
+
         - Uncertain Question: Questions with community prediction between 10% and 90%
         - Certain Question: Questions with community prediction greater than 90% or less than 10%
         - Perfect predictor: automatically created and shows what a perfect score (predicting community prediction) would be.
@@ -329,75 +342,67 @@ def display_benchmark_comparison_graphs(
     if not data_by_benchmark:
         return
 
-    try:
-        df = pd.DataFrame(data_by_benchmark)
+    df = pd.DataFrame(data_by_benchmark)
 
-        st.markdown("### Expected Baseline Scores")
-        st.markdown(
-            "Higher score indicates better performance. Read more [here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.). "
-            "This is a proper score assuming the community prediction is the true probability. "
-            f"Error bars are for {confidence_level*100}% confidence interval. "
-            "If an error bar is 0, then you have < 4 forecasts or the data probably violated the normality assumption for a T-based confidence interval when num_forecasts < 30. "
-            "Note that there are seasonal changes with the certinaty of questions (e.g. there are more certain questions near the end of the year). "
-            "'Certain' questions score better, so be careful of comparing benchmarks from different time periods. "
-        )
+    st.markdown("### Expected Baseline Scores")
+    st.markdown(
+        "Higher score indicates better performance. Read more [here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.). "
+        "This is a proper score assuming the community prediction is the true probability.\n\n"
+        f"Error bars are for a {confidence_level*100}% confidence interval. "
+        "If an error bar is 0, then either:\n"
+        "- You have < 4 forecasts\n"
+        "- The data violated the normality assumption for a T-based confidence interval when num_forecasts < 30.\n\n"
+    )
 
-        # Mark highest scores with stars (higher is better for baseline score)
-        max_scores = df.groupby("Category")[
-            "Expected Baseline Score"
-        ].transform("max")
-        df["Is Best Expected"] = df["Expected Baseline Score"] == max_scores
+    # Mark highest scores with stars (higher is better for baseline score)
+    max_scores = df.groupby("Category")["Expected Baseline Score"].transform(
+        "max"
+    )
+    df["Is Best Expected"] = df["Expected Baseline Score"] == max_scores
 
-        fig = px.bar(
-            df,
-            x="Benchmark",
-            y="Expected Baseline Score",
-            color="Category",
-            barmode="group",
-            title="Expected Baseline Scores by Benchmark and Category",
-            error_y="Baseline Error",
-        )
-        fig.update_layout(yaxis_title="Expected Baseline Score")
+    fig = px.bar(
+        df,
+        x="Benchmark",
+        y="Expected Baseline Score",
+        color="Category",
+        barmode="group",
+        title="Expected Baseline Scores by Benchmark and Category",
+        error_y="Baseline Error",
+    )
+    fig.update_layout(yaxis_title="Expected Baseline Score")
 
-        add_star_annotations(
-            fig, df, "Benchmark", "Expected Baseline Score", "Is Best Expected"
-        )
+    add_star_annotations(
+        fig, df, "Benchmark", "Expected Baseline Score", "Is Best Expected"
+    )
 
-        st.plotly_chart(fig)
+    st.plotly_chart(fig)
 
-        st.markdown("### Deviation Scores")
-        st.markdown(
-            "Lower score indicates predictions closer to community consensus. "
-            "Shown as difference in percentage points between bot and community. "
-            "This is not a proper score and is less meaningful than the expected baseline score. However it is more intuitive."
-        )
+    st.markdown("### Deviation Scores")
+    st.markdown(
+        "Lower score indicates predictions closer to community consensus. "
+        "Shown as difference in percentage points between bot and community. "
+        "This is not a proper score and is less meaningful than the expected baseline score. However it is more intuitive."
+    )
 
-        # Mark lowest deviations with stars (lower is better for deviation score)
-        min_deviations = df.groupby("Category")["Deviation Score"].transform(
-            "min"
-        )
-        df["Is Best Deviation"] = df["Deviation Score"] == min_deviations
+    # Mark lowest deviations with stars (lower is better for deviation score)
+    min_deviations = df.groupby("Category")["Deviation Score"].transform("min")
+    df["Is Best Deviation"] = df["Deviation Score"] == min_deviations
 
-        fig = px.bar(
-            df,
-            x="Benchmark",
-            y="Deviation Score",
-            color="Category",
-            barmode="group",
-            title="Deviation Scores by Benchmark and Category",
-        )
-        fig.update_layout(yaxis_title="Deviation Score (percentage points)")
+    fig = px.bar(
+        df,
+        x="Benchmark",
+        y="Deviation Score",
+        color="Category",
+        barmode="group",
+        title="Deviation Scores by Benchmark and Category",
+    )
+    fig.update_layout(yaxis_title="Deviation Score (percentage points)")
 
-        add_star_annotations(
-            fig, df, "Benchmark", "Deviation Score", "Is Best Deviation"
-        )
+    add_star_annotations(
+        fig, df, "Benchmark", "Deviation Score", "Is Best Deviation"
+    )
 
-        st.plotly_chart(fig)
-
-    except ImportError:
-        st.error(
-            "Please install plotly and pandas to view the graphs: `pip install plotly pandas`"
-        )
+    st.plotly_chart(fig)
 
 
 def make_perfect_benchmark(
@@ -415,7 +420,7 @@ def make_perfect_benchmark(
         report.prediction = report.community_prediction
     perfect_benchmark.forecast_reports = reports_of_perfect_benchmark
     perfect_benchmark.explicit_name = (
-        "Perfect Predictor (questions of benchmark 1)"
+        "Perfect Predictor (uses same questions as benchmark 1)"
     )
     return perfect_benchmark
 
