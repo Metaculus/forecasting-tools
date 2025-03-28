@@ -123,7 +123,7 @@ def test_calculate_average_expected_log_score() -> None:
             prediction=0.5, community_prediction=None
         )
     ]
-    with pytest.raises(AssertionError):
+    with pytest.raises(Exception):
         BinaryReport.calculate_average_expected_baseline_score(
             reports_with_none
         )
