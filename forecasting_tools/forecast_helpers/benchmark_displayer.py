@@ -346,8 +346,11 @@ def display_benchmark_comparison_graphs(
 
     st.markdown("### Expected Baseline Scores")
     st.markdown(
-        "Higher score indicates better performance. Read more [here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.). "
-        "This is a proper score assuming the community prediction is the true probability. "
+        "Higher score indicates better performance. Read more about baseline score "
+        "[here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.). "
+        "Expected baseline score is equal to `c * (np.log2(p) + 1.0) + (1.0 - c) * (np.log2(1.0 - p) + 1.0)` "
+        "where c is the community prediction and p is your prediction. "
+        "This is the expected value of the baseline score) and is a proper score assuming the community prediction is the true probability. "
         f"Error bars are for a {confidence_level*100}% confidence interval. If an error bar is 0, then either:\n"
         "- You have < 4 forecasts\n"
         "- The data violated the normality assumption for a T-based confidence interval when num_forecasts < 30.\n\n"

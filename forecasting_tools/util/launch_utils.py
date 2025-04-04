@@ -36,6 +36,7 @@ class LaunchQuestion(BaseModel, Jsonable):
     zero_point: int | float | None = None
     open_lower_bound: bool | None = None
     open_upper_bound: bool | None = None
+    unit: str | None = None
     group_variable: str | None = None
     options: list[str] | None = None
     tournament: str | None = None
@@ -165,6 +166,7 @@ class LaunchQuestion(BaseModel, Jsonable):
             "zero_point": self.zero_point,
             "open_lower_bound": self.open_lower_bound,
             "open_upper_bound": self.open_upper_bound,
+            "unit": self.unit,
             "group_variable": self.group_variable,
             "options": "|".join(self.options) if self.options else "",
         }
@@ -185,10 +187,11 @@ class SheetOrganizer:
     @classmethod
     def load_questions_from_csv(cls, file_path: str) -> list[LaunchQuestion]:
         questions = load_csv_file(file_path)
-        return [
+        loaded_questions = [
             LaunchQuestion.from_csv_row(row, i)
             for i, row in enumerate(questions)
         ]
+        return loaded_questions
 
     @classmethod
     def save_questions_to_csv(
@@ -373,8 +376,9 @@ class SheetOrganizer:
                     ), "resolution_criteria is required"
                     assert question.description, "description is required"
                     assert (
-                        question.question_weight
-                    ), "question_weight is required"
+                        question.question_weight is not None
+                        and 1 >= question.question_weight >= 0
+                    ), "question_weight must be between 0 and 1"
                     assert question.open_time, "open_time is required"
                     assert (
                         question.scheduled_close_time
@@ -410,11 +414,23 @@ class SheetOrganizer:
                         assert (
                             question.open_upper_bound is not None
                         ), "open_upper_bound is required"
+                        assert (
+                            question.unit is not None and question.unit.strip()
+                        ), "unit is required for numeric questions"
                     except AssertionError as e:
                         warnings.append(
                             LaunchWarning(
                                 relevant_question=question,
                                 warning=f"Missing at least one numeric field. Error: {e}",
+                            )
+                        )
+                else:
+                    # Check that non-numeric questions don't have unit
+                    if question.unit is not None and question.unit.strip():
+                        warnings.append(
+                            LaunchWarning(
+                                relevant_question=question,
+                                warning="Unit should only be specified for numeric questions",
                             )
                         )
             return warnings
@@ -445,6 +461,21 @@ class SheetOrganizer:
         def _check_no_field_changes() -> list[LaunchWarning]:
             warnings = []
 
+            duplicate_title_warnings = _check_duplicate_titles()
+            if duplicate_title_warnings:
+                warnings.append(
+                    LaunchWarning(
+                        relevant_question=None,
+                        warning=(
+                            "Cannot check if persistent fields changed"
+                            " between original and new questions because"
+                            " duplicate titles were found (titles needed to match"
+                            " between original and new questions)"
+                        ),
+                    )
+                )
+                return warnings
+
             for orig_q in original_questions:
                 for new_q in new_questions:
                     if orig_q.title == new_q.title:
@@ -459,7 +490,7 @@ class SheetOrganizer:
                                     warnings.append(
                                         LaunchWarning(
                                             relevant_question=new_q,
-                                            warning=f"Field {field} was changed",
+                                            warning=f"Field {field} was changed from {getattr(orig_q, field)} to {getattr(new_q, field)}",
                                         )
                                     )
             return warnings
@@ -581,9 +612,9 @@ class SheetOrganizer:
                 title_count[question.title] = (
                     title_count.get(question.title, 0) + 1
                 )
-
-            for question in new_questions:
-                if title_count[question.title] > 1:
+                if (
+                    title_count[question.title] == 1
+                ):  # Only add warning if first occurrence
                     warnings.append(
                         LaunchWarning(
                             relevant_question=question,
@@ -758,9 +789,12 @@ class SheetOrganizer:
         ]
         questions_to_schedule.sort(
             key=lambda q: (
-                q.scheduled_resolve_time
-                if q.scheduled_resolve_time
-                else datetime.max
+                (
+                    q.scheduled_resolve_time
+                    if q.scheduled_resolve_time
+                    else datetime.max
+                ),
+                q.original_order,
             )
         )
 
@@ -773,7 +807,10 @@ class SheetOrganizer:
         if not questions_to_schedule:
             all_questions = prescheduled_questions
             all_questions.sort(
-                key=lambda q: q.open_time if q.open_time else datetime.max
+                key=lambda q: (
+                    q.open_time if q.open_time else datetime.max,
+                    q.original_order,
+                )
             )
             return all_questions
 
@@ -813,7 +850,10 @@ class SheetOrganizer:
 
         all_questions = prescheduled_questions + newly_scheduled_questions
         all_questions.sort(
-            key=lambda q: q.open_time if q.open_time else datetime.max
+            key=lambda q: (
+                q.open_time if q.open_time else datetime.max,
+                q.original_order,
+            )
         )
 
         return all_questions
