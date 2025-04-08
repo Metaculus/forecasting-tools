@@ -41,9 +41,9 @@ scipy = "^1.12.0"
 faker = "^37.0.1"
 plotly = ">=5.24.1,<7.0.0"
 pandas = "^2.2.3"
+streamlit = "^1.20.0"
 
 [tool.poetry.group.dev.dependencies]
-streamlit = "^1.36.0"
 pre-commit = "^4.0.1"
 seaborn = "^0.13.2"
 matplotlib = "^3.9.2"
