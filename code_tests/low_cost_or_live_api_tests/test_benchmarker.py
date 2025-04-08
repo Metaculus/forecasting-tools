@@ -111,8 +111,8 @@ def assert_all_benchmark_object_fields_are_not_none(
         len(benchmark.forecast_reports) == num_questions
     ), "Forecast reports is not set"
     assert (
-        benchmark.average_expected_baseline_score > 0
-    ), "Average inverse expected log score is not set"
+        benchmark.average_expected_baseline_score <= 100
+    ), "Average expected baseline score is not set"
     assert (
         benchmark.num_input_questions == num_questions
     ), "Number of input questions is not set"

@@ -102,7 +102,7 @@ async def test_no_reports_when_questions_already_forecasted(
     ), "Expected all questions to be forecasted on"
 
 
-async def test_works_with_configured_llm(mocker: Mock) -> None:
+async def test_works_with_configured_llm() -> None:
     bot_type = TemplateBot
     bot = bot_type(
         llms={

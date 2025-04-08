@@ -613,8 +613,8 @@ class SheetOrganizer:
                     title_count.get(question.title, 0) + 1
                 )
                 if (
-                    title_count[question.title] == 1
-                ):  # Only add warning if first occurrence
+                    title_count[question.title] == 2
+                ):  # Only add warning first time duplicate is found
                     warnings.append(
                         LaunchWarning(
                             relevant_question=question,
