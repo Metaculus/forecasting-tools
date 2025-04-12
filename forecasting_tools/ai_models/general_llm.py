@@ -162,7 +162,7 @@ class GeneralLlm(
             assert (
                 self.litellm_kwargs.get("extra_headers") is None
             ), "extra_headers should not be set if use_metaculus_proxy is True"
-            if "claude" in self._litellm_model:
+            if "claude" in self.model or "anthropic" in self.model:
                 self.litellm_kwargs["base_url"] = (
                     "https://llm-proxy.metaculus.com/proxy/anthropic"
                 )

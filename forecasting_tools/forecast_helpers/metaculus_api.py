@@ -45,7 +45,8 @@ class MetaculusApi:
     Q3_2024_QUARTERLY_CUP = 3366
     Q4_2024_QUARTERLY_CUP = 3672
     Q1_2025_QUARTERLY_CUP = 32630
-    CURRENT_QUARTERLY_CUP_ID = "quarterly-cup"
+    CURRENT_QUARTERLY_CUP_ID = "metaculus-cup"
+    CURRENT_METACULUS_CUP_ID = "metaculus-cup"
     CURRENT_AI_COMPETITION_ID = AI_COMPETITION_ID_Q2
 
     API_BASE_URL = "https://www.metaculus.com/api"

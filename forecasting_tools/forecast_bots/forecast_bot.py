@@ -676,7 +676,7 @@ class ForecastBot(ABC):
                 <<<<<<<<<<<<<<<<<<<< Summary >>>>>>>>>>>>>>>>>>>>>
                 {report.summary}
 
-                <<<<<<<<<<<<<<<<<<<< First Rationales >>>>>>>>>>>>>>>>>>>>>
+                <<<<<<<<<<<<<<<<<<<< First Rationale >>>>>>>>>>>>>>>>>>>>>
                 {report.forecast_rationales.split("##")[1][:10000]}
                 -------------------------------------------------------------------------------------------
             """
@@ -695,6 +695,12 @@ class ForecastBot(ABC):
                 short_summary = f"❌ Exception: {report.__class__.__name__} | Message: {exception_message}"
             full_summary += short_summary + "\n"
         logger.info(full_summary)
+
+        total_cost = sum(
+            report.price_estimate if report.price_estimate else 0
+            for report in valid_reports
+        )
+        logger.info(f"Total cost estimated: {total_cost}")
 
         if minor_exceptions:
             logger.error(
@@ -755,6 +761,13 @@ class ForecastBot(ABC):
             raise ValueError(f"Unknown guarantee_type: {guarantee_type}")
 
         return return_value
+
+    def set_llm(
+        self, llm: GeneralLlm | str, purpose: str | None = None
+    ) -> None:
+        if purpose not in self._llms:
+            raise ValueError(f"Unknown llm purpose: {purpose}")
+        self._llms[purpose] = llm
 
     @classmethod
     def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm]:
