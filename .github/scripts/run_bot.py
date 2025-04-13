@@ -142,6 +142,51 @@ def create_bot_from_mode(token: str) -> ForecastBot:
                 temperature=default_temperature,
             )
         )
+    if token == "METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN":
+        _set_metaculus_token("METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="claude-3-7-sonnet-latest",
+                temperature=default_temperature,
+                thinking={
+                    "type": "enabled",
+                    "budget_tokens": 32000,
+                },
+                max_tokens=40000,
+            )
+        )
+    if token == "METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN":
+        _set_metaculus_token("METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="claude-3-7-sonnet-latest",
+                temperature=default_temperature,
+            )
+        )
+    if token == "METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN":
+        _set_metaculus_token("METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="claude-3-5-sonnet-latest",
+                temperature=default_temperature,
+            )
+        )
+    if token == "METAC_CLAUDE_3_5_SONNET_20240620_TOKEN":
+        _set_metaculus_token("METAC_CLAUDE_3_5_SONNET_20240620_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="claude-3.5-Sonnet-20240620",
+                temperature=default_temperature,
+            )
+        )
     if token == "METAC_UNIFORM_PROBABILITY_BOT_TOKEN":
         _set_metaculus_token("METAC_UNIFORM_PROBABILITY_BOT_TOKEN")
         bot = UniformProbabilityBot(

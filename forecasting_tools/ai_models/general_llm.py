@@ -77,6 +77,9 @@ class GeneralLlm(
         "claude-3-5-sonnet": {
             "timeout": 40,
         },
+        "claude-3-7-sonnet": {
+            "timeout": 90,
+        },
         "deepseek/": {
             "timeout": 80,
         },

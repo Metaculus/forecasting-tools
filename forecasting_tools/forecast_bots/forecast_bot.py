@@ -782,7 +782,7 @@ class ForecastBot(ABC):
             main_default_llm = GeneralLlm(model="gpt-4o", temperature=0.3)
         elif os.getenv("ANTHROPIC_API_KEY"):
             main_default_llm = GeneralLlm(
-                model="claude-3-5-sonnet-20241022", temperature=0.3
+                model="claude-3-7-sonnet-latest", temperature=0.3
             )
         elif os.getenv("OPENROUTER_API_KEY"):
             main_default_llm = GeneralLlm(
