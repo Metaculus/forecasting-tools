@@ -4,6 +4,8 @@ import logging
 import os
 from typing import Literal
 
+import dotenv
+
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
@@ -16,6 +18,7 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
 )
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 
+dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +35,7 @@ async def run_bot(mode: str) -> None:
 def create_bot_from_mode(mode: str) -> ForecastBot:
     if os.getenv("METACULUS_TOKEN") is not None:
         raise ValueError(
-            "Metaculus token will be overridden by the specific mode chosen"
+            "Don't set the METACULUS_TOKEN environment variable, it will be overridden by the specific mode chosen"
         )
 
     default_temperature = 0.3
@@ -41,7 +44,7 @@ def create_bot_from_mode(mode: str) -> ForecastBot:
         predictions_per_research_report=5,
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=True,
-        skip_previously_forecasted_questions=True,
+        skip_previously_forecasted_questions=False,
     )
 
     if mode == "gpt-4o_asknews":
@@ -54,29 +57,83 @@ def create_bot_from_mode(mode: str) -> ForecastBot:
                 temperature=default_temperature,
             )
         )
-    elif mode == "gpt-4o_exa":
-        _set_metaculus_token("METAC_GPT_4O_EXA_TOKEN")
-        _make_sure_search_keys_dont_conflict("exa-mode")
+    if mode == "o1_asknews":
+        _set_metaculus_token("METAC_O1_ASKNEWS_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="gpt-4o",
+                model="o1",
                 temperature=default_temperature,
             )
         )
-    elif mode == "gpt-4o_perplexity":
-        _set_metaculus_token("METAC_GPT_4O_PERPLEXITY_TOKEN")
-        _make_sure_search_keys_dont_conflict("perplexity-mode")
+    if mode == "o1-high_asknews":
+        _set_metaculus_token("METAC_O1_HIGH_ASKNEWS_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="gpt-4o",
+                model="o1",
+                temperature=default_temperature,
+                reasoning_effort="high",
+            )
+        )
+    if mode == "o3-mini_asknews":
+        _set_metaculus_token("METAC_O3_MINI_ASKNEWS_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="o3-mini",
                 temperature=default_temperature,
             )
         )
+    if mode == "o3-mini-high_asknews":
+        _set_metaculus_token("METAC_O3_MINI_HIGH_ASKNEWS_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="o3-mini",
+                temperature=default_temperature,
+                reasoning_effort="high",
+            )
+        )
+    if mode == "o1-mini_asknews":
+        _set_metaculus_token("METAC_O1_MINI_ASKNEWS_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="o1-mini",
+                temperature=default_temperature,
+            )
+        )
+    if mode == "gpt-3.5-turbo_asknews":
+        _set_metaculus_token("METAC_GPT_3_5_TURBO_ASKNEWS_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="gpt-3.5-turbo",
+                temperature=default_temperature,
+            )
+        )
+    if mode == "gpt-4o-mini_asknews":
+        _set_metaculus_token("METAC_GPT_4O_MINI_ASKNEWS_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="gpt-4o-mini",
+                temperature=default_temperature,
+            )
+        )
+    if mode == "coin-flip-bot":
+        _set_metaculus_token("METAC_COIN_FLIP_BOT_TOKEN")
+
     else:
         raise ValueError(f"Invalid mode: {mode}")
-
     return bot
 
 
@@ -125,6 +182,16 @@ async def _save_reports_to_database(reports: list[ForecastReport]) -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+
+    # Suppress LiteLLM logging
+    litellm_logger = logging.getLogger("LiteLLM")
+    litellm_logger.setLevel(logging.WARNING)
+    litellm_logger.propagate = False
+
     parser = argparse.ArgumentParser(
         description="Run a forecasting bot with the specified mode"
     )
@@ -135,4 +202,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    asyncio.run(run_bot(args.mode))
+    mode = args.mode
+
+    mode = "gpt-4o_asknews"
+    asyncio.run(run_bot(mode))

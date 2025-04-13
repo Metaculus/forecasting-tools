@@ -1,5 +1,8 @@
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.forecast_bots.community.coin_flip_bot import (
+    UniformProbabilityBot,
+)
 from forecasting_tools.forecast_bots.community.q1_veritas_bot import (
     Q1VeritasBot,
 )
@@ -33,11 +36,12 @@ def get_all_important_bot_classes() -> list[type[ForecastBot]]:
         Q4TemplateBot2024,
         Q4VeritasBot,
         Q1VeritasBot,
+        UniformProbabilityBot,
     ]
 
 
 def get_all_bots_for_doing_cheap_tests() -> list[ForecastBot]:
-    return [TemplateBot()]
+    return [TemplateBot(), UniformProbabilityBot()]
 
 
 def get_all_bot_question_type_pairs_for_cheap_tests() -> (

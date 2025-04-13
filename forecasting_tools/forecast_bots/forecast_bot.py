@@ -762,9 +762,7 @@ class ForecastBot(ABC):
 
         return return_value
 
-    def set_llm(
-        self, llm: GeneralLlm | str, purpose: str | None = None
-    ) -> None:
+    def set_llm(self, llm: GeneralLlm | str, purpose: str = "default") -> None:
         if purpose not in self._llms:
             raise ValueError(f"Unknown llm purpose: {purpose}")
         self._llms[purpose] = llm
