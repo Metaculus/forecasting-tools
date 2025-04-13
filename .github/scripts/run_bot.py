@@ -50,8 +50,8 @@ def create_bot_from_mode(token: str) -> ForecastBot:
         skip_previously_forecasted_questions=True,
     )
 
-    if token == "METAC_GPT_4O_ASKNEWS_TOKEN":
-        _set_metaculus_token("METAC_GPT_4O_ASKNEWS_TOKEN")
+    if token == "METAC_GPT_4O_TOKEN":
+        _set_metaculus_token("METAC_GPT_4O_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -60,8 +60,8 @@ def create_bot_from_mode(token: str) -> ForecastBot:
                 temperature=default_temperature,
             )
         )
-    if token == "METAC_O1_ASKNEWS_TOKEN":
-        _set_metaculus_token("METAC_O1_ASKNEWS_TOKEN")
+    if token == "METAC_O1_TOKEN":
+        _set_metaculus_token("METAC_O1_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -70,8 +70,8 @@ def create_bot_from_mode(token: str) -> ForecastBot:
                 temperature=default_temperature,
             )
         )
-    if token == "METAC_O1_HIGH_ASKNEWS_TOKEN":
-        _set_metaculus_token("METAC_O1_HIGH_ASKNEWS_TOKEN")
+    if token == "METAC_O1_HIGH_TOKEN":
+        _set_metaculus_token("METAC_O1_HIGH_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -81,8 +81,8 @@ def create_bot_from_mode(token: str) -> ForecastBot:
                 reasoning_effort="high",
             )
         )
-    if token == "METAC_O3_MINI_ASKNEWS_TOKEN":
-        _set_metaculus_token("METAC_O3_MINI_ASKNEWS_TOKEN")
+    if token == "METAC_O3_MINI_TOKEN":
+        _set_metaculus_token("METAC_O3_MINI_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -91,8 +91,8 @@ def create_bot_from_mode(token: str) -> ForecastBot:
                 temperature=default_temperature,
             )
         )
-    if token == "METAC_O3_MINI_HIGH_ASKNEWS_TOKEN":
-        _set_metaculus_token("METAC_O3_MINI_HIGH_ASKNEWS_TOKEN")
+    if token == "METAC_O3_MINI_HIGH_TOKEN":
+        _set_metaculus_token("METAC_O3_MINI_HIGH_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -102,8 +102,8 @@ def create_bot_from_mode(token: str) -> ForecastBot:
                 reasoning_effort="high",
             )
         )
-    if token == "METAC_O1_MINI_ASKNEWS_TOKEN":
-        _set_metaculus_token("METAC_O1_MINI_ASKNEWS_TOKEN")
+    if token == "METAC_O1_MINI_TOKEN":
+        _set_metaculus_token("METAC_O1_MINI_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -112,18 +112,19 @@ def create_bot_from_mode(token: str) -> ForecastBot:
                 temperature=default_temperature,
             )
         )
-    if token == "METAC_GPT_4_5_PREVIEW_ASKNEWS_TOKEN":
-        _set_metaculus_token("METAC_GPT_4_5_PREVIEW_ASKNEWS_TOKEN")
+    if token == "METAC_GPT_4_5_PREVIEW_TOKEN":
+        _set_metaculus_token("METAC_GPT_4_5_PREVIEW_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
                 model="gpt-4.5-preview",
                 temperature=default_temperature,
+                timeout=90,
             )
         )
-    if token == "METAC_GPT_3_5_TURBO_ASKNEWS_TOKEN":
-        _set_metaculus_token("METAC_GPT_3_5_TURBO_ASKNEWS_TOKEN")
+    if token == "METAC_GPT_3_5_TURBO_TOKEN":
+        _set_metaculus_token("METAC_GPT_3_5_TURBO_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -132,8 +133,8 @@ def create_bot_from_mode(token: str) -> ForecastBot:
                 temperature=default_temperature,
             )
         )
-    if token == "METAC_GPT_4O_MINI_ASKNEWS_TOKEN":
-        _set_metaculus_token("METAC_GPT_4O_MINI_ASKNEWS_TOKEN")
+    if token == "METAC_GPT_4O_MINI_TOKEN":
+        _set_metaculus_token("METAC_GPT_4O_MINI_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -185,6 +186,98 @@ def create_bot_from_mode(token: str) -> ForecastBot:
             GeneralLlm(
                 model="claude-3.5-Sonnet-20240620",
                 temperature=default_temperature,
+            )
+        )
+    if token == "METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN":
+        _set_metaculus_token("METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="openrouter/google/gemini-2.5-pro-preview-03-25",
+                temperature=default_temperature,
+                timeout=90,
+            )
+        )
+    if token == "METAC_GEMINI_2_0_FLASH_TOKEN":
+        _set_metaculus_token("METAC_GEMINI_2_0_FLASH_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="openrouter/google/gemini-2.0-flash-001",
+                temperature=default_temperature,
+            )
+        )
+    if token == "METAC_LLAMA_4_MAVERICK_17B_TOKEN":
+        _set_metaculus_token("METAC_LLAMA_4_MAVERICK_17B_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="openrouter/meta-llama/llama-4-maverick-17b-128e-instruct",
+                temperature=default_temperature,
+            )
+        )
+    if token == "METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN":
+        _set_metaculus_token("METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="openrouter/meta-llama/llama-3.3-nemotron-super-49b-v1",
+                temperature=default_temperature,
+            )
+        )
+    if token == "METAC_QWEN_2_5_MAX_TOKEN":
+        _set_metaculus_token("METAC_QWEN_2_5_MAX_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="openrouter/qwen/qwen2.5-max",
+                temperature=default_temperature,
+            )
+        )
+    if token == "METAC_DEEPSEEK_R1_TOKEN":
+        _set_metaculus_token("METAC_DEEPSEEK_R1_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="openrouter/deepseek/deepseek-r1",
+                temperature=default_temperature,
+            )
+        )
+    if token == "METAC_DEEPSEEK_V3_TOKEN":
+        _set_metaculus_token("METAC_DEEPSEEK_V3_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="openrouter/deepseek/deepseek-chat",
+                temperature=default_temperature,
+            )
+        )
+    if token == "METAC_GROK_3_LATEST_TOKEN":
+        _set_metaculus_token("METAC_GROK_3_LATEST_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="openrouter/xai/grok-3-latest",
+                temperature=default_temperature,
+            )
+        )
+    if token == "METAC_GROK_3_MINI_LATEST_HIGH_TOKEN":
+        _set_metaculus_token("METAC_GROK_3_MINI_LATEST_HIGH_TOKEN")
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="openrouter/xai/grok-3-mini-latest",
+                temperature=default_temperature,
+                reasoning_effort="high",
             )
         )
     if token == "METAC_UNIFORM_PROBABILITY_BOT_TOKEN":

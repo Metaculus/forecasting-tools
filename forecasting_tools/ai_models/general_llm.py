@@ -77,8 +77,11 @@ class GeneralLlm(
         "claude-3-5-sonnet": {
             "timeout": 40,
         },
-        "claude-3-7-sonnet": {
-            "timeout": 90,
+        "gemini-2.5-pro-preview": {
+            "timeout": 60,
+        },
+        "gemini-2.0-flash": {
+            "timeout": 60,
         },
         "deepseek/": {
             "timeout": 80,
