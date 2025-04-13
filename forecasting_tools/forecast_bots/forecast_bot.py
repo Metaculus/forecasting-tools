@@ -652,6 +652,7 @@ class ForecastBot(ABC):
     @staticmethod
     def log_report_summary(
         forecast_reports: Sequence[ForecastReport | BaseException],
+        raise_errors: bool = True,
     ) -> None:
         valid_reports = [
             report
@@ -694,20 +695,33 @@ class ForecastBot(ABC):
                 )
                 short_summary = f"❌ Exception: {report.__class__.__name__} | Message: {exception_message}"
             full_summary += short_summary + "\n"
-        logger.info(full_summary)
 
         total_cost = sum(
             report.price_estimate if report.price_estimate else 0
             for report in valid_reports
         )
-        logger.info(f"Total cost estimated: {total_cost}")
+        average_minutes = sum(
+            report.minutes_taken if report.minutes_taken else 0
+            for report in valid_reports
+        ) / len(valid_reports)
+        full_summary += "\nStats for passing reports:\n"
+        full_summary += f"Total cost estimated: ${total_cost:.2f}\n"
+        full_summary += f"Average cost per question: ${total_cost / len(valid_reports):.2f}\n"
+        full_summary += (
+            f"Average time spent per question: {average_minutes:.2f} minutes\n"
+        )
+        logger.info(full_summary)
 
         if minor_exceptions:
             logger.error(
                 f"{len(minor_exceptions)} minor exceptions occurred while forecasting: {minor_exceptions}"
             )
-        if exceptions:
+        if exceptions and raise_errors:
             raise RuntimeError(
+                f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
+            )
+        else:
+            logger.warning(
                 f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
             )
 
