@@ -1,13 +1,13 @@
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import MetaculusQuestion
-from forecasting_tools.forecast_bots.community.coin_flip_bot import (
-    UniformProbabilityBot,
-)
 from forecasting_tools.forecast_bots.community.q1_veritas_bot import (
     Q1VeritasBot,
 )
 from forecasting_tools.forecast_bots.community.q4_veritas_bot import (
     Q4VeritasBot,
+)
+from forecasting_tools.forecast_bots.community.uniform_probability_bot import (
+    UniformProbabilityBot,
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.main_bot import MainBot

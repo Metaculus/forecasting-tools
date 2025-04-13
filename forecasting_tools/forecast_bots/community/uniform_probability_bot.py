@@ -60,42 +60,43 @@ class UniformProbabilityBot(ForecastBot):
         # Create a uniform distribution between lower and upper bounds
         lower_bound = question.lower_bound
         upper_bound = question.upper_bound
+        distribution_range = upper_bound - lower_bound
 
         percentiles = [
             Percentile(
-                value=lower_bound + 0.1 * (upper_bound - lower_bound),
+                value=lower_bound + 0.1 * distribution_range,
                 percentile=0.1,
             ),
             Percentile(
-                value=lower_bound + 0.2 * (upper_bound - lower_bound),
+                value=lower_bound + 0.2 * distribution_range,
                 percentile=0.2,
             ),
             Percentile(
-                value=lower_bound + 0.3 * (upper_bound - lower_bound),
+                value=lower_bound + 0.3 * distribution_range,
                 percentile=0.3,
             ),
             Percentile(
-                value=lower_bound + 0.4 * (upper_bound - lower_bound),
+                value=lower_bound + 0.4 * distribution_range,
                 percentile=0.4,
             ),
             Percentile(
-                value=lower_bound + 0.5 * (upper_bound - lower_bound),
+                value=lower_bound + 0.5 * distribution_range,
                 percentile=0.5,
             ),
             Percentile(
-                value=lower_bound + 0.6 * (upper_bound - lower_bound),
+                value=lower_bound + 0.6 * distribution_range,
                 percentile=0.6,
             ),
             Percentile(
-                value=lower_bound + 0.7 * (upper_bound - lower_bound),
+                value=lower_bound + 0.7 * distribution_range,
                 percentile=0.7,
             ),
             Percentile(
-                value=lower_bound + 0.8 * (upper_bound - lower_bound),
+                value=lower_bound + 0.8 * distribution_range,
                 percentile=0.8,
             ),
             Percentile(
-                value=lower_bound + 0.9 * (upper_bound - lower_bound),
+                value=lower_bound + 0.9 * distribution_range,
                 percentile=0.9,
             ),
         ]
@@ -110,9 +111,13 @@ class UniformProbabilityBot(ForecastBot):
         )
 
         cdf_percentiles = distribution.cdf
+        float_cdf = [
+            float(percentile.percentile) for percentile in cdf_percentiles
+        ]
+        logger.info(f"Float CDF: {float_cdf}")
         step_differences = [
             cdf_percentiles[i + 1].percentile - cdf_percentiles[i].percentile
-            for i in range(1, len(percentiles) - 2)
+            for i in range(1, len(cdf_percentiles) - 2)
         ]
         expected_step = step_differences[0]
         for i, step in enumerate(step_differences[1:], 2):
