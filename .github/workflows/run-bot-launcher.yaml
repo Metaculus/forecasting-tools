@@ -1,0 +1,73 @@
+on:
+  workflow_call:
+    inputs:
+      bot_name:
+        required: true
+        type: string
+    secrets:
+      INPUT_METACULUS_TOKEN:
+        required: true
+      INPUT_OPENAI_API_KEY:
+        required: false
+      INPUT_ANTHROPIC_API_KEY:
+        required: false
+      INPUT_GEMINI_API_KEY:
+        required: false
+      INPUT_XAI_API_KEY:
+        required: false
+      INPUT_TOGETHERAI_API_KEY:
+        required: false
+      INPUT_EXA_API_KEY:
+        required: false
+      INPUT_PERPLEXITY_API_KEY:
+        required: false
+      INPUT_ASKNEWS_CLIENT_ID:
+        required: false
+      INPUT_ASKNEWS_SECRET:
+        required: false
+      INPUT_OPENROUTER_API_KEY:
+        required: false
+
+jobs:
+  run_bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+
+      - name: Run bot
+        run: |
+          poetry run python .github/scripts/run_bot.py ${{ inputs.bot_name }}
+        env:
+          METACULUS_TOKEN: ${{ secrets.INPUT_METACULUS_TOKEN }}
+          ASKNEWS_CLIENT_ID: ${{ secrets.INPUT_ASKNEWS_CLIENT_ID }}
+          ASKNEWS_SECRET: ${{ secrets.INPUT_ASKNEWS_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.INPUT_OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.INPUT_ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.INPUT_GEMINI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.INPUT_XAI_API_KEY }}
+          TOGETHERAI_API_KEY: ${{ secrets.INPUT_TOGETHERAI_API_KEY }}
+          EXA_API_KEY: ${{ secrets.INPUT_EXA_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.INPUT_PERPLEXITY_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.INPUT_OPENROUTER_API_KEY }}

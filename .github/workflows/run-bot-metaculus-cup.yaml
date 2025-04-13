@@ -1,9 +1,9 @@
-name: Run Bot for Metaculus AI Benchmark Tournament
+name: Run Bot for the Metaculus Cup
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *" # Runs every 30 minutes
+    - cron: "0 0 */2 * *" # runs at midnight every 2 days
 
 # Add concurrency group to prevent parallel runs
 concurrency:
@@ -15,9 +15,19 @@ jobs:
   bot_gpt4o:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
-      bot_name: 'METAC_GPT_4O_TOKEN'
+      bot_name: 'METAC_GPT_4O_TOKEN+metaculus-cup'
     secrets:
       INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_4O_TOKEN }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_o1:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_O1_TOKEN+metaculus-cup'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O1_TOKEN }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}

@@ -11,7 +11,6 @@ from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.forecast_bots.community.uniform_probability_bot import (
     UniformProbabilityBot,
 )
-from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
     Q2TemplateBot2025,
 )
@@ -26,20 +25,19 @@ logger = logging.getLogger(__name__)
 
 
 async def run_bot(mode: str) -> None:
-    ai_tournament = MetaculusApi.CURRENT_AI_COMPETITION_ID
-
-    bot = create_bot_from_mode(mode)
-    reports = await bot.forecast_on_tournament(
-        ai_tournament, return_exceptions=True
-    )
-    bot.log_report_summary(reports)
-
-
-def create_bot_from_mode(token: str) -> ForecastBot:
     if os.getenv("METACULUS_TOKEN") is not None:
         raise ValueError(
             "Don't set the METACULUS_TOKEN environment variable, it will be overridden by the specific mode chosen"
         )
+
+    if "metaculus-cup" in mode:
+        chosen_tournament = MetaculusApi.CURRENT_METACULUS_CUP_ID
+        skip_previously_forecasted_questions = False
+        token = mode.split("+")[0]
+    else:
+        chosen_tournament = MetaculusApi.CURRENT_AI_COMPETITION_ID
+        skip_previously_forecasted_questions = True
+        token = mode
 
     default_temperature = 0.3
     default_bot = Q2TemplateBot2025(
@@ -47,7 +45,7 @@ def create_bot_from_mode(token: str) -> ForecastBot:
         predictions_per_research_report=5,
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=True,
-        skip_previously_forecasted_questions=True,
+        skip_previously_forecasted_questions=skip_previously_forecasted_questions,
     )
 
     if token == "METAC_GPT_4O_TOKEN":
@@ -289,7 +287,11 @@ def create_bot_from_mode(token: str) -> ForecastBot:
         )
     else:
         raise ValueError(f"Invalid mode: {token}")
-    return bot
+
+    reports = await bot.forecast_on_tournament(
+        chosen_tournament, return_exceptions=True
+    )
+    bot.log_report_summary(reports)
 
 
 def _set_metaculus_token(variable_name: str) -> None:
@@ -357,6 +359,6 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    mode = args.mode
+    token = args.mode
 
-    asyncio.run(run_bot(mode))
+    asyncio.run(run_bot(token))
