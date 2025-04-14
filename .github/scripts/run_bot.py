@@ -2,9 +2,17 @@ import argparse
 import asyncio
 import logging
 import os
+import sys
 from typing import Literal
 
 import dotenv
+
+# Dynamically determine the absolute path to the top-level directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+top_level_dir = os.path.abspath(os.path.join(current_dir, "../../"))
+sys.path.append(top_level_dir)
+
+dotenv.load_dotenv()
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
@@ -20,7 +28,6 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
 )
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 
-dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 
 
