@@ -700,13 +700,21 @@ class ForecastBot(ABC):
             report.price_estimate if report.price_estimate else 0
             for report in valid_reports
         )
-        average_minutes = sum(
-            report.minutes_taken if report.minutes_taken else 0
-            for report in valid_reports
-        ) / len(valid_reports)
+        average_minutes = (
+            (
+                sum(
+                    report.minutes_taken if report.minutes_taken else 0
+                    for report in valid_reports
+                )
+                / len(valid_reports)
+            )
+            if valid_reports
+            else 0
+        )
+        average_cost = total_cost / len(valid_reports) if valid_reports else 0
         full_summary += "\nStats for passing reports:\n"
         full_summary += f"Total cost estimated: ${total_cost:.2f}\n"
-        full_summary += f"Average cost per question: ${total_cost / len(valid_reports):.2f}\n"
+        full_summary += f"Average cost per question: ${average_cost:.2f}\n"
         full_summary += (
             f"Average time spent per question: {average_minutes:.2f} minutes\n"
         )
