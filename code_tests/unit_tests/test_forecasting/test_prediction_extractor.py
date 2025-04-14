@@ -67,6 +67,50 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["One", "Two", "Three"],
             [33.33 / 100, 33.33 / 100, 33.34 / 100],
         ),
+        (
+            """
+            Option One: 0.5
+            Option Two: 0.2
+            Option Three: 0.3
+            """,
+            ["One", "Two", "Three"],
+            [0.5, 0.2, 0.3],
+        ),
+        (
+            """
+            Option One: 0.05
+            Option Two: 0.02
+            Option Three: 0.03
+            """,
+            ["One", "Two", "Three"],
+            [0.5, 0.2, 0.3],  # Probabilities are normalized
+        ),
+        (
+            """
+            Option One: 5
+            Option Two: 2
+            Option Three: 3
+            """,
+            ["One", "Two", "Three"],
+            [0.5, 0.2, 0.3],  # Probabilities are normalized
+        ),
+        (
+            """
+            I'm thinking that Option A, option B and option C are 50%, 20% and 30% respectively.
+
+            Option A: 50%
+            Option B: 20%
+            Option C: 30%
+
+            These are my guesses for Blue, Green and Yellow matching to A, B and C.
+            """,
+            ["Blue", "Green", "Yellow"],
+            [
+                0.5,
+                0.2,
+                0.3,
+            ],  # If probabilieis given as A B C, the ordering is used to match options.
+        ),
     ],
 )
 def test_multiple_choice_extraction_success(
@@ -89,11 +133,28 @@ def test_multiple_choice_extraction_success(
         )
 
 
-def test_multiple_choice_extraction_failure() -> None:
-    reasoning: str = """
-    Option OnlyOne: 60
-    """
-    options: list[str] = ["Option OnlyOne", "Option Missing"]
+@pytest.mark.parametrize(
+    "reasoning, options",
+    [
+        (
+            """
+            Option OnlyOne: 60
+            """,
+            ["Option OnlyOne", "Option Missing"],
+        ),
+        (
+            """
+            Option A: 30
+            Option B: 40
+            Option Yellow: 30
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
+    ],
+)
+def test_multiple_choice_extraction_failure(
+    reasoning: str, options: list[str]
+) -> None:
     with pytest.raises(ValueError):
         PredictionExtractor.extract_option_list_with_percentage_afterwards(
             reasoning, options

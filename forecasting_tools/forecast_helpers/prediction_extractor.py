@@ -1,4 +1,6 @@
+import logging
 import re
+import string
 
 from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOption,
@@ -9,6 +11,8 @@ from forecasting_tools.data_models.numeric_report import (
     Percentile,
 )
 from forecasting_tools.data_models.questions import NumericQuestion
+
+logger = logging.getLogger(__name__)
 
 
 class PredictionExtractor:
@@ -55,8 +59,62 @@ class PredictionExtractor:
                 "While trying to extract option list found that the text is None or an empty string"
             )
 
-        option_probabilities = []
+        alphabet_abc_option_letters = list(
+            string.ascii_uppercase[: len(options)]
+        )
+        option_lists_to_try = [
+            options,
+            [f"Option {option}" for option in options],
+            [f"Option {i}" for i in range(1, len(options) + 1)],
+            [f"Option {letter}" for letter in alphabet_abc_option_letters],
+            [f"{letter}" for letter in alphabet_abc_option_letters],
+        ]
 
+        exceptions = []
+        raise_exceptions = True
+        for option_list in option_lists_to_try:
+            try:
+                option_probabilities = PredictionExtractor._extract_option_probabilities_through_name_matching(
+                    text, option_list
+                )
+            except Exception as e:
+                exceptions.append(e)
+                continue
+            else:
+                raise_exceptions = False
+                break
+
+        if raise_exceptions:
+            raise ValueError(
+                f"No option list variations worked. First exception: {exceptions[0]}"
+            )
+
+        assert len(option_probabilities) == len(
+            options
+        ), f"Number of option probabilities {len(option_probabilities)} does not match number of options {len(options)}"
+
+        normalized_option_probabilities = (
+            PredictionExtractor._normalize_option_probabilities(
+                option_probabilities
+            )
+        )
+
+        predicted_options: list[PredictedOption] = []
+        for i in range(len(options)):
+            predicted_options.append(
+                PredictedOption(
+                    option_name=options[i],
+                    probability=normalized_option_probabilities[i],
+                )
+            )
+
+        return PredictedOptionList(predicted_options=predicted_options)
+
+    @staticmethod
+    def _extract_option_probabilities_through_name_matching(
+        text: str, options: list[str]
+    ) -> list[float]:
+        option_probabilities = []
         # Iterate through each line in the text
         for expected_option in options:
             expected_option = expected_option.strip()
@@ -93,15 +151,27 @@ class PredictionExtractor:
                 raise ValueError(
                     f"No probability found for option: {expected_option}"
                 )
+        return option_probabilities
 
-        assert len(option_probabilities) == len(
-            options
-        ), f"Number of option probabilities {len(option_probabilities)} does not match number of options {len(options)}"
-
+    @staticmethod
+    def _normalize_option_probabilities(
+        option_probabilities: list[float],
+    ) -> list[float]:
         total_sum = sum(option_probabilities)
-        assert (
-            total_sum > 1.5
-        ), f"Total sum of option probabilities {total_sum} is not greater than 1.5 indicating rationale was working in decimal probabilities"
+        threshold_for_decimal_probability_presence = 1.9
+        if total_sum < threshold_for_decimal_probability_presence:
+            logger.warning(
+                (
+                    f"Total sum of option probabilities {total_sum} is greater than",
+                    f"{threshold_for_decimal_probability_presence}",
+                    "indicating rationale was working in decimal probabilities",
+                    "Converting to percentage probabilities",
+                )
+            )
+            option_probabilities = [
+                prob * 100 for prob in option_probabilities
+            ]
+            total_sum = sum(option_probabilities)
         decimal_list = [x / total_sum for x in option_probabilities]
 
         # Step 1: Clamp values
@@ -118,16 +188,7 @@ class PredictionExtractor:
         normalized_list[-1] += adjustment
         normalized_option_probabilities = normalized_list
 
-        predicted_options: list[PredictedOption] = []
-        for i in range(len(options)):
-            predicted_options.append(
-                PredictedOption(
-                    option_name=options[i],
-                    probability=normalized_option_probabilities[i],
-                )
-            )
-
-        return PredictedOptionList(predicted_options=predicted_options)
+        return normalized_option_probabilities
 
     @staticmethod
     def extract_numeric_distribution_from_list_of_percentile_number_and_probability(
