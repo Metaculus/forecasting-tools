@@ -162,7 +162,7 @@ class PredictionExtractor:
         if total_sum < threshold_for_decimal_probability_presence:
             logger.warning(
                 (
-                    f"Total sum of option probabilities {total_sum} is greater than",
+                    f"Total sum of option probabilities {total_sum} is less than",
                     f"{threshold_for_decimal_probability_presence}",
                     "indicating rationale was working in decimal probabilities",
                     "Converting to percentage probabilities",
