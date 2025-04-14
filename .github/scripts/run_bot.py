@@ -281,25 +281,25 @@ def _make_sure_search_keys_dont_conflict(
     mode: Literal["asknews-mode", "exa-mode", "perplexity-mode"],
 ) -> None:
     if mode == "asknews-mode":
-        assert (
-            os.getenv("PERPLEXITY_API_KEY") is None
+        assert not os.getenv(
+            "PERPLEXITY_API_KEY"
         ), "Perplexity API key is set, but it should not be set for asknews-mode"
-        assert (
-            os.getenv("EXA_API_KEY") is None
+        assert not os.getenv(
+            "EXA_API_KEY"
         ), "Exa API key is set, but it should not be set for asknews-mode"
     elif mode == "exa-mode":
-        assert (
-            os.getenv("PERPLEXITY_API_KEY") is None
+        assert not os.getenv(
+            "PERPLEXITY_API_KEY"
         ), "Perplexity API key is set, but it should not be set for exa-mode"
-        assert (
-            os.getenv("ASKNEWS_SECRET_KEY") is None
+        assert not os.getenv(
+            "ASKNEWS_SECRET_KEY"
         ), "Asknews secret key is set, but it should not be set for exa-mode"
     elif mode == "perplexity-mode":
-        assert (
-            os.getenv("EXA_API_KEY") is None
+        assert not os.getenv(
+            "EXA_API_KEY"
         ), "Exa API key is set, but it should not be set for perplexity-mode"
-        assert (
-            os.getenv("ASKNEWS_SECRET_KEY") is None
+        assert not os.getenv(
+            "ASKNEWS_SECRET_KEY"
         ), "Asknews secret key is set, but it should not be set for perplexity-mode"
 
 
