@@ -6,6 +6,8 @@ from typing import Literal
 
 import dotenv
 
+from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
+
 dotenv.load_dotenv()
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
@@ -24,8 +26,43 @@ from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 
 logger = logging.getLogger(__name__)
 
+all_bot_modes = [
+    "METAC_O1_HIGH_TOKEN",
+    "METAC_O1_TOKEN",
+    "METAC_O1_MINI_TOKEN",
+    "METAC_GPT_4_5_PREVIEW_TOKEN",
+    "METAC_O3_MINI_HIGH_TOKEN",
+    "METAC_O3_MINI_TOKEN",
+    "METAC_GPT_4O_TOKEN",
+    "METAC_GPT_4O_MINI_TOKEN",
+    "METAC_GPT_3_5_TURBO_TOKEN",
+    "METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN",
+    "METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN",
+    "METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN",
+    "METAC_CLAUDE_3_5_SONNET_20240620_TOKEN",
+    "METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN",
+    "METAC_GEMINI_2_0_FLASH_TOKEN",
+    "METAC_LLAMA_4_MAVERICK_17B_TOKEN",
+    "METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN",
+    "METAC_QWEN_2_5_MAX_TOKEN",
+    "METAC_DEEPSEEK_R1_TOKEN",
+    "METAC_DEEPSEEK_V3_TOKEN",
+    "METAC_GROK_3_LATEST_TOKEN",
+    "METAC_GROK_3_MINI_LATEST_HIGH_TOKEN",
+    "METAC_UNIFORM_PROBABILITY_BOT_TOKEN",
+]
 
-async def run_bot(mode: str) -> None:
+
+async def get_all_bots() -> list[ForecastBot]:
+    bots = []
+    for mode in all_bot_modes:
+        bots.append(await run_or_grab_bot(mode, return_bot=True))
+    return bots
+
+
+async def run_or_grab_bot(
+    mode: str, return_bot: bool = False
+) -> ForecastBot | list[ForecastReport]:
 
     if "metaculus-cup" in mode:
         chosen_tournament = MetaculusApi.CURRENT_METACULUS_CUP_ID
@@ -45,13 +82,14 @@ async def run_bot(mode: str) -> None:
         skip_previously_forecasted_questions=skip_previously_forecasted_questions,
     )
 
-    if token == "METAC_GPT_4O_TOKEN":
+    if token == "METAC_O1_HIGH_TOKEN":
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="gpt-4o",
+                model="o1",
                 temperature=default_temperature,
+                reasoning_effort="high",
             )
         )
     elif token == "METAC_O1_TOKEN":
@@ -61,35 +99,6 @@ async def run_bot(mode: str) -> None:
             GeneralLlm(
                 model="o1",
                 temperature=default_temperature,
-            )
-        )
-    elif token == "METAC_O1_HIGH_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
-        bot = default_bot
-        bot.set_llm(
-            GeneralLlm(
-                model="o1",
-                temperature=default_temperature,
-                reasoning_effort="high",
-            )
-        )
-    elif token == "METAC_O3_MINI_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
-        bot = default_bot
-        bot.set_llm(
-            GeneralLlm(
-                model="o3-mini",
-                temperature=default_temperature,
-            )
-        )
-    elif token == "METAC_O3_MINI_HIGH_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
-        bot = default_bot
-        bot.set_llm(
-            GeneralLlm(
-                model="o3-mini",
-                temperature=default_temperature,
-                reasoning_effort="high",
             )
         )
     elif token == "METAC_O1_MINI_TOKEN":
@@ -113,12 +122,31 @@ async def run_bot(mode: str) -> None:
         )
         bot.research_reports_per_question = 1
         bot.predictions_per_research_report = 3
-    elif token == "METAC_GPT_3_5_TURBO_TOKEN":
+    elif token == "METAC_O3_MINI_HIGH_TOKEN":
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="gpt-3.5-turbo",
+                model="o3-mini",
+                temperature=default_temperature,
+                reasoning_effort="high",
+            )
+        )
+    elif token == "METAC_O3_MINI_TOKEN":
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="o3-mini",
+                temperature=default_temperature,
+            )
+        )
+    elif token == "METAC_GPT_4O_TOKEN":
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="gpt-4o",
                 temperature=default_temperature,
             )
         )
@@ -131,12 +159,21 @@ async def run_bot(mode: str) -> None:
                 temperature=default_temperature,
             )
         )
+    elif token == "METAC_GPT_3_5_TURBO_TOKEN":
+        _make_sure_search_keys_dont_conflict("asknews-mode")
+        bot = default_bot
+        bot.set_llm(
+            GeneralLlm(
+                model="gpt-3.5-turbo",
+                temperature=default_temperature,
+            )
+        )
     elif token == "METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN":
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="claude-3-7-sonnet-latest",
+                model="anthropic/claude-3-7-sonnet-latest",
                 temperature=1,
                 thinking={
                     "type": "enabled",
@@ -151,7 +188,7 @@ async def run_bot(mode: str) -> None:
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="claude-3-7-sonnet-latest",
+                model="anthropic/claude-3-7-sonnet-latest",
                 temperature=default_temperature,
             )
         )
@@ -160,7 +197,7 @@ async def run_bot(mode: str) -> None:
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="claude-3-5-sonnet-latest",
+                model="anthropic/claude-3-5-sonnet-latest",
                 temperature=default_temperature,
             )
         )
@@ -169,7 +206,7 @@ async def run_bot(mode: str) -> None:
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="claude-3.5-Sonnet-20240620",
+                model="anthropic/claude-3-5-sonnet-20240620",
                 temperature=default_temperature,
             )
         )
@@ -242,7 +279,7 @@ async def run_bot(mode: str) -> None:
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="openrouter/xai/grok-3-latest",
+                model="xai/grok-3-latest",
                 temperature=default_temperature,
             )
         )
@@ -251,7 +288,7 @@ async def run_bot(mode: str) -> None:
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="openrouter/xai/grok-3-mini-latest",
+                model="xai/grok-3-mini-latest",
                 temperature=default_temperature,
                 reasoning_effort="high",
             )
@@ -265,10 +302,14 @@ async def run_bot(mode: str) -> None:
     else:
         raise ValueError(f"Invalid mode: {token}")
 
-    reports = await bot.forecast_on_tournament(
-        chosen_tournament, return_exceptions=True
-    )
-    bot.log_report_summary(reports)
+    if return_bot:
+        return [bot]
+    else:
+        reports = await bot.forecast_on_tournament(
+            chosen_tournament, return_exceptions=True
+        )
+        bot.log_report_summary(reports)
+        return reports
 
 
 def _set_metaculus_token(variable_name: str) -> None:
@@ -338,4 +379,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     token = args.mode
 
-    asyncio.run(run_bot(token))
+    asyncio.run(run_or_grab_bot(token))
