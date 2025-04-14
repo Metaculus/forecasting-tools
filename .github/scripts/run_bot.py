@@ -26,10 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 async def run_bot(mode: str) -> None:
-    if os.getenv("METACULUS_TOKEN") is not None:
-        raise ValueError(
-            "Don't set the METACULUS_TOKEN environment variable, it will be overridden by the specific mode chosen"
-        )
 
     if "metaculus-cup" in mode:
         chosen_tournament = MetaculusApi.CURRENT_METACULUS_CUP_ID
