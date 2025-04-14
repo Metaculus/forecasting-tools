@@ -2,15 +2,9 @@ import argparse
 import asyncio
 import logging
 import os
-import sys
 from typing import Literal
 
 import dotenv
-
-# Dynamically determine the absolute path to the top-level directory
-current_dir = os.path.dirname(os.path.abspath(__file__))
-top_level_dir = os.path.abspath(os.path.join(current_dir, "../../"))
-sys.path.append(top_level_dir)
 
 dotenv.load_dotenv()
 

@@ -71,3 +71,4 @@ jobs:
           EXA_API_KEY: ${{ secrets.INPUT_EXA_API_KEY }}
           PERPLEXITY_API_KEY: ${{ secrets.INPUT_PERPLEXITY_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.INPUT_OPENROUTER_API_KEY }}
+          PYTHONPATH: .
