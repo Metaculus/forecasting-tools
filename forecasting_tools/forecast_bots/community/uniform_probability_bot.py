@@ -57,7 +57,6 @@ class UniformProbabilityBot(ForecastBot):
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
-        # Create a uniform distribution between lower and upper bounds
         lower_bound = question.lower_bound
         upper_bound = question.upper_bound
         distribution_range = upper_bound - lower_bound
@@ -68,32 +67,16 @@ class UniformProbabilityBot(ForecastBot):
                 percentile=0.1,
             ),
             Percentile(
-                value=lower_bound + 0.2 * distribution_range,
-                percentile=0.2,
-            ),
-            Percentile(
                 value=lower_bound + 0.3 * distribution_range,
                 percentile=0.3,
-            ),
-            Percentile(
-                value=lower_bound + 0.4 * distribution_range,
-                percentile=0.4,
             ),
             Percentile(
                 value=lower_bound + 0.5 * distribution_range,
                 percentile=0.5,
             ),
             Percentile(
-                value=lower_bound + 0.6 * distribution_range,
-                percentile=0.6,
-            ),
-            Percentile(
                 value=lower_bound + 0.7 * distribution_range,
                 percentile=0.7,
-            ),
-            Percentile(
-                value=lower_bound + 0.8 * distribution_range,
-                percentile=0.8,
             ),
             Percentile(
                 value=lower_bound + 0.9 * distribution_range,
@@ -110,23 +93,10 @@ class UniformProbabilityBot(ForecastBot):
             zero_point=question.zero_point,
         )
 
-        cdf_percentiles = distribution.cdf
-        float_cdf = [
-            float(percentile.percentile) for percentile in cdf_percentiles
-        ]
-        logger.info(f"Float CDF: {float_cdf}")
-        step_differences = [
-            cdf_percentiles[i + 1].percentile - cdf_percentiles[i].percentile
-            for i in range(1, len(cdf_percentiles) - 2)
-        ]
-        expected_step = step_differences[0]
-        for i, step in enumerate(step_differences[1:], 2):
-            assert abs(step - expected_step) < 1e-10, (
-                f"Step difference at index {i} ({step}) differs from expected step ({expected_step}). "
-                f"All step differences should be the same for a uniform distribution."
-            )
-
         return ReasonedPrediction(
             prediction_value=distribution,
-            reasoning="Created a uniform distribution between the lower and upper bounds",
+            reasoning=(
+                "Created a uniform distribution between the lower and upper bounds. "
+                "NOTE: The cdf will have sloping probability at the edges if the bounds are open"
+            ),
         )

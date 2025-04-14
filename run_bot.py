@@ -53,15 +53,8 @@ all_bot_modes = [
 ]
 
 
-async def get_all_bots() -> list[ForecastBot]:
-    bots = []
-    for mode in all_bot_modes:
-        bots.append(await run_or_grab_bot(mode, return_bot=True))
-    return bots
-
-
 async def run_or_grab_bot(
-    mode: str, return_bot: bool = False
+    mode: str, return_bot: bool = False, check_env_vars: bool = True
 ) -> ForecastBot | list[ForecastReport]:
 
     if "metaculus-cup" in mode:
@@ -83,7 +76,8 @@ async def run_or_grab_bot(
     )
 
     if token == "METAC_O1_HIGH_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -93,7 +87,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_O1_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -102,7 +97,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_O1_MINI_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -111,7 +107,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_GPT_4_5_PREVIEW_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -123,7 +120,8 @@ async def run_or_grab_bot(
         bot.research_reports_per_question = 1
         bot.predictions_per_research_report = 3
     elif token == "METAC_O3_MINI_HIGH_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -133,7 +131,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_O3_MINI_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -142,7 +141,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_GPT_4O_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -151,7 +151,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_GPT_4O_MINI_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -160,7 +161,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_GPT_3_5_TURBO_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -169,7 +171,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -184,7 +187,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -193,7 +197,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -202,7 +207,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_CLAUDE_3_5_SONNET_20240620_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -211,7 +217,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -221,7 +228,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_GEMINI_2_0_FLASH_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -230,34 +238,38 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_LLAMA_4_MAVERICK_17B_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="openrouter/meta-llama/llama-4-maverick-17b-128e-instruct",
+                model="openrouter/meta-llama/llama-4-maverick",  # pointer to llama-4-maverick-17b-128e-instruct
                 temperature=default_temperature,
             )
         )
     elif token == "METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="openrouter/meta-llama/llama-3.3-nemotron-super-49b-v1",
+                model="openrouter/nvidia/llama-3.3-nemotron-super-49b-v1:free",
                 temperature=default_temperature,
             )
         )
     elif token == "METAC_QWEN_2_5_MAX_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="openrouter/qwen/qwen2.5-max",
+                model="openrouter/qwen/qwen-max",  # https://openrouter.ai/qwen/qwen-max - pointer to qwen-2.5-max
                 temperature=default_temperature,
             )
         )
     elif token == "METAC_DEEPSEEK_R1_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -266,7 +278,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_DEEPSEEK_V3_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -275,7 +288,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_GROK_3_LATEST_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -284,7 +298,8 @@ async def run_or_grab_bot(
             )
         )
     elif token == "METAC_GROK_3_MINI_LATEST_HIGH_TOKEN":
-        _make_sure_search_keys_dont_conflict("asknews-mode")
+        if check_env_vars:
+            _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
@@ -303,7 +318,7 @@ async def run_or_grab_bot(
         raise ValueError(f"Invalid mode: {token}")
 
     if return_bot:
-        return [bot]
+        return bot
     else:
         reports = await bot.forecast_on_tournament(
             chosen_tournament, return_exceptions=True
@@ -354,6 +369,17 @@ async def _save_reports_to_database(reports: list[ForecastReport]) -> None:
             )
         except Exception as e:
             logger.error(f"Error adding forecast report to database: {e}")
+
+
+async def get_all_bots(check_env_vars: bool = True) -> list[ForecastBot]:
+    bots = []
+    for mode in all_bot_modes:
+        bots.append(
+            await run_or_grab_bot(
+                mode, return_bot=True, check_env_vars=check_env_vars
+            )
+        )
+    return bots
 
 
 if __name__ == "__main__":
