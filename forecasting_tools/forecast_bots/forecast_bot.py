@@ -113,7 +113,9 @@ class ForecastBot(ABC):
                     f"Please override and add it to the {self._llm_config_defaults.__name__} method"
                 )
 
-        logger.info(f"Chosen LLMs for bot are: {self._make_llm_dict()}")
+        logger.debug(
+            f"LLMs at initialization for bot are: {self.make_llm_dict()}"
+        )
 
     @overload
     async def forecast_on_tournament(
@@ -275,11 +277,11 @@ class ForecastBot(ABC):
             except Exception:
                 config[name] = str(value)
 
-        llm_dict = self._make_llm_dict()
+        llm_dict = self.make_llm_dict()
         config["llms"] = llm_dict
         return config
 
-    def _make_llm_dict(self) -> dict[str, str | dict[str, Any]]:
+    def make_llm_dict(self) -> dict[str, str | dict[str, Any]]:
         llm_dict: dict[str, str | dict[str, Any]] = {}
         for key, value in self._llms.items():
             if isinstance(value, GeneralLlm):
@@ -510,7 +512,7 @@ class ForecastBot(ABC):
             # SUMMARY
             *Question*: {question.question_text}
             *Final Prediction*: {report_type.make_readable_prediction(aggregated_prediction)}
-            *Total Cost*: ${round(final_cost,2)}
+            *Total Cost*: ${round(final_cost,4)}
             *Time Spent*: {round(time_spent_in_minutes, 2)} minutes
 
             {combined_summaries}

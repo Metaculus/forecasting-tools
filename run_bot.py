@@ -53,8 +53,8 @@ all_bot_modes = [
 ]
 
 
-async def run_or_grab_bot(
-    mode: str, return_bot: bool = False, check_env_vars: bool = True
+async def run_bot(
+    mode: str, return_bot_dont_run: bool = False, check_env_vars: bool = True
 ) -> ForecastBot | list[ForecastReport]:
 
     if "metaculus-cup" in mode:
@@ -317,21 +317,15 @@ async def run_or_grab_bot(
     else:
         raise ValueError(f"Invalid mode: {token}")
 
-    if return_bot:
+    if return_bot_dont_run:
         return bot
     else:
+        logger.info(f"LLMs for bot are: {bot._make_llm_dict()}")
         reports = await bot.forecast_on_tournament(
             chosen_tournament, return_exceptions=True
         )
         bot.log_report_summary(reports)
         return reports
-
-
-def _set_metaculus_token(variable_name: str) -> None:
-    token_value = os.getenv(variable_name)
-    if token_value is None:
-        raise ValueError(f"Token {variable_name} is not set")
-    os.environ["METACULUS_TOKEN"] = token_value
 
 
 def _make_sure_search_keys_dont_conflict(
@@ -375,8 +369,8 @@ async def get_all_bots(check_env_vars: bool = True) -> list[ForecastBot]:
     bots = []
     for mode in all_bot_modes:
         bots.append(
-            await run_or_grab_bot(
-                mode, return_bot=True, check_env_vars=check_env_vars
+            await run_bot(
+                mode, return_bot_dont_run=True, check_env_vars=check_env_vars
             )
         )
     return bots
@@ -405,4 +399,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     token = args.mode
 
-    asyncio.run(run_or_grab_bot(token))
+    asyncio.run(run_bot(token))
