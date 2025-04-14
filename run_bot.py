@@ -320,7 +320,7 @@ async def run_bot(
     if return_bot_dont_run:
         return bot
     else:
-        logger.info(f"LLMs for bot are: {bot._make_llm_dict()}")
+        logger.info(f"LLMs for bot are: {bot.make_llm_dict()}")
         reports = await bot.forecast_on_tournament(
             chosen_tournament, return_exceptions=True
         )
