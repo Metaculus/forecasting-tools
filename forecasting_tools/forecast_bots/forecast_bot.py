@@ -719,10 +719,10 @@ class ForecastBot(ABC):
         )
         average_cost = total_cost / len(valid_reports) if valid_reports else 0
         full_summary += "\nStats for passing reports:\n"
-        full_summary += f"Total cost estimated: ${total_cost:.2f}\n"
-        full_summary += f"Average cost per question: ${average_cost:.2f}\n"
+        full_summary += f"Total cost estimated: ${total_cost:.5f}\n"
+        full_summary += f"Average cost per question: ${average_cost:.5f}\n"
         full_summary += (
-            f"Average time spent per question: {average_minutes:.2f} minutes\n"
+            f"Average time spent per question: {average_minutes:.4f} minutes\n"
         )
         logger.info(full_summary)
 

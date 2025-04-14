@@ -137,12 +137,13 @@ async def run_bot(mode: str) -> None:
         bot.set_llm(
             GeneralLlm(
                 model="claude-3-7-sonnet-latest",
-                temperature=default_temperature,
+                temperature=1,
                 thinking={
                     "type": "enabled",
                     "budget_tokens": 32000,
                 },
                 max_tokens=40000,
+                timeout=160,
             )
         )
     elif token == "METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN":
@@ -177,7 +178,7 @@ async def run_bot(mode: str) -> None:
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="openrouter/google/gemini-2.5-pro-preview-03-25",
+                model="gemini/gemini-2.5-pro-preview-03-25",
                 temperature=default_temperature,
                 timeout=90,
             )
@@ -187,7 +188,7 @@ async def run_bot(mode: str) -> None:
         bot = default_bot
         bot.set_llm(
             GeneralLlm(
-                model="openrouter/google/gemini-2.0-flash-001",
+                model="gemini/gemini-2.0-flash-001",
                 temperature=default_temperature,
             )
         )
