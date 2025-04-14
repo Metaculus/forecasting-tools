@@ -174,11 +174,12 @@ class Q2TemplateBot2025(ForecastBot):
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         prediction: float = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0
         )
         logger.info(
-            f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
+            f"Forecasted URL {question.page_url} with prediction: {prediction}"
         )
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
@@ -225,13 +226,14 @@ class Q2TemplateBot2025(ForecastBot):
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         prediction: PredictedOptionList = (
             PredictionExtractor.extract_option_list_with_percentage_afterwards(
                 reasoning, question.options
             )
         )
         logger.info(
-            f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
+            f"Forecasted URL {question.page_url} with prediction: {prediction}"
         )
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
@@ -294,13 +296,14 @@ class Q2TemplateBot2025(ForecastBot):
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         prediction: NumericDistribution = (
             PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
                 reasoning, question
             )
         )
         logger.info(
-            f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
+            f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}"
         )
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
@@ -364,7 +367,7 @@ if __name__ == "__main__":
         skip_previously_forecasted_questions=True,
         # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
         #     "default": GeneralLlm(
-        #         model="metaculus/anthropic/claude-3-5-sonnet-20241022",
+        #         model="metaculus/anthropic/claude-3-5-sonnet-20241022", # or "openrouter/openai/gpt-4o-mini", "openai/gpt-4o", etc (see docs for litellm)
         #         temperature=0.3,
         #         timeout=40,
         #         allowed_tries=2,
@@ -403,4 +406,4 @@ if __name__ == "__main__":
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(questions, return_exceptions=True)
         )
-    Q2TemplateBot2025.log_report_summary(forecast_reports)  # type: ignore
+    template_bot.log_report_summary(forecast_reports)  # type: ignore

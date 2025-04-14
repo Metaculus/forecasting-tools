@@ -113,6 +113,8 @@ class ForecastBot(ABC):
                     f"Please override and add it to the {self._llm_config_defaults.__name__} method"
                 )
 
+        logger.info(f"Chosen LLMs for bot are: {self._make_llm_dict()}")
+
     @overload
     async def forecast_on_tournament(
         self,
@@ -273,14 +275,18 @@ class ForecastBot(ABC):
             except Exception:
                 config[name] = str(value)
 
+        llm_dict = self._make_llm_dict()
+        config["llms"] = llm_dict
+        return config
+
+    def _make_llm_dict(self) -> dict[str, str | dict[str, Any]]:
         llm_dict: dict[str, str | dict[str, Any]] = {}
         for key, value in self._llms.items():
             if isinstance(value, GeneralLlm):
                 llm_dict[key] = value.to_dict()
             else:
                 llm_dict[key] = value
-        config["llms"] = llm_dict
-        return config
+        return llm_dict
 
     async def _run_individual_question_with_error_propagation(
         self, question: MetaculusQuestion

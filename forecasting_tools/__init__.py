@@ -69,6 +69,9 @@ from forecasting_tools.data_models.questions import (
 from forecasting_tools.data_models.questions import (
     QuestionState as QuestionState,
 )
+from forecasting_tools.forecast_bots.community.uniform_probability_bot import (
+    UniformProbabilityBot as UniformProbabilityBot,
+)
 from forecasting_tools.forecast_bots.forecast_bot import (
     ForecastBot as ForecastBot,
 )
