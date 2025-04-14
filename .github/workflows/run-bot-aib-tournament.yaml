@@ -21,3 +21,226 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_o1:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_O1_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O1_TOKEN }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_o1_high:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_O1_HIGH_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O1_HIGH_TOKEN }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_o3_mini:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_O3_MINI_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O3_MINI_TOKEN }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_o3_mini_high:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_O3_MINI_HIGH_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O3_MINI_HIGH_TOKEN }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_o1_mini:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_O1_MINI_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O1_MINI_TOKEN }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gpt4_5_preview:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_GPT_4_5_PREVIEW_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_4_5_PREVIEW_TOKEN }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gpt3_5_turbo:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_GPT_3_5_TURBO_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_3_5_TURBO_TOKEN }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gpt4o_mini:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_GPT_4O_MINI_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_4O_MINI_TOKEN }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_claude_3_7_sonnet_latest_thinking:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_claude_3_7_sonnet_latest:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_claude_3_5_sonnet_latest:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_claude_3_5_sonnet_20240620:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_CLAUDE_3_5_SONNET_20240620_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_3_5_SONNET_20240620_TOKEN }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gemini_2_5_pro_preview:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN }}
+      INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gemini_2_0_flash:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_GEMINI_2_0_FLASH_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_0_FLASH_TOKEN }}
+      INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_llama_4_maverick_17b:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_LLAMA_4_MAVERICK_17B_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_LLAMA_4_MAVERICK_17B_TOKEN }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_llama_3_3_nemotron_49b:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_qwen_2_5_max:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_QWEN_2_5_MAX_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_QWEN_2_5_MAX_TOKEN }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_deepseek_r1:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_DEEPSEEK_R1_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_TOKEN }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_deepseek_v3:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_DEEPSEEK_V3_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_V3_TOKEN }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_grok_3_latest:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_GROK_3_LATEST_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_3_LATEST_TOKEN }}
+      INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_grok_3_mini_latest_high:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_GROK_3_MINI_LATEST_HIGH_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_3_MINI_LATEST_HIGH_TOKEN }}
+      INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_uniform_probability:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_UNIFORM_PROBABILITY_BOT_TOKEN'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_UNIFORM_PROBABILITY_BOT_TOKEN }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}

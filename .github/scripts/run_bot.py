@@ -49,7 +49,6 @@ async def run_bot(mode: str) -> None:
     )
 
     if token == "METAC_GPT_4O_TOKEN":
-        _set_metaculus_token("METAC_GPT_4O_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -59,7 +58,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_O1_TOKEN":
-        _set_metaculus_token("METAC_O1_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -69,7 +67,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_O1_HIGH_TOKEN":
-        _set_metaculus_token("METAC_O1_HIGH_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -80,7 +77,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_O3_MINI_TOKEN":
-        _set_metaculus_token("METAC_O3_MINI_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -90,7 +86,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_O3_MINI_HIGH_TOKEN":
-        _set_metaculus_token("METAC_O3_MINI_HIGH_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -101,7 +96,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_O1_MINI_TOKEN":
-        _set_metaculus_token("METAC_O1_MINI_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -111,7 +105,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_GPT_4_5_PREVIEW_TOKEN":
-        _set_metaculus_token("METAC_GPT_4_5_PREVIEW_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -121,8 +114,9 @@ async def run_bot(mode: str) -> None:
                 timeout=90,
             )
         )
+        bot.research_reports_per_question = 1
+        bot.predictions_per_research_report = 3
     if token == "METAC_GPT_3_5_TURBO_TOKEN":
-        _set_metaculus_token("METAC_GPT_3_5_TURBO_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -132,7 +126,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_GPT_4O_MINI_TOKEN":
-        _set_metaculus_token("METAC_GPT_4O_MINI_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -142,7 +135,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN":
-        _set_metaculus_token("METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -157,7 +149,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN":
-        _set_metaculus_token("METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -167,7 +158,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN":
-        _set_metaculus_token("METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -177,7 +167,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_CLAUDE_3_5_SONNET_20240620_TOKEN":
-        _set_metaculus_token("METAC_CLAUDE_3_5_SONNET_20240620_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -187,7 +176,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN":
-        _set_metaculus_token("METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -198,7 +186,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_GEMINI_2_0_FLASH_TOKEN":
-        _set_metaculus_token("METAC_GEMINI_2_0_FLASH_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -208,7 +195,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_LLAMA_4_MAVERICK_17B_TOKEN":
-        _set_metaculus_token("METAC_LLAMA_4_MAVERICK_17B_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -218,7 +204,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN":
-        _set_metaculus_token("METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -228,7 +213,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_QWEN_2_5_MAX_TOKEN":
-        _set_metaculus_token("METAC_QWEN_2_5_MAX_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -238,7 +222,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_DEEPSEEK_R1_TOKEN":
-        _set_metaculus_token("METAC_DEEPSEEK_R1_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -248,7 +231,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_DEEPSEEK_V3_TOKEN":
-        _set_metaculus_token("METAC_DEEPSEEK_V3_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -258,7 +240,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_GROK_3_LATEST_TOKEN":
-        _set_metaculus_token("METAC_GROK_3_LATEST_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -268,7 +249,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_GROK_3_MINI_LATEST_HIGH_TOKEN":
-        _set_metaculus_token("METAC_GROK_3_MINI_LATEST_HIGH_TOKEN")
         _make_sure_search_keys_dont_conflict("asknews-mode")
         bot = default_bot
         bot.set_llm(
@@ -279,7 +259,6 @@ async def run_bot(mode: str) -> None:
             )
         )
     if token == "METAC_UNIFORM_PROBABILITY_BOT_TOKEN":
-        _set_metaculus_token("METAC_UNIFORM_PROBABILITY_BOT_TOKEN")
         bot = UniformProbabilityBot(
             use_research_summary_to_forecast=False,
             publish_reports_to_metaculus=True,
