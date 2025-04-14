@@ -31,3 +31,33 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gemini_2_5_pro_preview:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN+metaculus-cup'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN }}
+      INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_deepseek_r1:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_DEEPSEEK_R1_TOKEN+metaculus-cup'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_TOKEN }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_llama_4_maverick_17b:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_LLAMA_4_MAVERICK_17B_TOKEN+metaculus-cup'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_LLAMA_4_MAVERICK_17B_TOKEN }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}

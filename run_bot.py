@@ -6,15 +6,12 @@ from typing import Literal
 
 import dotenv
 
-from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
-
-dotenv.load_dotenv()
-
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.forecast_bots.community.uniform_probability_bot import (
     UniformProbabilityBot,
 )
+from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
     Q2TemplateBot2025,
 )
@@ -25,6 +22,7 @@ from forecasting_tools.forecast_helpers.forecast_database_manager import (
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 
 logger = logging.getLogger(__name__)
+dotenv.load_dotenv()
 
 all_bot_modes = [
     "METAC_O1_HIGH_TOKEN",
