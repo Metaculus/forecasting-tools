@@ -221,7 +221,7 @@ all_base_bots = {
         ),
     },
     "METAC_DEEPSEEK_R1_TOKEN": {
-        "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
+        "estimated_cost_per_question": roughly_gpt_4o_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="openrouter/deepseek/deepseek-r1",
