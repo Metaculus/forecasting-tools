@@ -37,6 +37,7 @@ def create_bot(
         skip_previously_forecasted_questions=True,
         llms={
             "default": llm,
+            "summarizer": "gpt-4o-mini",
         },
     )
     return default_bot
