@@ -311,20 +311,27 @@ def _make_sure_search_keys_dont_conflict(
         assert not os.getenv(
             "EXA_API_KEY"
         ), "Exa API key is set, but it should not be set for asknews-mode"
+        assert os.getenv(
+            "ASKNEWS_SECRET"
+        ), "Asknews secret key is not set for asknews-mode"
     elif mode == "exa-mode":
         assert not os.getenv(
             "PERPLEXITY_API_KEY"
         ), "Perplexity API key is set, but it should not be set for exa-mode"
         assert not os.getenv(
-            "ASKNEWS_SECRET_KEY"
+            "ASKNEWS_SECRET"
         ), "Asknews secret key is set, but it should not be set for exa-mode"
+        assert os.getenv("EXA_API_KEY"), "Exa API key is not set for exa-mode"
     elif mode == "perplexity-mode":
         assert not os.getenv(
             "EXA_API_KEY"
         ), "Exa API key is set, but it should not be set for perplexity-mode"
         assert not os.getenv(
-            "ASKNEWS_SECRET_KEY"
+            "ASKNEWS_SECRET"
         ), "Asknews secret key is set, but it should not be set for perplexity-mode"
+        assert os.getenv(
+            "PERPLEXITY_API_KEY"
+        ), "Perplexity API key is not set for perplexity-mode"
 
 
 async def _save_reports_to_database(reports: list[ForecastReport]) -> None:
