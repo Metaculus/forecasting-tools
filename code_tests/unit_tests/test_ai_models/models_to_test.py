@@ -11,7 +11,6 @@ from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4ovision import (
     Gpt4oVision,
 )
-from forecasting_tools.ai_models.deprecated_model_classes.gpto1 import GptO1
 from forecasting_tools.ai_models.deprecated_model_classes.metaculus4o import (
     Gpt4oMetaculusProxy,
 )
@@ -54,7 +53,7 @@ class ModelsToTest:
         Gpt4oMetaculusProxy,
         Gpt4oVision,
         # GptO1Preview,
-        GptO1,
+        # GptO1,
         Claude35Sonnet,
         Perplexity,
         ExaSearcher,
