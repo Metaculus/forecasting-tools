@@ -174,15 +174,16 @@ jobs:
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
-  bot_llama_3_3_nemotron_49b:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+  # Takes 2hr+ to run
+  # bot_llama_3_3_nemotron_49b:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+  #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
   bot_qwen_2_5_max:
     uses: ./.github/workflows/run-bot-launcher.yaml
