@@ -97,7 +97,6 @@ class ForecastBot(ABC):
         self._note_pads: list[Notepad] = []
         self._note_pad_lock = asyncio.Lock()
         self._llms = llms or self._llm_config_defaults()
-        assert "default" in self._llms, "Must have a default llm"
 
         for purpose, llm in self._llm_config_defaults().items():
             if purpose not in self._llms:
@@ -806,8 +805,9 @@ class ForecastBot(ABC):
         Returns a dictionary of default llms for the bot.
         The keys are the purpose of the llm and the values are the llms (model name or GeneralLlm object).
         Consider adding:
-        - researcher
         - reasoner
+        - fermi-estimator
+        - judge
         - etc.
         """
 
@@ -837,7 +837,25 @@ class ForecastBot(ABC):
         else:
             summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
 
+        if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
+            researcher = "asknews/news-summaries"
+        elif os.getenv("PERPLEXITY_API_KEY"):
+            researcher = GeneralLlm(
+                model="perplexity/sonar-pro", temperature=0.1
+            )
+        elif os.getenv("OPENROUTER_API_KEY"):
+            researcher = GeneralLlm(
+                model="openrouter/perplexity/sonar-reasoning", temperature=0.1
+            )
+        elif os.getenv("EXA_API_KEY"):
+            researcher = f"smart-searcher/{main_default_llm.model}"
+        else:
+            researcher = GeneralLlm(
+                model="perplexity/sonar-pro", temperature=0.1
+            )
+
         return {
             "default": main_default_llm,
             "summarizer": summarizer,
+            "researcher": researcher,
         }

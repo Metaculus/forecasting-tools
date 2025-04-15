@@ -104,10 +104,12 @@ async def test_no_reports_when_questions_already_forecasted(
 
 async def test_works_with_configured_llm() -> None:
     bot_type = TemplateBot
+    researcher_model = "openrouter/perplexity/sonar-pro"
     bot = bot_type(
         llms={
             "default": GeneralLlm(model="gpt-4o-mini", timeout=42),
             "summarizer": "gpt-4o-mini",
+            "researcher": GeneralLlm(model=researcher_model),
         }
     )
 
@@ -115,7 +117,39 @@ async def test_works_with_configured_llm() -> None:
     assert isinstance(default_llm, GeneralLlm)
     assert default_llm.timeout == 42
     assert bot.get_llm("summarizer") == "gpt-4o-mini"
+    assert bot.get_llm("researcher", "string_name") == researcher_model
 
     question = ForecastingTestManager.get_fake_binary_question()
     report = await bot.forecast_question(question)
     assert report is not None
+
+
+@pytest.mark.parametrize(
+    "research_llm",
+    [
+        "asknews/news-summaries",
+        "openrouter/perplexity/sonar",
+        GeneralLlm("perplexity/sonar"),
+        "smart-searcher/gpt-4o-mini",
+        "",
+        "non-existent-llm",
+    ],
+)
+async def test_research(research_llm: GeneralLlm | str) -> None:
+    bot = TemplateBot(llms={"researcher": research_llm})
+    question = ForecastingTestManager.get_fake_binary_question()
+
+    if research_llm == "non-existent-llm":
+        with pytest.raises(Exception):
+            await bot.run_research(question)
+    else:
+        research = await bot.run_research(question)
+        if not research_llm:
+            research = ""
+        else:
+            assert (
+                len(research) > 0
+            ), "Expected research to return a non-empty string"
+            assert (
+                "https:" in research or "www." in research or "[1]"
+            ), "Expected research to contain a URL"

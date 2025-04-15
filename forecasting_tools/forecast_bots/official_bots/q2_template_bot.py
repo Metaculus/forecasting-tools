@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import logging
-import os
 from datetime import datetime
 from typing import Literal
 
@@ -68,35 +67,9 @@ class Q2TemplateBot2025(ForecastBot):
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
             research = ""
-            if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
-                research = await AskNewsSearcher().get_formatted_news_async(
-                    question.question_text
-                )
-            elif os.getenv("EXA_API_KEY"):
-                research = await self._call_exa_smart_searcher(
-                    question.question_text
-                )
-            elif os.getenv("PERPLEXITY_API_KEY"):
-                research = await self._call_perplexity(question.question_text)
-            elif os.getenv("OPENROUTER_API_KEY"):
-                research = await self._call_perplexity(
-                    question.question_text, use_open_router=True
-                )
-            else:
-                logger.warning(
-                    f"No research provider found when processing question URL {question.page_url}. Will pass back empty string."
-                )
-                research = ""
-            logger.info(
-                f"Found Research for URL {question.page_url}:\n{research}"
-            )
-            return research
+            researcher = self.get_llm("researcher")
 
-    async def _call_perplexity(
-        self, question: str, use_open_router: bool = False
-    ) -> str:
-        prompt = clean_indents(
-            f"""
+            prompt = f"""
             You are an assistant to a superforecaster.
             The superforecaster will give you a question they intend to forecast on.
             To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
@@ -105,37 +78,32 @@ class Q2TemplateBot2025(ForecastBot):
             Question:
             {question}
             """
-        )  # NOTE: The metac bot in Q1 put everything but the question in the system prompt.
-        if use_open_router:
-            model_name = "openrouter/perplexity/sonar-reasoning"
-        else:
-            model_name = "perplexity/sonar-pro"  # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search.
-        model = GeneralLlm(
-            model=model_name,
-            temperature=0.1,
-        )
-        response = await model.invoke(prompt)
-        return response
 
-    async def _call_exa_smart_searcher(self, question: str) -> str:
-        """
-        SmartSearcher is a custom class that is a wrapper around an search on Exa.ai
-        """
-        searcher = SmartSearcher(
-            model=self.get_llm("default", "llm"),
-            temperature=0,
-            num_searches_to_run=2,
-            num_sites_per_search=10,
-        )
-        prompt = (
-            "You are an assistant to a superforecaster. The superforecaster will give"
-            "you a question they intend to forecast on. To be a great assistant, you generate"
-            "a concise but detailed rundown of the most relevant news, including if the question"
-            "would resolve Yes or No based on current information. You do not produce forecasts yourself."
-            f"\n\nThe question is: {question}"
-        )  # You can ask the searcher to filter by date, exclude/include a domain, and run specific searches for finding sources vs finding highlights within a source
-        response = await searcher.invoke(prompt)
-        return response
+            if isinstance(researcher, GeneralLlm):
+                research = await researcher.invoke(prompt)
+            elif researcher == "asknews/news-summaries":
+                research = await AskNewsSearcher().get_formatted_news_async(
+                    question.question_text
+                )
+            elif researcher.startswith("smart-searcher"):
+                model_name = researcher.split("/")[-1]
+                searcher = SmartSearcher(
+                    model=model_name,
+                    temperature=0,
+                    num_searches_to_run=2,
+                    num_sites_per_search=10,
+                )
+                research = await searcher.invoke(prompt)
+            elif not researcher:
+                research = ""
+            else:
+                research = await self.get_llm("researcher", "llm").invoke(
+                    prompt
+                )
+            logger.info(
+                f"Found Research for URL {question.page_url}:\n{research}"
+            )
+            return research
 
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
