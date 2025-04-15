@@ -75,7 +75,7 @@ all_base_bots = {
             ),
         ),
     },
-    "METAC_4_5_PREVIEW_TOKEN": {
+    "METAC_GPT_4_5_PREVIEW_TOKEN": {
         "estimated_cost_per_question": 1.5,
         "bot": create_bot(
             GeneralLlm(
