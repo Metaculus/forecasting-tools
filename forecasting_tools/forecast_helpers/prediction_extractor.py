@@ -44,7 +44,7 @@ class PredictionExtractor:
             assert (
                 min_prediction <= clamped_number <= max_prediction
             ), f"Clamped number {clamped_number} is not between {min_prediction} and {max_prediction}"
-            return clamped_number
+            return float(clamped_number)
         else:
             raise ValueError(
                 f"Could not extract prediction from response. The text was: {text}"

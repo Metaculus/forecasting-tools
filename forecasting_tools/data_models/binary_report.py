@@ -43,8 +43,7 @@ class BinaryReport(ForecastReport):
     ) -> float:
         for prediction in predictions:
             assert 0 <= prediction <= 1, "Predictions must be between 0 and 1"
-            assert isinstance(prediction, float), "Predictions must be floats"
-        return statistics.median(predictions)
+        return float(statistics.median(predictions))
 
     @classmethod
     def make_readable_prediction(cls, prediction: float) -> str:

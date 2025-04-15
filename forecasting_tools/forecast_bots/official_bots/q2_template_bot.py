@@ -176,7 +176,7 @@ class Q2TemplateBot2025(ForecastBot):
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         prediction: float = PredictionExtractor.extract_last_percentage_value(
-            reasoning, max_prediction=1, min_prediction=0
+            reasoning, max_prediction=0.99, min_prediction=0.01
         )
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction}"
