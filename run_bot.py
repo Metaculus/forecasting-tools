@@ -43,6 +43,9 @@ def create_bot(
 
 
 default_temperature = 0.3
+roughly_gpt_4o_cost = 0.05
+roughly_gpt_4o_mini_cost = 0.005
+roughly_sonnet_3_5_cost = 0.10
 all_base_bots = {
     "METAC_O1_HIGH_TOKEN": {
         "estimated_cost_per_question": 1.18,
@@ -64,6 +67,7 @@ all_base_bots = {
         ),
     },
     "METAC_O1_MINI_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="o1-mini",
@@ -72,6 +76,7 @@ all_base_bots = {
         ),
     },
     "METAC_4_5_PREVIEW_TOKEN": {
+        "estimated_cost_per_question": 1.5,
         "bot": create_bot(
             GeneralLlm(
                 model="gpt-4.5-preview",
@@ -81,6 +86,7 @@ all_base_bots = {
         ),
     },
     "METAC_O3_MINI_HIGH_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="o3-mini",
@@ -90,6 +96,7 @@ all_base_bots = {
         ),
     },
     "METAC_O3_MINI_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="o3-mini",
@@ -99,6 +106,7 @@ all_base_bots = {
         ),
     },
     "METAC_GPT_4O_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="gpt-4o",
@@ -107,6 +115,7 @@ all_base_bots = {
         ),
     },
     "METAC_GPT_4O_MINI_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="gpt-4o-mini",
@@ -115,6 +124,7 @@ all_base_bots = {
         ),
     },
     "METAC_GPT_3_5_TURBO_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="gpt-3.5-turbo",
@@ -123,6 +133,7 @@ all_base_bots = {
         ),
     },
     "METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN": {
+        "estimated_cost_per_question": 0.37,
         "bot": create_bot(
             GeneralLlm(
                 model="anthropic/claude-3-7-sonnet-latest",  # NOSONAR
@@ -137,6 +148,7 @@ all_base_bots = {
         ),
     },
     "METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN": {
+        "estimated_cost_per_question": roughly_sonnet_3_5_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="anthropic/claude-3-7-sonnet-latest",
@@ -145,6 +157,7 @@ all_base_bots = {
         ),
     },
     "METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN": {
+        "estimated_cost_per_question": roughly_sonnet_3_5_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="anthropic/claude-3-5-sonnet-latest",
@@ -153,6 +166,7 @@ all_base_bots = {
         ),
     },
     "METAC_CLAUDE_3_5_SONNET_20240620_TOKEN": {
+        "estimated_cost_per_question": roughly_sonnet_3_5_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="anthropic/claude-3-5-sonnet-20240620",
@@ -161,6 +175,7 @@ all_base_bots = {
         ),
     },
     "METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN": {
+        "estimated_cost_per_question": 0.30,
         "bot": create_bot(
             GeneralLlm(
                 model="gemini/gemini-2.5-pro-preview-03-25",
@@ -170,6 +185,7 @@ all_base_bots = {
         ),
     },
     "METAC_GEMINI_2_0_FLASH_TOKEN": {
+        "estimated_cost_per_question": 0.05,
         "bot": create_bot(
             GeneralLlm(
                 model="gemini/gemini-2.0-flash-001",
@@ -178,6 +194,7 @@ all_base_bots = {
         ),
     },
     "METAC_LLAMA_4_MAVERICK_17B_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="openrouter/meta-llama/llama-4-maverick",
@@ -186,6 +203,7 @@ all_base_bots = {
         ),
     },
     "METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="openrouter/nvidia/llama-3.3-nemotron-super-49b-v1:free",
@@ -194,6 +212,7 @@ all_base_bots = {
         ),
     },
     "METAC_QWEN_2_5_MAX_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="openrouter/qwen/qwen-max",
@@ -202,6 +221,7 @@ all_base_bots = {
         ),
     },
     "METAC_DEEPSEEK_R1_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="openrouter/deepseek/deepseek-r1",
@@ -210,6 +230,7 @@ all_base_bots = {
         ),
     },
     "METAC_DEEPSEEK_V3_TOKEN": {
+        "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="openrouter/deepseek/deepseek-chat",
@@ -218,6 +239,7 @@ all_base_bots = {
         ),
     },
     "METAC_GROK_3_LATEST_TOKEN": {
+        "estimated_cost_per_question": 0.13,
         "bot": create_bot(
             GeneralLlm(
                 model="xai/grok-3-latest",
@@ -226,6 +248,7 @@ all_base_bots = {
         ),
     },
     "METAC_GROK_3_MINI_LATEST_HIGH_TOKEN": {
+        "estimated_cost_per_question": 0.10,
         "bot": create_bot(
             GeneralLlm(
                 model="xai/grok-3-mini-latest",
@@ -235,6 +258,7 @@ all_base_bots = {
         ),
     },
     "METAC_UNIFORM_PROBABILITY_BOT_TOKEN": {
+        "estimated_cost_per_question": 0.00,
         "bot": UniformProbabilityBot(
             use_research_summary_to_forecast=False,
             publish_reports_to_metaculus=True,
