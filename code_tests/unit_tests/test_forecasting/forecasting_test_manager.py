@@ -117,9 +117,9 @@ class ForecastingTestManager:
         month = current_date.month
 
         is_first_month_of_quarter = month in [1, 4, 7, 10]
-        is_first_10_days = day_of_month <= 10
+        is_first_21_days = day_of_month <= 21
 
-        return is_first_month_of_quarter and is_first_10_days
+        return is_first_month_of_quarter and is_first_21_days
 
     @staticmethod
     def mock_getting_benchmark_questions(mocker: Mock) -> Mock:

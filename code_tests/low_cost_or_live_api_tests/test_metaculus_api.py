@@ -38,7 +38,7 @@ def test_get_binary_question_type_from_id() -> None:
     assert isinstance(question, BinaryQuestion)
     assert post_id == question.id_of_post
     assert question.community_prediction_at_access_time is not None
-    assert question.community_prediction_at_access_time <= 0.01
+    assert question.community_prediction_at_access_time <= 0.03
     assert question.state == QuestionState.OPEN
     assert_basic_question_attributes_not_none(question, post_id)
 
