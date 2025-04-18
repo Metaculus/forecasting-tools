@@ -42,15 +42,15 @@ jobs:
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
-  bot_gpt4_5_preview:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_GPT_4_5_PREVIEW_TOKEN'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_4_5_PREVIEW_TOKEN }}
-      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+  # bot_gpt4_5_preview:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_GPT_4_5_PREVIEW_TOKEN'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_4_5_PREVIEW_TOKEN }}
+  #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+  #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
   bot_o3_mini_high:
     uses: ./.github/workflows/run-bot-launcher.yaml

@@ -678,6 +678,7 @@ class ForecastBot(ABC):
         ]
 
         full_summary = "\n"
+        full_summary += "-" * 100 + "\n"
         for report in valid_reports:
             question_summary = clean_indents(
                 f"""
@@ -727,6 +728,7 @@ class ForecastBot(ABC):
         full_summary += (
             f"Average time spent per question: {average_minutes:.4f} minutes\n"
         )
+        full_summary += "-" * 100 + "\n\n\n"
         logger.info(full_summary)
 
         if minor_exceptions:
