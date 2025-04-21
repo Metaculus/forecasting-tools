@@ -173,8 +173,10 @@ class LaunchQuestion(BaseModel, Jsonable):
 
     @classmethod
     def from_csv_row(cls, row: dict, original_order: int) -> LaunchQuestion:
-        row["original_order"] = original_order
-        return cls(**row)
+        # Create a new dictionary with cleaned keys
+        cleaned_row = {k.replace("\ufeff", ""): v for k, v in row.items()}
+        cleaned_row["original_order"] = original_order
+        return cls(**cleaned_row)
 
 
 class LaunchWarning(BaseModel, Jsonable):
