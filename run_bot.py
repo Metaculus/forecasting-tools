@@ -77,6 +77,7 @@ async def get_all_bots(check_env_vars: bool = True) -> list[ForecastBot]:
 
 def create_bot(
     llm: GeneralLlm,
+    researcher: str | GeneralLlm = "asknews/news-summaries",
     predictions_per_research_report: int = 5,
 ) -> ForecastBot:
     default_bot = Q2TemplateBot2025(
@@ -88,6 +89,7 @@ def create_bot(
         llms={
             "default": llm,
             "summarizer": "gpt-4o-mini",
+            "researcher": researcher,
         },
     )
     return default_bot
@@ -99,7 +101,123 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     roughly_gpt_4o_mini_cost = 0.005
     roughly_sonnet_3_5_cost = 0.10
 
-    return {
+    default_perplexity_settings = {
+        "web_search_options": {"search_context_size": "high"},
+        "reasoning_effort": "high",
+    }
+    gemini_grounding_llm = GeneralLlm(
+        model="google/gemini-2.5-pro-preview-03-25",
+        tools=[
+            {"googleSearchRetrieval": {}},
+            # { # https://cloud.google.com/vertex-ai/generative-ai/docs/grounding/grounding-with-google-search#googlegenaisdk_tools_google_search_with_txt-drest
+            #     "googleSearchRetrieval": {
+            #         "dynamicRetrievalConfig": {
+            #             "mode": "MODE_DYNAMIC",
+            #             "dynamicThreshold": 0.7,
+            #         }
+            #     }
+            # },
+        ],
+    )
+    default_deepseek_research_bot_llm = GeneralLlm(
+        model="openrouter/deepseek/deepseek-r1",
+        temperature=default_temperature,
+    )
+
+    base_models = {
+        "METAC_GEMINI_2_5_PRO_GEMINI_2_5_PRO_GROUNDING": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="gemini/gemini-2.5-pro-preview-03-25",
+                    temperature=default_temperature,
+                    timeout=90,
+                ),
+                researcher=gemini_grounding_llm,
+            ),
+        },
+        "METAC_GEMINI_2_5_PRO_SONAR_REASONING_PRO": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="gemini/gemini-2.5-pro-preview-03-25",
+                    temperature=default_temperature,
+                    timeout=90,
+                ),
+                researcher=GeneralLlm(
+                    model="perplexity/sonar-reasoning-pro",
+                    **default_perplexity_settings,
+                ),
+            ),
+        },
+        "METAC_DEEPSEEK_R1_SONAR_PRO": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(
+                    model="perplexity/sonar-pro",
+                    **default_perplexity_settings,
+                ),
+            ),
+        },
+        "METAC_DEEPSEEK_R1_SONAR": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(
+                    model="perplexity/sonar",
+                    **default_perplexity_settings,
+                ),
+            ),
+        },
+        "METAC_DEEPSEEK_R1_SONAR_DEEP_RESEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(
+                    model="perplexity/sonar-deep-research",
+                    **default_perplexity_settings,
+                ),
+            ),
+        },
+        "METAC_DEEPSEEK_R1_SONAR_REASONING_PRO": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(
+                    model="perplexity/sonar-reasoning-pro",
+                    **default_perplexity_settings,
+                ),
+            ),
+        },
+        "METAC_ONLY_SONAR_REASONING_PRO": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                GeneralLlm(model="perplexity/sonar-reasoning-pro"),
+                researcher="None",
+            ),
+        },
+        "METAC_DEEPSEEK_R1_SONAR_REASONING": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(model="perplexity/sonar-reasoning"),
+            ),
+        },
+        "METAC_DEEPSEEK_R1_GPT_4O_SEARCH_PREVIEW": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(model="openai/gpt-4o-search-preview"),
+            ),
+        },
+        "METAC_DEEPSEEK_R1_GEMINI_2_5_PRO_GROUNDING": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=gemini_grounding_llm,
+            ),
+        },
         "METAC_O3_HIGH_TOKEN": {
             "estimated_cost_per_question": None,
             "bot": create_bot(
@@ -383,6 +501,24 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
     }
+
+    keys = list(base_models.keys())
+    all_modes_using_perplexity = [
+        key for key in keys if "sonar" in key.lower()
+    ]
+    for model in all_modes_using_perplexity:
+        bot: ForecastBot = base_models[model]["bot"]
+        researcher = bot.get_llm("researcher", "llm")
+        assert researcher.model.startswith("perplexity/")
+        assert (
+            researcher.litellm_kwargs["web_search_options"][
+                "search_context_size"
+            ]
+            == "high"
+        )
+        assert researcher.litellm_kwargs["reasoning_effort"] == "high"
+
+    return base_models
 
 
 def _make_sure_search_keys_dont_conflict(

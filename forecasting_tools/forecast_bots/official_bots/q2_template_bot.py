@@ -94,7 +94,7 @@ class Q2TemplateBot2025(ForecastBot):
                     num_sites_per_search=10,
                 )
                 research = await searcher.invoke(prompt)
-            elif not researcher:
+            elif not researcher or researcher == "None":
                 research = ""
             else:
                 research = await self.get_llm("researcher", "llm").invoke(
