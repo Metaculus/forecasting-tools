@@ -159,9 +159,10 @@ class ForecastBot(ABC):
         question: MetaculusQuestion,
         return_exceptions: bool = False,
     ) -> ForecastReport | BaseException:
-        assert (
-            not self.skip_previously_forecasted_questions
-        ), "Skipping questions is not supported for single question forecasts"
+        if self.skip_previously_forecasted_questions:
+            logger.warning(
+                "Setting skip_previously_forecasted_questions to True might not be intended if forecasting one question at a time"
+            )
         reports = await self.forecast_questions([question], return_exceptions)
         assert len(reports) == 1, f"Expected 1 report, got {len(reports)}"
         return reports[0]

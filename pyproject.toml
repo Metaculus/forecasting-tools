@@ -17,7 +17,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "<3.14,>=3.10"
 openai = "^1.51.0"
 tiktoken = ">=0.8.0,<0.10.0"
 aiofiles = "^24.1.0"
@@ -33,7 +33,7 @@ tenacity = ">=8.0.0,<10.0.0"
 pillow = ">=9.0.0,<12.0.0"
 transformers = "^4.44.1"
 typeguard = "^4.3.0"
-scikit-learn = ">=1.5.2,<1.7.0"
+scikit-learn = "^1.5.2"
 litellm = "^1.59.1"
 numpy = ">=1.26.0,<3.0.0"
 exceptiongroup = "^1.2.2"
@@ -42,6 +42,7 @@ faker = "^37.0.1"
 plotly = ">=5.24.1,<7.0.0"
 pandas = "^2.2.3"
 streamlit = "^1.20.0"
+asknews = "^0.11.6"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.1"

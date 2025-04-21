@@ -31,7 +31,7 @@ default_for_using_summary = False
 
 
 async def configure_and_run_bot(
-    mode: str, return_bot_dont_run: bool = False, check_env_vars: bool = True
+    mode: str, return_bot_dont_run: bool = False
 ) -> ForecastBot | list[ForecastReport]:
 
     if "metaculus-cup" in mode:
@@ -49,9 +49,6 @@ async def configure_and_run_bot(
         skip_previously_forecasted_questions
     )
 
-    if check_env_vars:
-        _make_sure_search_keys_dont_conflict("asknews-mode")
-
     if return_bot_dont_run:
         return bot
     else:
@@ -63,15 +60,11 @@ async def configure_and_run_bot(
         return reports
 
 
-async def get_all_bots(check_env_vars: bool = True) -> list[ForecastBot]:
+async def get_all_bots() -> list[ForecastBot]:
     bots = []
     keys = list(get_default_bot_dict().keys())
     for key in keys:
-        bots.append(
-            await configure_and_run_bot(
-                key, return_bot_dont_run=True, check_env_vars=check_env_vars
-            )
-        )
+        bots.append(await configure_and_run_bot(key, return_bot_dont_run=True))
     return bots
 
 
@@ -124,7 +117,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         temperature=default_temperature,
     )
 
-    base_models = {
+    mode_base_bot_mapping = {
         "METAC_GEMINI_2_5_PRO_GEMINI_2_5_PRO_GROUNDING": {
             "estimated_cost_per_question": None,
             "bot": create_bot(
@@ -190,18 +183,14 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 ),
             ),
         },
-        "METAC_ONLY_SONAR_REASONING_PRO": {
-            "estimated_cost_per_question": None,
-            "bot": create_bot(
-                GeneralLlm(model="perplexity/sonar-reasoning-pro"),
-                researcher="None",
-            ),
-        },
         "METAC_DEEPSEEK_R1_SONAR_REASONING": {
             "estimated_cost_per_question": None,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
-                researcher=GeneralLlm(model="perplexity/sonar-reasoning"),
+                researcher=GeneralLlm(
+                    model="perplexity/sonar-reasoning",
+                    **default_perplexity_settings,
+                ),
             ),
         },
         "METAC_DEEPSEEK_R1_GPT_4O_SEARCH_PREVIEW": {
@@ -216,6 +205,16 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher=gemini_grounding_llm,
+            ),
+        },
+        "METAC_ONLY_SONAR_REASONING_PRO": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="perplexity/sonar-reasoning-pro",
+                    **default_perplexity_settings,
+                ),
+                researcher="None",
             ),
         },
         "METAC_O3_HIGH_TOKEN": {
@@ -261,14 +260,14 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         "METAC_4_1_TOKEN": {
             "estimated_cost_per_question": None,
             "bot": create_bot(
-                GeneralLlm(model="4.1", temperature=default_temperature),
+                GeneralLlm(model="gpt-4.1", temperature=default_temperature),
             ),
         },
         "METAC_4_1_MINI_TOKEN": {
             "estimated_cost_per_question": None,
             "bot": create_bot(
                 GeneralLlm(
-                    model="4.1-mini",
+                    model="gpt-4.1-mini",
                     temperature=default_temperature,
                 ),
             ),
@@ -277,7 +276,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": None,
             "bot": create_bot(
                 GeneralLlm(
-                    model="4.1-nano",
+                    model="gpt-4.1-nano",
                     temperature=default_temperature,
                 ),
             ),
@@ -308,6 +307,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 GeneralLlm(
                     model="o1",
                     temperature=default_temperature,
+                    reasoning_effort="medium",
                 ),
             ),
         },
@@ -317,6 +317,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 GeneralLlm(
                     model="o1-mini",
                     temperature=default_temperature,
+                    reasoning_effort="medium",
                 ),
             ),
         },
@@ -502,23 +503,35 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         },
     }
 
-    keys = list(base_models.keys())
-    all_modes_using_perplexity = [
-        key for key in keys if "sonar" in key.lower()
+    modes = list(mode_base_bot_mapping.keys())
+    bots: list[ForecastBot] = [
+        mode_base_bot_mapping[key]["bot"] for key in modes
     ]
-    for model in all_modes_using_perplexity:
-        bot: ForecastBot = base_models[model]["bot"]
-        researcher = bot.get_llm("researcher", "llm")
-        assert researcher.model.startswith("perplexity/")
-        assert (
-            researcher.litellm_kwargs["web_search_options"][
-                "search_context_size"
-            ]
-            == "high"
-        )
-        assert researcher.litellm_kwargs["reasoning_effort"] == "high"
+    for mode, bot in zip(modes, bots):
+        if "sonar" in mode.lower():
+            researcher = bot.get_llm("researcher", "llm")
+            if "only" in mode.lower():
+                researcher = bot.get_llm("default", "llm")
 
-    return base_models
+            assert researcher.model.startswith("perplexity/")
+            assert (
+                researcher.litellm_kwargs["web_search_options"][
+                    "search_context_size"
+                ]
+                == "high"
+            )
+            assert researcher.litellm_kwargs["reasoning_effort"] == "high"
+        elif "grounding" in mode.lower():
+            researcher = bot.get_llm("researcher", "llm")
+            assert researcher.model.startswith("google/")
+            assert researcher.litellm_kwargs["tools"] == [
+                {"googleSearchRetrieval": {}}
+            ]
+        elif "deepseek" in mode.lower():
+            researcher = bot.get_llm("default", "llm")
+            assert researcher.model.startswith("openrouter/deepseek/")
+
+    return mode_base_bot_mapping
 
 
 def _make_sure_search_keys_dont_conflict(

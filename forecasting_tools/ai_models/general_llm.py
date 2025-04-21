@@ -71,9 +71,6 @@ class GeneralLlm(
         "o4": {
             "timeout": 80,
         },
-        "perplexity/": {
-            "timeout": 120,
-        },
         "claude-3-5-sonnet": {
             "timeout": 40,
         },
@@ -82,6 +79,13 @@ class GeneralLlm(
         },
         "deepseek/": {
             "timeout": 80,
+        },
+        "perplexity/": {
+            "timeout": 120,
+        },
+        "perplexity/sonar-deep-research": {
+            "timeout": 60
+            * 60,  # Can take 30min+ at times according to Perplexity https://docs.perplexity.ai/models/model-cards#search-models:~:text=models%20may%20take-,30%2B%20minutes,-to%20process%20and
         },
     }
 
@@ -207,7 +211,7 @@ class GeneralLlm(
         matching_keys = [key for key in all_keys if key in model]
         if not matching_keys:
             return 60
-        return cls._defaults[matching_keys[0]]["timeout"]
+        return cls._defaults[matching_keys[-1]]["timeout"]
 
     def _give_cost_tracking_warning_if_needed(self) -> None:
         model = self._litellm_model
