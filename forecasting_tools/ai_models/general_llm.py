@@ -62,13 +62,13 @@ class GeneralLlm(
         "gpt-4o-mini": {
             "timeout": 40,
         },
-        "o1-preview": {
-            "timeout": 80,
-        },
         "o1": {
             "timeout": 80,
         },
-        "o3-mini": {
+        "o3": {
+            "timeout": 80,
+        },
+        "o4": {
             "timeout": 80,
         },
         "perplexity/": {
@@ -77,11 +77,8 @@ class GeneralLlm(
         "claude-3-5-sonnet": {
             "timeout": 40,
         },
-        "gemini-2.5-pro-preview": {
-            "timeout": 60,
-        },
-        "gemini-2.0-flash": {
-            "timeout": 60,
+        "gemini-2.5": {
+            "timeout": 80,
         },
         "deepseek/": {
             "timeout": 80,
@@ -150,6 +147,7 @@ class GeneralLlm(
         if self._use_metaculus_proxy:
             self._litellm_model = self._litellm_model[len(metaculus_prefix) :]
         if self._litellm_model.startswith(openai_prefix):
+            # prefix removal is to help with matching with model cost lists
             self._litellm_model = self._litellm_model[len(openai_prefix) :]
         if self._litellm_model.startswith(anthropic_prefix):
             self._litellm_model = self._litellm_model[len(anthropic_prefix) :]

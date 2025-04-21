@@ -34,8 +34,13 @@
 				"ms-toolsai.jupyter"
 			]
 		}
-	}
+	},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
+
+	// Forces using public DNS servers
+	// (this may not be necessary, but is intended to prevent needing to
+	// rebuild the container or restart Docker when a network change is made)
+	"dns": ["8.8.8.8", "1.1.1.1"]
 }
