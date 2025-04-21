@@ -3,13 +3,11 @@ import re
 
 import dotenv
 import streamlit as st
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.questions import BinaryQuestion
-from forecasting_tools.forecast_bots.community.q4_veritas_bot import (
-    Q4VeritasBot,
-)
+from forecasting_tools.forecast_bots.main_bot import MainBot
 from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
@@ -26,8 +24,6 @@ logger = logging.getLogger(__name__)
 
 class ForecastInput(Jsonable, BaseModel):
     question: BinaryQuestion
-    num_background_questions: int = Field(default=4, ge=1, le=5)
-    num_base_rate_questions: int = Field(default=4, ge=1, le=5)
 
 
 class ForecasterPage(ToolPage):
@@ -72,23 +68,6 @@ class ForecasterPage(ToolPage):
                 "Background Info (optional)", key=cls.BACKGROUND_INFO_BOX
             )
 
-            col1, col2 = st.columns(2)
-            with col1:
-                num_background_questions = st.number_input(
-                    "Number of background questions to ask",
-                    min_value=1,
-                    max_value=5,
-                    value=4,
-                    key=cls.NUM_BACKGROUND_QUESTIONS_BOX,
-                )
-            with col2:
-                num_base_rate_questions = st.number_input(
-                    "Number of base rate questions to ask",
-                    min_value=1,
-                    max_value=5,
-                    value=4,
-                    key=cls.NUM_BASE_RATE_QUESTIONS_BOX,
-                )
             submitted = st.form_submit_button("Submit")
 
             if submitted:
@@ -105,22 +84,17 @@ class ForecasterPage(ToolPage):
                 )
                 return ForecastInput(
                     question=question,
-                    num_background_questions=num_background_questions,
-                    num_base_rate_questions=num_base_rate_questions,
                 )
         return None
 
     @classmethod
     async def _run_tool(cls, input: ForecastInput) -> BinaryReport:
         with st.spinner("Forecasting... This may take a minute or two..."):
-            report = await Q4VeritasBot(
+            report = await MainBot(
                 research_reports_per_question=1,
                 predictions_per_research_report=5,
                 publish_reports_to_metaculus=False,
                 folder_to_save_reports_to=None,
-                number_of_background_questions_to_ask=input.num_background_questions,
-                number_of_base_rate_questions_to_ask=input.num_base_rate_questions,
-                number_of_base_rates_to_do_deep_research_on=0,
             ).forecast_question(input.question)
             assert isinstance(report, BinaryReport)
             return report
