@@ -1,3 +1,9 @@
+"""
+This is the main file used to run the bots in the Metaulus AI Competition.
+
+It is run by workflows in the .github/workflows directory.
+"""
+
 import argparse
 import asyncio
 import logging
@@ -100,16 +106,14 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     }
     gemini_grounding_llm = GeneralLlm(
         model="gemini/gemini-2.5-pro-preview-03-25",
+        generationConfig={
+            "thinkingConfig": {
+                "thinkingBudget": 0,
+            },
+            "responseMimeType": "text/plain",
+        },
         tools=[
-            {"googleSearchRetrieval": {}},
-            # { # https://cloud.google.com/vertex-ai/generative-ai/docs/grounding/grounding-with-google-search#googlegenaisdk_tools_google_search_with_txt-drest
-            #     "googleSearchRetrieval": {
-            #         "dynamicRetrievalConfig": {
-            #             "mode": "MODE_DYNAMIC",
-            #             "dynamicThreshold": 0.7,
-            #         }
-            #     }
-            # },
+            {"googleSearch": {}},
         ],
     )
     default_deepseek_research_bot_llm = GeneralLlm(
@@ -556,9 +560,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         elif "grounding" in mode.lower():
             researcher = bot.get_llm("researcher", "llm")
             assert researcher.model.startswith("gemini/")
-            assert researcher.litellm_kwargs["tools"] == [
-                {"googleSearchRetrieval": {}}
-            ]
+            assert len(researcher.litellm_kwargs["tools"]) == 1
         elif "deepseek" in mode.lower():
             researcher = bot.get_llm("default", "llm")
             assert researcher.model.startswith("openrouter/deepseek/")

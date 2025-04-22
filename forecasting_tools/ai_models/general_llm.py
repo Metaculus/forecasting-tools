@@ -33,6 +33,7 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 from forecasting_tools.util import async_batching
+from forecasting_tools.util.misc import raise_for_status_with_additional_info
 
 logger = logging.getLogger(__name__)
 ModelInputType = str | VisionMessageData | list[dict[str, str]]
@@ -363,6 +364,7 @@ class GeneralLlm(
                     [task], float(timeout)
                 )[0]
             response = await task
+            raise_for_status_with_additional_info(response)
             completion = await response.json()
 
         response_text = completion["choices"][0]["message"]["content"]
