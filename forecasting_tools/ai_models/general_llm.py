@@ -5,6 +5,7 @@ import logging
 import os
 from typing import Any
 
+import aiohttp
 import litellm
 import typeguard
 from litellm import acompletion, model_cost
@@ -31,6 +32,7 @@ from forecasting_tools.ai_models.model_interfaces.tokens_incur_cost import (
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.util import async_batching
 
 logger = logging.getLogger(__name__)
 ModelInputType = str | VisionMessageData | list[dict[str, str]]
@@ -140,21 +142,30 @@ class GeneralLlm(
         """
         super().__init__(allowed_tries=allowed_tries)
         self.model = model
-        self.timeout = timeout
 
         metaculus_prefix = "metaculus/"
+        exa_prefix = "exa/"
         openai_prefix = "openai/"
         anthropic_prefix = "anthropic/"
         self._use_metaculus_proxy = model.startswith(metaculus_prefix)
+        self._use_exa = model.startswith(exa_prefix)
 
         self._litellm_model = model
         if self._use_metaculus_proxy:
-            self._litellm_model = self._litellm_model[len(metaculus_prefix) :]
+            self._litellm_model = self._litellm_model.removeprefix(
+                metaculus_prefix
+            )
+        if self._litellm_model.startswith(exa_prefix):
+            self._litellm_model = self._litellm_model.removeprefix(exa_prefix)
         if self._litellm_model.startswith(openai_prefix):
             # prefix removal is to help with matching with model cost lists
-            self._litellm_model = self._litellm_model[len(openai_prefix) :]
+            self._litellm_model = self._litellm_model.removeprefix(
+                openai_prefix
+            )
         if self._litellm_model.startswith(anthropic_prefix):
-            self._litellm_model = self._litellm_model[len(anthropic_prefix) :]
+            self._litellm_model = self._litellm_model.removeprefix(
+                anthropic_prefix
+            )
 
         self.litellm_kwargs = kwargs
         self.litellm_kwargs["model"] = self._litellm_model
@@ -164,12 +175,14 @@ class GeneralLlm(
         )
 
         if self._use_metaculus_proxy:
-            assert (
-                self.litellm_kwargs.get("base_url") is None
-            ), "base_url should not be set if use_metaculus_proxy is True"
-            assert (
-                self.litellm_kwargs.get("extra_headers") is None
-            ), "extra_headers should not be set if use_metaculus_proxy is True"
+            if self.litellm_kwargs.get("base_url") is not None:
+                raise ValueError(
+                    "base_url should not be set if use_metaculus_proxy is True"
+                )
+            if self.litellm_kwargs.get("extra_headers") is not None:
+                raise ValueError(
+                    "extra_headers should not be set if use_metaculus_proxy is True"
+                )
             if "claude" in self.model or "anthropic" in self.model:
                 self.litellm_kwargs["base_url"] = (
                     "https://llm-proxy.metaculus.com/proxy/anthropic"
@@ -183,7 +196,11 @@ class GeneralLlm(
                 "Content-Type": "application/json",
                 "Authorization": f"Token {METACULUS_TOKEN}",
             }
-            self.litellm_kwargs["api_key"] = METACULUS_TOKEN
+            if self.litellm_kwargs.get("api_key") is None:
+                self.litellm_kwargs["api_key"] = METACULUS_TOKEN
+        elif self._use_exa:
+            if self.litellm_kwargs.get("api_key") is None:
+                self.litellm_kwargs["api_key"] = os.getenv("EXA_API_KEY")
 
         valid_acompletion_params = set(
             inspect.signature(acompletion).parameters.keys()
@@ -265,6 +282,10 @@ class GeneralLlm(
     ) -> TextTokenCostResponse:
         self._everything_special_to_call_before_direct_call()
         assert self._litellm_model is not None
+
+        if self._use_exa:
+            return await self._call_exa_model(prompt)
+
         litellm.drop_params = True
 
         response = await acompletion(
@@ -294,6 +315,71 @@ class GeneralLlm(
 
         return TextTokenCostResponse(
             data=answer,
+            prompt_tokens_used=prompt_tokens,
+            completion_tokens_used=completion_tokens,
+            total_tokens_used=total_tokens,
+            model=self.model,
+            cost=cost,
+        )
+
+    async def _call_exa_model(
+        self, prompt: ModelInputType
+    ) -> TextTokenCostResponse:
+        # TODO: Move this back to ussing the exa or OpenAI sdk.
+        # I thought that a direct call might reveal the costDollars field but it didn't
+        assert self._litellm_model is not None, "litellm model is not set"
+        assert self.model.startswith(
+            "exa/"
+        ), f"model {self.model} is not an exa model but is being called like one"
+
+        payload = {
+            "model": self._litellm_model,
+            "messages": self.model_input_to_message(prompt),
+            "temperature": self.litellm_kwargs["temperature"],
+            "extra_body": {
+                "text": False,
+            },
+        }
+
+        async with aiohttp.ClientSession() as session:
+            api_key = self.litellm_kwargs.get("api_key")
+            if not api_key:
+                raise ValueError("Exa API key not found in litellm_kwargs")
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            }
+            extra_headers = self.litellm_kwargs.get("extra_headers")
+            if extra_headers:
+                headers.update(extra_headers)
+            task = session.post(
+                "https://api.exa.ai/chat/completions",
+                headers=headers,
+                json=payload,
+            )
+            timeout = self.litellm_kwargs.get("timeout")
+            if timeout is not None:
+                task = async_batching.wrap_coroutines_with_timeout(
+                    [task], float(timeout)
+                )[0]
+            response = await task
+            completion = await response.json()
+
+        response_text = completion["choices"][0]["message"]["content"]
+        if response_text is None:
+            raise ValueError("Response text is None for exa model")
+
+        usage = completion["usage"]
+        if usage is None:
+            raise ValueError("Usage is None for exa model")
+
+        prompt_tokens = usage["prompt_tokens"]
+        completion_tokens = usage["completion_tokens"]
+        total_tokens = usage["total_tokens"]
+        cost = 0  # API claims that there is completion["costDollars"], but I can't find it
+
+        return TextTokenCostResponse(
+            data=response_text,
             prompt_tokens_used=prompt_tokens,
             completion_tokens_used=completion_tokens,
             total_tokens_used=total_tokens,

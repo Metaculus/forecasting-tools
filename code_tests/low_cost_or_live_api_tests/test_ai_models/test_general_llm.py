@@ -29,7 +29,8 @@ def test_general_llm_instances_run(
         assert response is not None, "Response is None"
         assert response != "", "Response is an empty string"
         logger.info(f"Cost for {test_name}: {cost_manager.current_usage}")
-        assert cost_manager.current_usage > 0, "No cost was incurred"
+        if not model.model.startswith("exa/"):
+            assert cost_manager.current_usage > 0, "No cost was incurred"
 
 
 def test_timeout_works() -> None:

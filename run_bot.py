@@ -224,6 +224,13 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 researcher="smart-searcher/openrouter/deepseek/deepseek-r1",
             ),
         },
+        "METAC_DEEPSEEK_R1_ASK_EXA_PRO": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(model="exa/exa-pro"),
+            ),
+        },
         "METAC_DEEPSEEK_R1_DEEPNEWS": {
             "estimated_cost_per_question": None,
             "bot": create_bot(
