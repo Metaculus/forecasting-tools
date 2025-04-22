@@ -476,15 +476,6 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 ),
             ),
         },
-        "METAC_LLAMA_3_3_NEMOTRON_49B_TOKEN": {
-            "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
-            "bot": create_bot(
-                GeneralLlm(
-                    model="openrouter/nvidia/llama-3.3-nemotron-super-49b-v1:free",
-                    temperature=default_temperature,
-                ),
-            ),
-        },
         "METAC_QWEN_2_5_MAX_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
             "bot": create_bot(
