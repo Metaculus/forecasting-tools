@@ -123,7 +123,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
 
     mode_base_bot_mapping = {
         "METAC_GEMINI_2_5_PRO_GEMINI_2_5_PRO_GROUNDING": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": 0.16,
             "bot": create_bot(
                 GeneralLlm(
                     model="gemini/gemini-2.5-pro-preview-03-25",
@@ -222,7 +222,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": None,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
-                researcher=GeneralLlm(model="openai/gpt-4o-search-preview"),
+                researcher=GeneralLlm(
+                    model="openai/gpt-4o-search-preview", temperature=None
+                ),
             ),
         },
         "METAC_DEEPSEEK_R1_GEMINI_2_5_PRO_GROUNDING": {
@@ -254,7 +256,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_O3_HIGH_TOKEN": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": 0.62,
             "bot": create_bot(
                 GeneralLlm(
                     model="o3",
@@ -264,7 +266,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_O3_TOKEN": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": 0.43,
             "bot": create_bot(
                 GeneralLlm(
                     model="o3",
@@ -318,7 +320,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GEMINI_2_5_FLASH_PREVIEW_TOKEN": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": 0.03,
             "bot": create_bot(
                 GeneralLlm(
                     model="gemini/gemini-2.5-flash-preview-04-17",
