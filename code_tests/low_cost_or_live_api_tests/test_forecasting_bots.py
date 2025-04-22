@@ -115,7 +115,7 @@ async def test_works_with_configured_llm() -> None:
 
     default_llm = bot.get_llm("default")
     assert isinstance(default_llm, GeneralLlm)
-    assert default_llm.timeout == 42
+    assert default_llm.litellm_kwargs["timeout"] == 42
     assert bot.get_llm("summarizer") == "gpt-4o-mini"
     assert bot.get_llm("researcher", "string_name") == researcher_model
 

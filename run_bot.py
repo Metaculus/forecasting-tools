@@ -143,6 +143,17 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 ),
             ),
         },
+        "METAC_GEMINI_2_5_EXA_PRO": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="gemini/gemini-2.5-pro-preview-03-25",
+                    temperature=default_temperature,
+                    timeout=90,
+                ),
+                researcher=GeneralLlm(model="exa/exa-pro"),
+            ),
+        },
         "METAC_DEEPSEEK_R1_SONAR_PRO": {
             "estimated_cost_per_question": None,
             "bot": create_bot(
