@@ -112,14 +112,14 @@ jobs:
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-  # bot_deepseek_r1_exa_smart_searcher:
-  #   uses: ./.github/workflows/run-bot-launcher.yaml
-  #   with:
-  #     bot_name: 'METAC_DEEPSEEK_R1_EXA_SMART_SEARCHER'
-  #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_EXA_SMART_SEARCHER }}
-  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-  #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+  bot_deepseek_r1_exa_smart_searcher:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_DEEPSEEK_R1_EXA_SMART_SEARCHER'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_EXA_SMART_SEARCHER }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
 
   bot_deepseek_r1_ask_exa_pro:
     uses: ./.github/workflows/run-bot-launcher.yaml
