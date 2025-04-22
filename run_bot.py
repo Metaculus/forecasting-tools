@@ -99,7 +99,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         "reasoning_effort": "high",
     }
     gemini_grounding_llm = GeneralLlm(
-        model="google/gemini-2.5-pro-preview-03-25",
+        model="gemini/gemini-2.5-pro-preview-03-25",
         tools=[
             {"googleSearchRetrieval": {}},
             # { # https://cloud.google.com/vertex-ai/generative-ai/docs/grounding/grounding-with-google-search#googlegenaisdk_tools_google_search_with_txt-drest
@@ -523,7 +523,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             assert researcher.litellm_kwargs["reasoning_effort"] == "high"
         elif "grounding" in mode.lower():
             researcher = bot.get_llm("researcher", "llm")
-            assert researcher.model.startswith("google/")
+            assert researcher.model.startswith("gemini/")
             assert researcher.litellm_kwargs["tools"] == [
                 {"googleSearchRetrieval": {}}
             ]

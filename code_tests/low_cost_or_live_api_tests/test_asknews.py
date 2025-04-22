@@ -22,3 +22,22 @@ def test_asknews_connection() -> None:
     logger.debug(f"News: {news}")
     assert news is not None
     assert len(news) > 100
+
+
+async def test_formatted_deep_research() -> None:
+    if not os.getenv("ASKNEWS_CLIENT_ID") or not os.getenv("ASKNEWS_SECRET"):
+        pytest.skip("ASKNEWS_CLIENT_ID or ASKNEWS_SECRET is not set")
+    logger.debug("Testing AskNews connection")
+    start_time = time.time()
+    news = await AskNewsSearcher().get_formatted_deep_research(
+        "Will the US stock market crash in 2025?",
+        search_depth=1,
+        max_depth=1,
+    )
+    end_time = time.time()
+    logger.info(f"Time taken: {end_time - start_time} seconds")
+    logger.info(f"News: {news}")
+    assert news is not None
+    assert len(news) > 100
+    assert "<final_answer>" not in news
+    assert "<think>" not in news
