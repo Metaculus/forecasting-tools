@@ -85,8 +85,20 @@ class Q2TemplateBot2025(ForecastBot):
                 research = await AskNewsSearcher().get_formatted_news_async(
                     question.question_text
                 )
+            elif researcher == "asknews/deep-research/medium-depth":
+                research = await AskNewsSearcher().get_formatted_deep_research(
+                    question.question_text,
+                    search_depth=2,
+                    max_depth=2,
+                )
+            elif researcher == "asknews/deep-research/high-depth":
+                research = await AskNewsSearcher().get_formatted_deep_research(
+                    question.question_text,
+                    search_depth=5,
+                    max_depth=8,
+                )
             elif researcher.startswith("smart-searcher"):
-                model_name = researcher.split("/")[-1]
+                model_name = researcher.removeprefix("smart-searcher/")
                 searcher = SmartSearcher(
                     model=model_name,
                     temperature=0,
@@ -341,6 +353,7 @@ if __name__ == "__main__":
         #         allowed_tries=2,
         #     ),
         #     "summarizer": "openai/gpt-4o-mini",
+        #     "researcher": "asknews/deep-research/low",
         # },
     )
 

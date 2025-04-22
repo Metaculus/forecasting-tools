@@ -193,6 +193,16 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 ),
             ),
         },
+        "METAC_ONLY_SONAR_REASONING_PRO": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="perplexity/sonar-reasoning-pro",
+                    **default_perplexity_settings,
+                ),
+                researcher="None",
+            ),
+        },
         "METAC_DEEPSEEK_R1_GPT_4O_SEARCH_PREVIEW": {
             "estimated_cost_per_question": None,
             "bot": create_bot(
@@ -207,14 +217,18 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 researcher=gemini_grounding_llm,
             ),
         },
-        "METAC_ONLY_SONAR_REASONING_PRO": {
+        "METAC_DEEPSEEK_R1_EXA_SMART_SEARCHER": {
             "estimated_cost_per_question": None,
             "bot": create_bot(
-                GeneralLlm(
-                    model="perplexity/sonar-reasoning-pro",
-                    **default_perplexity_settings,
-                ),
-                researcher="None",
+                default_deepseek_research_bot_llm,
+                researcher="smart-searcher/openrouter/deepseek/deepseek-r1",
+            ),
+        },
+        "METAC_DEEPSEEK_R1_DEEPNEWS": {
+            "estimated_cost_per_question": None,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher="asknews/deep-research/high-depth",
             ),
         },
         "METAC_O3_HIGH_TOKEN": {
