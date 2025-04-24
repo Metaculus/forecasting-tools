@@ -35,7 +35,9 @@ class HttpApiKeyFilter(logging.Filter):
 
 class CustomLogger:
     _initialized = False
-    DEFAULT_MESSAGE_FORMAT = "%(threadName)s - %(asctime)s - %(levelname)s - %(name)s - %(funcName)s  - %(message)s"
+    DEFAULT_MESSAGE_FORMAT = (
+        "%(asctime)s - %(levelname)s - %(name)s - %(funcName)s  - %(message)s"
+    )
     LATEST_DEBUG_LOG_FILE_PATH = file_manipulation.get_absolute_path(
         "logs/latest_debug.log"
     )

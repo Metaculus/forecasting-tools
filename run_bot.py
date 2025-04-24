@@ -355,7 +355,6 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 GeneralLlm(
                     model="o1-mini",
                     temperature=default_temperature,
-                    reasoning_effort="medium",
                 ),
             ),
         },
