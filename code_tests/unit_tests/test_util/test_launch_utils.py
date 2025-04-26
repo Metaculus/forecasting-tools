@@ -214,7 +214,7 @@ class TestSheetOrganizer:
             LaunchQuestion(**question2),
         ]
 
-        overlapping = SheetOrganizer.find_overlapping_windows(questions)
+        overlapping = SheetOrganizer._find_overlapping_windows(questions)
         assert len(overlapping) == 0
 
     def test_find_overlapping_windows(self) -> None:
@@ -240,7 +240,7 @@ class TestSheetOrganizer:
             LaunchQuestion(**question3),
         ]
 
-        overlapping = SheetOrganizer.find_overlapping_windows(questions)
+        overlapping = SheetOrganizer._find_overlapping_windows(questions)
         assert len(overlapping) == 1
         assert overlapping[0][0].title == "Question 1"
         assert overlapping[0][1].title == "Question 2"
@@ -263,7 +263,7 @@ class TestSheetOrganizer:
             LaunchQuestion(**question2),
         ]
 
-        overlapping = SheetOrganizer.find_overlapping_windows(questions)
+        overlapping = SheetOrganizer._find_overlapping_windows(questions)
         assert len(overlapping) == 0
 
     def test_questions_without_time_windows(self) -> None:
@@ -281,7 +281,7 @@ class TestSheetOrganizer:
             LaunchQuestion(**question2),
         ]
 
-        overlapping = SheetOrganizer.find_overlapping_windows(questions)
+        overlapping = SheetOrganizer._find_overlapping_windows(questions)
         assert len(overlapping) == 0
 
     def test_day_of_week_computation(self) -> None:

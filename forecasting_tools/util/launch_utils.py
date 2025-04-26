@@ -192,6 +192,227 @@ class LaunchWarning(BaseModel, Jsonable):
 class SheetOrganizer:
 
     @classmethod
+    def schedule_questions_from_file(
+        cls,
+        input_file_path: str,
+        bot_output_file_path: str,
+        start_date: datetime,
+        end_date: datetime,
+        pro_output_file_path: str | None = None,
+        num_pro_questions: int | None = None,
+    ) -> list[LaunchQuestion]:
+        input_questions = cls.load_questions_from_csv(input_file_path)
+        bot_questions = cls.schedule_questions(input_questions, start_date)
+        cls.save_questions_to_csv(bot_questions, bot_output_file_path)
+        warnings = cls.find_processing_errors(
+            input_questions,
+            bot_questions,
+            start_date,
+            end_date,
+            question_type="bots",
+        )
+        if pro_output_file_path and num_pro_questions:
+            pro_questions = cls.make_pro_questions_from_bot_questions(
+                bot_questions,
+                num_pro_questions,
+            )
+            cls.save_questions_to_csv(pro_questions, pro_output_file_path)
+            additional_warnings = cls.find_processing_errors(
+                bot_questions,
+                pro_questions,
+                start_date,
+                end_date,
+                question_type="pros",
+            )
+            warnings.extend(additional_warnings)
+        for warning in warnings:
+            logger.warning(warning)
+        return bot_questions
+
+    @classmethod
+    def schedule_questions(
+        cls, questions: list[LaunchQuestion], start_date: datetime
+    ) -> list[LaunchQuestion]:
+        copied_input_questions = [
+            question.model_copy(deep=True) for question in questions
+        ]
+        prescheduled_questions = [
+            q
+            for q in copied_input_questions
+            if q.open_time is not None and q.scheduled_close_time is not None
+        ]
+        questions_to_schedule = [
+            q
+            for q in copied_input_questions
+            if q not in prescheduled_questions
+        ]
+        questions_to_schedule.sort(
+            key=lambda q: (
+                (
+                    q.scheduled_resolve_time
+                    if q.scheduled_resolve_time
+                    else datetime.max
+                ),
+                q.original_order,
+            )
+        )
+
+        proposed_open_time = start_date.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        newly_scheduled_questions = []
+
+        # Handle the case when there are no questions to schedule
+        if not questions_to_schedule:
+            all_questions = prescheduled_questions
+            all_questions.sort(
+                key=lambda q: (
+                    q.open_time if q.open_time else datetime.max,
+                    q.original_order,
+                )
+            )
+            return all_questions
+
+        current_question = questions_to_schedule.pop(0)
+        while True:
+            proposed_open_time += timedelta(hours=2)
+            proposed_closed_time = proposed_open_time + timedelta(hours=2)
+            current_question.open_time = proposed_open_time
+            current_question.scheduled_close_time = proposed_closed_time
+
+            prescheduled_question_overlaps = any(
+                cls._open_window_overlaps_for_questions(
+                    prescheduled_question, current_question
+                )
+                for prescheduled_question in prescheduled_questions
+            )
+
+            if not prescheduled_question_overlaps:
+                if (
+                    current_question.scheduled_resolve_time is not None
+                    and current_question.scheduled_resolve_time
+                    < current_question.scheduled_close_time
+                ):
+                    raise RuntimeError(
+                        f"Question {current_question.title} has a scheduled resolve time that can't find a valid close time"
+                    )
+                new_question = LaunchQuestion(
+                    **current_question.model_dump(),
+                )  # For model validation purposes
+                newly_scheduled_questions.append(new_question)
+
+                # Break out of the loop if there are no more questions to schedule
+                if not questions_to_schedule:
+                    break
+
+                current_question = questions_to_schedule.pop(0)
+
+        all_questions = prescheduled_questions + newly_scheduled_questions
+        all_questions.sort(
+            key=lambda q: (
+                q.open_time if q.open_time else datetime.max,
+                q.original_order,
+            )
+        )
+
+        return all_questions
+
+    @staticmethod
+    def compute_upcoming_day(
+        day_of_week: Literal["monday", "saturday", "friday"],
+    ) -> datetime:
+        day_number = {"monday": 0, "saturday": 5, "friday": 4}
+        today = datetime.now().date()
+        today_weekday = today.weekday()
+        target_weekday = day_number[day_of_week]
+
+        if today_weekday == target_weekday:
+            # If today is the target day, return next week's day
+            days_to_add = 7
+        elif today_weekday < target_weekday:
+            # If target day is later this week
+            days_to_add = target_weekday - today_weekday
+        else:
+            # If target day is in next week
+            days_to_add = 7 - today_weekday + target_weekday
+
+        target_date = today + timedelta(days=days_to_add)
+        return datetime(target_date.year, target_date.month, target_date.day)
+
+    @classmethod
+    def make_pro_questions_from_bot_questions(
+        cls,
+        bot_launch_questions: list[LaunchQuestion],
+        num_pro_questions: int,
+    ) -> list[LaunchQuestion]:
+        date_to_question_map: dict[date, list[LaunchQuestion]] = {}
+        for question in bot_launch_questions:
+            if question.open_time:
+                date_to_question_map[question.open_time.date()].append(
+                    question
+                )
+
+        questions_left_to_sample = num_pro_questions
+        pro_launch_questions: list[LaunchQuestion] = []
+        available_days = list(date_to_question_map.keys())
+        while questions_left_to_sample > 0:
+            for day in available_days:
+                if questions_left_to_sample == 0:
+                    break
+
+                questions_for_day = date_to_question_map[day]
+                if len(questions_for_day) == 0:
+                    continue
+
+                sampled_bot_question = random.sample(questions_for_day, 1)[0]
+                date_to_question_map[day].remove(sampled_bot_question)
+
+                if cls._weighted_pair_is_already_in_list(
+                    sampled_bot_question, pro_launch_questions
+                ):
+                    continue
+
+                pro_question = cls._make_pro_question_from_bot_question(
+                    sampled_bot_question
+                )
+                pro_launch_questions.append(pro_question)
+                questions_left_to_sample -= 1
+        return pro_launch_questions
+
+    @classmethod
+    def _weighted_pair_is_already_in_list(
+        cls,
+        question: LaunchQuestion,
+        chosen_questions: list[LaunchQuestion],
+    ) -> bool:
+        # TODO: This is incorrectly triggered when the adjacent question had a weight of 1
+        #       (or a different weight overall) and thus was not a weighted pair.
+        if (
+            question.question_weight is not None
+            and question.question_weight < 1
+        ):
+            question_index_one_above = question.original_order + 1
+            question_index_one_below = question.original_order - 1
+            all_question_indexes = [q.original_order for q in chosen_questions]
+            if (
+                question_index_one_above in all_question_indexes
+                or question_index_one_below in all_question_indexes
+            ):
+                return True
+        return False
+
+    @classmethod
+    def _make_pro_question_from_bot_question(
+        cls,
+        bot_question: LaunchQuestion,
+    ) -> LaunchQuestion:
+        question_copy = bot_question.model_copy(deep=True)
+        assert question_copy.open_time is not None
+        question_copy.open_time -= timedelta(days=2)
+        question_copy.question_weight = 1
+        return question_copy
+
+    @classmethod
     def load_questions_from_csv(cls, file_path: str) -> list[LaunchQuestion]:
         questions = load_csv_file(file_path)
         loaded_questions = [
@@ -206,61 +427,6 @@ class SheetOrganizer:
     ) -> None:
         write_csv_file(
             file_path, [question.to_csv_row() for question in questions]
-        )
-
-    @classmethod
-    def find_overlapping_windows(
-        cls, questions: list[LaunchQuestion]
-    ) -> list[tuple[LaunchQuestion, LaunchQuestion]]:
-        time_periods = []
-        overlapping_pairs = []
-
-        # Collect all valid time periods
-        for question in questions:
-            if (
-                question.open_time is not None
-                and question.scheduled_close_time is not None
-            ):
-                time_periods.append(
-                    (
-                        question,
-                        question.open_time,
-                        question.scheduled_close_time,
-                    )
-                )
-
-        # Check each pair of time periods
-        for i, (q1, start1, end1) in enumerate(time_periods):
-            for j, (q2, start2, end2) in enumerate(time_periods):
-                if (
-                    i >= j
-                ):  # Skip comparing the same pair or pairs we've already checked
-                    continue
-
-                # Check if periods are exactly the same
-                if start1 == start2 and end1 == end2:
-                    continue
-
-                # Check for overlap
-                if cls._open_window_overlaps_for_questions(q1, q2):
-                    overlapping_pairs.append((q1, q2))
-
-        return overlapping_pairs
-
-    @staticmethod
-    def _open_window_overlaps_for_questions(
-        question_1: LaunchQuestion, question_2: LaunchQuestion
-    ) -> bool:
-        if (
-            question_1.open_time is None
-            or question_1.scheduled_close_time is None
-            or question_2.open_time is None
-            or question_2.scheduled_close_time is None
-        ):
-            raise ValueError("Question has no open or close time")
-        return (
-            question_1.open_time < question_2.scheduled_close_time
-            and question_2.open_time < question_1.scheduled_close_time
         )
 
     @classmethod
@@ -299,7 +465,7 @@ class SheetOrganizer:
         # No overlapping windows except for questions originally with a open/close time
         def _check_no_new_overlapping_windows() -> list[LaunchWarning]:
             warnings = []
-            overlapping_pairs = cls.find_overlapping_windows(new_questions)
+            overlapping_pairs = cls._find_overlapping_windows(new_questions)
 
             for q1, q2 in overlapping_pairs:
                 # Check if either question had preexisting times in original questions
@@ -326,13 +492,16 @@ class SheetOrganizer:
             return warnings
 
         # If bots, The open time must be 2hr before scheduled close time unless. If pros it must be 2 days
-        def _check_window_duration() -> list[LaunchWarning]:
+        def _check_window_duration(
+            question_type: Literal["bots", "pros"]
+        ) -> list[LaunchWarning]:
             warnings = []
-            required_duration = (
-                timedelta(hours=2)
-                if question_type == "bots"
-                else timedelta(days=2)
-            )
+            if question_type == "bots":
+                required_duration = timedelta(hours=2)
+            elif question_type == "pros":
+                required_duration = timedelta(days=2, hours=2)
+            else:
+                raise ValueError(f"Invalid question type: {question_type}")
 
             for question in new_questions:
                 if question.open_time and question.scheduled_close_time:
@@ -839,7 +1008,7 @@ class SheetOrganizer:
 
         final_warnings.extend(_check_existing_times_preserved())
         final_warnings.extend(_check_no_new_overlapping_windows())
-        final_warnings.extend(_check_window_duration())
+        final_warnings.extend(_check_window_duration(question_type))
         final_warnings.extend(_check_unique_windows())
         final_warnings.extend(_check_required_fields())
         final_warnings.extend(_check_numeric_fields())
@@ -863,232 +1032,72 @@ class SheetOrganizer:
         return final_warnings
 
     @classmethod
-    def schedule_questions(
-        cls, questions: list[LaunchQuestion], start_date: datetime
-    ) -> list[LaunchQuestion]:
-        copied_input_questions = [
-            question.model_copy(deep=True) for question in questions
-        ]
-        prescheduled_questions = [
-            q
-            for q in copied_input_questions
-            if q.open_time is not None and q.scheduled_close_time is not None
-        ]
-        questions_to_schedule = [
-            q
-            for q in copied_input_questions
-            if q not in prescheduled_questions
-        ]
-        questions_to_schedule.sort(
-            key=lambda q: (
-                (
-                    q.scheduled_resolve_time
-                    if q.scheduled_resolve_time
-                    else datetime.max
-                ),
-                q.original_order,
-            )
-        )
+    def _find_overlapping_windows(
+        cls, questions: list[LaunchQuestion]
+    ) -> list[tuple[LaunchQuestion, LaunchQuestion]]:
+        time_periods = []
+        overlapping_pairs = []
 
-        proposed_open_time = start_date.replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
-        newly_scheduled_questions = []
-
-        # Handle the case when there are no questions to schedule
-        if not questions_to_schedule:
-            all_questions = prescheduled_questions
-            all_questions.sort(
-                key=lambda q: (
-                    q.open_time if q.open_time else datetime.max,
-                    q.original_order,
-                )
-            )
-            return all_questions
-
-        current_question = questions_to_schedule.pop(0)
-        while True:
-            proposed_open_time += timedelta(hours=2)
-            proposed_closed_time = proposed_open_time + timedelta(hours=2)
-            current_question.open_time = proposed_open_time
-            current_question.scheduled_close_time = proposed_closed_time
-
-            prescheduled_question_overlaps = any(
-                cls._open_window_overlaps_for_questions(
-                    prescheduled_question, current_question
-                )
-                for prescheduled_question in prescheduled_questions
-            )
-
-            if not prescheduled_question_overlaps:
-                if (
-                    current_question.scheduled_resolve_time is not None
-                    and current_question.scheduled_resolve_time
-                    < current_question.scheduled_close_time
-                ):
-                    raise RuntimeError(
-                        f"Question {current_question.title} has a scheduled resolve time that can't find a valid close time"
+        # Collect all valid time periods
+        for question in questions:
+            if (
+                question.open_time is not None
+                and question.scheduled_close_time is not None
+            ):
+                time_periods.append(
+                    (
+                        question,
+                        question.open_time,
+                        question.scheduled_close_time,
                     )
-                new_question = LaunchQuestion(
-                    **current_question.model_dump(),
-                )  # For model validation purposes
-                newly_scheduled_questions.append(new_question)
-
-                # Break out of the loop if there are no more questions to schedule
-                if not questions_to_schedule:
-                    break
-
-                current_question = questions_to_schedule.pop(0)
-
-        all_questions = prescheduled_questions + newly_scheduled_questions
-        all_questions.sort(
-            key=lambda q: (
-                q.open_time if q.open_time else datetime.max,
-                q.original_order,
-            )
-        )
-
-        return all_questions
-
-    @classmethod
-    def schedule_questions_from_file(
-        cls,
-        input_file_path: str,
-        bot_output_file_path: str,
-        start_date: datetime,
-        end_date: datetime,
-        pro_output_file_path: str | None = None,
-        num_pro_questions: int | None = None,
-    ) -> list[LaunchQuestion]:
-        questions = cls.load_questions_from_csv(input_file_path)
-        scheduled_questions = cls.schedule_questions(questions, start_date)
-        cls.save_questions_to_csv(scheduled_questions, bot_output_file_path)
-        warnings = cls.find_processing_errors(
-            questions,
-            scheduled_questions,
-            start_date,
-            end_date,
-            question_type="bots",
-        )
-        if pro_output_file_path and num_pro_questions:
-            pro_questions = cls.make_pro_questions_from_bot_questions(
-                scheduled_questions,
-                num_pro_questions,
-            )
-            cls.save_questions_to_csv(pro_questions, pro_output_file_path)
-            additional_warnings = cls.find_processing_errors(
-                questions,
-                pro_questions,
-                start_date,
-                end_date,
-                question_type="pros",
-            )
-            warnings.extend(additional_warnings)
-        for warning in warnings:
-            logger.warning(warning)
-        return scheduled_questions
-
-    @staticmethod
-    def compute_upcoming_day(
-        day_of_week: Literal["monday", "saturday", "friday"],
-    ) -> datetime:
-        day_number = {"monday": 0, "saturday": 5, "friday": 4}
-        today = datetime.now().date()
-        today_weekday = today.weekday()
-        target_weekday = day_number[day_of_week]
-
-        if today_weekday == target_weekday:
-            # If today is the target day, return next week's day
-            days_to_add = 7
-        elif today_weekday < target_weekday:
-            # If target day is later this week
-            days_to_add = target_weekday - today_weekday
-        else:
-            # If target day is in next week
-            days_to_add = 7 - today_weekday + target_weekday
-
-        target_date = today + timedelta(days=days_to_add)
-        return datetime(target_date.year, target_date.month, target_date.day)
-
-    @classmethod
-    def make_pro_questions_from_bot_questions(
-        cls,
-        bot_launch_questions: list[LaunchQuestion],
-        num_pro_questions: int,
-    ) -> list[LaunchQuestion]:
-        date_to_question_map: dict[date, list[LaunchQuestion]] = {}
-        for question in bot_launch_questions:
-            if question.open_time:
-                date_to_question_map[question.open_time.date()].append(
-                    question
                 )
 
-        questions_left_to_sample = num_pro_questions
-        pro_launch_questions: list[LaunchQuestion] = []
-        available_days = list(date_to_question_map.keys())
-        while questions_left_to_sample > 0:
-            for day in available_days:
-                if questions_left_to_sample == 0:
-                    break
-
-                questions_for_day = date_to_question_map[day]
-                sampled_bot_question = random.sample(questions_for_day, 1)[0]
-                questions_left_to_sample -= 1
-                date_to_question_map[day].remove(sampled_bot_question)
-
-                if cls._weighted_pair_is_already_in_list(
-                    sampled_bot_question, pro_launch_questions
-                ):
+        # Check each pair of time periods
+        for i, (q1, start1, end1) in enumerate(time_periods):
+            for j, (q2, start2, end2) in enumerate(time_periods):
+                if (
+                    i >= j
+                ):  # Skip comparing the same pair or pairs we've already checked
                     continue
 
-                pro_question = cls._make_pro_question_from_bot_question(
-                    sampled_bot_question
-                )
-                pro_launch_questions.append(pro_question)
-        return pro_launch_questions
+                # Check if periods are exactly the same
+                if start1 == start2 and end1 == end2:
+                    continue
 
-    @classmethod
-    def _weighted_pair_is_already_in_list(
-        cls,
-        question: LaunchQuestion,
-        chosen_questions: list[LaunchQuestion],
+                # Check for overlap
+                if cls._open_window_overlaps_for_questions(q1, q2):
+                    overlapping_pairs.append((q1, q2))
+
+        return overlapping_pairs
+
+    @staticmethod
+    def _open_window_overlaps_for_questions(
+        question_1: LaunchQuestion, question_2: LaunchQuestion
     ) -> bool:
         if (
-            question.question_weight is not None
-            and question.question_weight < 1
+            question_1.open_time is None
+            or question_1.scheduled_close_time is None
+            or question_2.open_time is None
+            or question_2.scheduled_close_time is None
         ):
-            question_index_one_above = question.original_order + 1
-            question_index_one_below = question.original_order - 1
-            all_question_indexes = [q.original_order for q in chosen_questions]
-            if (
-                question_index_one_above in all_question_indexes
-                or question_index_one_below in all_question_indexes
-            ):
-                return True
-        return False
-
-    @classmethod
-    def _make_pro_question_from_bot_question(
-        cls,
-        bot_question: LaunchQuestion,
-    ) -> LaunchQuestion:
-        question_copy = bot_question.model_copy(deep=True)
-        assert question_copy.open_time is not None
-        question_copy.open_time -= timedelta(days=2)
-        question_copy.question_weight = 1
-        return question_copy
+            raise ValueError("Question has no open or close time")
+        return (
+            question_1.open_time < question_2.scheduled_close_time
+            and question_2.open_time < question_1.scheduled_close_time
+        )
 
 
 if __name__ == "__main__":
-
     CustomLogger.setup_logging()
 
     start_date = SheetOrganizer.compute_upcoming_day("monday")
     end_date = SheetOrganizer.compute_upcoming_day("friday")
     logger.info(f"Start date: {start_date}, End date: {end_date}")
     SheetOrganizer.schedule_questions_from_file(
-        "temp/input_launch_questions.csv",
-        "temp/ordered_questions.csv",
-        start_date,
-        end_date,
+        input_file_path="temp/input_launch_questions.csv",
+        bot_output_file_path="temp/ordered_questions.csv",
+        pro_output_file_path="temp/pro_questions.csv",
+        num_pro_questions=15,
+        start_date=start_date,
+        end_date=end_date,
     )
