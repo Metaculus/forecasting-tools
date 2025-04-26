@@ -10,6 +10,9 @@ from pydantic import BaseModel, field_validator, model_validator
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
 from forecasting_tools.util.custom_logger import CustomLogger
 from forecasting_tools.util.file_manipulation import (
     load_csv_file,
@@ -36,9 +39,9 @@ class LaunchQuestion(BaseModel, Jsonable):
     open_time: datetime | None = None
     scheduled_close_time: datetime | None = None
     scheduled_resolve_time: datetime | None = None
-    range_min: int | None = None
-    range_max: int | None = None
-    zero_point: int | float | None = None
+    range_min: float | int | None = None
+    range_max: float | int | None = None
+    zero_point: float | int | None = None
     open_lower_bound: bool | None = None
     open_upper_bound: bool | None = None
     unit: str | None = None
@@ -215,6 +218,7 @@ class SheetOrganizer:
             pro_questions = cls.make_pro_questions_from_bot_questions(
                 bot_questions,
                 num_pro_questions,
+                start_date,
             )
             cls.save_questions_to_csv(pro_questions, pro_output_file_path)
             additional_warnings = cls.find_processing_errors(
@@ -344,13 +348,24 @@ class SheetOrganizer:
         cls,
         bot_launch_questions: list[LaunchQuestion],
         num_pro_questions: int,
+        start_date: datetime,
     ) -> list[LaunchQuestion]:
         date_to_question_map: dict[date, list[LaunchQuestion]] = {}
         for question in bot_launch_questions:
-            if question.open_time:
-                date_to_question_map[question.open_time.date()].append(
-                    question
-                )
+            if (
+                question.scheduled_close_time
+                and question.scheduled_close_time > start_date
+            ):
+                if (
+                    question.scheduled_close_time.date()
+                    not in date_to_question_map
+                ):
+                    date_to_question_map[
+                        question.scheduled_close_time.date()
+                    ] = []
+                date_to_question_map[
+                    question.scheduled_close_time.date()
+                ].append(question)
 
         questions_left_to_sample = num_pro_questions
         pro_launch_questions: list[LaunchQuestion] = []
@@ -377,6 +392,13 @@ class SheetOrganizer:
                 )
                 pro_launch_questions.append(pro_question)
                 questions_left_to_sample -= 1
+
+        pro_launch_questions.sort(
+            key=lambda q: (
+                (q.open_time if q.open_time else datetime.max),
+                q.original_order,
+            )
+        )
         return pro_launch_questions
 
     @classmethod
@@ -441,7 +463,9 @@ class SheetOrganizer:
         final_warnings = []
 
         # Some questions will already have a open and close time. These must be respected and stay the same
-        def _check_existing_times_preserved() -> list[LaunchWarning]:
+        def _check_existing_times_preserved(
+            question_type: Literal["bots", "pros"]
+        ) -> list[LaunchWarning]:
             warnings = []
             for orig_q in original_questions:
                 if (
@@ -449,15 +473,26 @@ class SheetOrganizer:
                     and orig_q.scheduled_close_time is not None
                 ):
                     for new_q in new_questions:
-                        if new_q.title == orig_q.title and (
+                        if not new_q.title == orig_q.title:
+                            continue
+                        if (
                             new_q.open_time != orig_q.open_time
-                            or new_q.scheduled_close_time
+                            and question_type == "bots"
+                        ):
+                            warnings.append(
+                                LaunchWarning(
+                                    relevant_question=new_q,
+                                    warning=f"Existing open times must be preserved. Original: {orig_q.open_time} to {orig_q.scheduled_close_time}",
+                                )
+                            )
+                        if (
+                            new_q.scheduled_close_time
                             != orig_q.scheduled_close_time
                         ):
                             warnings.append(
                                 LaunchWarning(
                                     relevant_question=new_q,
-                                    warning=f"Existing open/close times must be preserved. Original: {orig_q.open_time} to {orig_q.scheduled_close_time}",
+                                    warning=f"Existing close times must be preserved. Original: {orig_q.open_time} to {orig_q.scheduled_close_time}",
                                 )
                             )
             return warnings
@@ -634,7 +669,9 @@ class SheetOrganizer:
             return warnings
 
         # No fields changed between original and new question other than open/close time
-        def _check_no_field_changes() -> list[LaunchWarning]:
+        def _check_no_field_changes(
+            question_type: Literal["bots", "pros"]
+        ) -> list[LaunchWarning]:
             warnings = []
 
             duplicate_title_warnings = _check_duplicate_titles()
@@ -660,6 +697,12 @@ class SheetOrganizer:
                                 "open_time",
                                 "scheduled_close_time",
                             ]:
+                                if (
+                                    question_type == "pros"
+                                    and field == "question_weight"
+                                ):
+                                    continue
+
                                 if getattr(orig_q, field) != getattr(
                                     new_q, field
                                 ):
@@ -722,22 +765,43 @@ class SheetOrganizer:
             return warnings
 
         # open times are between start_date and the questions' resolve date
-        def _check_open_time_bounds() -> list[LaunchWarning]:
+        def _check_adherence_to_end_and_start_time(
+            question_type: Literal["bots", "pros"]
+        ) -> list[LaunchWarning]:
             warnings = []
-
             for question in new_questions:
-                if question.open_time and (
-                    question.open_time < start_date
-                    or (
-                        question.scheduled_resolve_time
-                        and question.open_time
-                        > question.scheduled_resolve_time
+                warning_messages = []
+                if question.open_time:
+                    if question.open_time > end_date + timedelta(days=1):
+                        warning_messages.append(
+                            f"Question {question.title} opens after end date {end_date}"
+                        )
+                    pro_adjustment = (
+                        timedelta(days=2)
+                        if question_type == "pros"
+                        else timedelta(days=0)
                     )
-                ):
+                    if question.open_time < start_date - pro_adjustment:
+                        warning_messages.append(
+                            f"Question {question.title} opens before start date {start_date}"
+                        )
+                if question.scheduled_close_time:
+                    if question.scheduled_close_time > end_date + timedelta(
+                        days=1
+                    ):
+                        warning_messages.append(
+                            f"Question {question.title} closes after end date {end_date}"
+                        )
+                    if question.scheduled_close_time < start_date:
+                        warning_messages.append(
+                            f"Question {question.title} closes before start date {start_date}"
+                        )
+
+                for warning_message in warning_messages:
                     warnings.append(
                         LaunchWarning(
                             relevant_question=question,
-                            warning=f"Open time {question.open_time} is before start date {start_date} or after resolve time {question.scheduled_resolve_time}",
+                            warning=warning_message,
                         )
                     )
             return warnings
@@ -925,29 +989,6 @@ class SheetOrganizer:
                 warnings.append(LaunchWarning(warning=warning_msg))
             return warnings
 
-        # Questions are scheduled to open before end date
-        def _opens_and_closes_before_end_date() -> list[LaunchWarning]:
-            warnings = []
-            for question in new_questions:
-                if question.open_time and question.open_time < end_date:
-                    warnings.append(
-                        LaunchWarning(
-                            relevant_question=question,
-                            warning=f"Question {question.title} opens before end date {end_date}",
-                        )
-                    )
-                if (
-                    question.scheduled_close_time
-                    and question.scheduled_close_time > end_date
-                ):
-                    warnings.append(
-                        LaunchWarning(
-                            relevant_question=question,
-                            warning=f"Question {question.title} closes after end date {end_date}",
-                        )
-                    )
-            return warnings
-
         # There are no glaring errors in the text of the question
         async def _no_inconsistencies_causing_annulment() -> (
             list[LaunchWarning]
@@ -955,8 +996,14 @@ class SheetOrganizer:
             tasks: list[Coroutine[Any, Any, dict[str, Any]]] = []
             for question in new_questions:
                 model = GeneralLlm(
-                    model="gpt-4o",
-                    temperature=0,
+                    model="openrouter/anthropic/claude-3.7-sonnet",  # NOSONAR
+                    temperature=1,
+                    thinking={
+                        "type": "enabled",
+                        "budget_tokens": 32000,
+                    },
+                    max_tokens=40000,
+                    timeout=40,
                 )
                 prompt = clean_indents(
                     f"""
@@ -971,19 +1018,28 @@ class SheetOrganizer:
                     Based on your review, provide a rating and a brief reason.
 
                     Rating criteria:
-                    - "bad": The question has significant typos, or internal inconsistencies that make it confusing, incorrect, or would result in annulment/ambiguous resolution.
-                    - "ok": The question has minor issues that wouldn't result in an ambiguous resolution.
+                    - "typo": There is a typo in the question.
+                    - "explicit_contradiction": There is an explicit contradiction in the question. For example the question title says one month while the resolution criteria says another.
+                    - "bad_timing": The timing of the question is bad. For example the events of interest will have already happened by the time the question opens.
+                    - "other": There is a general inconsistency in the question.
                     - "good": The question is well-written, clear, and free of significant errors.
+
+                    Remember:
+                    - DO NOT give a bad rating for a field having the question is only open for a short time (this is a testing spot forecasting)
+                    - DO NOT give a bad rating for a field having ".p". This will use a parent url to get the question.
+                    - DO NOT give a bad rating for the close date being long before the resolution date. The close date is just when the forecasters stop forecasting.
+                    - 90% of questions are good. If in doubt, say "good"
+                    - Today is {datetime.now().strftime("%Y-%m-%d")}
 
                     Respond ONLY with a JSON object in the following format:
                     {{
-                        "rating": "good" | "bad" | "ok",
+                        "rating": "good" | "typo" | "explicit_contradiction" | "bad_timing" | "other",
                         "reason": "A brief explanation for your rating, highlighting any specific issues found."
                     }}
 
                     Example Output for a bad question:
                     {{
-                        "rating": "bad",
+                        "rating": "explicit_contradiction",
                         "reason": "The resolution criteria and question title contain different months of for when the question is resolved, which would result in annulment."
                     }}
 
@@ -996,13 +1052,24 @@ class SheetOrganizer:
                         dict,
                     )
                 )
-            responses = await asyncio.gather(*tasks)
+
+            with MonetaryCostManager() as cost_manager:
+                responses = await asyncio.gather(*tasks)
+                cost = cost_manager.current_usage
             warnings = []
-            for response in responses:
-                if response["rating"] == "bad":
+            warnings.append(
+                LaunchWarning(
+                    warning=f"Cost of checking question for inconsistencies: ${cost:.6f}",
+                )
+            )
+            for question, response in zip(new_questions, responses):
+                if (
+                    response["rating"] == "typo"
+                    or response["rating"] == "explicit_contradiction"
+                ):
                     warnings.append(
                         LaunchWarning(
-                            relevant_question=None,
+                            relevant_question=question,
                             warning=response["reason"],
                         )
                     )
@@ -1022,11 +1089,25 @@ class SheetOrganizer:
                     if question.original_order == new_question.original_order:
                         original_question = question
 
+                question_above_in_new_list = False
+                question_below_in_new_list = False
+                for question in new_questions:
+                    if question.original_order == question_above_index:
+                        question_above_in_new_list = True
+                    if question.original_order == question_below_index:
+                        question_below_in_new_list = True
+
                 if original_question.question_weight != 1:
                     offending_question = None
-                    if original_question_above.question_weight != 1:
+                    if (
+                        original_question_above.question_weight != 1
+                        and question_above_in_new_list
+                    ):
                         offending_question = original_question_above
-                    if original_question_below.question_weight != 1:
+                    if (
+                        original_question_below.question_weight != 1
+                        and question_below_in_new_list
+                    ):
                         offending_question = original_question_below
                     if offending_question:
                         warnings.append(
@@ -1049,30 +1130,45 @@ class SheetOrganizer:
             ]
             question_count_per_day = {date: 0 for date in list_of_dates}
             for question in new_questions:
-                if question.open_time:
-                    question_count_per_day[question.open_time.date()] += 1
+                if question.scheduled_close_time:
+                    if (
+                        question.scheduled_close_time.date()
+                        not in question_count_per_day
+                    ):
+                        question_count_per_day[
+                            question.scheduled_close_time.date()
+                        ] = 0
+                    question_count_per_day[
+                        question.scheduled_close_time.date()
+                    ] += 1
             warnings = []
             for date_key, count in question_count_per_day.items():
-                if count != target_questions_per_day:
+                if not (
+                    target_questions_per_day - 1
+                    <= count
+                    <= target_questions_per_day
+                ):
                     warnings.append(
                         LaunchWarning(
                             relevant_question=None,
-                            warning=f"Question count per day is not even. {date_key}: {count} != {target_questions_per_day}",
+                            warning=f"{count} questions for {date_key} != target of {target_questions_per_day}",
                         )
                     )
             return warnings
 
-        final_warnings.extend(_check_existing_times_preserved())
+        final_warnings.extend(_check_existing_times_preserved(question_type))
         final_warnings.extend(_check_no_new_overlapping_windows())
         final_warnings.extend(_check_window_duration(question_type))
         final_warnings.extend(_check_unique_windows())
         final_warnings.extend(_check_required_fields())
         final_warnings.extend(_check_numeric_fields())
         final_warnings.extend(_check_mc_fields())
-        final_warnings.extend(_check_no_field_changes())
+        final_warnings.extend(_check_no_field_changes(question_type))
         final_warnings.extend(_check_parent_url_fields())
         final_warnings.extend(_check_earliest_open_time())
-        final_warnings.extend(_check_open_time_bounds())
+        final_warnings.extend(
+            _check_adherence_to_end_and_start_time(question_type)
+        )
         final_warnings.extend(_check_bridgewater_tournament())
         final_warnings.extend(_check_numeric_range())
         final_warnings.extend(_check_duplicate_titles())
@@ -1080,7 +1176,6 @@ class SheetOrganizer:
         final_warnings.extend(_check_average_weight())
         final_warnings.extend(_check_order_changed())
         final_warnings.extend(_check_ordered_by_open_time())
-        final_warnings.extend(_opens_and_closes_before_end_date())
         if question_type == "bots":
             final_warnings.extend(_check_same_number_of_questions())
             final_warnings.extend(
@@ -1155,7 +1250,7 @@ if __name__ == "__main__":
     logger.info(f"Start date: {start_date}, End date: {end_date}")
     SheetOrganizer.schedule_questions_from_file(
         input_file_path="temp/input_launch_questions.csv",
-        bot_output_file_path="temp/ordered_questions.csv",
+        bot_output_file_path="temp/bot_questions.csv",
         pro_output_file_path="temp/pro_questions.csv",
         num_pro_questions=15,
         start_date=start_date,
