@@ -925,7 +925,8 @@ class SheetOrganizer:
                 warnings.append(LaunchWarning(warning=warning_msg))
             return warnings
 
-        def _stay_before_end_date() -> list[LaunchWarning]:
+        # Questions are scheduled to open before end date
+        def _opens_and_closes_before_end_date() -> list[LaunchWarning]:
             warnings = []
             for question in new_questions:
                 if question.open_time and question.open_time < end_date:
@@ -947,6 +948,7 @@ class SheetOrganizer:
                     )
             return warnings
 
+        # There are no glaring errors in the text of the question
         async def _no_inconsistencies_causing_annulment() -> (
             list[LaunchWarning]
         ):
@@ -1006,6 +1008,60 @@ class SheetOrganizer:
                     )
             return warnings
 
+        # Each weighted question is weighted in a group that is originally next to each other. Make sure only one from any group is in the final list.
+        def _weighted_pairs_are_not_in_list() -> list[LaunchWarning]:
+            warnings = []
+            for new_question in new_questions:
+                question_above_index = new_question.original_order + 1
+                question_below_index = new_question.original_order - 1
+                for question in original_questions:
+                    if question.original_order == question_above_index:
+                        original_question_above = question
+                    if question.original_order == question_below_index:
+                        original_question_below = question
+                    if question.original_order == new_question.original_order:
+                        original_question = question
+
+                if original_question.question_weight != 1:
+                    offending_question = None
+                    if original_question_above.question_weight != 1:
+                        offending_question = original_question_above
+                    if original_question_below.question_weight != 1:
+                        offending_question = original_question_below
+                    if offending_question:
+                        warnings.append(
+                            LaunchWarning(
+                                relevant_question=new_question,
+                                warning=f"Weighted pair {original_question.title} and {offending_question.title} is in list",
+                            )
+                        )
+            return warnings
+
+        # Questions are evenly distributed per day
+        def _questions_evenly_distributed_per_day() -> list[LaunchWarning]:
+            duration_of_period = end_date - start_date
+            target_questions_per_day = (
+                len(new_questions) / duration_of_period.days
+            )
+            list_of_dates = [
+                (start_date + timedelta(days=i)).date()
+                for i in range(duration_of_period.days)
+            ]
+            question_count_per_day = {date: 0 for date in list_of_dates}
+            for question in new_questions:
+                if question.open_time:
+                    question_count_per_day[question.open_time.date()] += 1
+            warnings = []
+            for date_key, count in question_count_per_day.items():
+                if count != target_questions_per_day:
+                    warnings.append(
+                        LaunchWarning(
+                            relevant_question=None,
+                            warning=f"Question count per day is not even. {date_key}: {count} != {target_questions_per_day}",
+                        )
+                    )
+            return warnings
+
         final_warnings.extend(_check_existing_times_preserved())
         final_warnings.extend(_check_no_new_overlapping_windows())
         final_warnings.extend(_check_window_duration(question_type))
@@ -1024,11 +1080,15 @@ class SheetOrganizer:
         final_warnings.extend(_check_average_weight())
         final_warnings.extend(_check_order_changed())
         final_warnings.extend(_check_ordered_by_open_time())
-        final_warnings.extend(_check_same_number_of_questions())
-        final_warnings.extend(_stay_before_end_date())
-        final_warnings.extend(
-            asyncio.run(_no_inconsistencies_causing_annulment())
-        )
+        final_warnings.extend(_opens_and_closes_before_end_date())
+        if question_type == "bots":
+            final_warnings.extend(_check_same_number_of_questions())
+            final_warnings.extend(
+                asyncio.run(_no_inconsistencies_causing_annulment())
+            )
+        if question_type == "pros":
+            final_warnings.extend(_weighted_pairs_are_not_in_list())
+            final_warnings.extend(_questions_evenly_distributed_per_day())
         return final_warnings
 
     @classmethod
