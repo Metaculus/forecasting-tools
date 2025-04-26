@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+import random
+from datetime import date, datetime, timedelta
 from typing import Any, Coroutine, Literal
 
 from pydantic import BaseModel, field_validator, model_validator
@@ -953,23 +954,39 @@ class SheetOrganizer:
     def schedule_questions_from_file(
         cls,
         input_file_path: str,
-        output_file_path: str,
+        bot_output_file_path: str,
         start_date: datetime,
         end_date: datetime,
-        question_type: Literal["bots", "pros"],
-    ) -> None:
+        pro_output_file_path: str | None = None,
+        num_pro_questions: int | None = None,
+    ) -> list[LaunchQuestion]:
         questions = cls.load_questions_from_csv(input_file_path)
         scheduled_questions = cls.schedule_questions(questions, start_date)
-        cls.save_questions_to_csv(scheduled_questions, output_file_path)
+        cls.save_questions_to_csv(scheduled_questions, bot_output_file_path)
         warnings = cls.find_processing_errors(
             questions,
             scheduled_questions,
             start_date,
             end_date,
-            question_type,
+            question_type="bots",
         )
+        if pro_output_file_path and num_pro_questions:
+            pro_questions = cls.make_pro_questions_from_bot_questions(
+                scheduled_questions,
+                num_pro_questions,
+            )
+            cls.save_questions_to_csv(pro_questions, pro_output_file_path)
+            additional_warnings = cls.find_processing_errors(
+                questions,
+                pro_questions,
+                start_date,
+                end_date,
+                question_type="pros",
+            )
+            warnings.extend(additional_warnings)
         for warning in warnings:
             logger.warning(warning)
+        return scheduled_questions
 
     @staticmethod
     def compute_upcoming_day(
@@ -993,6 +1010,74 @@ class SheetOrganizer:
         target_date = today + timedelta(days=days_to_add)
         return datetime(target_date.year, target_date.month, target_date.day)
 
+    @classmethod
+    def make_pro_questions_from_bot_questions(
+        cls,
+        bot_launch_questions: list[LaunchQuestion],
+        num_pro_questions: int,
+    ) -> list[LaunchQuestion]:
+        date_to_question_map: dict[date, list[LaunchQuestion]] = {}
+        for question in bot_launch_questions:
+            if question.open_time:
+                date_to_question_map[question.open_time.date()].append(
+                    question
+                )
+
+        questions_left_to_sample = num_pro_questions
+        pro_launch_questions: list[LaunchQuestion] = []
+        available_days = list(date_to_question_map.keys())
+        while questions_left_to_sample > 0:
+            for day in available_days:
+                if questions_left_to_sample == 0:
+                    break
+
+                questions_for_day = date_to_question_map[day]
+                sampled_bot_question = random.sample(questions_for_day, 1)[0]
+                questions_left_to_sample -= 1
+                date_to_question_map[day].remove(sampled_bot_question)
+
+                if cls._weighted_pair_is_already_in_list(
+                    sampled_bot_question, pro_launch_questions
+                ):
+                    continue
+
+                pro_question = cls._make_pro_question_from_bot_question(
+                    sampled_bot_question
+                )
+                pro_launch_questions.append(pro_question)
+        return pro_launch_questions
+
+    @classmethod
+    def _weighted_pair_is_already_in_list(
+        cls,
+        question: LaunchQuestion,
+        chosen_questions: list[LaunchQuestion],
+    ) -> bool:
+        if (
+            question.question_weight is not None
+            and question.question_weight < 1
+        ):
+            question_index_one_above = question.original_order + 1
+            question_index_one_below = question.original_order - 1
+            all_question_indexes = [q.original_order for q in chosen_questions]
+            if (
+                question_index_one_above in all_question_indexes
+                or question_index_one_below in all_question_indexes
+            ):
+                return True
+        return False
+
+    @classmethod
+    def _make_pro_question_from_bot_question(
+        cls,
+        bot_question: LaunchQuestion,
+    ) -> LaunchQuestion:
+        question_copy = bot_question.model_copy(deep=True)
+        assert question_copy.open_time is not None
+        question_copy.open_time -= timedelta(days=2)
+        question_copy.question_weight = 1
+        return question_copy
+
 
 if __name__ == "__main__":
 
@@ -1006,5 +1091,4 @@ if __name__ == "__main__":
         "temp/ordered_questions.csv",
         start_date,
         end_date,
-        "bots",
     )
