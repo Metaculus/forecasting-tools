@@ -202,11 +202,14 @@ class SheetOrganizer:
         bot_output_file_path: str,
         start_date: datetime,
         end_date: datetime,
+        chance_to_skip_slot: float,
         pro_output_file_path: str | None = None,
         num_pro_questions: int | None = None,
     ) -> list[LaunchQuestion]:
         input_questions = cls.load_questions_from_csv(input_file_path)
-        bot_questions = cls.schedule_questions(input_questions, start_date)
+        bot_questions = cls.schedule_questions(
+            input_questions, start_date, chance_to_skip_slot
+        )
         cls.save_questions_to_csv(bot_questions, bot_output_file_path)
         warnings = cls.find_processing_errors(
             input_questions,
@@ -236,7 +239,10 @@ class SheetOrganizer:
 
     @classmethod
     def schedule_questions(
-        cls, questions: list[LaunchQuestion], start_date: datetime
+        cls,
+        questions: list[LaunchQuestion],
+        start_date: datetime,
+        chance_to_skip_slot: float,
     ) -> list[LaunchQuestion]:
         copied_input_questions = [
             question.model_copy(deep=True) for question in questions
@@ -301,6 +307,8 @@ class SheetOrganizer:
                     raise RuntimeError(
                         f"Question {current_question.title} has a scheduled resolve time that can't find a valid close time"
                     )
+                if random.random() < chance_to_skip_slot:
+                    continue
                 new_question = LaunchQuestion(
                     **current_question.model_dump(),
                 )  # For model validation purposes
@@ -1261,6 +1269,7 @@ if __name__ == "__main__":
         bot_output_file_path="temp/bot_questions.csv",
         pro_output_file_path="temp/pro_questions.csv",
         num_pro_questions=15,
+        chance_to_skip_slot=0.1,
         start_date=start_date,
         end_date=end_date,
     )
