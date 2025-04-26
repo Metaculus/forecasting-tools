@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Literal
+from typing import Any, Coroutine, Literal
 
 from pydantic import BaseModel, field_validator, model_validator
 
+from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.util.custom_logger import CustomLogger
 from forecasting_tools.util.file_manipulation import (
     load_csv_file,
     write_csv_file,
@@ -751,6 +755,87 @@ class SheetOrganizer:
                 warnings.append(LaunchWarning(warning=warning_msg))
             return warnings
 
+        def _stay_before_end_date() -> list[LaunchWarning]:
+            warnings = []
+            for question in new_questions:
+                if question.open_time and question.open_time < end_date:
+                    warnings.append(
+                        LaunchWarning(
+                            relevant_question=question,
+                            warning=f"Question {question.title} opens before end date {end_date}",
+                        )
+                    )
+                if (
+                    question.scheduled_close_time
+                    and question.scheduled_close_time > end_date
+                ):
+                    warnings.append(
+                        LaunchWarning(
+                            relevant_question=question,
+                            warning=f"Question {question.title} closes after end date {end_date}",
+                        )
+                    )
+            return warnings
+
+        async def _no_inconsistencies_causing_annulment() -> (
+            list[LaunchWarning]
+        ):
+            tasks: list[Coroutine[Any, Any, dict[str, Any]]] = []
+            for question in new_questions:
+                model = GeneralLlm(
+                    model="gpt-4o",
+                    temperature=0,
+                )
+                prompt = clean_indents(
+                    f"""
+                    You are an expert proofreader for Metaculus and Good Judgement Open tasked with evaluating the quality of a forecasting question.
+                    Please review the following question for internal inconsistencies or obvious errors that would result in annulment/ambiguous resolution.
+
+                    Question Data:
+                    ```json
+                    {question.model_dump_json(indent=2)}
+                    ```
+
+                    Based on your review, provide a rating and a brief reason.
+
+                    Rating criteria:
+                    - "bad": The question has significant typos, or internal inconsistencies that make it confusing, incorrect, or would result in annulment/ambiguous resolution.
+                    - "ok": The question has minor issues that wouldn't result in an ambiguous resolution.
+                    - "good": The question is well-written, clear, and free of significant errors.
+
+                    Respond ONLY with a JSON object in the following format:
+                    {{
+                        "rating": "good" | "bad" | "ok",
+                        "reason": "A brief explanation for your rating, highlighting any specific issues found."
+                    }}
+
+                    Example Output for a bad question:
+                    {{
+                        "rating": "bad",
+                        "reason": "The resolution criteria and question title contain different months of for when the question is resolved, which would result in annulment."
+                    }}
+
+                    Your JSON Response:
+                    """
+                )
+                tasks.append(
+                    model.invoke_and_return_verified_type(
+                        prompt,
+                        dict,
+                    )
+                )
+            responses = await asyncio.gather(*tasks)
+            warnings = []
+            for response in responses:
+                if response["rating"] == "bad":
+                    warnings.append(
+                        LaunchWarning(
+                            relevant_question=None,
+                            warning=response["reason"],
+                        )
+                    )
+            return warnings
+
         final_warnings.extend(_check_existing_times_preserved())
         final_warnings.extend(_check_no_new_overlapping_windows())
         final_warnings.extend(_check_window_duration())
@@ -770,6 +855,10 @@ class SheetOrganizer:
         final_warnings.extend(_check_order_changed())
         final_warnings.extend(_check_ordered_by_open_time())
         final_warnings.extend(_check_same_number_of_questions())
+        final_warnings.extend(_stay_before_end_date())
+        final_warnings.extend(
+            asyncio.run(_no_inconsistencies_causing_annulment())
+        )
         return final_warnings
 
     @classmethod
@@ -906,7 +995,6 @@ class SheetOrganizer:
 
 
 if __name__ == "__main__":
-    from forecasting_tools.util.custom_logger import CustomLogger
 
     CustomLogger.setup_logging()
 
