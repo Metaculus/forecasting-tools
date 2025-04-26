@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import random
 from datetime import date, datetime, timedelta
 from typing import Any, Coroutine, Literal
@@ -464,7 +465,7 @@ class SheetOrganizer:
 
         # Some questions will already have a open and close time. These must be respected and stay the same
         def _check_existing_times_preserved(
-            question_type: Literal["bots", "pros"]
+            question_type: Literal["bots", "pros"],
         ) -> list[LaunchWarning]:
             warnings = []
             for orig_q in original_questions:
@@ -528,7 +529,7 @@ class SheetOrganizer:
 
         # If bots, The open time must be 2hr before scheduled close time unless. If pros it must be 2 days
         def _check_window_duration(
-            question_type: Literal["bots", "pros"]
+            question_type: Literal["bots", "pros"],
         ) -> list[LaunchWarning]:
             warnings = []
             if question_type == "bots":
@@ -670,7 +671,7 @@ class SheetOrganizer:
 
         # No fields changed between original and new question other than open/close time
         def _check_no_field_changes(
-            question_type: Literal["bots", "pros"]
+            question_type: Literal["bots", "pros"],
         ) -> list[LaunchWarning]:
             warnings = []
 
@@ -740,7 +741,9 @@ class SheetOrganizer:
             return warnings
 
         # The earliest open time is on start_date
-        def _check_earliest_open_time() -> list[LaunchWarning]:
+        def _check_earliest_open_time(
+            question_type: Literal["bots", "pros"],
+        ) -> list[LaunchWarning]:
             warnings = []
 
             earliest_open = min(
@@ -751,7 +754,12 @@ class SheetOrganizer:
                 ),
                 default=None,
             )
-            if earliest_open and earliest_open.date() != start_date.date():
+            target_date = (
+                start_date
+                if question_type == "bots"
+                else start_date - timedelta(days=2)
+            )
+            if earliest_open and earliest_open.date() != target_date.date():
                 # Find the question with the earliest open time
                 earliest_question = next(
                     q for q in new_questions if q.open_time == earliest_open
@@ -766,7 +774,7 @@ class SheetOrganizer:
 
         # open times are between start_date and the questions' resolve date
         def _check_adherence_to_end_and_start_time(
-            question_type: Literal["bots", "pros"]
+            question_type: Literal["bots", "pros"],
         ) -> list[LaunchWarning]:
             warnings = []
             for question in new_questions:
@@ -774,7 +782,7 @@ class SheetOrganizer:
                 if question.open_time:
                     if question.open_time > end_date + timedelta(days=1):
                         warning_messages.append(
-                            f"Question {question.title} opens after end date {end_date}"
+                            f"Question opens at {question.open_time} after end date {end_date}"
                         )
                     pro_adjustment = (
                         timedelta(days=2)
@@ -783,18 +791,18 @@ class SheetOrganizer:
                     )
                     if question.open_time < start_date - pro_adjustment:
                         warning_messages.append(
-                            f"Question {question.title} opens before start date {start_date}"
+                            f"Question opens at {question.open_time} before start date {start_date}"
                         )
                 if question.scheduled_close_time:
                     if question.scheduled_close_time > end_date + timedelta(
                         days=1
                     ):
                         warning_messages.append(
-                            f"Question {question.title} closes after end date {end_date}"
+                            f"Question closes at {question.scheduled_close_time} after end date {end_date}"
                         )
                     if question.scheduled_close_time < start_date:
                         warning_messages.append(
-                            f"Question {question.title} closes before start date {start_date}"
+                            f"Question closes at {question.scheduled_close_time} before start date {start_date}"
                         )
 
                 for warning_message in warning_messages:
@@ -1144,14 +1152,14 @@ class SheetOrganizer:
             warnings = []
             for date_key, count in question_count_per_day.items():
                 if not (
-                    target_questions_per_day - 1
+                    math.floor(target_questions_per_day)
                     <= count
-                    <= target_questions_per_day
+                    <= math.ceil(target_questions_per_day)
                 ):
                     warnings.append(
                         LaunchWarning(
                             relevant_question=None,
-                            warning=f"{count} questions for {date_key} != target of {target_questions_per_day}",
+                            warning=f"{count} questions scheduled for {date_key} != target of {target_questions_per_day}",
                         )
                     )
             return warnings
@@ -1165,7 +1173,7 @@ class SheetOrganizer:
         final_warnings.extend(_check_mc_fields())
         final_warnings.extend(_check_no_field_changes(question_type))
         final_warnings.extend(_check_parent_url_fields())
-        final_warnings.extend(_check_earliest_open_time())
+        final_warnings.extend(_check_earliest_open_time(question_type))
         final_warnings.extend(
             _check_adherence_to_end_and_start_time(question_type)
         )
