@@ -196,7 +196,7 @@ class LaunchWarning(BaseModel, Jsonable):
 class SheetOrganizer:
 
     @classmethod
-    def schedule_questions_from_file(
+    async def schedule_questions_from_file(
         cls,
         input_file_path: str,
         bot_output_file_path: str,
@@ -211,7 +211,7 @@ class SheetOrganizer:
             input_questions, start_date, chance_to_skip_slot
         )
         cls.save_questions_to_csv(bot_questions, bot_output_file_path)
-        warnings = cls.find_processing_errors(
+        warnings = await cls.find_processing_errors(
             input_questions,
             bot_questions,
             start_date,
@@ -225,7 +225,7 @@ class SheetOrganizer:
                 start_date,
             )
             cls.save_questions_to_csv(pro_questions, pro_output_file_path)
-            additional_warnings = cls.find_processing_errors(
+            additional_warnings = await cls.find_processing_errors(
                 bot_questions,
                 pro_questions,
                 start_date,
@@ -461,7 +461,7 @@ class SheetOrganizer:
         )
 
     @classmethod
-    def find_processing_errors(  # NOSONAR
+    async def find_processing_errors(  # NOSONAR
         cls,
         original_questions: list[LaunchQuestion],
         new_questions: list[LaunchQuestion],
@@ -1195,7 +1195,7 @@ class SheetOrganizer:
         if question_type == "bots":
             final_warnings.extend(_check_same_number_of_questions())
             final_warnings.extend(
-                asyncio.run(_no_inconsistencies_causing_annulment())
+                await _no_inconsistencies_causing_annulment()
             )
         if question_type == "pros":
             final_warnings.extend(_weighted_pairs_are_not_in_list())
@@ -1264,12 +1264,14 @@ if __name__ == "__main__":
     start_date = SheetOrganizer.compute_upcoming_day("monday")
     end_date = SheetOrganizer.compute_upcoming_day("friday")
     logger.info(f"Start date: {start_date}, End date: {end_date}")
-    SheetOrganizer.schedule_questions_from_file(
-        input_file_path="temp/input_launch_questions.csv",
-        bot_output_file_path="temp/bot_questions.csv",
-        pro_output_file_path="temp/pro_questions.csv",
-        num_pro_questions=15,
-        chance_to_skip_slot=0.1,
-        start_date=start_date,
-        end_date=end_date,
+    asyncio.run(
+        SheetOrganizer.schedule_questions_from_file(
+            input_file_path="temp/input_launch_questions.csv",
+            bot_output_file_path="temp/bot_questions.csv",
+            pro_output_file_path="temp/pro_questions.csv",
+            num_pro_questions=15,
+            chance_to_skip_slot=0.1,
+            start_date=start_date,
+            end_date=end_date,
+        )
     )
