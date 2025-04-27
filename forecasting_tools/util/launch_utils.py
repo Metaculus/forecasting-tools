@@ -244,6 +244,11 @@ class SheetOrganizer:
         start_date: datetime,
         chance_to_skip_slot: float,
     ) -> list[LaunchQuestion]:
+        if chance_to_skip_slot >= 0.95:
+            raise ValueError(
+                "Chance to skip slot is too high and could run indefinitely"
+            )
+
         copied_input_questions = [
             question.model_copy(deep=True) for question in questions
         ]
@@ -307,6 +312,7 @@ class SheetOrganizer:
                     raise RuntimeError(
                         f"Question {current_question.title} has a scheduled resolve time that can't find a valid close time"
                     )
+
                 if random.random() < chance_to_skip_slot:
                     continue
                 new_question = LaunchQuestion(
@@ -359,6 +365,11 @@ class SheetOrganizer:
         num_pro_questions: int,
         start_date: datetime,
     ) -> list[LaunchQuestion]:
+        if num_pro_questions > len(bot_launch_questions):
+            raise ValueError(
+                "Number of pro questions is greater than the number of bot questions"
+            )
+
         date_to_question_map: dict[date, list[LaunchQuestion]] = {}
         for question in bot_launch_questions:
             if (
@@ -379,7 +390,14 @@ class SheetOrganizer:
         questions_left_to_sample = num_pro_questions
         pro_launch_questions: list[LaunchQuestion] = []
         available_days = list(date_to_question_map.keys())
+        iterations = 0
         while questions_left_to_sample > 0:
+            iterations += 1
+            if iterations > 1000:
+                raise RuntimeError(
+                    "Number of iterations is greater than 1000 and could run indefinitely"
+                )
+
             for day in available_days:
                 if questions_left_to_sample == 0:
                     break
@@ -775,7 +793,7 @@ class SheetOrganizer:
                 warnings.append(
                     LaunchWarning(
                         relevant_question=earliest_question,
-                        warning=f"Earliest open time should be on {start_date.date()}, not {earliest_open.date()}",
+                        warning=f"Earliest open time should be on {target_date.date()}, not {earliest_open.date()}",
                     )
                 )
             return warnings
