@@ -10,7 +10,7 @@ import litellm
 import typeguard
 from litellm import acompletion, model_cost
 from litellm.files.main import ModelResponse
-from litellm.types.utils import Choices, Usage
+from litellm.types.utils import Choices
 from litellm.utils import token_counter
 
 from forecasting_tools.ai_models.ai_utils.openai_utils import (
@@ -289,39 +289,31 @@ class GeneralLlm(
 
         litellm.drop_params = True
 
-        response = await acompletion(
-            messages=self.model_input_to_message(prompt),
-            **self.litellm_kwargs,
-        )
-        assert isinstance(response, ModelResponse)
-        choices = response.choices
-        choices = typeguard.check_type(choices, list[Choices])
-        answer = choices[0].message.content
-        assert isinstance(
-            answer, str
-        ), f"Answer is not a string and is of type: {type(answer)}. Answer: {answer}"
-        usage = response.usage  # type: ignore
-        assert isinstance(usage, Usage)
-        prompt_tokens = usage.prompt_tokens
-        completion_tokens = usage.completion_tokens
-        total_tokens = usage.total_tokens
-
-        cost = response._hidden_params.get(
-            "response_cost"
-        )  # If this has problems, consider using the budgetmanager class
-        if cost is None:
-            cost = 0
-
-        cost += self.calculate_per_request_cost(self.model)
-
-        return TextTokenCostResponse(
-            data=answer,
-            prompt_tokens_used=prompt_tokens,
-            completion_tokens_used=completion_tokens,
-            total_tokens_used=total_tokens,
-            model=self.model,
-            cost=cost,
-        )
+        try:
+            response = await acompletion(
+                messages=self.model_input_to_message(prompt),
+                **self.litellm_kwargs,
+            )
+            assert isinstance(response, ModelResponse)
+            choices = response.choices
+            choices = typeguard.check_type(choices, list[Choices])
+            answer = choices[0].message.content
+            assert isinstance(answer, str)
+            return TextTokenCostResponse(
+                text=answer,
+                prompt_tokens=response.usage.prompt_tokens,
+                completion_tokens=response.usage.completion_tokens,
+                cost_dollars=response.usage.get("cost", 0.0),
+            )
+        except Exception as e:
+            # Ensure any litellm-specific exception attributes are preserved
+            if hasattr(e, "request"):
+                # If it's a litellm exception with request info, add it to the error message
+                error_msg = f"LiteLLM API request failed: {str(e)}"
+                if hasattr(e, "response"):
+                    error_msg += f"\nResponse: {str(e.response)}"
+                raise type(e)(error_msg) from e
+            raise  # Re-raise the original exception if it's not a litellm-specific one
 
     async def _call_exa_model(
         self, prompt: ModelInputType

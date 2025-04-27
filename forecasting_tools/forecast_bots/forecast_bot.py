@@ -633,7 +633,9 @@ class ForecastBot(ABC):
                 f"{message}: {exception.message}", exception.exceptions
             )
         else:
-            raise type(exception)(f"{message}: {exception}") from exception
+            raise RuntimeError(
+                f"{message}: {exception.__class__.__name__} - {str(exception)}"
+            ) from exception
 
     async def _initialize_notepad(
         self, question: MetaculusQuestion
