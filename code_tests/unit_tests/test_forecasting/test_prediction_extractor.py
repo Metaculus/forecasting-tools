@@ -316,6 +316,28 @@ def create_numeric_question(
             ],
             create_numeric_question(),
         ),
+        (
+            """
+            Notes before hand including numbers like 3yr and 2,000 million and 70%.
+            Percentile 10: 0.5 million
+            Percentile 20: 1 million
+            Percentile 40: 2.1m
+            Percentile 60: 3,000 million
+            Percentile 80: 4,000 million
+            Percentile 90: 5,000 million
+            Notes afterwards including numbers like 3yr and 2,000 million and 70%.
+            More Notes including numbers like 3yr and 2,000 million and 70%.
+            """,
+            [
+                Percentile(value=0.5, percentile=0.1),
+                Percentile(value=1, percentile=0.2),
+                Percentile(value=2.1, percentile=0.4),
+                Percentile(value=3000, percentile=0.6),
+                Percentile(value=4000, percentile=0.8),
+                Percentile(value=5000, percentile=0.9),
+            ],
+            create_numeric_question(magnitude_units="millions"),
+        ),
         # (
         #     """
         #     Percentile 20: 1,000,000

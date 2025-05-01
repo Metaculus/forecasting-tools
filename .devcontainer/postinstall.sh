@@ -16,16 +16,16 @@ poetry install --no-interaction
 # Install pre-commit hooks
 poetry run pre-commit install
 
-# Activate virtual environment
-source .venv/bin/activate
-source ../.venv/bin/activate
-
-# Show which Python interpreter is being used
-which python
-
 # Install playwright
 # playwright install
 # playwright install-deps
 
 # Used for sonar extension code analysis
 nvm install 18
+
+# Activate virtual environment
+source .venv/bin/activate
+source ../.venv/bin/activate
+
+# Show which Python interpreter is being used
+which python

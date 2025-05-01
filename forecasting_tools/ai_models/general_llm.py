@@ -141,6 +141,9 @@ class GeneralLlm(
         # Optional liteLLM function params
         **kwargs,
         """
+        litellm.suppress_debug_info = (
+            True  # Disables print statements that escape the litellm logger
+        )
         super().__init__(allowed_tries=allowed_tries)
         self.model = model
 

@@ -268,8 +268,13 @@ class NumericReport(ForecastReport):
 
     @classmethod
     def make_readable_prediction(cls, prediction: NumericDistribution) -> str:
-        representative_percentiles = (
-            prediction.get_representative_percentiles()
+        num_percentiles = len(prediction.declared_percentiles)
+        if num_percentiles > 10:
+            num_display_percentiles = 5
+        else:
+            num_display_percentiles = num_percentiles
+        representative_percentiles = prediction.get_representative_percentiles(
+            num_display_percentiles
         )
         readable = "Probability distribution:\n"
         for percentile in representative_percentiles:

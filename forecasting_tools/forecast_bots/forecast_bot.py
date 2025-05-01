@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import time
+import traceback
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Coroutine, Literal, Sequence, TypeVar, cast, overload
@@ -737,7 +738,17 @@ class ForecastBot(ABC):
             logger.error(
                 f"{len(minor_exceptions)} minor exceptions occurred while forecasting: {minor_exceptions}"
             )
+
         if exceptions and raise_errors:
+            for exc in exceptions:
+                logger.error(
+                    "Exception occurred during forecasting:\n%s",
+                    "".join(
+                        traceback.format_exception(
+                            type(exc), exc, exc.__traceback__
+                        )
+                    ),
+                )
             raise RuntimeError(
                 f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
             )
