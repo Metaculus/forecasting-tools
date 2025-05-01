@@ -10,7 +10,11 @@ from urllib.parse import quote, urlencode
 
 import httpx
 from asknews_sdk import AsyncAskNewsSDK
-from asknews_sdk.dto.deepnews import CreateDeepNewsResponse
+
+try:
+    from asknews_sdk.dto.deepnews import CreateDeepNewsResponse
+except ImportError:
+    pass
 from httpx import Auth, Request
 
 # NOTE: Until there is more need for asknews endpoints, this is a custom implementation
@@ -290,6 +294,12 @@ class AskNewsSearcher:
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
     ) -> CreateDeepNewsResponse:
+        try:
+            from asknews_sdk.dto.deepnews import CreateDeepNewsResponse
+        except ImportError:
+            raise ImportError(
+                "Most recent version of asknews package not installed, deep research will not work. Run `poetry add asknews@0.11.6`"
+            )
         response = await self.sdk.chat.get_deep_news(
             messages=[{"role": "user", "content": query}],
             search_depth=search_depth,
