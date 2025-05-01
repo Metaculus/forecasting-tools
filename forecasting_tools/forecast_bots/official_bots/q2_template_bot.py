@@ -104,6 +104,7 @@ class Q2TemplateBot2025(ForecastBot):
                     temperature=0,
                     num_searches_to_run=2,
                     num_sites_per_search=10,
+                    use_advanced_filters=False,
                 )
                 research = await searcher.invoke(prompt)
             elif not researcher or researcher == "None":

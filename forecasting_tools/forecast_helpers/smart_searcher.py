@@ -36,6 +36,7 @@ class SmartSearcher(OutputsText, AiModel):
         num_sites_per_search: int = 10,
         model: str | GeneralLlm = default_llms["basic"],
         temperature: float | None = None,
+        use_advanced_filters: bool = False,
     ) -> None:
         assert (
             temperature is None or 0 <= temperature <= 1
@@ -57,6 +58,7 @@ class SmartSearcher(OutputsText, AiModel):
             self.llm = model
         self.include_works_cited_list = include_works_cited_list
         self.use_citation_brackets = use_brackets_around_citations
+        self.use_advanced_filters = use_advanced_filters
 
     async def invoke(self, prompt: str) -> str:
         logger.debug(f"Running search for prompt: {prompt}")
@@ -81,6 +83,42 @@ class SmartSearcher(OutputsText, AiModel):
         return final_report, quotes
 
     async def __come_up_with_search_queries(
+        self, prompt: str
+    ) -> list[SearchInput]:
+        if self.use_advanced_filters:
+            return await self.__create_search_queries_with_filters(prompt)
+        else:
+            return await self.__create_basic_search_queries(prompt)
+
+    async def __create_basic_search_queries(
+        self, prompt: str
+    ) -> list[SearchInput]:
+        prompt = clean_indents(
+            f"""
+            You have been given the following instructions. Instructions are included between <><><><><><><><><><><><> tags.
+
+            <><><><><><><><><><><><>
+            {prompt}
+            <><><><><><><><><><><><>
+
+            Generate {self.number_of_searches_to_run} google searches that will help you fulfill any questions in the instructions.
+            Make them each target different aspects of the question.
+            Please provide the searches as a list of strings like this:
+            ["search 1", "search 2"]
+            Give no other text than the list of search terms.
+            """
+        )
+        search_terms = await self.llm.invoke_and_return_verified_type(
+            prompt, list[str]
+        )
+        logger.debug(f"Decided on searches: {search_terms}")
+        search_inputs = [
+            self.exa_searcher.string_to_default_search_input(search_term)
+            for search_term in search_terms
+        ]
+        return search_inputs
+
+    async def __create_search_queries_with_filters(
         self, prompt: str
     ) -> list[SearchInput]:
         prompt = clean_indents(

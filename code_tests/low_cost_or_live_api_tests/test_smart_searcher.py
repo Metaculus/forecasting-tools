@@ -15,6 +15,21 @@ async def test_ask_question_basic() -> None:
         num_searches_to_run=1,
         num_sites_per_search=3,
         use_brackets_around_citations=True,
+        use_advanced_filters=False,
+    )
+    question = "What is the recent news on SpaceX?"
+    report = await searcher.invoke(question)
+    logger.info(f"Report:\n{report}")
+    validate_search_report(report)
+
+
+async def test_ask_question_with_filters() -> None:
+    searcher = SmartSearcher(
+        include_works_cited_list=True,
+        num_searches_to_run=1,
+        num_sites_per_search=3,
+        use_brackets_around_citations=True,
+        use_advanced_filters=True,
     )
     question = "What is the recent news on SpaceX?"
     report = await searcher.invoke(question)
@@ -85,3 +100,20 @@ async def test_ask_question_empty_prompt() -> None:
     searcher = SmartSearcher()
     with pytest.raises(ValueError):
         await searcher.invoke("")
+
+
+@pytest.mark.skip(
+    "Deepseek just doesn't understand the prompt well. Not worth getting working now"
+)
+async def test_deepseek_works_with_smart_searcher() -> None:
+    searcher = SmartSearcher(
+        model="openrouter/deepseek/deepseek-r1",
+        include_works_cited_list=True,
+        num_searches_to_run=2,
+        num_sites_per_search=10,
+        use_advanced_filters=True,
+    )
+    question = "Please forecast the price of Bitcoin in December 2025"
+    report = await searcher.invoke(question)
+    logger.info(f"Report:\n{report}")
+    validate_search_report(report)
