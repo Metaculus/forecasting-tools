@@ -97,15 +97,15 @@ class SearchInput(BaseModel, Jsonable):
             raise ValueError("start_published_date must be before today")
         if end_date and end_date > now_utc:
             raise ValueError("end_published_date must be before today")
-        if start_date and (now_utc - start_date) <= timedelta(days=1):
+        if start_date and (now_utc - start_date) <= timedelta(hours=3):
             logger.warning(
-                "You are searching for results from within the last day. This may not return any results."
+                "You are searching for results from within the last 3 hours. This may not return any results."
             )
         return self
 
     @model_validator(mode="after")
     def validate_include_text(self: SearchInput) -> SearchInput:
-        if self.include_text:
+        if self.include_text is not None:
             num_words = len(self.include_text.split())
             if num_words < 1 or num_words > 5:
                 raise ValueError("include_text must be 1-5 words")
