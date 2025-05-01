@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import aiohttp
 from pydantic import BaseModel, Field, model_validator
@@ -77,17 +77,30 @@ class SearchInput(BaseModel, Jsonable):
 
     @model_validator(mode="after")
     def validate_times(self: SearchInput) -> SearchInput:
-        start_date = self.start_published_date
-        end_date = self.end_published_date
-        today = datetime.now()
+        def to_utc(dt: datetime | None) -> datetime | None:
+            if dt is None:
+                return None
+            if dt.tzinfo is None:
+                # Assume local time if naive, convert to UTC
+                return dt.astimezone().astimezone(timezone.utc)
+            return dt.astimezone(timezone.utc)
+
+        start_date = to_utc(self.start_published_date)
+        end_date = to_utc(self.end_published_date)
+        now_utc = datetime.now(timezone.utc)
+
         if start_date and end_date and start_date > end_date:
             raise ValueError(
                 "start_published_date must be before or equal to end_published_date"
             )
-        if start_date and start_date > today:
+        if start_date and start_date > now_utc:
             raise ValueError("start_published_date must be before today")
-        if end_date and end_date > today:
+        if end_date and end_date > now_utc:
             raise ValueError("end_published_date must be before today")
+        if start_date and (now_utc - start_date) <= timedelta(days=1):
+            logger.warning(
+                "You are searching for results from within the last day. This may not return any results."
+            )
         return self
 
     @model_validator(mode="after")
