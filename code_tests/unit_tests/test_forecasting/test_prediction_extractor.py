@@ -292,13 +292,13 @@ def test_multiple_choice_extraction_success(
 @pytest.mark.parametrize(
     "reasoning, options",
     [
-        (
+        (  # Test missing option
             """
             Option OnlyOne: 60
             """,
             ["Option OnlyOne", "Option Missing"],
         ),
-        (
+        (  # Test inconsistent option names
             """
             Option A: 30
             Option B: 40
@@ -306,7 +306,7 @@ def test_multiple_choice_extraction_success(
             """,
             ["Blue", "Green", "Yellow"],
         ),
-        (
+        (  # Test total probability < 1
             """
             Option Blue: 0.01
             Option Green: 0.02
@@ -314,7 +314,7 @@ def test_multiple_choice_extraction_success(
             """,
             ["Blue", "Green", "Yellow"],
         ),
-        (
+        (  # Test total probabiliby > 1
             """
             Option Blue: 0.5
             Option Green: 0.7
@@ -322,7 +322,7 @@ def test_multiple_choice_extraction_success(
             """,
             ["Blue", "Green", "Yellow"],
         ),
-        (
+        (  # Test negative probabilities
             """
             Blue: -0.5
             Green: 0.3

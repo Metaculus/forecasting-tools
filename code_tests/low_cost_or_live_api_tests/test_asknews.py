@@ -37,7 +37,9 @@ async def test_formatted_deep_research() -> None:
     end_time = time.time()
     logger.info(f"Time taken: {end_time - start_time} seconds")
     logger.info(f"News: {news}")
-    assert news is not None
-    assert len(news) > 100
-    assert "<final_answer>" not in news
-    assert "<think>" not in news
+    assert news is not None, "News is None"
+    assert len(news) > 100, "News is too short"
+    assert (
+        "<final_answer>" not in news
+    ), "<final_answer> is in the final answer"
+    assert "<think>" not in news, "<think> is in the news"
