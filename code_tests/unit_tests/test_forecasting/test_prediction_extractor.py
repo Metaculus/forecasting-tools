@@ -191,6 +191,46 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["Blue", "Green", "Yellow"],
             [0.3, 0.4, 0.3],
         ),
+        (
+            """
+            - '0': 20
+            - '1': 70
+            - '2': 10
+            """,
+            ["0", "1", "2"],
+            [0.2, 0.7, 0.1],
+        ),
+        (
+            """
+            {
+                "0": 20,
+                "1": 70,
+                "2": 10,
+            }
+            """,
+            ["0", "1", "2"],
+            [0.2, 0.7, 0.1],
+        ),
+        (
+            """
+            | Option | Probability |
+            | "0"    | 20          |
+            | "1"    | 70          |
+            | "2"    | 10          |
+            """,
+            ["0", "1", "2"],
+            [0.2, 0.7, 0.1],
+        ),
+        (
+            """
+            | Option | Probability |
+            | 'Option 0'    | 20          |
+            | 'Option 1'    | 70          |
+            | 'Option 2'    | 10          |
+            """,
+            ["0", "1", "2"],
+            [0.2, 0.7, 0.1],
+        ),
     ],
 )
 def test_multiple_choice_extraction_success(
