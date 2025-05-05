@@ -137,7 +137,9 @@ class PredictionExtractor:
             probability_found = False
             matching_lines = []
             for line in text.split("\n"):
-                if line.strip().lower().startswith(expected_option.lower()):
+                pattern = rf".*(?:^|[^0-9.])(?:{re.escape(expected_option.lower())})(?:\s*|\s*['\"]?\s*)[^.,0-9]+(-?\d*\.\d+|-?\d+).*"
+                match = re.match(pattern, line.strip().lower())
+                if match:
                     matching_lines.append(line)
 
             if matching_lines:

@@ -173,7 +173,7 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["1", "0.2", "0.3", "0.4"],
             [0.4, 0.3, 0.2, 0.1],
         ),
-        (
+        (  # Test case insensitive
             """
             option blue: 0.3
             option green: 0.2
@@ -191,7 +191,7 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["Blue", "Green", "Yellow"],
             [0.3, 0.4, 0.3],
         ),
-        (
+        (  # Test bullet points
             """
             - '0': 20
             - '1': 70
@@ -200,19 +200,56 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["0", "1", "2"],
             [0.2, 0.7, 0.1],
         ),
-        (
+        (  # Test special characters
             """
-            {
-                "0": 20,
-                "1": 70,
-                "2": 10,
-            }
+            - '≥0 and ≤20.0': 20
+            - '>20.0 and <35.0': 70
+            - '≥35.0': 10
             """,
-            ["0", "1", "2"],
+            ["≥0 and ≤20.0", ">20.0 and <35.0", "≥35.0"],
             [0.2, 0.7, 0.1],
         ),
-        (
+        (  # Test special characters
             """
+            - "12.00 € or under": 1
+            - "Greater than 12.00 € and less than or equal to 15.00 €": 79
+            - "Greater than 15.00 €": 20
+            """,
+            [
+                "12.00 € or under",
+                "Greater than 12.00 € and less than or equal to 15.00 €",
+                "Greater than 15.00 €",
+            ],
+            [0.01, 0.79, 0.2],
+        ),
+        (  # comma numbers and small percentages
+            """
+            - "0": 0.5%
+            - "1": 99%
+            - "2-100": 0.2%
+            - "100-1,000": 0.2%
+            - "1,001": 0.1%
+            """,
+            ["0", "1", "2-100", "100-1,000", "1,001"],
+            [0.005, 0.99, 0.002, 0.002, 0.001],
+        ),
+        (  # Test json format
+            """
+            Research and reasoning
+            {
+                "0": 20,
+                "1": 68.98,
+                "2": 10,
+                "3": 1.01,
+                "10": 0.01,
+            }
+            """,
+            ["0", "1", "2", "3", "10"],
+            [0.2, 0.6898, 0.1, 0.0101, 0.0001],
+        ),
+        (  # Test table format
+            """
+            Research and reasoning including numbers like "1": 20% and "70%".
             | Option | Probability |
             | "0"    | 20          |
             | "1"    | 70          |
@@ -221,7 +258,7 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["0", "1", "2"],
             [0.2, 0.7, 0.1],
         ),
-        (
+        (  # Test table format
             """
             | Option | Probability |
             | 'Option 0'    | 20          |
@@ -271,22 +308,6 @@ def test_multiple_choice_extraction_success(
         ),
         (
             """
-            Not-allowed-word Option Blue: 30
-            Not-allowed-word Option Green: 40
-            Not-allowed-word Option Yellow: 30
-            """,
-            ["Blue", "Green", "Yellow"],
-        ),
-        (
-            """
-            Not-allowed-word Blue: 30
-            Not-allowed-word Green: 40
-            Not-allowed-word Yellow: 30
-            """,
-            ["Blue", "Green", "Yellow"],
-        ),
-        (
-            """
             Option Blue: 0.01
             Option Green: 0.02
             Option Yellow: 0.03
@@ -298,6 +319,14 @@ def test_multiple_choice_extraction_success(
             Option Blue: 0.5
             Option Green: 0.7
             Option Yellow: 0.8
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
+        (
+            """
+            Blue: -0.5
+            Green: 0.3
+            Yellow: 0.2
             """,
             ["Blue", "Green", "Yellow"],
         ),
