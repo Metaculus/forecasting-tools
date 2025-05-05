@@ -41,7 +41,7 @@ class LaunchQuestion(BaseModel, Jsonable):
     question_weight: float | None = None
     open_time: datetime | None = None
     scheduled_close_time: datetime | None = None
-    scheduled_resolve_time: datetime
+    scheduled_resolve_time: datetime | None = None
     range_min: float | int | None = None
     range_max: float | int | None = None
     zero_point: float | int | None = None

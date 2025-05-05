@@ -520,6 +520,20 @@ def test_numeric_parsing(
             """,
             0.05,
         ),
+        (
+            """
+            Research and reasoning
+            Probability: 110%
+            """,
+            0.95,
+        ),
+        # ( TODO: Check for negative probabilities
+        #     """
+        #     Research and reasoning
+        #     Probability: -10%
+        #     """,
+        #     0.05,
+        # ),
     ],
 )
 def test_binary_parsing(
@@ -536,14 +550,6 @@ def test_binary_parsing(
 @pytest.mark.parametrize(
     "gpt_response",
     [
-        """
-        Research and reasoning
-        Probability: 110%
-        """,
-        # """ TODO: Check for negative probabilities
-        # Research and reasoning
-        # Probability: -10%
-        # """,
         """
         Research and reasoning
         Probability: 30

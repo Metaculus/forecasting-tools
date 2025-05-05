@@ -38,10 +38,6 @@ class PredictionExtractor:
         if matches:
             # Return the last number found before a '%'
             original_number = int(matches[-1]) / 100
-            if original_number > 1 or original_number < 0:
-                raise ValueError(
-                    f"Probability {original_number} is not between 0 and 1"
-                )
             clamped_number = min(
                 max_prediction, max(min_prediction, original_number)
             )
