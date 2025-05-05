@@ -19,7 +19,7 @@ class PredictionExtractor:
 
     @staticmethod
     def extract_last_percentage_value(
-        text: str, max_prediction: float, min_prediction: float
+        text: str, max_prediction: float = 1.0, min_prediction: float = 0.0
     ) -> float:
         if not text or text.strip() == "":
             raise ValueError(
@@ -38,6 +38,10 @@ class PredictionExtractor:
         if matches:
             # Return the last number found before a '%'
             original_number = int(matches[-1]) / 100
+            if original_number > 1 or original_number < 0:
+                raise ValueError(
+                    f"Probability {original_number} is not between 0 and 1"
+                )
             clamped_number = min(
                 max_prediction, max(min_prediction, original_number)
             )
@@ -62,11 +66,28 @@ class PredictionExtractor:
         alphabet_abc_option_letters = list(
             string.ascii_uppercase[: len(options)]
         )
+        cleaned_options = [option.strip() for option in options]
+        underscored_options = [
+            option.strip().replace(" ", "_") for option in options
+        ]
         option_lists_to_try = [
             options,
+            cleaned_options,
+            underscored_options,
             [f"Option {option}" for option in options],
+            [f"Option {cleaned_option}" for cleaned_option in cleaned_options],
+            [
+                f"Option {underscored_option}"
+                for underscored_option in underscored_options
+            ],
+            [
+                f"Option_{underscored_option}"
+                for underscored_option in underscored_options
+            ],
             [f"Option {i}" for i in range(1, len(options) + 1)],
+            [f"Option_{i}" for i in range(1, len(options) + 1)],
             [f"Option {letter}" for letter in alphabet_abc_option_letters],
+            [f"Option_{letter}" for letter in alphabet_abc_option_letters],
             [f"{letter}" for letter in alphabet_abc_option_letters],
         ]
 
@@ -115,24 +136,16 @@ class PredictionExtractor:
         text: str, options: list[str]
     ) -> list[float]:
         option_probabilities = []
-        # Iterate through each line in the text
         for expected_option in options:
             expected_option = expected_option.strip()
             probability_found = False
             matching_lines = []
             for line in text.split("\n"):
-                expected_option_with_underscores = expected_option.replace(
-                    " ", "_"
-                )
-                if (
-                    expected_option.lower() in line.lower()
-                    or expected_option_with_underscores.lower() in line.lower()
-                ):
+                if line.strip().lower().startswith(expected_option.lower()):
                     matching_lines.append(line)
 
             if matching_lines:
                 last_matching_line = matching_lines[-1]
-                # Extract all numbers from the line
                 numbers_as_string = re.findall(
                     r"-?\d+(?:,\d{3})*(?:\.\d+)?", last_matching_line
                 )
@@ -160,19 +173,25 @@ class PredictionExtractor:
         total_sum = sum(option_probabilities)
         threshold_for_decimal_probability_presence = 1.9
         if total_sum < threshold_for_decimal_probability_presence:
-            logger.warning(
+            logger.debug(
                 (
-                    f"Total sum of option probabilities {total_sum} is less than",
-                    f"{threshold_for_decimal_probability_presence}",
-                    "indicating rationale was working in decimal probabilities",
-                    "Converting to percentage probabilities",
+                    f"Total sum of option probabilities {total_sum} is less than ",
+                    f"{threshold_for_decimal_probability_presence} ",
+                    "indicating rationale was working in decimal probabilities. ",
+                    "Now these are being treated as decimal probabilities.",
                 )
             )
-            option_probabilities = [
-                prob * 100 for prob in option_probabilities
-            ]
-            total_sum = sum(option_probabilities)
-        decimal_list = [x / total_sum for x in option_probabilities]
+            decimal_list = option_probabilities
+        else:
+            decimal_list = [x / 100 for x in option_probabilities]
+
+        sum_of_probabilities = sum(decimal_list)
+        if sum_of_probabilities > 1.11 or sum_of_probabilities < 0.89:
+            raise ValueError(
+                f"Sum of option probabilities {sum_of_probabilities} is "
+                "too far from 1 to be confident that normalization will deliver an "
+                "intended prediction."
+            )
 
         # Step 1: Clamp values
         clamped_list = [max(min(x, 0.999), 0.001) for x in decimal_list]

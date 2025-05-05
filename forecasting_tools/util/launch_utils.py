@@ -16,7 +16,9 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 )
 from forecasting_tools.util.custom_logger import CustomLogger
 from forecasting_tools.util.file_manipulation import (
+    append_to_text_file,
     load_csv_file,
+    load_text_file,
     write_csv_file,
 )
 from forecasting_tools.util.jsonable import Jsonable
@@ -39,7 +41,7 @@ class LaunchQuestion(BaseModel, Jsonable):
     question_weight: float | None = None
     open_time: datetime | None = None
     scheduled_close_time: datetime | None = None
-    scheduled_resolve_time: datetime | None = None
+    scheduled_resolve_time: datetime
     range_min: float | int | None = None
     range_max: float | int | None = None
     zero_point: float | int | None = None
@@ -143,6 +145,8 @@ class LaunchQuestion(BaseModel, Jsonable):
             assert close_time <= resolve_date
         if open_time and resolve_date:
             assert open_time <= resolve_date
+        if resolve_date:
+            assert resolve_date > datetime.now()
         return self
 
     def to_csv_row(self) -> dict[str, Any]:
@@ -252,6 +256,7 @@ class SheetOrganizer:
         copied_input_questions = [
             question.model_copy(deep=True) for question in questions
         ]
+        random.shuffle(copied_input_questions)
         prescheduled_questions = [
             q
             for q in copied_input_questions
@@ -262,6 +267,7 @@ class SheetOrganizer:
             for q in copied_input_questions
             if q not in prescheduled_questions
         ]
+        # May 2 2025: Consider not sorting by scheduled resolve time since it can put too many numerics back to back which s hard for pros.
         questions_to_schedule.sort(
             key=lambda q: (
                 (
@@ -878,23 +884,42 @@ class SheetOrganizer:
             return warnings
 
         # None of the questions have duplicate titles
-        def _check_duplicate_titles() -> list[LaunchWarning]:
+        def _check_duplicate_titles(
+            use_stored_titles: bool = False,
+            title_file: str = "temp/question_name_list.txt",
+        ) -> list[LaunchWarning]:
             warnings = []
             title_count = {}
 
-            for question in new_questions:
-                title_count[question.title] = (
-                    title_count.get(question.title, 0) + 1
+            new_question_titles = [
+                question.title for question in new_questions
+            ]
+            if use_stored_titles:
+                stored_question_titles = load_text_file(title_file)
+                stored_question_titles = [
+                    title.strip()
+                    for title in stored_question_titles.split("\n")
+                    if title.strip()
+                ]
+                combined_question_titles = (
+                    stored_question_titles + new_question_titles
                 )
+            else:
+                combined_question_titles = new_question_titles
+
+            for title in combined_question_titles:
+                title_count[title] = title_count.get(title, 0) + 1
                 if (
-                    title_count[question.title] == 2
+                    title_count[title] == 2
                 ):  # Only add warning first time duplicate is found
                     warnings.append(
                         LaunchWarning(
-                            relevant_question=question,
-                            warning=f"Duplicate title found: {question.title}",
+                            warning=f"Duplicate title found: {title}",
                         )
                     )
+
+            if not warnings and use_stored_titles:
+                append_to_text_file(title_file, "\n".join(new_question_titles))
             return warnings
 
         # If bot questions
@@ -1024,7 +1049,7 @@ class SheetOrganizer:
             return warnings
 
         # There are no glaring errors in the text of the question
-        async def _no_inconsistencies_causing_annulment() -> (
+        async def _no_inconsistencies_causing_annulment_gpt() -> (
             list[LaunchWarning]
         ):
             tasks: list[Coroutine[Any, Any, dict[str, Any]]] = []
@@ -1213,7 +1238,7 @@ class SheetOrganizer:
         if question_type == "bots":
             final_warnings.extend(_check_same_number_of_questions())
             final_warnings.extend(
-                await _no_inconsistencies_causing_annulment()
+                await _no_inconsistencies_causing_annulment_gpt()
             )
         if question_type == "pros":
             final_warnings.extend(_weighted_pairs_are_not_in_list())
@@ -1288,7 +1313,7 @@ if __name__ == "__main__":
             bot_output_file_path="temp/bot_questions.csv",
             pro_output_file_path="temp/pro_questions.csv",
             num_pro_questions=15,
-            chance_to_skip_slot=0.1,
+            chance_to_skip_slot=0.07,
             start_date=start_date,
             end_date=end_date,
         )

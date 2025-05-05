@@ -26,6 +26,15 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             """
             Option Financial_Growth: 50
             Option consumer_demand: 25%
+            Option Government_Spending: 25
+            """,
+            [" Financial Growth ", "Consumer Demand", "Government Spending"],
+            [0.5, 0.25, 0.25],
+        ),
+        (
+            """
+            Option_Financial_Growth: 50
+            Option_consumer_demand: 25%
             Option_Government_Spending: 25
             """,
             [" Financial Growth ", "Consumer Demand", "Government Spending"],
@@ -41,7 +50,20 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             Option Z: 50
             Final notes.
             """,
-            ["X", "Y", "Option Z"],
+            ["X", "Y", "Z"],
+            [0.2, 0.3, 0.5],
+        ),
+        (
+            """
+            Introduction text.
+            Option X: 20
+            More stuff.
+            Option Y: 30
+            Some more details.
+            Option Z: 50
+            Final notes.
+            """,
+            ["Option X", "Option Y", "Option Z"],
             [0.2, 0.3, 0.5],
         ),
         (
@@ -59,6 +81,19 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
         ),
         (
             """
+            In this forecast, we consider three options: Blue, Green, and Yellow.
+            I think that Blue is 30%
+            And Option Yellow is 20%
+
+            Option Yellow: 50
+            Option Blue: 20
+            Option Green: 30
+            """,
+            ["Blue", "Green", "Yellow"],
+            [0.2, 0.3, 0.5],
+        ),
+        (
+            """
             Forecast breakdown:
             Option One: 33.33
             Option Two: 33.33
@@ -67,34 +102,25 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["One", "Two", "Three"],
             [33.33 / 100, 33.33 / 100, 33.34 / 100],
         ),
-        (
+        (  # Check Probabilities are normalized
             """
-            Option One: 0.5
-            Option Two: 0.2
+            Option One: 0.3
+            Option Two: 0.3
             Option Three: 0.3
             """,
             ["One", "Two", "Three"],
-            [0.5, 0.2, 0.3],
+            [1 / 3, 1 / 3, 1 / 3],
         ),
-        (
+        (  # Check Probabilities are normalized
             """
-            Option One: 0.05
-            Option Two: 0.02
-            Option Three: 0.03
+            Option One: 0.5
+            Option Two: 0.2
+            Option Three: 0.2
             """,
             ["One", "Two", "Three"],
-            [0.5, 0.2, 0.3],  # Probabilities are normalized
+            [0.55555555, 0.22222222, 0.22222222],
         ),
-        (
-            """
-            Option One: 5
-            Option Two: 2
-            Option Three: 3
-            """,
-            ["One", "Two", "Three"],
-            [0.5, 0.2, 0.3],  # Probabilities are normalized
-        ),
-        (
+        (  # If probabilieis given as A B C, the ordering is used to match options.
             """
             I'm thinking that Option A, option B and option C are 50%, 20% and 30% respectively.
 
@@ -109,14 +135,67 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
                 0.5,
                 0.2,
                 0.3,
-            ],  # If probabilieis given as A B C, the ordering is used to match options.
+            ],
+        ),
+        (
+            """
+            Therefore, I'll place the highest probability on '1' mention, followed closely by '2-3'. I'll retain a moderate probability for '0' reflecting the status quo possibility and a small probability for '4 or more' to account for the unexpected scenario.
+            (Final Probabilities)
+            0: 0.25
+            1: 0.40
+            2-3: 0.30
+            4 or more: 0.05
+            """,
+            ["0", "1", "2-3", "4 or more"],
+            [0.25, 0.40, 0.30, 0.05],
+        ),
+        (
+            """
+            Therefore, I'll place the highest probability on '1' mention, followed closely by '2-3'. I'll retain a moderate probability for '0' reflecting the status quo possibility and a small probability for '4 or more' to account for the unexpected scenario.
+            (Final Probabilities)
+            1: 0.4
+            0.2: 0.3
+            0.3: 0.2
+            0.4: 0.1
+            """,
+            ["1", "0.2", "0.3", "0.4"],
+            [0.4, 0.3, 0.2, 0.1],
+        ),
+        (
+            """
+            Therefore, I'll place the highest probability on '1' mention, followed closely by '2-3'. I'll retain a moderate probability for '0' reflecting the status quo possibility and a small probability for '4 or more' to account for the unexpected scenario.
+            (Final Probabilities)
+            Option 1: 0.4
+            Option 0.2: 0.3
+            Option 0.3: 0.2
+            Option 0.4: 0.1
+            """,
+            ["1", "0.2", "0.3", "0.4"],
+            [0.4, 0.3, 0.2, 0.1],
+        ),
+        (
+            """
+            option blue: 0.3
+            option green: 0.2
+            option yellow: 0.5
+            """,
+            ["BLUE", "GREEN", "YELLOW"],
+            [0.3, 0.2, 0.5],
+        ),
+        (  # Out of order
+            """
+            Option A: 30
+            Option C: 30
+            Option B: 40
+            """,
+            ["Blue", "Green", "Yellow"],
+            [0.3, 0.4, 0.3],
         ),
     ],
 )
 def test_multiple_choice_extraction_success(
     reasoning: str, options: list[str], expected_probabilities: list[float]
 ) -> None:
-    print("Starting test")
     predicted_option_list: PredictedOptionList = (
         PredictionExtractor.extract_option_list_with_percentage_afterwards(
             reasoning, options
@@ -129,7 +208,7 @@ def test_multiple_choice_extraction_success(
     ):
         assert predicted_option.option_name == expected_option
         assert predicted_option.probability == pytest.approx(
-            expected_probability
+            expected_probability, abs=0.001
         )
 
 
@@ -147,6 +226,38 @@ def test_multiple_choice_extraction_success(
             Option A: 30
             Option B: 40
             Option Yellow: 30
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
+        (
+            """
+            Not-allowed-word Option Blue: 30
+            Not-allowed-word Option Green: 40
+            Not-allowed-word Option Yellow: 30
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
+        (
+            """
+            Not-allowed-word Blue: 30
+            Not-allowed-word Green: 40
+            Not-allowed-word Yellow: 30
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
+        (
+            """
+            Option Blue: 0.01
+            Option Green: 0.02
+            Option Yellow: 0.03
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
+        (
+            """
+            Option Blue: 0.5
+            Option Green: 0.7
+            Option Yellow: 0.8
             """,
             ["Blue", "Green", "Yellow"],
         ),
@@ -382,4 +493,71 @@ def test_numeric_parsing(
         )
         assert declared_percentile.percentile == pytest.approx(
             expected_percentile.percentile
+        )
+
+
+@pytest.mark.parametrize(
+    "gpt_response, expected_probability",
+    [
+        (
+            """
+            Text before
+            Probability: 30%
+            """,
+            0.3,
+        ),
+        (
+            """
+            Text before
+            Probability: 100%
+            """,
+            0.95,
+        ),
+        (
+            """
+            Text before
+            Probability: 0%
+            """,
+            0.05,
+        ),
+    ],
+)
+def test_binary_parsing(
+    gpt_response: str, expected_probability: list[float]
+) -> None:
+    binary_prediction = PredictionExtractor.extract_last_percentage_value(
+        gpt_response,
+        max_prediction=0.95,
+        min_prediction=0.05,
+    )
+    assert binary_prediction == pytest.approx(expected_probability, abs=0.001)
+
+
+@pytest.mark.parametrize(
+    "gpt_response",
+    [
+        """
+        Research and reasoning
+        Probability: 110%
+        """,
+        # """ TODO: Check for negative probabilities
+        # Research and reasoning
+        # Probability: -10%
+        # """,
+        """
+        Research and reasoning
+        Probability: 30
+        """,
+        """
+        Text before
+        Probability: 0.3
+        """,
+    ],
+)
+def test_binary_parsing_failure(gpt_response: str) -> None:
+    with pytest.raises(ValueError):
+        PredictionExtractor.extract_last_percentage_value(
+            gpt_response,
+            max_prediction=0.95,
+            min_prediction=0.05,
         )

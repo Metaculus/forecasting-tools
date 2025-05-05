@@ -113,6 +113,16 @@ def load_text_file(file_path_in_package: str) -> str:
 
 
 @skip_if_file_writing_not_allowed
+def append_to_text_file(file_path_in_package: str, text: str) -> None:
+    create_or_append_to_file(file_path_in_package, text)
+
+
+@skip_if_file_writing_not_allowed
+def write_text_file(file_path_in_package: str, text: str) -> None:
+    create_or_overwrite_file(file_path_in_package, text)
+
+
+@skip_if_file_writing_not_allowed
 def write_json_file(file_path_in_package: str, input: list[dict]) -> None:
     json_string = json.dumps(input, indent=4)
     create_or_overwrite_file(file_path_in_package, json_string)

@@ -15,10 +15,6 @@ def setup_logging() -> None:
     CustomLogger.setup_logging()
 
 
-def sanitize_filename(name: str) -> str:
-    """Remove characters that are invalid for filenames."""
-
-
 # Can be used to profile each test
 # @pytest.fixture(autouse=True)
 # def profile_each_test(request: pytest.FixtureRequest) -> None:
