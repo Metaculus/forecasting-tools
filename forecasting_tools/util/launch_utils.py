@@ -145,8 +145,6 @@ class LaunchQuestion(BaseModel, Jsonable):
             assert close_time <= resolve_date
         if open_time and resolve_date:
             assert open_time <= resolve_date
-        if resolve_date:
-            assert resolve_date > datetime.now()
         return self
 
     def to_csv_row(self) -> dict[str, Any]:
@@ -1215,6 +1213,19 @@ class SheetOrganizer:
                     )
             return warnings
 
+        def _check_resolve_date_is_in_future() -> list[LaunchWarning]:
+            warnings = []
+            for question in new_questions:
+                if question.scheduled_resolve_time:
+                    if question.scheduled_resolve_time < datetime.now():
+                        warnings.append(
+                            LaunchWarning(
+                                relevant_question=question,
+                                warning=f"Resolve date {question.scheduled_resolve_time} is in the past",
+                            )
+                        )
+            return warnings
+
         final_warnings.extend(_check_existing_times_preserved(question_type))
         final_warnings.extend(_check_no_new_overlapping_windows())
         final_warnings.extend(_check_window_duration(question_type))
@@ -1235,6 +1246,7 @@ class SheetOrganizer:
         final_warnings.extend(_check_average_weight())
         final_warnings.extend(_check_order_changed())
         final_warnings.extend(_check_ordered_by_open_time())
+        final_warnings.extend(_check_resolve_date_is_in_future())
         if question_type == "bots":
             final_warnings.extend(_check_same_number_of_questions())
             final_warnings.extend(
