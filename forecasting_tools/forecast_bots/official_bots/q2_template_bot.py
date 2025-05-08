@@ -88,14 +88,16 @@ class Q2TemplateBot2025(ForecastBot):
             elif researcher == "asknews/deep-research/medium-depth":
                 research = await AskNewsSearcher().get_formatted_deep_research(
                     question.question_text,
+                    sources=["asknews", "google"],
                     search_depth=2,
-                    max_depth=2,
+                    max_depth=4,
                 )
             elif researcher == "asknews/deep-research/high-depth":
                 research = await AskNewsSearcher().get_formatted_deep_research(
                     question.question_text,
-                    search_depth=5,
-                    max_depth=8,
+                    sources=["asknews", "google"],
+                    search_depth=4,
+                    max_depth=6,
                 )
             elif researcher.startswith("smart-searcher"):
                 model_name = researcher.removeprefix("smart-searcher/")
