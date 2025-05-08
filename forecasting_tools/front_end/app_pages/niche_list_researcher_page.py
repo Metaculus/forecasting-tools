@@ -3,6 +3,10 @@ import logging
 import streamlit as st
 from pydantic import BaseModel
 
+from forecasting_tools.agents_and_tools.niche_list_researcher import (
+    FactCheckedItem,
+    NicheListResearcher,
+)
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
@@ -14,10 +18,6 @@ from forecasting_tools.front_end.helpers.report_displayer import (
     ReportDisplayer,
 )
 from forecasting_tools.front_end.helpers.tool_page import ToolPage
-from forecasting_tools.research_agents.niche_list_researcher import (
-    FactCheckedItem,
-    NicheListResearcher,
-)
 from forecasting_tools.util.jsonable import Jsonable
 
 logger = logging.getLogger(__name__)

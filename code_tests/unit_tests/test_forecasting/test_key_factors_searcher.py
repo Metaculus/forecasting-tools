@@ -3,7 +3,7 @@ from datetime import datetime
 
 import pytest
 
-from forecasting_tools.research_agents.key_factors_researcher import (
+from forecasting_tools.agents_and_tools.key_factors_researcher import (
     KeyFactor,
     KeyFactorType,
     ScoreCard,

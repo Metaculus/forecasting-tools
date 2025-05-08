@@ -7,21 +7,21 @@ from enum import Enum
 
 from pydantic import BaseModel, field_validator
 
+from forecasting_tools.agents_and_tools.estimator import Estimator
+from forecasting_tools.agents_and_tools.general_researcher import (
+    GeneralResearcher,
+)
+from forecasting_tools.agents_and_tools.niche_list_researcher import (
+    FactCheckedItem,
+    NicheListResearcher,
+)
+from forecasting_tools.agents_and_tools.question_responder import (
+    QuestionResponder,
+)
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.configured_llms import BasicLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
-)
-from forecasting_tools.research_agents.estimator import Estimator
-from forecasting_tools.research_agents.general_researcher import (
-    GeneralResearcher,
-)
-from forecasting_tools.research_agents.niche_list_researcher import (
-    FactCheckedItem,
-    NicheListResearcher,
-)
-from forecasting_tools.research_agents.question_responder import (
-    QuestionResponder,
 )
 from forecasting_tools.util.jsonable import Jsonable
 

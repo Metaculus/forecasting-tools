@@ -268,6 +268,16 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["0", "1", "2"],
             [0.2, 0.7, 0.1],
         ),
+        (
+            """
+            Option “0”: 20%
+            Option “1”: 50%
+            Option “2-3”: 25%
+            Option “4 or more”: 5%
+            """,
+            ["0", "1", "2-3", "4 or more"],
+            [0.2, 0.5, 0.25, 0.05],
+        ),
     ],
 )
 def test_multiple_choice_extraction_success(

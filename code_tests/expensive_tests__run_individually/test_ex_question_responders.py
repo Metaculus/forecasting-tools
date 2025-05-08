@@ -3,18 +3,18 @@ from unittest.mock import Mock
 
 import pytest
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
-from forecasting_tools.research_agents.base_rate_researcher import (
+from forecasting_tools.agents_and_tools.base_rate_researcher import (
     BaseRateResearcher,
 )
-from forecasting_tools.research_agents.general_researcher import (
+from forecasting_tools.agents_and_tools.general_researcher import (
     GeneralResearcher,
 )
-from forecasting_tools.research_agents.question_responder import (
+from forecasting_tools.agents_and_tools.question_responder import (
     QuestionResponder,
 )
-from forecasting_tools.research_agents.question_router import QuestionRouter
+from forecasting_tools.agents_and_tools.question_router import QuestionRouter
+from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 
 
 #################################### HELPERS ####################################

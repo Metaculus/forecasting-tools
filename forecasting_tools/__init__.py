@@ -1,3 +1,25 @@
+from forecasting_tools.agents_and_tools.base_rate_researcher import (
+    BaseRateResearcher as BaseRateResearcher,
+)
+from forecasting_tools.agents_and_tools.estimator import Estimator as Estimator
+from forecasting_tools.agents_and_tools.key_factors_researcher import (
+    KeyFactorsResearcher as KeyFactorsResearcher,
+)
+from forecasting_tools.agents_and_tools.key_factors_researcher import (
+    ScoredKeyFactor as ScoredKeyFactor,
+)
+from forecasting_tools.agents_and_tools.niche_list_researcher import (
+    FactCheckedItem as FactCheckedItem,
+)
+from forecasting_tools.agents_and_tools.niche_list_researcher import (
+    NicheListResearcher as NicheListResearcher,
+)
+from forecasting_tools.agents_and_tools.question_generator import (
+    QuestionGenerator as QuestionGenerator,
+)
+from forecasting_tools.agents_and_tools.question_generator import (
+    TopicGenerator as TopicGenerator,
+)
 from forecasting_tools.ai_models.ai_utils.ai_misc import (
     clean_indents as clean_indents,
 )
@@ -112,26 +134,4 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
 )
 from forecasting_tools.forecast_helpers.smart_searcher import (
     SmartSearcher as SmartSearcher,
-)
-from forecasting_tools.research_agents.base_rate_researcher import (
-    BaseRateResearcher as BaseRateResearcher,
-)
-from forecasting_tools.research_agents.estimator import Estimator as Estimator
-from forecasting_tools.research_agents.key_factors_researcher import (
-    KeyFactorsResearcher as KeyFactorsResearcher,
-)
-from forecasting_tools.research_agents.key_factors_researcher import (
-    ScoredKeyFactor as ScoredKeyFactor,
-)
-from forecasting_tools.research_agents.niche_list_researcher import (
-    FactCheckedItem as FactCheckedItem,
-)
-from forecasting_tools.research_agents.niche_list_researcher import (
-    NicheListResearcher as NicheListResearcher,
-)
-from forecasting_tools.research_agents.question_generator import (
-    QuestionGenerator as QuestionGenerator,
-)
-from forecasting_tools.research_agents.question_generator import (
-    TopicGenerator as TopicGenerator,
 )

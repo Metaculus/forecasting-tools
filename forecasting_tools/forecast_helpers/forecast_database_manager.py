@@ -1,10 +1,10 @@
 import logging
 from enum import Enum
 
-from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.research_agents.base_rate_researcher import (
+from forecasting_tools.agents_and_tools.base_rate_researcher import (
     BaseRateReport,
 )
+from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.util.coda_utils import (
     CodaCell,
     CodaColumn,

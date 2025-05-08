@@ -3,14 +3,14 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from forecasting_tools.ai_models.general_llm import GeneralLlm
-from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
-    MonetaryCostManager,
-)
-from forecasting_tools.research_agents.question_generator import (
+from forecasting_tools.agents_and_tools.question_generator import (
     GeneratedQuestion,
     QuestionGenerator,
     SimpleQuestion,
+)
+from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
 )
 
 logger = logging.getLogger(__name__)

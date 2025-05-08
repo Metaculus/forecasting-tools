@@ -1,5 +1,8 @@
 from datetime import datetime
 
+from forecasting_tools.agents_and_tools.research_coordinator import (
+    ResearchCoordinator,
+)
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
@@ -12,9 +15,6 @@ from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
 )
 from forecasting_tools.forecast_helpers.prediction_extractor import (
     PredictionExtractor,
-)
-from forecasting_tools.research_agents.research_coordinator import (
-    ResearchCoordinator,
 )
 
 

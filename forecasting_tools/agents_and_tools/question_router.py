@@ -1,16 +1,16 @@
 import logging
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.configured_llms import BasicLlm
-from forecasting_tools.research_agents.base_rate_researcher import (
+from forecasting_tools.agents_and_tools.base_rate_researcher import (
     BaseRateResearcher,
 )
-from forecasting_tools.research_agents.general_researcher import (
+from forecasting_tools.agents_and_tools.general_researcher import (
     GeneralResearcher,
 )
-from forecasting_tools.research_agents.question_responder import (
+from forecasting_tools.agents_and_tools.question_responder import (
     QuestionResponder,
 )
+from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.configured_llms import BasicLlm
 
 logger = logging.getLogger(__name__)
 

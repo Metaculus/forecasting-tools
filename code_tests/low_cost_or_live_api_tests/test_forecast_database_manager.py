@@ -1,13 +1,13 @@
 import asyncio
 
+from forecasting_tools.agents_and_tools.base_rate_researcher import (
+    BaseRateReport,
+)
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
-)
-from forecasting_tools.research_agents.base_rate_researcher import (
-    BaseRateReport,
 )
 from forecasting_tools.util.coda_utils import CodaRow
 

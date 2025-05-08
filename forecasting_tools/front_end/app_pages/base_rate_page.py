@@ -13,6 +13,10 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 top_level_dir = os.path.abspath(os.path.join(current_dir, "../../../"))
 sys.path.append(top_level_dir)
 
+from forecasting_tools.agents_and_tools.base_rate_researcher import (
+    BaseRateReport,
+    BaseRateResearcher,
+)
 from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
@@ -21,10 +25,6 @@ from forecasting_tools.front_end.helpers.report_displayer import (
     ReportDisplayer,
 )
 from forecasting_tools.front_end.helpers.tool_page import ToolPage
-from forecasting_tools.research_agents.base_rate_researcher import (
-    BaseRateReport,
-    BaseRateResearcher,
-)
 from forecasting_tools.util.jsonable import Jsonable
 
 logger = logging.getLogger(__name__)
