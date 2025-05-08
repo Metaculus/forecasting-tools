@@ -14,10 +14,10 @@ from forecasting_tools.agents_and_tools.niche_list_researcher import (
 from forecasting_tools.agents_and_tools.niche_list_researcher import (
     NicheListResearcher as NicheListResearcher,
 )
-from forecasting_tools.agents_and_tools.question_generator import (
+from forecasting_tools.agents_and_tools.question_generators.question_generator import (
     QuestionGenerator as QuestionGenerator,
 )
-from forecasting_tools.agents_and_tools.question_generator import (
+from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator as TopicGenerator,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import (

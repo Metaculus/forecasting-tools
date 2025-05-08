@@ -7,9 +7,13 @@ from datetime import datetime, timedelta
 import streamlit as st
 from pydantic import BaseModel
 
-from forecasting_tools.agents_and_tools.question_generator import (
+from forecasting_tools.agents_and_tools.question_generators.generated_question import (
     GeneratedQuestion,
+)
+from forecasting_tools.agents_and_tools.question_generators.question_generator import (
     QuestionGenerator,
+)
+from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator,
 )
 from forecasting_tools.ai_models.general_llm import GeneralLlm
