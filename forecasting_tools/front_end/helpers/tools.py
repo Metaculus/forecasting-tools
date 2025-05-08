@@ -8,20 +8,21 @@ from forecasting_tools.agents_and_tools.question_generators.topic_generator impo
 
 
 @function_tool
-async def generate_random_number(min_num: int, max_num: int) -> int:
+async def generate_random_number() -> int:
     """
     Generate a random number between min_num and max_num (default to 1 and 100).
     """
-    return random.randint(min_num, max_num)
+    return random.randint(0, 100)
 
 
 @function_tool
-async def generate_random_topics(num_topics: int = 10) -> str:
+async def generate_random_topics() -> str:
     """
     Generate a list of random topics to help come up with ideas for questions to forecast.
+    Output: List of topics that include links to the source.
     """
     topics = await TopicGenerator.generate_random_news_items(
-        number_of_items=num_topics
+        number_of_items=10
     )
     topic_list = ""
     for topic in topics:

@@ -1,7 +1,7 @@
 import logging
 
 import streamlit as st
-from agents import Agent, Handoff, RunItem, Runner, set_tracing_disabled
+from agents import Agent, Handoff, RunItem, Runner
 from agents.extensions.models.litellm_model import LitellmModel
 from openai.types.responses import ResponseTextDeltaEvent
 
@@ -11,22 +11,45 @@ from forecasting_tools.front_end.helpers.tools import get_tools_for_chat_app
 logger = logging.getLogger(__name__)
 
 
+class ChatMessage:
+    def __init__(self, role: str, content: str, reasoning: str = "") -> None:
+        self.role = role
+        self.content = content
+        self.reasoning = reasoning
+
+    def to_open_ai_message(self) -> dict:
+        return {"role": self.role, "content": self.content}
+
+    def to_dict(self) -> dict:
+        return {
+            "role": self.role,
+            "content": self.content,
+            "reasoning": self.reasoning,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ChatMessage":
+        return cls(
+            role=data.get("role", "assistant"),
+            content=data.get("content", ""),
+            reasoning=data.get("reasoning", ""),
+        )
+
+
 class ChatPage(AppPage):
     PAGE_DISPLAY_NAME: str = "💬 Chatbot"
     URL_PATH: str = "/chat"
     ENABLE_HEADER: bool = False
     ENABLE_FOOTER: bool = False
-    DEFAULT_MESSAGE: dict = {
-        "role": "assistant",
-        "content": "How may I assist you today?",
-    }
+    DEFAULT_MESSAGE: ChatMessage = ChatMessage(
+        role="assistant",
+        content="How may I assist you today?",
+        reasoning="",
+    )
     MODEL_NAME: str = "openrouter/google/gemini-2.5-pro-preview"
 
     @classmethod
     async def _async_main(cls) -> None:
-        set_tracing_disabled(disabled=True)
-
-        # Store LLM generated responses
         if "messages" not in st.session_state.keys():
             st.session_state.messages = [cls.DEFAULT_MESSAGE]
 
@@ -35,52 +58,41 @@ class ChatPage(AppPage):
         )
         cls.display_messages(st.session_state.messages)
 
-        # User-provided prompt
         if prompt := st.chat_input():
             st.session_state.messages.append(
-                {"role": "user", "content": prompt}
+                ChatMessage(role="user", content=prompt)
             )
             with st.chat_message("user"):
                 st.write(prompt)
 
-        # Generate a new response if last message is not from assistant
-        if st.session_state.messages[-1]["role"] != "assistant":
+        if st.session_state.messages[-1].role != "assistant":
             new_messages = await cls.generate_response(prompt)
             st.session_state.messages.extend(new_messages)
             st.rerun()
 
     @classmethod
-    def display_messages(cls, messages: list[dict]) -> None:
+    def display_messages(cls, messages: list[ChatMessage]) -> None:
         for i, message in enumerate(messages):
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
+            with st.chat_message(message.role):
+                st.write(message.content)
 
-            if "reasoning" in message:
-                reasoning: str = message["reasoning"].strip()
-                if reasoning:
-                    with st.sidebar:
-                        with st.expander(f"Tool Calls Message {i//2}"):
-                            st.write(reasoning)
+            if message.reasoning.strip():
+                with st.sidebar:
+                    with st.expander(f"Tool Calls Message {i//2}"):
+                        st.write(message.reasoning)
 
     @classmethod
-    async def generate_response(cls, prompt_input: str | None) -> list[dict]:
+    async def generate_response(
+        cls, prompt_input: str | None
+    ) -> list[ChatMessage]:
         if prompt_input is None:
             return [
-                {
-                    "role": "assistant",
-                    "content": "You didn't enter any message",
-                }
+                ChatMessage(
+                    role="assistant",
+                    content="You didn't enter any message",
+                )
             ]
-        chat_history_as_string = ""
-        for dict_message in st.session_state.messages:
-            if dict_message["role"] == "user":
-                chat_history_as_string += (
-                    "User: " + dict_message["content"] + "\n\n"
-                )
-            else:
-                chat_history_as_string += (
-                    "Assistant: " + dict_message["content"] + "\n\n"
-                )
+
         agent = Agent(
             name="Assistant",
             instructions="You are a helpful assistant. You do not respond as 'User' or pretend to be 'User'. You only respond once as 'Assistant'.",
@@ -89,9 +101,10 @@ class ChatPage(AppPage):
             handoffs=cls._all_handoffs(),
         )
 
-        result = Runner.run_streamed(
-            agent, f"{chat_history_as_string} {prompt_input} \n\n Assistant: "
-        )
+        openai_messages = [
+            m.to_open_ai_message() for m in st.session_state.messages
+        ]
+        result = Runner.run_streamed(agent, openai_messages)
         streamed_text = ""
         reasoning_text = ""
         with st.chat_message("assistant"):
@@ -109,11 +122,11 @@ class ChatPage(AppPage):
                     placeholder.write(streamed_text)
         logger.info(f"Chat finished with output: {streamed_text}")
         new_messages = [
-            {
-                "role": "assistant",
-                "content": streamed_text,
-                "reasoning": reasoning_text,
-            }
+            ChatMessage(
+                role="assistant",
+                content=streamed_text,
+                reasoning=reasoning_text,
+            )
         ]
         return new_messages
 
