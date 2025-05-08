@@ -14,6 +14,8 @@ class AppPage(ABC):
     PAGE_DISPLAY_NAME: str = NotImplemented
     URL_PATH: str = NotImplemented
     IS_DEFAULT_PAGE: bool = False
+    ENABLE_FOOTER: bool = True
+    ENABLE_HEADER: bool = True
 
     def __init_subclass__(cls: type[AppPage], *args, **kwargs) -> None:
         super().__init_subclass__(*args, **kwargs)
@@ -28,9 +30,11 @@ class AppPage(ABC):
 
     @classmethod
     def main(cls) -> None:
-        cls.header()
+        if cls.ENABLE_HEADER:
+            cls.header()
         asyncio.run(cls._async_main())
-        cls.footer()
+        if cls.ENABLE_FOOTER:
+            cls.footer()
 
     @classmethod
     @abstractmethod

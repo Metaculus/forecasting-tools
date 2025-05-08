@@ -4,6 +4,8 @@ import sys
 import dotenv
 import streamlit as st
 
+from forecasting_tools.front_end.app_pages.chat_page import ChatPage
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 top_level_dir = os.path.abspath(os.path.join(current_dir, "../../"))
 sys.path.append(top_level_dir)
@@ -32,6 +34,7 @@ class HomePage(AppPage):
     URL_PATH: str = "/"
     IS_DEFAULT_PAGE: bool = True
 
+    CHAT_PAGE: type[AppPage] = ChatPage
     FORECASTER_PAGE: type[AppPage] = ForecasterPage
     BASE_RATE_PAGE: type[AppPage] = BaseRatePage
     NICHE_LIST_RESEARCH_PAGE: type[AppPage] = NicheListResearchPage
@@ -39,6 +42,7 @@ class HomePage(AppPage):
     KEY_FACTORS_PAGE: type[AppPage] = KeyFactorsPage
     QUESTION_GENERATION_PAGE: type[AppPage] = QuestionGeneratorPage
     NON_HOME_PAGES: list[type[AppPage]] = [
+        CHAT_PAGE,
         FORECASTER_PAGE,
         KEY_FACTORS_PAGE,
         BASE_RATE_PAGE,
