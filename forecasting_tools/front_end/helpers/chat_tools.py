@@ -1,18 +1,11 @@
-import random
+from agents import Agent, Handoff, Tool, function_tool
 
-from agents import Tool, function_tool
-
+from forecasting_tools.agents_and_tools.question_generators.question_agent import (
+    QuestionCreationAgent,
+)
 from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator,
 )
-
-
-@function_tool
-async def generate_random_number() -> int:
-    """
-    Generate a random number between min_num and max_num (default to 1 and 100).
-    """
-    return random.randint(0, 100)
 
 
 @function_tool
@@ -30,5 +23,9 @@ async def generate_random_topics() -> str:
     return topic_list
 
 
+def get_agents_for_chat_app() -> list[Agent | Handoff]:
+    return [QuestionCreationAgent().readable_agent]
+
+
 def get_tools_for_chat_app() -> list[Tool]:
-    return [generate_random_number, generate_random_topics]
+    return []  # generate_random_topics]

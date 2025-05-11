@@ -1,12 +1,14 @@
 import logging
 
 import streamlit as st
-from agents import Agent, Handoff, RunItem, Runner
-from agents.extensions.models.litellm_model import LitellmModel
+from agents import Agent, RunItem, Runner
 from openai.types.responses import ResponseTextDeltaEvent
 
 from forecasting_tools.front_end.helpers.app_page import AppPage
-from forecasting_tools.front_end.helpers.tools import get_tools_for_chat_app
+from forecasting_tools.front_end.helpers.chat_tools import (
+    get_agents_for_chat_app,
+    get_tools_for_chat_app,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -96,9 +98,9 @@ class ChatPage(AppPage):
         agent = Agent(
             name="Assistant",
             instructions="You are a helpful assistant. When a tool gives you answers that are cited, you include the links in your responses.",
-            model=LitellmModel(model=cls.MODEL_NAME),
+            # model=LitellmModel(model=cls.MODEL_NAME),
             tools=get_tools_for_chat_app(),
-            handoffs=cls._all_handoffs(),
+            handoffs=get_agents_for_chat_app(),
         )
 
         openai_messages = [
@@ -117,6 +119,10 @@ class ChatPage(AppPage):
                         streamed_text += event.data.delta
                     elif event.type == "run_item_stream_event":
                         reasoning_text += f"{cls._grab_text_of_item(event.item)}\n\n"  # TODO: Don't define this as reasoning, but as a new tool-role message
+                    elif event.type == "agent_updated_stream_event":
+                        reasoning_text += (
+                            f"Agent updated: {event.new_agent.name}"
+                        )
                     placeholder.write(streamed_text)
         logger.info(f"Chat finished with output: {streamed_text}")
         new_messages = [
@@ -157,15 +163,6 @@ class ChatPage(AppPage):
     @classmethod
     def clear_chat_history(cls) -> None:
         st.session_state.messages = [cls.DEFAULT_MESSAGE]
-
-    @classmethod
-    def _all_handoffs(cls) -> list[Agent | Handoff]:
-        debate_agent = Agent(
-            name="Debate Agent",
-            instructions="You are a debate agent. You act as a debate partner.",
-            model=LitellmModel(model="gemini/gemini-2.5-pro-preview-03-25"),
-        )
-        return [debate_agent]
 
 
 if __name__ == "__main__":
