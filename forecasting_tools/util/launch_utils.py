@@ -209,6 +209,7 @@ class SheetOrganizer:
         num_pro_questions: int | None = None,
     ) -> list[LaunchQuestion]:
         input_questions = cls.load_questions_from_csv(input_file_path)
+        random.shuffle(input_questions)
         bot_questions = cls.schedule_questions(
             input_questions, start_date, chance_to_skip_slot
         )
@@ -254,7 +255,6 @@ class SheetOrganizer:
         copied_input_questions = [
             question.model_copy(deep=True) for question in questions
         ]
-        random.shuffle(copied_input_questions)
         prescheduled_questions = [
             q
             for q in copied_input_questions
@@ -273,7 +273,6 @@ class SheetOrganizer:
                     if q.scheduled_resolve_time
                     else datetime.max
                 ),
-                q.original_order,
             )
         )
 
@@ -286,10 +285,7 @@ class SheetOrganizer:
         if not questions_to_schedule:
             all_questions = prescheduled_questions
             all_questions.sort(
-                key=lambda q: (
-                    q.open_time if q.open_time else datetime.max,
-                    q.original_order,
-                )
+                key=lambda q: (q.open_time if q.open_time else datetime.max,)
             )
             return all_questions
 
@@ -332,10 +328,7 @@ class SheetOrganizer:
 
         all_questions = prescheduled_questions + newly_scheduled_questions
         all_questions.sort(
-            key=lambda q: (
-                q.open_time if q.open_time else datetime.max,
-                q.original_order,
-            )
+            key=lambda q: (q.open_time if q.open_time else datetime.max,)
         )
 
         return all_questions
@@ -425,10 +418,7 @@ class SheetOrganizer:
                 questions_left_to_sample -= 1
 
         pro_launch_questions.sort(
-            key=lambda q: (
-                (q.open_time if q.open_time else datetime.max),
-                q.original_order,
-            )
+            key=lambda q: ((q.open_time if q.open_time else datetime.max),)
         )
         return pro_launch_questions
 
@@ -894,6 +884,9 @@ class SheetOrganizer:
             ]
             if use_stored_titles:
                 stored_question_titles = load_text_file(title_file)
+                assert (
+                    len(stored_question_titles) > 0
+                ), "Stored question titles file is empty"
                 stored_question_titles = [
                     title.strip()
                     for title in stored_question_titles.split("\n")
@@ -905,19 +898,35 @@ class SheetOrganizer:
             else:
                 combined_question_titles = new_question_titles
 
+            duplicate_titles = set()
             for title in combined_question_titles:
                 title_count[title] = title_count.get(title, 0) + 1
                 if (
                     title_count[title] == 2
                 ):  # Only add warning first time duplicate is found
+                    duplicate_titles.add(title)
                     warnings.append(
                         LaunchWarning(
                             warning=f"Duplicate title found: {title}",
                         )
                     )
 
-            if not warnings and use_stored_titles:
-                append_to_text_file(title_file, "\n".join(new_question_titles))
+            if use_stored_titles:
+                non_duplicate_titles = [
+                    title
+                    for title in new_question_titles
+                    if title not in duplicate_titles
+                ]
+                append_to_text_file(
+                    title_file, "\n".join(non_duplicate_titles)
+                )
+
+            if len(warnings) > 10:
+                warnings = [
+                    LaunchWarning(
+                        warning=f"There are {len(warnings)} duplicate titles. You probably just reran the script.",
+                    )
+                ]
             return warnings
 
         # If bot questions
@@ -1241,7 +1250,7 @@ class SheetOrganizer:
         )
         final_warnings.extend(_check_bridgewater_tournament())
         final_warnings.extend(_check_numeric_range())
-        final_warnings.extend(_check_duplicate_titles())
+        final_warnings.extend(_check_duplicate_titles(use_stored_titles=True))
         final_warnings.extend(_check_question_type_distribution())
         final_warnings.extend(_check_average_weight())
         final_warnings.extend(_check_order_changed())
@@ -1324,8 +1333,8 @@ if __name__ == "__main__":
             input_file_path="temp/input_launch_questions.csv",
             bot_output_file_path="temp/bot_questions.csv",
             pro_output_file_path="temp/pro_questions.csv",
-            num_pro_questions=15,
-            chance_to_skip_slot=0.07,
+            num_pro_questions=11,
+            chance_to_skip_slot=0.12,
             start_date=start_date,
             end_date=end_date,
         )

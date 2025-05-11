@@ -95,7 +95,7 @@ class ChatPage(AppPage):
 
         agent = Agent(
             name="Assistant",
-            instructions="You are a helpful assistant. You do not respond as 'User' or pretend to be 'User'. You only respond once as 'Assistant'.",
+            instructions="You are a helpful assistant. When a tool gives you answers that are cited, you include the links in your responses.",
             model=LitellmModel(model=cls.MODEL_NAME),
             tools=get_tools_for_chat_app(),
             handoffs=cls._all_handoffs(),
@@ -116,9 +116,7 @@ class ChatPage(AppPage):
                     ):
                         streamed_text += event.data.delta
                     elif event.type == "run_item_stream_event":
-                        reasoning_text += (
-                            f"{cls._grab_text_of_item(event.item)}\n\n"
-                        )
+                        reasoning_text += f"{cls._grab_text_of_item(event.item)}\n\n"  # TODO: Don't define this as reasoning, but as a new tool-role message
                     placeholder.write(streamed_text)
         logger.info(f"Chat finished with output: {streamed_text}")
         new_messages = [
