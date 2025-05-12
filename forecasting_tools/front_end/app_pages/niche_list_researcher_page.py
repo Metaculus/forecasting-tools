@@ -3,7 +3,7 @@ import logging
 import streamlit as st
 from pydantic import BaseModel
 
-from forecasting_tools.agents_and_tools.niche_list_researcher import (
+from forecasting_tools.agents_and_tools.base_rates.niche_list_researcher import (
     FactCheckedItem,
     NicheListResearcher,
 )

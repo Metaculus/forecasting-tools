@@ -3,7 +3,7 @@ name: Run Bot for the Metaculus Cup
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 */2 * *" # runs at midnight every 2 days
+    - cron: "0 0 */3 * *" # runs at midnight every 3 days
 
 # Add concurrency group to prevent parallel runs
 concurrency:
@@ -39,6 +39,16 @@ jobs:
     secrets:
       INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN }}
       INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_o3_high_token:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_O3_HIGH_TOKEN+metaculus-cup'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O3_HIGH_TOKEN }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 

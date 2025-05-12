@@ -2,7 +2,9 @@ import logging
 
 import pytest
 
-from forecasting_tools.agents_and_tools.deduplicator import Deduplicator
+from forecasting_tools.agents_and_tools.base_rates.deduplicator import (
+    Deduplicator,
+)
 
 logger = logging.getLogger(__name__)
 

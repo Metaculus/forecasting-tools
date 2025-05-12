@@ -1,6 +1,6 @@
 import asyncio
 
-from forecasting_tools.agents_and_tools.base_rate_researcher import (
+from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
     BaseRateReport,
 )
 from forecasting_tools.data_models.data_organizer import DataOrganizer

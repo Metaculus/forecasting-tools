@@ -69,6 +69,9 @@ You only give your final result in json after you have gone through all the step
 # Good candidates for follow up question to get context
 - Anything that shed light on a good base rate (especially ones that already have data)
 - If there might be a index, site, etc that would allow for a clear resolution
+
+Whatever you do, DO NOT give ANY Json until you have gotten the results of the perplexity tool call.
+DO NOT ask follow up questions. Just execute the plan the best you can.
 """
 # # Example
 # Lets say the question is "Will AI be a net negative for society?" and you are asked for 5 questions
@@ -84,6 +87,7 @@ You only give your final result in json after you have gone through all the step
 @dataclass
 class DecompositionResult:
     reasoning: str
+    research_summary: str
     questions: list[str]
 
 

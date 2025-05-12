@@ -67,7 +67,7 @@ class QuestionGenerator:
             self.smart_searcher = researcher
 
         self.example_full_questions = DataOrganizer.load_questions_from_file_path(
-            "forecasting_tools/research_agents/q3_q4_quarterly_questions.json"
+            "forecasting_tools/agents_and_tools/question_generators/q3_q4_quarterly_questions.json"
         )
         self.example_simple_questions = (
             SimpleQuestion.full_questions_to_simple_questions(

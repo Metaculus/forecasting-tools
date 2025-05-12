@@ -17,3 +17,5 @@ def test_question_decomposer_runs() -> None:
     )
     logger.info(f"result: {result}")
     assert len(result.questions) == 5
+    assert len(result.research_summary) > 0
+    assert len(result.reasoning) > 0

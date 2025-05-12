@@ -6,7 +6,9 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, field_validator
 
-from forecasting_tools.agents_and_tools.deduplicator import Deduplicator
+from forecasting_tools.agents_and_tools.base_rates.deduplicator import (
+    Deduplicator,
+)
 from forecasting_tools.agents_and_tools.research_coordinator import (
     ResearchCoordinator,
 )

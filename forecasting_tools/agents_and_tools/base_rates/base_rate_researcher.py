@@ -7,13 +7,13 @@ from enum import Enum
 
 from pydantic import BaseModel, field_validator
 
-from forecasting_tools.agents_and_tools.estimator import Estimator
-from forecasting_tools.agents_and_tools.general_researcher import (
-    GeneralResearcher,
-)
-from forecasting_tools.agents_and_tools.niche_list_researcher import (
+from forecasting_tools.agents_and_tools.base_rates.estimator import Estimator
+from forecasting_tools.agents_and_tools.base_rates.niche_list_researcher import (
     FactCheckedItem,
     NicheListResearcher,
+)
+from forecasting_tools.agents_and_tools.general_researcher import (
+    GeneralResearcher,
 )
 from forecasting_tools.agents_and_tools.question_responder import (
     QuestionResponder,

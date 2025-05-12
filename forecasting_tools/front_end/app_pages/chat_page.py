@@ -73,7 +73,7 @@ class ChatPage(AppPage):
         if st.session_state.messages[-1].role != "assistant":
             new_messages = await cls.generate_response(prompt)
             st.session_state.messages.extend(new_messages)
-            st.rerun()
+            # st.rerun()
 
     @classmethod
     def display_messages(cls, messages: list[ChatMessage]) -> None:
@@ -138,6 +138,8 @@ class ChatPage(AppPage):
                         )
                     placeholder.write(streamed_text)
         logger.info(f"Chat finished with output: {streamed_text}")
+        all_messages = result.to_input_list()
+        st.write(all_messages)
         new_messages = [
             ChatMessage(
                 role="assistant",
@@ -171,6 +173,8 @@ class ChatPage(AppPage):
             text = f"Handoff call: {handoff_info}"
         elif item.type == "handoff_output_item":
             text = f"Handoff output: {str(item.raw_item)}"
+        elif item.type == "reasoning_item":
+            text = f"Reasoning: {str(item.raw_item)}"
         return text
 
     @classmethod
@@ -198,7 +202,10 @@ def get_agents_for_chat_app() -> list[Agent | Handoff]:
 
 
 def get_tools_for_chat_app() -> list[Tool]:
-    return [QuestionDecomposer().decompose_into_questions_tool]
+    return [
+        QuestionDecomposer().decompose_into_questions_tool,
+        generate_random_topics,
+    ]
 
 
 if __name__ == "__main__":

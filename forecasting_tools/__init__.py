@@ -1,18 +1,20 @@
-from forecasting_tools.agents_and_tools.base_rate_researcher import (
+from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
     BaseRateResearcher as BaseRateResearcher,
 )
-from forecasting_tools.agents_and_tools.estimator import Estimator as Estimator
+from forecasting_tools.agents_and_tools.base_rates.estimator import (
+    Estimator as Estimator,
+)
+from forecasting_tools.agents_and_tools.base_rates.niche_list_researcher import (
+    FactCheckedItem as FactCheckedItem,
+)
+from forecasting_tools.agents_and_tools.base_rates.niche_list_researcher import (
+    NicheListResearcher as NicheListResearcher,
+)
 from forecasting_tools.agents_and_tools.key_factors_researcher import (
     KeyFactorsResearcher as KeyFactorsResearcher,
 )
 from forecasting_tools.agents_and_tools.key_factors_researcher import (
     ScoredKeyFactor as ScoredKeyFactor,
-)
-from forecasting_tools.agents_and_tools.niche_list_researcher import (
-    FactCheckedItem as FactCheckedItem,
-)
-from forecasting_tools.agents_and_tools.niche_list_researcher import (
-    NicheListResearcher as NicheListResearcher,
 )
 from forecasting_tools.agents_and_tools.question_generators.question_generator import (
     QuestionGenerator as QuestionGenerator,

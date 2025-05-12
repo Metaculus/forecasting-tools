@@ -1,6 +1,6 @@
 import pytest
 
-from forecasting_tools.agents_and_tools.base_rate_researcher import (
+from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
     BaseRateResearcher,
 )
 

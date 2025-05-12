@@ -5,7 +5,7 @@ import logging
 import streamlit as st
 from pydantic import BaseModel
 
-from forecasting_tools.agents_and_tools.estimator import Estimator
+from forecasting_tools.agents_and_tools.base_rates.estimator import Estimator
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
