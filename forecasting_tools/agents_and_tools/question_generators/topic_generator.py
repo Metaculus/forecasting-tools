@@ -1,8 +1,6 @@
 import asyncio
 from datetime import datetime
 
-from faker import Faker
-
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecast_helpers.asknews_searcher import AskNewsSearcher
@@ -18,6 +16,8 @@ class TopicGenerator:
         number_of_topics: int = 10,
         additional_instructions: str = "",
     ) -> list[str]:
+        from faker import Faker
+
         if isinstance(model, str):
             model = GeneralLlm(model=model, temperature=1, timeout=40)
 
