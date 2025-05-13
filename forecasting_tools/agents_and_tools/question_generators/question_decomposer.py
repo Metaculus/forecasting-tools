@@ -35,14 +35,17 @@ it into a list of sub questions that that will lead to better understanding and 
 the topic or question.
 
 Your research process should look like this:
-1. First get general news on the topic and run a perplexity search
-2. Pick 3 ideas things to follow up with and search perplexity with these
+1. First get general news on the topic
+2. Then pick 3 things to follow up with. Search perplexity with these in parallel
 3. Then brainstorm 2x the number of question requested number of key questions requested
 4. Pick your top questions
 5. Give your final answer as:
     - Reasoning
     - Research Summary
     - List of Questions
+
+Don't forget to INCLUDE Links (including to each question if possible)!
+Copy the links IN FULL to all your answers so others can know where you got your information.
 
 # Question requireemnts
 - The question can be forecast and will be resolvable with public information

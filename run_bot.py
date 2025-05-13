@@ -14,12 +14,12 @@ import dotenv
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.forecast_bots.community.uniform_probability_bot import (
-    UniformProbabilityBot,
-)
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
     Q2TemplateBot2025,
+)
+from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
+    UniformProbabilityBot,
 )
 from forecasting_tools.forecast_helpers.forecast_database_manager import (
     ForecastDatabaseManager,

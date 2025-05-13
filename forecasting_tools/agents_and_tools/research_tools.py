@@ -27,6 +27,7 @@ async def perplexity_search(query: str) -> str:
         model="perplexity/sonar-reasoning-pro",
         reasoning_effort="high",
         web_search_options={"search_context_size": "high"},
+        populate_citations=True,
     )
     return await llm.invoke(query)
 

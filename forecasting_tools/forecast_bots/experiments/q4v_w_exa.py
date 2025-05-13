@@ -1,8 +1,6 @@
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.questions import MetaculusQuestion
-from forecasting_tools.forecast_bots.community.q4_veritas_bot import (
-    Q4VeritasBot,
-)
+from forecasting_tools.forecast_bots.other.q4_veritas_bot import Q4VeritasBot
 from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 
 

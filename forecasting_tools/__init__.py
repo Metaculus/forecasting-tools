@@ -93,9 +93,6 @@ from forecasting_tools.data_models.questions import (
 from forecasting_tools.data_models.questions import (
     QuestionState as QuestionState,
 )
-from forecasting_tools.forecast_bots.community.uniform_probability_bot import (
-    UniformProbabilityBot as UniformProbabilityBot,
-)
 from forecasting_tools.forecast_bots.forecast_bot import (
     ForecastBot as ForecastBot,
 )
@@ -112,6 +109,9 @@ from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
 )
 from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
     Q4TemplateBot2024 as Q4TemplateBot2024,
+)
+from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
+    UniformProbabilityBot as UniformProbabilityBot,
 )
 from forecasting_tools.forecast_bots.template_bot import (
     TemplateBot as TemplateBot,
