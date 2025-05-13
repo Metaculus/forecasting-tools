@@ -89,10 +89,10 @@ class Q2TemplateBotWithDecompositionV1(Q2TemplateBot2025):
 
         research = clean_indents(
             f"""
-            ==================== ASK NEWS RESEARCH ====================
+            ==================== NEWS ====================
             {ask_news_research}
 
-            ==================== FORECASTS ====================
+            ==================== FORECAST HISTORY ====================
             Below are some previous forecasts you have made on related questions
             {formatted_forecasts}
             ==================== END ====================

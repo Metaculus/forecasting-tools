@@ -9,6 +9,10 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.forecast_bots.experiments.q2t_w_decomposition import (
+    Q2TemplateBotWithDecompositionV1,
+    Q2TemplateBotWithDecompositionV2,
+)
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
     Q2TemplateBot2025,
@@ -21,22 +25,43 @@ logger = logging.getLogger(__name__)
 
 async def benchmark_forecast_bot() -> None:
     questions_to_use = 3
+    perplexity_reasoning_pro = GeneralLlm(
+        model="openrouter/perplexity/perplexity-reasoning-pro",
+        temperature=0.3,
+        web_search_options={"search_context_size": "high"},
+        reasoning_effort="high",
+    )
+    google_gemini_2_5_pro_preview = GeneralLlm(
+        model="openrouter/google/gemini-2.5-pro-preview",
+        temperature=0.3,
+    )
+    gpt_4o = GeneralLlm(
+        model="openrouter/openai/gpt-4o",
+        temperature=0.3,
+    )
     with MonetaryCostManager() as cost_manager:
         bots = [
             Q2TemplateBot2025(
                 llms={
-                    "default": GeneralLlm(
-                        model="gpt-4o",
-                        temperature=0.3,
-                    ),
+                    "default": perplexity_reasoning_pro,
+                    "researcher": perplexity_reasoning_pro,
+                    "summarizer": gpt_4o,
                 },
             ),
-            Q2TemplateBot2025(
+            Q2TemplateBotWithDecompositionV1(
                 llms={
-                    "default": GeneralLlm(
-                        model="gpt-4o-mini",
-                        temperature=0.3,
-                    ),
+                    "default": google_gemini_2_5_pro_preview,
+                    "decomposer": google_gemini_2_5_pro_preview,
+                    "researcher": perplexity_reasoning_pro,
+                    "summarizer": gpt_4o,
+                },
+            ),
+            Q2TemplateBotWithDecompositionV2(
+                llms={
+                    "default": google_gemini_2_5_pro_preview,
+                    "decomposer": google_gemini_2_5_pro_preview,
+                    "researcher": perplexity_reasoning_pro,
+                    "summarizer": gpt_4o,
                 },
             ),
         ]
