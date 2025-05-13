@@ -121,14 +121,14 @@ class ForecastBot(ABC):
     async def forecast_on_tournament(
         self,
         tournament_id: int | str,
-        return_exceptions: bool = False,
+        return_exceptions: Literal[False],
     ) -> list[ForecastReport]: ...
 
     @overload
     async def forecast_on_tournament(
         self,
         tournament_id: int | str,
-        return_exceptions: bool = True,
+        return_exceptions: Literal[True],
     ) -> list[ForecastReport | BaseException]: ...
 
     async def forecast_on_tournament(
@@ -145,14 +145,14 @@ class ForecastBot(ABC):
     async def forecast_question(
         self,
         question: MetaculusQuestion,
-        return_exceptions: bool = False,
+        return_exceptions: Literal[False],
     ) -> ForecastReport: ...
 
     @overload
     async def forecast_question(
         self,
         question: MetaculusQuestion,
-        return_exceptions: bool = True,
+        return_exceptions: Literal[True],
     ) -> ForecastReport | BaseException: ...
 
     async def forecast_question(
@@ -172,14 +172,14 @@ class ForecastBot(ABC):
     async def forecast_questions(
         self,
         questions: Sequence[MetaculusQuestion],
-        return_exceptions: bool = False,
+        return_exceptions: Literal[False],
     ) -> list[ForecastReport]: ...
 
     @overload
     async def forecast_questions(
         self,
         questions: Sequence[MetaculusQuestion],
-        return_exceptions: bool = True,
+        return_exceptions: Literal[True],
     ) -> list[ForecastReport | BaseException]: ...
 
     async def forecast_questions(

@@ -12,13 +12,16 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 
-from agents import Agent, AgentOutputSchema, Runner, function_tool
+from agents import Agent, Runner, function_tool
 from agents.extensions.models.litellm_model import LitellmModel
+from pydantic import BaseModel
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecast_helpers.asknews_searcher import AskNewsSearcher
+from forecasting_tools.forecast_helpers.structure_output import (
+    structure_output,
+)
 
 
 @function_tool
@@ -54,9 +57,11 @@ Your research process should look like this:
 1. First get general news on the topic and run a perplexity search
 2. Pick 3 ideas things to follow up with and search perplexity with these
 3. Then brainstorm 2x the number of question requested number of key questions requested
-4. Pick and submit your top questions
-
-You only give your final result in json after you have gone through all the steps
+4. Pick  your top questions
+5. Give your final answer as:
+    - Reasoning
+    - Research Summary
+    - List of Questions
 
 # Question requireemnts
 - The question can be forecast and will be resolvable with public information
@@ -70,22 +75,11 @@ You only give your final result in json after you have gone through all the step
 - Anything that shed light on a good base rate (especially ones that already have data)
 - If there might be a index, site, etc that would allow for a clear resolution
 
-Whatever you do, DO NOT give ANY Json until you have gotten the results of the perplexity tool call.
 DO NOT ask follow up questions. Just execute the plan the best you can.
 """
-# # Example
-# Lets say the question is "Will AI be a net negative for society?" and you are asked for 5 questions
-# 1. Run a general news search and perplexity search
-# 2. Pick 3 ideas things to follow up with and search perplexity with these
-# 3. Brainstorm 10 questions
-# 4. Pick your top 5 questions
-# [
-#     "..."
-# ]
 
 
-@dataclass
-class DecompositionResult:
+class DecompositionResult(BaseModel):
     reasoning: str
     research_summary: str
     questions: list[str]
@@ -94,9 +88,9 @@ class DecompositionResult:
 class QuestionDecomposer:
     def __init__(
         self,
-        model: str = "anthropic/claude-3-7-sonnet-latest",
+        model: str | GeneralLlm = "o4-mini",
     ) -> None:
-        self.model = model
+        self.model: str = GeneralLlm.to_model_name(model)
 
     async def decompose_into_questions(
         self,
@@ -122,13 +116,15 @@ class QuestionDecomposer:
             instructions=agent_instructions,
             tools=[get_general_news, perplexity_search],
             model=LitellmModel(model=self.model),
-            output_type=AgentOutputSchema(DecompositionResult),
+            output_type=None,
         )
         result = await Runner.run(agent, input_prompt)
-        output = result.final_output_as(
-            DecompositionResult, raise_if_incorrect_type=True
+        # all_messages = result.to_input_list()
+        final_output = result.final_output
+        structured_output = await structure_output(
+            str(final_output), DecompositionResult
         )
-        return output
+        return structured_output
 
     @function_tool
     @staticmethod

@@ -271,12 +271,7 @@ class GeneralLlm(
         direct_call_response = await self._mockable_direct_call_to_model(
             *args, **kwargs
         )
-        response_to_log = (
-            direct_call_response[:1000]
-            if isinstance(direct_call_response, str)
-            else direct_call_response
-        )
-        logger.debug(f"Model responded with: {response_to_log}...")
+        logger.debug(f"Model responded with: {direct_call_response}")
         cost = direct_call_response.cost
         MonetaryCostManager.increase_current_usage_in_parent_managers(cost)
         return direct_call_response
@@ -513,3 +508,15 @@ class GeneralLlm(
             if "pro" in model:
                 cost += 0.005  # There is probably more than one search in pro models
         return cost
+
+    @classmethod
+    def to_llm(cls, model_name_or_instance: str | GeneralLlm) -> GeneralLlm:
+        if isinstance(model_name_or_instance, str):
+            return GeneralLlm(model=model_name_or_instance)
+        return model_name_or_instance
+
+    @classmethod
+    def to_model_name(cls, model_name_or_instance: str | GeneralLlm) -> str:
+        if isinstance(model_name_or_instance, str):
+            return model_name_or_instance
+        return model_name_or_instance.model

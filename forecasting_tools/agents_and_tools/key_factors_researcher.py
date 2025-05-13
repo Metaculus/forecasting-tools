@@ -9,11 +9,14 @@ from pydantic import BaseModel, Field, field_validator
 from forecasting_tools.agents_and_tools.base_rates.deduplicator import (
     Deduplicator,
 )
+from forecasting_tools.agents_and_tools.configured_llms import (
+    AdvancedLlm,
+    BasicLlm,
+)
 from forecasting_tools.agents_and_tools.research_coordinator import (
     ResearchCoordinator,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.configured_llms import AdvancedLlm, BasicLlm
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusQuestion
 from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 from forecasting_tools.util import async_batching
