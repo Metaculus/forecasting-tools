@@ -1,14 +1,22 @@
 import logging
 
 import streamlit as st
-from agents import Agent, Handoff, RunItem, Runner, Tool, function_tool
+from agents import Agent, Handoff, RunItem, Runner, Tool
+from agents.extensions.models.litellm_model import LitellmModel
 from openai.types.responses import ResponseTextDeltaEvent
 
 from forecasting_tools.agents_and_tools.question_generators.question_decomposer import (
     QuestionDecomposer,
 )
+from forecasting_tools.agents_and_tools.question_generators.question_operationalizer import (
+    QuestionOperationalizer,
+)
 from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator,
+)
+from forecasting_tools.agents_and_tools.research_tools import (
+    get_general_news,
+    perplexity_search,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.front_end.helpers.app_page import AppPage
@@ -73,7 +81,7 @@ class ChatPage(AppPage):
         if st.session_state.messages[-1].role != "assistant":
             new_messages = await cls.generate_response(prompt)
             st.session_state.messages.extend(new_messages)
-            # st.rerun()
+            st.rerun()
 
     @classmethod
     def display_messages(cls, messages: list[ChatMessage]) -> None:
@@ -111,7 +119,7 @@ class ChatPage(AppPage):
                 If a tool call fails, you say so rather than giving a back up answer.
                 """
             ),
-            # model=LitellmModel(model=cls.MODEL_NAME),
+            model=LitellmModel(model=cls.MODEL_NAME),
             tools=get_tools_for_chat_app(),
             handoffs=get_agents_for_chat_app(),
         )
@@ -132,14 +140,11 @@ class ChatPage(AppPage):
                         streamed_text += event.data.delta
                     elif event.type == "run_item_stream_event":
                         reasoning_text += f"{cls._grab_text_of_item(event.item)}\n\n"  # TODO: Don't define this as reasoning, but as a new tool-role message
-                    elif event.type == "agent_updated_stream_event":
-                        reasoning_text += (
-                            f"Agent updated: {event.new_agent.name}\n\n"
-                        )
+                    # elif event.type == "agent_updated_stream_event":
+                    #     reasoning_text += f"Agent updated: {event.new_agent.name}\n\n"
                     placeholder.write(streamed_text)
+                    st.sidebar.write(reasoning_text)
         logger.info(f"Chat finished with output: {streamed_text}")
-        all_messages = result.to_input_list()
-        st.write(all_messages)
         new_messages = [
             ChatMessage(
                 role="assistant",
@@ -182,21 +187,6 @@ class ChatPage(AppPage):
         st.session_state.messages = [cls.DEFAULT_MESSAGE]
 
 
-@function_tool
-async def generate_random_topics() -> str:
-    """
-    Generate a list of random topics to help come up with ideas for questions to forecast.
-    Output: List of topics that include links to the source.
-    """
-    topics = await TopicGenerator.generate_random_news_items(
-        number_of_items=10
-    )
-    topic_list = ""
-    for topic in topics:
-        topic_list += f"- {topic}\n"
-    return topic_list
-
-
 def get_agents_for_chat_app() -> list[Agent | Handoff]:
     return []
 
@@ -204,7 +194,10 @@ def get_agents_for_chat_app() -> list[Agent | Handoff]:
 def get_tools_for_chat_app() -> list[Tool]:
     return [
         QuestionDecomposer().decompose_into_questions_tool,
-        generate_random_topics,
+        TopicGenerator().generate_random_topics_tool,
+        QuestionOperationalizer().question_title_to_simple_question_tool,
+        perplexity_search,
+        get_general_news,
     ]
 
 

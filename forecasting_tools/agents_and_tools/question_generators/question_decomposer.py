@@ -17,33 +17,14 @@ from agents import Agent, Runner, function_tool
 from agents.extensions.models.litellm_model import LitellmModel
 from pydantic import BaseModel
 
+from forecasting_tools.agents_and_tools.research_tools import (
+    get_general_news,
+    perplexity_search,
+)
 from forecasting_tools.ai_models.general_llm import GeneralLlm
-from forecasting_tools.forecast_helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.forecast_helpers.structure_output import (
     structure_output,
 )
-
-
-@function_tool
-async def get_general_news(topic: str) -> str:
-    """
-    Get general news context for a topic using AskNews.
-    """
-    return await AskNewsSearcher().get_formatted_news_async(topic)
-
-
-@function_tool
-async def perplexity_search(query: str) -> str:
-    """
-    Use Perplexity (sonar-reasoning-pro) to search for information on a topic.
-    """
-    llm = GeneralLlm(
-        model="perplexity/sonar-reasoning-pro",
-        reasoning_effort="high",
-        web_search_options={"search_context_size": "high"},
-    )
-    return await llm.invoke(query)
-
 
 agent_instructions = """
 # Instructions
@@ -57,7 +38,7 @@ Your research process should look like this:
 1. First get general news on the topic and run a perplexity search
 2. Pick 3 ideas things to follow up with and search perplexity with these
 3. Then brainstorm 2x the number of question requested number of key questions requested
-4. Pick  your top questions
+4. Pick your top questions
 5. Give your final answer as:
     - Reasoning
     - Research Summary
@@ -69,11 +50,12 @@ Your research process should look like this:
     - Bad: "Will Elon mention his intention to launch in a private meeting by the end of 2023?"
 - The question should be specific and not vague
 - The question should have an inferred date
-- The question should shed light on the topic
+- The question should shed light on the topic and have high VOI (Value of Information)
 
 # Good candidates for follow up question to get context
 - Anything that shed light on a good base rate (especially ones that already have data)
 - If there might be a index, site, etc that would allow for a clear resolution
+- Consider if it would be best to ask a binary ("Will X happen"), numeric ("How many?"), or multiple choice question ("Which of these will occur?")
 
 DO NOT ask follow up questions. Just execute the plan the best you can.
 """
@@ -106,7 +88,7 @@ class QuestionDecomposer:
                 else ""
             )
             + (
-                f" Additional context: {additional_context}."
+                f" Additional context/criteria: {additional_context}."
                 if additional_context
                 else ""
             )
@@ -131,7 +113,7 @@ class QuestionDecomposer:
     def decompose_into_questions_tool(
         fuzzy_topic_or_question: str,
         number_of_questions: int,
-        summary_of_chat: str,
+        additional_criteria_or_context_from_user: str | None,
     ) -> DecompositionResult:
         """
         Decompose a topic or question into a list of sub questions.
@@ -139,13 +121,84 @@ class QuestionDecomposer:
         Args:
             fuzzy_topic_or_question: The topic or question to decompose.
             number_of_questions: The number of questions to decompose the topic or question into. Default to 5.
-            summary_of_chat: A summary of the relevant chat history.
+            additional_criteria_or_context_from_user: Additional criteria or context from the user (default to None)
 
         Returns:
             A list of sub questions.
         """
         return asyncio.run(
             QuestionDecomposer().decompose_into_questions(
-                fuzzy_topic_or_question, number_of_questions, summary_of_chat
+                fuzzy_topic_or_question,
+                number_of_questions,
+                additional_criteria_or_context_from_user,
             )
         )
+
+
+# agent_instructions_v1 = """
+# # Instructions
+# You are a research assistant to a superforecaster
+
+# You want to take an overarching topic or question they have given you and decompose
+# it into a list of sub questions that that will lead to better understanding and forecasting
+# the topic or question.
+
+# Your research process should look like this:
+# 1. First get general news on the topic and run a perplexity search
+# 2. Pick 3 ideas things to follow up with and search perplexity with these
+# 3. Then brainstorm 2x the number of question requested number of key questions requested
+# 4. Pick  your top questions
+# 5. Give your final answer as:
+#     - Reasoning
+#     - Research Summary
+#     - List of Questions
+
+# # Question requireemnts
+# - The question can be forecast and will be resolvable with public information
+#     - Good: "Will SpaceX launch a rocket in 2023?"
+#     - Bad: "Will Elon mention his intention to launch in a private meeting by the end of 2023?"
+# - The question should be specific and not vague
+# - The question should have an inferred date
+# - The question should shed light on the topic and have high VOI (Value of Information)
+
+# # Good candidates for follow up question to get context
+# - Anything that shed light on a good base rate (especially ones that already have data)
+# - If there might be a index, site, etc that would allow for a clear resolution
+
+# DO NOT ask follow up questions. Just execute the plan the best you can.
+# """
+
+
+# agent_instructions_v2 = """
+# # Instructions
+# You are a research assistant to a superforecaster
+
+# You want to take an overarching topic or question they have given you and decompose
+# it into a list of sub questions that that will lead to better understanding and forecasting
+# the topic or question.
+
+# Your research process should look like this:
+# 1. First get general news on the topic (run general news tool and perplexity search)
+# 2. List out 5-20 of the major drivers of the topic
+# 3. Pick your top questions based on VOI (Value of Information) for predicting the overarching topic
+# 4. In a "FINAL ANSWER" section list out:
+#     - 2 paragraph summary of the research
+#     - Overarching Reasoning
+#     - List of Questions you chose
+#     - Dont forget to INCLUDE LINKS for everything!
+
+# # Question requireemnts
+# - The question can be forecast and will be resolvable with public information
+#     - Good: "Will SpaceX launch a rocket in 2023?"
+#     - Bad: "Will Elon mention his intention to launch in a private meeting by the end of 2023?"
+# - The question should be specific and not vague
+# - The question should have an inferred date
+# - The question should shed light on the topic and have high VOI (Value of Information)
+
+# # Good candidates for follow up question to get context
+# - Anything that shed light on a good base rate (especially ones that already have data)
+# - If there might be a index, site, etc that would allow for a clear resolution
+# - Consider if it would be best to ask a binary ("Will X happen"), numeric ("How many?"), or multiple choice question ("Which of these will occur?")
+
+# DO NOT ask follow up questions. Just execute the plan the best you can.
+# """

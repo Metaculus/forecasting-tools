@@ -1,6 +1,8 @@
 import asyncio
 from datetime import datetime
 
+from agents import function_tool
+
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecast_helpers.asknews_searcher import AskNewsSearcher
@@ -197,3 +199,18 @@ class TopicGenerator:
             for topic_dict in topic_dicts
         ]
         return topics
+
+    @function_tool
+    @staticmethod
+    def generate_random_topics_tool() -> str:
+        """
+        Generate a list of random topics to help come up with ideas for questions to forecast.
+        Output: List of topics that include links to the source.
+        """
+        topics = asyncio.run(
+            TopicGenerator.generate_random_news_items(number_of_items=10)
+        )
+        topic_list = ""
+        for topic in topics:
+            topic_list += f"- {topic}\n"
+        return topic_list

@@ -1,10 +1,7 @@
 import asyncio
 import logging
-import re
-import urllib.parse
 from datetime import datetime
 
-from forecasting_tools.agents_and_tools.configured_llms import default_llms
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.exa_searcher import (
     ExaHighlightQuote,
@@ -18,6 +15,10 @@ from forecasting_tools.ai_models.model_interfaces.outputs_text import (
 )
 from forecasting_tools.forecast_helpers.works_cited_creator import (
     WorksCitedCreator,
+)
+from forecasting_tools.util.misc import (
+    fill_in_citations,
+    make_text_fragment_url,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class SmartSearcher(OutputsText, AiModel):
         use_brackets_around_citations: bool = False,
         num_searches_to_run: int = 2,
         num_sites_per_search: int = 10,
-        model: str | GeneralLlm = default_llms["basic"],
+        model: str | GeneralLlm = "gpt-4.1",
         temperature: float | None = None,
         use_advanced_filters: bool = False,
     ) -> None:
@@ -251,47 +252,19 @@ class SmartSearcher(OutputsText, AiModel):
     def __add_links_to_citations(
         self, report: str, highlights: list[ExaHighlightQuote]
     ) -> str:
+        urls_for_citations = []
         for i, highlight in enumerate(highlights):
-            citation_num = i + 1
-            less_than_10_words = len(highlight.highlight_text.split()) < 10
-            if less_than_10_words:
-                text_fragment = highlight.highlight_text
-            else:
-                first_five_words = " ".join(
-                    highlight.highlight_text.split()[:5]
-                )
-                last_five_words = " ".join(
-                    highlight.highlight_text.split()[-5:]
-                )
-                encoded_first_five_words = urllib.parse.quote(
-                    first_five_words, safe=""
-                )
-                encoded_last_five_words = urllib.parse.quote(
-                    last_five_words, safe=""
-                )
-                text_fragment = f"{encoded_first_five_words},{encoded_last_five_words}"  # Comma indicates that anything can be included in between
-            text_fragment = text_fragment.replace("(", "%28").replace(
-                ")", "%29"
+            url = highlight.source.url
+            if url is None:
+                url = "No URL found"
+                logger.warning(f"Highlight {i} has no url")
+            text_fragment_url = make_text_fragment_url(
+                highlight.highlight_text, url
             )
-            text_fragment = text_fragment.replace("-", "%2D").strip(",")
-            text_fragment = text_fragment.replace(" ", "%20")
-            fragment_url = f"{highlight.source.url}#:~:text={text_fragment}"
-
-            if self.use_citation_brackets:
-                markdown_url = f"\\[[{citation_num}]({fragment_url})\\]"
-            else:
-                markdown_url = f"[{citation_num}]({fragment_url})"
-
-            # Combined regex pattern for all citation types
-            pattern = re.compile(
-                r"(?:\\\[)?(\[{}\](?:\(.*?\))?)(?:\\\])?".format(citation_num)
-            )
-            # Matches:
-            # [1]
-            # [1](some text)
-            # \[[1]\]
-            # \[[1](some text)\]
-            report = pattern.sub(markdown_url, report)
+            urls_for_citations.append(text_fragment_url)
+        report = fill_in_citations(
+            urls_for_citations, report, self.use_citation_brackets
+        )
 
         return report
 

@@ -33,7 +33,10 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 from forecasting_tools.util import async_batching
-from forecasting_tools.util.misc import raise_for_status_with_additional_info
+from forecasting_tools.util.misc import (
+    fill_in_citations,
+    raise_for_status_with_additional_info,
+)
 
 logger = logging.getLogger(__name__)
 ModelInputType = str | VisionMessageData | list[dict[str, str]]
@@ -99,6 +102,7 @@ class GeneralLlm(
         temperature: float | int | None = 0,
         timeout: float | int | None = None,
         pass_through_unknown_kwargs: bool = True,
+        populate_citations: bool = True,
         **kwargs,
     ) -> None:
         """
@@ -146,6 +150,7 @@ class GeneralLlm(
         )
         super().__init__(allowed_tries=allowed_tries)
         self.model = model
+        self.populate_citations = populate_citations
 
         metaculus_prefix = "metaculus/"
         exa_prefix = "exa/"
@@ -311,6 +316,17 @@ class GeneralLlm(
             cost = 0
 
         cost += self.calculate_per_request_cost(self.model)
+
+        if (
+            response.model_extra
+            and "citations" in response.model_extra
+            and self.populate_citations
+        ):
+            citations = response.model_extra.get("citations")
+            citations = typeguard.check_type(citations, list[str])
+            answer = fill_in_citations(
+                citations, answer, use_citation_brackets=False
+            )
 
         return TextTokenCostResponse(
             data=answer,

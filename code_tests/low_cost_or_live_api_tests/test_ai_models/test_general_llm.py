@@ -69,3 +69,25 @@ def test_litellm_params_work() -> None:
         non_litellm_param=100,
         pass_through_unknown_kwargs=True,
     )
+
+
+def test_citations_are_populated() -> None:
+    model = GeneralLlm(
+        model="openrouter/perplexity/sonar", populate_citations=True
+    )
+    response = asyncio.run(model.invoke("When did Abraham Lincoln die?"))
+    logger.info(f"Response: {response}")
+    assert response, "Response is empty"
+    assert (
+        "http:" in response or "www." in response
+    ), "Citations are not populated"
+
+    model = GeneralLlm(
+        model="openrouter/perplexity/sonar", populate_citations=False
+    )
+    response = asyncio.run(model.invoke("When did Abraham Lincoln die?"))
+    logger.info(f"Response: {response}")
+    assert response, "Response is empty"
+    assert (
+        "http:" not in response and "www." not in response
+    ), "Citations are populated"
