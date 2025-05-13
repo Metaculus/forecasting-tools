@@ -10,6 +10,21 @@ from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 
 
 class TopicGenerator:
+    LANGUAGES = [
+        "en_US",
+        "ja_JP",
+        "de_DE",
+        "en_GB",
+        "fr_FR",
+        "es_ES",
+        "it_IT",
+        "pt_BR",
+        "ru_RU",
+        "zh_CN",
+        "ar_EG",
+        "hi_IN",
+        "ko_KR",
+    ]
 
     @classmethod
     async def generate_random_topic(
@@ -23,23 +38,7 @@ class TopicGenerator:
         if isinstance(model, str):
             model = GeneralLlm(model=model, temperature=1, timeout=40)
 
-        fake = Faker(
-            [
-                "en_US",
-                "ja_JP",
-                "de_DE",
-                "en_GB",
-                "fr_FR",
-                "es_ES",
-                "it_IT",
-                "pt_BR",
-                "ru_RU",
-                "zh_CN",
-                "ar_EG",
-                "hi_IN",
-                "ko_KR",
-            ]
-        )
+        fake = Faker(cls.LANGUAGES)
 
         random_text = clean_indents(
             f"""
@@ -200,16 +199,47 @@ class TopicGenerator:
         ]
         return topics
 
+    @classmethod
+    async def get_news_on_random_company(
+        cls, model: GeneralLlm | str = "gpt-4o"
+    ) -> list[str]:
+        from faker import Faker
+
+        fake = Faker(cls.LANGUAGES)
+
+        ticker_symbol = fake.lexify(
+            text="???", letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        )
+        topics = await cls.topic_to_news_item(
+            topic=f"News on company with ticker symbol {ticker_symbol}",
+            model=model,
+            number_of_items=10,
+        )
+        return topics
+
     @function_tool
     @staticmethod
-    def generate_random_topics_tool() -> str:
+    def find_random_headlines_tool() -> str:
         """
-        Generate a list of random topics to help come up with ideas for questions to forecast.
+        By picking a random countery/industry/etc, finds a list of random headlines to help come up with ideas for questions to forecast.
         Output: List of topics that include links to the source.
         """
         topics = asyncio.run(
             TopicGenerator.generate_random_news_items(number_of_items=10)
         )
+        topic_list = ""
+        for topic in topics:
+            topic_list += f"- {topic}\n"
+        return topic_list
+
+    @function_tool
+    @staticmethod
+    def get_headlines_on_random_company_tool() -> str:
+        """
+        By picking a random company, finds a list of news items on the company.
+        Output: List of news items on the company.
+        """
+        topics = asyncio.run(TopicGenerator.get_news_on_random_company())
         topic_list = ""
         for topic in topics:
             topic_list += f"- {topic}\n"

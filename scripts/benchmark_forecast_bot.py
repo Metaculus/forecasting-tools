@@ -18,15 +18,16 @@ from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
     Q2TemplateBot2025,
 )
 from forecasting_tools.forecast_helpers.benchmarker import Benchmarker
+from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 from forecasting_tools.util.custom_logger import CustomLogger
 
 logger = logging.getLogger(__name__)
 
 
 async def benchmark_forecast_bot() -> None:
-    questions_to_use = 3
+    num_questions_to_use = 5
     perplexity_reasoning_pro = GeneralLlm(
-        model="openrouter/perplexity/perplexity-reasoning-pro",
+        model="openrouter/perplexity/sonar-reasoning-pro",
         temperature=0.3,
         web_search_options={"search_context_size": "high"},
         reasoning_effort="high",
@@ -47,6 +48,8 @@ async def benchmark_forecast_bot() -> None:
                     "researcher": perplexity_reasoning_pro,
                     "summarizer": gpt_4o,
                 },
+                research_reports_per_question=1,
+                predictions_per_research_report=5,
             ),
             Q2TemplateBotWithDecompositionV1(
                 llms={
@@ -55,6 +58,8 @@ async def benchmark_forecast_bot() -> None:
                     "researcher": perplexity_reasoning_pro,
                     "summarizer": gpt_4o,
                 },
+                research_reports_per_question=1,
+                predictions_per_research_report=5,
             ),
             Q2TemplateBotWithDecompositionV2(
                 llms={
@@ -63,11 +68,18 @@ async def benchmark_forecast_bot() -> None:
                     "researcher": perplexity_reasoning_pro,
                     "summarizer": gpt_4o,
                 },
+                research_reports_per_question=1,
+                predictions_per_research_report=5,
             ),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
+        chosen_questions = MetaculusApi.get_benchmark_questions(
+            num_questions_to_use,
+            days_to_resolve_in=6 * 30,  # 6 months
+            max_days_since_opening=365,
+        )
         benchmarks = await Benchmarker(
-            number_of_questions_to_use=questions_to_use,
+            questions_to_use=chosen_questions,
             forecast_bots=bots,
             file_path_to_save_reports="logs/forecasts/benchmarks/",
             concurrent_question_batch_size=20,

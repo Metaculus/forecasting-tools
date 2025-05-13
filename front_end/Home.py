@@ -14,6 +14,7 @@ from forecasting_tools.util.custom_logger import CustomLogger
 
 if __name__ == "__main__":
     dotenv.load_dotenv()
+    CustomLogger.clear_latest_log_files()
     if "logger_initialized" not in st.session_state:
         CustomLogger.setup_logging()
         st.session_state["logger_initialized"] = True

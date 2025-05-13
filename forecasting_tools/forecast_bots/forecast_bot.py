@@ -145,14 +145,14 @@ class ForecastBot(ABC):
     async def forecast_question(
         self,
         question: MetaculusQuestion,
-        return_exceptions: Literal[False],
+        return_exceptions: Literal[False] = False,
     ) -> ForecastReport: ...
 
     @overload
     async def forecast_question(
         self,
         question: MetaculusQuestion,
-        return_exceptions: Literal[True],
+        return_exceptions: Literal[True] = True,
     ) -> ForecastReport | BaseException: ...
 
     async def forecast_question(

@@ -112,7 +112,7 @@ class CustomLogger:
             handler.addFilter(api_key_filter)  # Add the filter to the handler
             root_logger.addHandler(handler)
 
-        cls._clear_latest_log_files()
+        cls.clear_latest_log_files()
         root_logger.info(
             f"Logger initialized with {len(handlers)} handlers at {datetime.datetime.now()}"
         )
@@ -159,7 +159,7 @@ class CustomLogger:
         return handler
 
     @classmethod
-    def _clear_latest_log_files(cls) -> None:
+    def clear_latest_log_files(cls) -> None:
         file_manipulation.create_or_overwrite_file(
             cls.LATEST_DEBUG_LOG_FILE_PATH, ""
         )

@@ -9,7 +9,7 @@ T = TypeVar("T")
 
 
 async def structure_output(
-    output: str, output_type: type[T], model: GeneralLlm | str = "o4-mini"
+    output: str, output_type: type[T], model: GeneralLlm | str = "gpt-4o-mini"
 ) -> T:
     # Initialize with empty instructions
     pydantic_instructions = ""

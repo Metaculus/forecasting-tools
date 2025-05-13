@@ -55,14 +55,14 @@ class Q2TemplateBotWithDecompositionV1(Q2TemplateBot2025):
         sub_questions = decomposition_result.questions
         operationalized_questions = await asyncio.gather(
             *[
-                QuestionOperationalizer(
-                    model=model
-                ).question_title_to_simple_question(question)
+                QuestionOperationalizer(model=model).operationalize_question(
+                    question
+                )
                 for question in sub_questions
             ]
         )
         metaculus_questions = (
-            SimpleQuestion.simple_questions_to_metaculus_question(
+            SimpleQuestion.simple_questions_to_metaculus_questions(
                 operationalized_questions
             )
         )

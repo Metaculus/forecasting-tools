@@ -13,99 +13,85 @@ from __future__ import annotations
 
 import asyncio
 
-from agents import Agent, Runner, function_tool
-from agents.extensions.models.litellm_model import LitellmModel
+from agents import function_tool
 from pydantic import BaseModel
 
-from forecasting_tools.agents_and_tools.research_tools import (
-    get_general_news,
-    perplexity_search,
-)
+from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecast_helpers.structure_output import (
     structure_output,
 )
 
-agent_instructions = """
-# Instructions
-You are a research assistant to a superforecaster
-
-You want to take an overarching topic or question they have given you and decompose
-it into a list of sub questions that that will lead to better understanding and forecasting
-the topic or question.
-
-Your research process should look like this:
-1. First get general news on the topic
-2. Then pick 3 things to follow up with. Search perplexity with these in parallel
-3. Then brainstorm 2x the number of question requested number of key questions requested
-4. Pick your top questions
-5. Give your final answer as:
-    - Reasoning
-    - Research Summary
-    - List of Questions
-
-Don't forget to INCLUDE Links (including to each question if possible)!
-Copy the links IN FULL to all your answers so others can know where you got your information.
-
-# Question requireemnts
-- The question can be forecast and will be resolvable with public information
-    - Good: "Will SpaceX launch a rocket in 2023?"
-    - Bad: "Will Elon mention his intention to launch in a private meeting by the end of 2023?"
-- The question should be specific and not vague
-- The question should have an inferred date
-- The question should shed light on the topic and have high VOI (Value of Information)
-
-# Good candidates for follow up question to get context
-- Anything that shed light on a good base rate (especially ones that already have data)
-- If there might be a index, site, etc that would allow for a clear resolution
-- Consider if it would be best to ask a binary ("Will X happen"), numeric ("How many?"), or multiple choice question ("Which of these will occur?")
-
-DO NOT ask follow up questions. Just execute the plan the best you can.
-"""
-
 
 class DecompositionResult(BaseModel):
     reasoning: str
-    research_summary: str
     questions: list[str]
 
 
 class QuestionDecomposer:
     def __init__(
         self,
-        model: str | GeneralLlm = "o4-mini",
+        model: str | GeneralLlm = "openrouter/perplexity/sonar-reasoning-pro",
     ) -> None:
-        self.model: str = GeneralLlm.to_model_name(model)
+        self.model: GeneralLlm = GeneralLlm.to_llm(model)
 
     async def decompose_into_questions(
         self,
         fuzzy_topic_or_question: str | None = None,
         number_of_questions: int = 5,
         additional_context: str | None = None,
+        related_research: str | None = None,
     ) -> DecompositionResult:
-        input_prompt = (
-            f"Please write me {number_of_questions} forecasting questions."
-            + (
-                f" Topic: {fuzzy_topic_or_question}."
-                if fuzzy_topic_or_question
-                else ""
-            )
-            + (
-                f" Additional context/criteria: {additional_context}."
-                if additional_context
-                else ""
-            )
+        prompt = clean_indents(
+            f"""
+            # Instructions
+            You are a research assistant to a superforecaster
+
+            You want to take an overarching topic or question they have given you and decompose
+            it into a list of sub questions that that will lead to better understanding and forecasting
+            the topic or question.
+
+            Your research process should look like this:
+            1. First get general news on the topic
+            2. Then pick 3 things to follow up with. Search perplexity with these in parallel
+            3. Then brainstorm 2x the number of question requested number of key questions requested
+            4. Pick your top questions
+            5. Give your final answer as:
+                - Reasoning
+                - Research Summary
+                - List of Questions
+
+            Don't forget to INCLUDE Links (including to each question if possible)!
+            Copy the links IN FULL to all your answers so others can know where you got your information.
+
+            # Question requireemnts
+            - The question can be forecast and will be resolvable with public information
+                - Good: "Will SpaceX launch a rocket in 2023?"
+                - Bad: "Will Elon mention his intention to launch in a private meeting by the end of 2023?"
+            - The question should be specific and not vague
+            - The question should have an inferred date
+            - The question should shed light on the topic and have high VOI (Value of Information)
+
+            # Good candidates for follow up question to get context
+            - Anything that shed light on a good base rate (especially ones that already have data)
+            - If there might be a index, site, etc that would allow for a clear resolution
+            - Consider if it would be best to ask a binary ("Will X happen"), numeric ("How many?"), or multiple choice question ("Which of these will occur?")
+
+
+            # Your Task
+            ## Topic/Question to Decompose
+            Please decompose the following topic or question into a list of {number_of_questions} sub questions.
+
+            Question/Topic: {fuzzy_topic_or_question}
+
+            ## Additional Context/Criteria
+            {additional_context}
+
+            ## Related Research
+            {related_research}
+            """
         )
-        agent = Agent(
-            name="Question Decomposer Agent",
-            instructions=agent_instructions,
-            tools=[get_general_news, perplexity_search],
-            model=LitellmModel(model=self.model),
-            output_type=None,
-        )
-        result = await Runner.run(agent, input_prompt)
-        # all_messages = result.to_input_list()
-        final_output = result.final_output
+        final_output = await self.model.invoke(prompt)
         structured_output = await structure_output(
             str(final_output), DecompositionResult
         )
@@ -116,26 +102,69 @@ class QuestionDecomposer:
     def decompose_into_questions_tool(
         fuzzy_topic_or_question: str,
         number_of_questions: int,
+        related_research: str,
         additional_criteria_or_context_from_user: str | None,
     ) -> DecompositionResult:
         """
-        Decompose a topic or question into a list of sub questions.
+        Decompose a topic or question into a list of sub questions that helps to understand and forecast the topic or question.
 
         Args:
             fuzzy_topic_or_question: The topic or question to decompose.
             number_of_questions: The number of questions to decompose the topic or question into. Default to 5.
+            related_research: Include as much research as possible to help make a good question (especially include important drivers/influencers of the topic)
             additional_criteria_or_context_from_user: Additional criteria or context from the user (default to None)
 
         Returns:
-            A list of sub questions.
+            A DecompositionResult object with the following fields:
+            - reasoning: The reasoning for the decomposition.
+            - questions: A list of sub questions.
         """
         return asyncio.run(
             QuestionDecomposer().decompose_into_questions(
                 fuzzy_topic_or_question,
                 number_of_questions,
                 additional_criteria_or_context_from_user,
+                related_research,
             )
         )
+
+
+# agent_instructions_v4 = """
+# # Instructions
+# You are a research assistant to a superforecaster
+
+# You want to take an overarching topic or question they have given you and decompose
+# it into a list of sub questions that that will lead to better understanding and forecasting
+# the topic or question.
+
+# Your research process should look like this:
+# 1. First get general news on the topic
+# 2. Then pick 3 things to follow up with. Search perplexity with these in parallel
+# 3. Then brainstorm 2x the number of question requested number of key questions requested
+# 4. Pick your top questions
+# 5. Give your final answer as:
+#     - Reasoning
+#     - Research Summary
+#     - List of Questions
+
+# Don't forget to INCLUDE Links (including to each question if possible)!
+# Copy the links IN FULL to all your answers so others can know where you got your information.
+
+# # Question requireemnts
+# - The question can be forecast and will be resolvable with public information
+#     - Good: "Will SpaceX launch a rocket in 2023?"
+#     - Bad: "Will Elon mention his intention to launch in a private meeting by the end of 2023?"
+# - The question should be specific and not vague
+# - The question should have an inferred date
+# - The question should shed light on the topic and have high VOI (Value of Information)
+
+# # Good candidates for follow up question to get context
+# - Anything that shed light on a good base rate (especially ones that already have data)
+# - If there might be a index, site, etc that would allow for a clear resolution
+# - Consider if it would be best to ask a binary ("Will X happen"), numeric ("How many?"), or multiple choice question ("Which of these will occur?")
+
+# DO NOT ask follow up questions. Just execute the plan the best you can.
+# """
 
 
 # agent_instructions_v1 = """

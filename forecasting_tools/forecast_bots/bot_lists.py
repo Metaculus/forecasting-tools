@@ -1,5 +1,9 @@
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.forecast_bots.experiments.q2t_w_decomposition import (
+    Q2TemplateBotWithDecompositionV1,
+    Q2TemplateBotWithDecompositionV2,
+)
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.main_bot import MainBot
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
@@ -28,11 +32,13 @@ def get_all_important_bot_classes() -> list[type[ForecastBot]]:
         TemplateBot,
         Q2TemplateBot2025,
         Q1TemplateBot2025,
-        Q3TemplateBot2024,
         Q4TemplateBot2024,
-        Q4VeritasBot,
+        Q3TemplateBot2024,
         Q1VeritasBot,
+        Q4VeritasBot,
         UniformProbabilityBot,
+        Q2TemplateBotWithDecompositionV1,
+        Q2TemplateBotWithDecompositionV2,
     ]
 
 

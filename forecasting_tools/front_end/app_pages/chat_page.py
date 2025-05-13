@@ -1,10 +1,18 @@
 import logging
 
 import streamlit as st
-from agents import Agent, Handoff, RunItem, Runner, Tool
+from agents import Agent, RunItem, Runner, Tool
 from agents.extensions.models.litellm_model import LitellmModel
 from openai.types.responses import ResponseTextDeltaEvent
 
+from forecasting_tools.agents_and_tools.misc_tools import (
+    create_tool_for_forecasting_bot,
+    get_general_news_with_asknews,
+    grab_open_questions_from_tournament,
+    grab_question_details_from_metaculus,
+    perplexity_search,
+    smart_searcher_search,
+)
 from forecasting_tools.agents_and_tools.question_generators.question_decomposer import (
     QuestionDecomposer,
 )
@@ -14,12 +22,14 @@ from forecasting_tools.agents_and_tools.question_generators.question_operational
 from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator,
 )
-from forecasting_tools.agents_and_tools.research_tools import (
-    get_general_news,
-    perplexity_search,
-)
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.forecast_bots.bot_lists import (
+    get_all_important_bot_classes,
+)
 from forecasting_tools.front_end.helpers.app_page import AppPage
+from forecasting_tools.front_end.helpers.report_displayer import (
+    ReportDisplayer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +79,7 @@ class ChatPage(AppPage):
         st.sidebar.button(
             "Clear Chat History", on_click=cls.clear_chat_history
         )
+        active_tools = cls.display_tools()
         cls.display_messages(st.session_state.messages)
 
         if prompt := st.chat_input():
@@ -79,9 +90,40 @@ class ChatPage(AppPage):
                 st.write(prompt)
 
         if st.session_state.messages[-1].role != "assistant":
-            new_messages = await cls.generate_response(prompt)
+            new_messages = await cls.generate_response(prompt, active_tools)
             st.session_state.messages.extend(new_messages)
             st.rerun()
+
+    @classmethod
+    def display_tools(cls) -> list[Tool]:
+        default_tools: list[Tool] = [
+            TopicGenerator().find_random_headlines_tool,
+            TopicGenerator().get_headlines_on_random_company_tool,
+            QuestionDecomposer().decompose_into_questions_tool,
+            QuestionOperationalizer().question_operationalizer_tool,
+            perplexity_search,
+            get_general_news_with_asknews,
+            smart_searcher_search,
+            grab_question_details_from_metaculus,
+            grab_open_questions_from_tournament,
+        ]
+
+        bot_options = get_all_important_bot_classes()
+        bot_choice = st.sidebar.selectbox(
+            "Select a bot for forecast_question_tool",
+            [bot.__name__ for bot in bot_options],
+        )
+        bot = next(bot for bot in bot_options if bot.__name__ == bot_choice)
+        default_tools.append(create_tool_for_forecasting_bot(bot))
+
+        active_tools: list[Tool] = []
+        with st.sidebar:
+            for tool in default_tools:
+                tool_active = st.checkbox(tool.name, value=True)
+                if tool_active:
+                    active_tools.append(tool)
+
+        return active_tools
 
     @classmethod
     def display_messages(cls, messages: list[ChatMessage]) -> None:
@@ -96,7 +138,7 @@ class ChatPage(AppPage):
 
     @classmethod
     async def generate_response(
-        cls, prompt_input: str | None
+        cls, prompt_input: str | None, active_tools: list[Tool]
     ) -> list[ChatMessage]:
         if prompt_input is None:
             return [
@@ -120,8 +162,8 @@ class ChatPage(AppPage):
                 """
             ),
             model=LitellmModel(model=cls.MODEL_NAME),
-            tools=get_tools_for_chat_app(),
-            handoffs=get_agents_for_chat_app(),
+            tools=active_tools,
+            handoffs=[],
         )
 
         openai_messages = [
@@ -134,22 +176,27 @@ class ChatPage(AppPage):
             placeholder = st.empty()
             with st.spinner("Thinking..."):
                 async for event in result.stream_events():
+                    new_reasoning = ""
                     if event.type == "raw_response_event" and isinstance(
                         event.data, ResponseTextDeltaEvent
                     ):
                         streamed_text += event.data.delta
                     elif event.type == "run_item_stream_event":
-                        reasoning_text += f"{cls._grab_text_of_item(event.item)}\n\n"  # TODO: Don't define this as reasoning, but as a new tool-role message
+                        new_reasoning = (
+                            f"{cls._grab_text_of_item(event.item)}\n\n"
+                        )
+                        reasoning_text += new_reasoning  # TODO: Don't define this as reasoning, but as a new tool-role message
                     # elif event.type == "agent_updated_stream_event":
                     #     reasoning_text += f"Agent updated: {event.new_agent.name}\n\n"
                     placeholder.write(streamed_text)
-                    st.sidebar.write(reasoning_text)
+                    if new_reasoning:
+                        st.sidebar.write(new_reasoning)
         logger.info(f"Chat finished with output: {streamed_text}")
         new_messages = [
             ChatMessage(
                 role="assistant",
-                content=streamed_text,
-                reasoning=reasoning_text,
+                content=ReportDisplayer.clean_markdown(streamed_text),
+                reasoning=ReportDisplayer.clean_markdown(reasoning_text),
             )
         ]
         return new_messages
@@ -185,20 +232,6 @@ class ChatPage(AppPage):
     @classmethod
     def clear_chat_history(cls) -> None:
         st.session_state.messages = [cls.DEFAULT_MESSAGE]
-
-
-def get_agents_for_chat_app() -> list[Agent | Handoff]:
-    return []
-
-
-def get_tools_for_chat_app() -> list[Tool]:
-    return [
-        QuestionDecomposer().decompose_into_questions_tool,
-        TopicGenerator().generate_random_topics_tool,
-        QuestionOperationalizer().question_title_to_simple_question_tool,
-        perplexity_search,
-        get_general_news,
-    ]
 
 
 if __name__ == "__main__":

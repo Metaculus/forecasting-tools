@@ -153,7 +153,7 @@ class SimpleQuestion(BaseModel, Jsonable):
         return simple_questions
 
     @classmethod
-    def simple_questions_to_metaculus_question(
+    def simple_questions_to_metaculus_questions(
         cls, simple_questions: list[SimpleQuestion]
     ) -> list[MetaculusQuestion]:
         full_questions = []

@@ -1,9 +1,11 @@
+import json
 import logging
 import re
 import urllib.parse
 from typing import Any, TypeVar, cast
 
 import requests
+from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import validate_complex_type
 
@@ -89,3 +91,15 @@ def fill_in_citations(
         # \[[1](some text)\]
         final_text = pattern.sub(markdown_url, final_text)
     return final_text
+
+
+def get_schema_of_base_model(model_class: type[BaseModel]) -> str:
+    schema = {k: v for k, v in model_class.model_json_schema().items()}
+
+    reduced_schema = schema
+    if "title" in reduced_schema:
+        del reduced_schema["title"]
+    if "type" in reduced_schema:
+        del reduced_schema["type"]
+    schema_str = json.dumps(reduced_schema)
+    return schema_str

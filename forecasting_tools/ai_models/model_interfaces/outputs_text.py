@@ -13,6 +13,7 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import (
     validate_complex_type,
 )
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
+from forecasting_tools.util.misc import get_schema_of_base_model
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
@@ -237,14 +238,7 @@ class OutputsText(AiModel, ABC):
         pydantic_type: type[BaseModel],
     ) -> str:
         # Copy schema to avoid altering original Pydantic schema.
-        schema = {k: v for k, v in pydantic_type.model_json_schema().items()}
-
-        reduced_schema = schema
-        if "title" in reduced_schema:
-            del reduced_schema["title"]
-        if "type" in reduced_schema:
-            del reduced_schema["type"]
-        schema_str = json.dumps(reduced_schema)
+        schema_str = get_schema_of_base_model(pydantic_type)
 
         return _PYDANTIC_FORMAT_INSTRUCTIONS.format(schema=schema_str)
 

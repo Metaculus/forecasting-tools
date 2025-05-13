@@ -272,7 +272,7 @@ class QuestionGenerator:
 
         # Convert simple questions to MetaculusQuestion format
         metaculus_questions = (
-            SimpleQuestion.simple_questions_to_metaculus_question(questions)
+            SimpleQuestion.simple_questions_to_metaculus_questions(questions)
         )
 
         for simple_question, metaculus_question in zip(
