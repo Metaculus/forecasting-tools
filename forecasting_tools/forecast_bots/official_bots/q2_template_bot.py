@@ -69,15 +69,17 @@ class Q2TemplateBot2025(ForecastBot):
             research = ""
             researcher = self.get_llm("researcher")
 
-            prompt = f"""
-            You are an assistant to a superforecaster.
-            The superforecaster will give you a question they intend to forecast on.
-            To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-            You do not produce forecasts yourself.
+            prompt = clean_indents(
+                f"""
+                You are an assistant to a superforecaster.
+                The superforecaster will give you a question they intend to forecast on.
+                To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
+                You do not produce forecasts yourself.
 
-            Question:
-            {question}
-            """
+                Question:
+                {question}
+                """
+            )
 
             if isinstance(researcher, GeneralLlm):
                 research = await researcher.invoke(prompt)
