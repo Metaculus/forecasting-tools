@@ -433,7 +433,7 @@ def run_benchmark_streamlit_page(
 
     This function runs the benchmark streamlit page.
     If input_benchmarks is provided, it will display the benchmarks passed in.
-    If input is a string, it will be treated as a folder path that contains benchmark JSON file.
+    If input is a string, it will be treated as a folder path that contains benchmark JSON files.
     Otherwise, it will display the benchmarks in the project directory.
 
     Files containing "bench" in the name and ending in '.json' will be collected as benchmark files

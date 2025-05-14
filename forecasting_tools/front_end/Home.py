@@ -4,6 +4,7 @@ import sys
 import dotenv
 import streamlit as st
 
+from forecasting_tools.front_end.app_pages.benchmark_page import BenchmarkPage
 from forecasting_tools.front_end.app_pages.chat_page import ChatPage
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +42,7 @@ class HomePage(AppPage):
     ESTIMATOR_PAGE: type[AppPage] = EstimatorPage
     KEY_FACTORS_PAGE: type[AppPage] = KeyFactorsPage
     QUESTION_GENERATION_PAGE: type[AppPage] = QuestionGeneratorPage
+    BENCHMARK_PAGE: type[AppPage] = BenchmarkPage
     NON_HOME_PAGES: list[type[AppPage]] = [
         CHAT_PAGE,
         FORECASTER_PAGE,
@@ -49,6 +51,7 @@ class HomePage(AppPage):
         NICHE_LIST_RESEARCH_PAGE,
         ESTIMATOR_PAGE,
         QUESTION_GENERATION_PAGE,
+        # BENCHMARK_PAGE, # Enabled by env variable
     ]
 
     @classmethod
@@ -62,6 +65,8 @@ class HomePage(AppPage):
 
 def run_forecasting_streamlit_app() -> None:
     all_pages = [HomePage] + HomePage.NON_HOME_PAGES
+    if os.getenv("RUN_BENCHMARK_PAGE", "false").lower() == "true":
+        all_pages.append(HomePage.BENCHMARK_PAGE)
     navigation = st.navigation(
         [page.convert_to_streamlit_page() for page in all_pages]
     )

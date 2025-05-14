@@ -98,7 +98,6 @@ class ChatPage(AppPage):
     def display_tools(cls) -> list[Tool]:
         default_tools: list[Tool] = [
             TopicGenerator().find_random_headlines_tool,
-            TopicGenerator().get_headlines_on_random_company_tool,
             QuestionDecomposer().decompose_into_questions_tool,
             QuestionOperationalizer().question_operationalizer_tool,
             perplexity_search,
@@ -106,6 +105,7 @@ class ChatPage(AppPage):
             smart_searcher_search,
             grab_question_details_from_metaculus,
             grab_open_questions_from_tournament,
+            TopicGenerator().get_headlines_on_random_company_tool,
         ]
 
         bot_options = get_all_important_bot_classes()
@@ -159,6 +159,8 @@ class ChatPage(AppPage):
                 If you can, you infer the inputs to tools rather than ask for them.
 
                 If a tool call fails, you say so rather than giving a back up answer.
+
+                Whenever possible, please parralelize your tool calls.
                 """
             ),
             model=LitellmModel(model=cls.MODEL_NAME),
@@ -169,7 +171,7 @@ class ChatPage(AppPage):
         openai_messages = [
             m.to_open_ai_message() for m in st.session_state.messages
         ]
-        result = Runner.run_streamed(agent, openai_messages)
+        result = Runner.run_streamed(agent, openai_messages, max_turns=20)
         streamed_text = ""
         reasoning_text = ""
         with st.chat_message("assistant"):

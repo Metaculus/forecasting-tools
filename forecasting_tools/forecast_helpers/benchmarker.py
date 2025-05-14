@@ -40,6 +40,7 @@ class Benchmarker:
         questions_to_use: Sequence[MetaculusQuestion] | None = None,
         file_path_to_save_reports: str | None = None,
         concurrent_question_batch_size: int = 10,
+        classes_to_snapshot: list[type] | None = None,
     ) -> None:
         if (
             number_of_questions_to_use is not None
@@ -64,6 +65,7 @@ class Benchmarker:
         self.file_path_to_save_reports = file_path_to_save_reports
         self.initialization_timestamp = datetime.now()
         self.concurrent_question_batch_size = concurrent_question_batch_size
+        self.code_to_snapshot = classes_to_snapshot
 
     async def run_benchmark(self) -> list[BenchmarkForBot]:
         if self.questions_to_use is None:
@@ -87,6 +89,9 @@ class Benchmarker:
         for bot in self.forecast_bots:
             try:
                 source_code = inspect.getsource(bot.__class__)
+                if self.code_to_snapshot:
+                    for item in self.code_to_snapshot:
+                        source_code += f"\n\n#------------{item.__name__}-------------\n\n{inspect.getsource(item)}"
             except Exception:
                 logger.warning(
                     f"Could not get source code for {bot.__class__.__name__}"

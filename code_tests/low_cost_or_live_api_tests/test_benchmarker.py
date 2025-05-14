@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock
@@ -8,8 +9,13 @@ from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
 )
 from forecasting_tools.data_models.benchmark_for_bot import BenchmarkForBot
+from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
+    Q2TemplateBot2025,
+)
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
 from forecasting_tools.forecast_helpers.benchmarker import Benchmarker
+
+logger = logging.getLogger(__name__)
 
 
 async def test_file_is_made_for_benchmark(
@@ -155,6 +161,35 @@ async def test_benchmarks_run_properly_with_provided_questions(
         assert_all_benchmark_object_fields_are_not_none(
             benchmark, len(test_questions)
         )
+
+
+async def test_code_is_saved_for_benchmark(mocker: Mock) -> None:
+    bot_type = Q2TemplateBot2025
+    bot = bot_type()
+    ForecastingTestManager.mock_forecast_bot_run_forecast(bot_type, mocker)
+    questions = [
+        ForecastingTestManager.get_fake_binary_question() for _ in range(10)
+    ]
+    benchmarks = await Benchmarker(
+        forecast_bots=[bot],
+        classes_to_snapshot=[ForecastingTestManager],
+        questions_to_use=questions,
+    ).run_benchmark()
+    assert len(benchmarks) == 1
+    benchmark = benchmarks[0]
+
+    logger.info(benchmark.code)
+    assert benchmark.code is not None
+    assert f"{Q2TemplateBot2025.__name__}" in benchmark.code
+    assert (
+        f"{Q2TemplateBot2025._run_forecast_on_binary.__name__}"
+        in benchmark.code
+    )
+    assert f"{ForecastingTestManager.__name__}" in benchmark.code
+    assert (
+        f"{ForecastingTestManager.mock_forecast_bot_run_forecast.__name__}"
+        in benchmark.code
+    )
 
 
 def test_benchmarker_initialization_errors() -> None:

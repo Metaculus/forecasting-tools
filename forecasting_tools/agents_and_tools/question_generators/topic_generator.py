@@ -1,12 +1,27 @@
 import asyncio
+import logging
+import random
 from datetime import datetime
 
 from agents import function_tool
+from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecast_helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
+from forecasting_tools.forecast_helpers.structure_output import (
+    structure_output,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class OrgInfo(BaseModel):
+    symbol: str
+    name: str
+    url: str
+    overview: str
 
 
 class TopicGenerator:
@@ -201,21 +216,39 @@ class TopicGenerator:
 
     @classmethod
     async def get_news_on_random_company(
-        cls, model: GeneralLlm | str = "gpt-4o"
-    ) -> list[str]:
+        cls,
+        model: GeneralLlm | str = "gpt-4o",
+        search_model: GeneralLlm | str = "openrouter/perplexity/sonar-pro",
+    ) -> tuple[OrgInfo, list[str]]:
         from faker import Faker
 
         fake = Faker(cls.LANGUAGES)
 
-        ticker_symbol = fake.lexify(
-            text="???", letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        use_4_letters = random.random() < 0.5
+        if use_4_letters:
+            ticker_symbol = fake.lexify(
+                text="????", letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            )
+        else:
+            ticker_symbol = fake.lexify(
+                text="???", letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            )
+        prompt = clean_indents(
+            f"""
+            Please figure out what org/entity the ticker symbol {ticker_symbol} is for (or if it doesn't exist an org with the closest matching ticker).
+            Return the name of the org/entity, a relevant url, the chosen ticker symbol, and a short description of the org/entity.
+            """
         )
+        response = await GeneralLlm.to_llm(search_model).invoke(prompt)
+        company = await structure_output(response, OrgInfo)
+        logger.info(f"Company info: {company}")
+
         topics = await cls.topic_to_news_item(
-            topic=f"News on company with ticker symbol {ticker_symbol}",
+            topic=f"News on company '{company.name}' with ticker symbol {company.symbol}",
             model=model,
             number_of_items=10,
         )
-        return topics
+        return company, topics
 
     @function_tool
     @staticmethod
@@ -239,8 +272,13 @@ class TopicGenerator:
         By picking a random company, finds a list of news items on the company.
         Output: List of news items on the company.
         """
-        topics = asyncio.run(TopicGenerator.get_news_on_random_company())
+        company, topics = asyncio.run(
+            TopicGenerator.get_news_on_random_company()
+        )
+        company_info = f"Company: {company.name} ({company.symbol})\n"
+        company_info += f"Overview: {company.overview}\n"
+        company_info += f"URL: {company.url}\n"
         topic_list = ""
         for topic in topics:
             topic_list += f"- {topic}\n"
-        return topic_list
+        return f"{company_info}\n{topic_list}"
