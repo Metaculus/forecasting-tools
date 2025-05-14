@@ -12,6 +12,8 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 from forecasting_tools.forecast_bots.experiments.q2t_w_decomposition import (
     Q2TemplateBotWithDecompositionV1,
     Q2TemplateBotWithDecompositionV2,
+    QuestionDecomposer,
+    QuestionOperationalizer,
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
@@ -25,14 +27,12 @@ logger = logging.getLogger(__name__)
 
 
 async def benchmark_forecast_bot() -> None:
-    num_questions_to_use = 5
-    perplexity_reasoning_pro = GeneralLlm(
-        model="openrouter/perplexity/sonar-reasoning-pro",
-        temperature=0.3,
-        web_search_options={"search_context_size": "high"},
-        reasoning_effort="high",
-    )
+    num_questions_to_use = 1
     google_gemini_2_5_pro_preview = GeneralLlm(
+        model="openrouter/google/gemini-2.5-pro-preview",
+        temperature=0.3,
+    )
+    gemini_grounded_model = GeneralLlm.grounded_model(
         model="openrouter/google/gemini-2.5-pro-preview",
         temperature=0.3,
     )
@@ -44,8 +44,8 @@ async def benchmark_forecast_bot() -> None:
         bots = [
             Q2TemplateBot2025(
                 llms={
-                    "default": perplexity_reasoning_pro,
-                    "researcher": perplexity_reasoning_pro,
+                    "default": google_gemini_2_5_pro_preview,
+                    "researcher": gemini_grounded_model,
                     "summarizer": gpt_4o,
                 },
                 research_reports_per_question=1,
@@ -54,8 +54,8 @@ async def benchmark_forecast_bot() -> None:
             Q2TemplateBotWithDecompositionV1(
                 llms={
                     "default": google_gemini_2_5_pro_preview,
-                    "decomposer": google_gemini_2_5_pro_preview,
-                    "researcher": perplexity_reasoning_pro,
+                    "decomposer": gemini_grounded_model,
+                    "researcher": gemini_grounded_model,
                     "summarizer": gpt_4o,
                 },
                 research_reports_per_question=1,
@@ -64,8 +64,8 @@ async def benchmark_forecast_bot() -> None:
             Q2TemplateBotWithDecompositionV2(
                 llms={
                     "default": google_gemini_2_5_pro_preview,
-                    "decomposer": google_gemini_2_5_pro_preview,
-                    "researcher": perplexity_reasoning_pro,
+                    "decomposer": gemini_grounded_model,
+                    "researcher": gemini_grounded_model,
                     "summarizer": gpt_4o,
                 },
                 research_reports_per_question=1,
@@ -83,6 +83,10 @@ async def benchmark_forecast_bot() -> None:
             forecast_bots=bots,
             file_path_to_save_reports="logs/forecasts/benchmarks/",
             concurrent_question_batch_size=20,
+            additional_code_to_snapshot=[
+                QuestionDecomposer,
+                QuestionOperationalizer,
+            ],
         ).run_benchmark()
         for i, benchmark in enumerate(benchmarks):
             logger.info(

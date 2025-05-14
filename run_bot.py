@@ -38,7 +38,7 @@ default_for_using_summary = False
 
 async def configure_and_run_bot(
     mode: str, return_bot_dont_run: bool = False
-) -> ForecastBot | list[ForecastReport]:
+) -> ForecastBot | list[ForecastReport | BaseException]:
 
     if "metaculus-cup" in mode:
         chosen_tournament = MetaculusApi.CURRENT_METACULUS_CUP_ID

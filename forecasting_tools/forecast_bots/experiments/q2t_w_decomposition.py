@@ -12,6 +12,7 @@ from forecasting_tools.agents_and_tools.question_generators.simple_question impo
     SimpleQuestion,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOptionList,
@@ -36,37 +37,71 @@ logger = logging.getLogger(__name__)
 
 class Q2TemplateBotWithDecompositionV1(Q2TemplateBot2025):
     """
-    Runs forecasts on sub questions separately
+    Runs forecasts on decomposed sub questions separately
     """
+
+    @classmethod
+    def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm]:
+        gemini_grounded_model = GeneralLlm.grounded_model(
+            model="openrouter/google/gemini-2.5-pro-preview",
+            temperature=0.3,
+        )
+        gemini_model = GeneralLlm(
+            model="openrouter/google/gemini-2.5-pro-preview",
+            temperature=0.3,
+        )
+        return {
+            "default": gemini_model,
+            "summarizer": "gpt-4o",
+            "decomposer": gemini_grounded_model,
+            "researcher": gemini_grounded_model,
+        }
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         ask_news_research = await AskNewsSearcher().get_formatted_news_async(
             question.question_text
         )
 
-        model = self.get_llm("decomposer", "string_name")
+        question_context = clean_indents(
+            f"""
+            Here are more details for the original question:
+
+            Background:
+            {question.background_info}
+
+            Resolution criteria:
+            {question.resolution_criteria}
+
+            Fine print:
+            {question.fine_print}
+            """
+        )
+
+        model = self.get_llm("decomposer", "llm")
         decomposition_result = await QuestionDecomposer(
             model=model
         ).decompose_into_questions(
             fuzzy_topic_or_question=question.question_text,
             number_of_questions=5,
+            related_research=ask_news_research,
+            additional_context=question_context,
         )
         logger.info(f"Decomposition result: {decomposition_result}")
-        sub_questions = decomposition_result.questions
-        operationalized_questions = await asyncio.gather(
-            *[
-                QuestionOperationalizer(model=model).operationalize_question(
-                    question
-                )
-                for question in sub_questions
-            ]
-        )
+
+        operationalize_tasks = [
+            QuestionOperationalizer(model=model).operationalize_question(
+                question_title=question,
+                related_research=None,
+            )
+            for question in decomposition_result.questions
+        ]
+        operationalized_questions = await asyncio.gather(*operationalize_tasks)
+
         metaculus_questions = (
             SimpleQuestion.simple_questions_to_metaculus_questions(
                 operationalized_questions
             )
         )
-
         sub_predictor = Q2TemplateBot2025(
             llms=self._llms,
             predictions_per_research_report=5,
@@ -94,7 +129,7 @@ class Q2TemplateBotWithDecompositionV1(Q2TemplateBot2025):
 
             ==================== FORECAST HISTORY ====================
             Below are some previous forecasts you have made on related questions
-            {formatted_forecasts}
+            {formatted_forecasts if formatted_forecasts else "<No previous forecasts>"}
             ==================== END ====================
             """
         )
@@ -104,16 +139,49 @@ class Q2TemplateBotWithDecompositionV1(Q2TemplateBot2025):
 
 class Q2TemplateBotWithDecompositionV2(Q2TemplateBot2025):
     """
-    Runs forecasts on sub questions separately
+    Runs forecasts on all decomposed questions simultaneously
     """
 
+    @classmethod
+    def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm]:
+        gemini_grounded_model = GeneralLlm.grounded_model(
+            model="openrouter/google/gemini-2.5-pro-preview",
+            temperature=0.3,
+        )
+        gemini_model = GeneralLlm(
+            model="openrouter/google/gemini-2.5-pro-preview",
+            temperature=0.3,
+        )
+        return {
+            "default": gemini_model,
+            "summarizer": "gpt-4o-mini",
+            "decomposer": gemini_grounded_model,
+            "researcher": gemini_grounded_model,
+        }
+
     async def run_research(self, question: MetaculusQuestion) -> str:
-        model = self.get_llm("decomposer", "string_name")
+        additional_context = clean_indents(
+            f"""
+            Here are more details for the original question:
+
+            Background:
+            {question.background_info}
+
+            Resolution criteria:
+            {question.resolution_criteria}
+
+            Fine print:
+            {question.fine_print}
+            """
+        )
+        model = self.get_llm("decomposer", "llm")
         decomposition_result = await QuestionDecomposer(
-            model=model
+            model=model,
         ).decompose_into_questions(
             fuzzy_topic_or_question=question.question_text,
             number_of_questions=5,
+            related_research=None,
+            additional_context=additional_context,
         )
         sub_questions = decomposition_result.questions
 

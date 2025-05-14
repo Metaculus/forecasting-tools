@@ -40,7 +40,7 @@ class Benchmarker:
         questions_to_use: Sequence[MetaculusQuestion] | None = None,
         file_path_to_save_reports: str | None = None,
         concurrent_question_batch_size: int = 10,
-        classes_to_snapshot: list[type] | None = None,
+        additional_code_to_snapshot: list[type] | None = None,
     ) -> None:
         if (
             number_of_questions_to_use is not None
@@ -65,7 +65,7 @@ class Benchmarker:
         self.file_path_to_save_reports = file_path_to_save_reports
         self.initialization_timestamp = datetime.now()
         self.concurrent_question_batch_size = concurrent_question_batch_size
-        self.code_to_snapshot = classes_to_snapshot
+        self.code_to_snapshot = additional_code_to_snapshot
 
     async def run_benchmark(self) -> list[BenchmarkForBot]:
         if self.questions_to_use is None:

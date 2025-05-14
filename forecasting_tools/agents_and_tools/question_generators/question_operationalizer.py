@@ -34,7 +34,8 @@ class QuestionOperationalizer:
     async def operationalize_question(
         self,
         question_title: str,
-        related_research: str,
+        related_research: str | None,
+        additional_context: str | None = None,
     ) -> SimpleQuestion:
         examples = "\n".join(
             [str(question) for question in self.random_example_question_sample]
@@ -68,6 +69,9 @@ class QuestionOperationalizer:
             ### Question Title
             Please operationalize the following question title into a full forecasting question.
             {question_title}
+
+            ### Additional Context
+            {additional_context}
 
             ### Your previous research
             {related_research}

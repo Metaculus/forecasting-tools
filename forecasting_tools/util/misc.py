@@ -4,6 +4,7 @@ import re
 import urllib.parse
 from typing import Any, TypeVar, cast
 
+import aiohttp
 import requests
 from pydantic import BaseModel
 
@@ -14,7 +15,9 @@ T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
-def raise_for_status_with_additional_info(response: requests.Response) -> None:
+def raise_for_status_with_additional_info(
+    response: requests.Response | aiohttp.ClientResponse,
+) -> None:
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:

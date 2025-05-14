@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 import logging
 import os
-from typing import Any
+from typing import Any, Literal
 
 import aiohttp
 import litellm
@@ -536,3 +536,56 @@ class GeneralLlm(
         if isinstance(model_name_or_instance, str):
             return model_name_or_instance
         return model_name_or_instance.model
+
+    @classmethod
+    def grounded_model(cls, model: str, temperature: float = 0) -> GeneralLlm:
+        grounding_llm = GeneralLlm(
+            model=model,
+            temperature=temperature,
+            generationConfig={
+                "thinkingConfig": {
+                    "thinkingBudget": 0,
+                },
+                "responseMimeType": "text/plain",
+            },
+            tools=[
+                {"googleSearch": {}},
+            ],
+        )
+        return grounding_llm
+
+    @classmethod
+    def thinking_budget_model(
+        cls,
+        model: str,
+        temperature: float = 1,
+        budget_tokens: int = 32000,
+        max_tokens: int = 40000,
+        timeout: float = 160,
+    ) -> GeneralLlm:
+        thinking_budget_llm = GeneralLlm(
+            model=model,
+            temperature=temperature,
+            thinking={
+                "type": "enabled",
+                "budget_tokens": budget_tokens,
+            },
+            max_tokens=max_tokens,
+            timeout=timeout,
+        )
+        return thinking_budget_llm
+
+    @classmethod
+    def search_context_model(
+        cls,
+        model: str,
+        temperature: float = 0,
+        search_context_size: Literal["high", "medium", "low"] = "high",
+    ) -> GeneralLlm:
+        search_model = GeneralLlm(
+            model=model,
+            temperature=temperature,
+            web_search_options={"search_context_size": search_context_size},
+            reasoning_effort="high",
+        )
+        return search_model

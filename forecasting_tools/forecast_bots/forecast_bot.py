@@ -172,14 +172,14 @@ class ForecastBot(ABC):
     async def forecast_questions(
         self,
         questions: Sequence[MetaculusQuestion],
-        return_exceptions: Literal[False],
+        return_exceptions: Literal[False] = False,
     ) -> list[ForecastReport]: ...
 
     @overload
     async def forecast_questions(
         self,
         questions: Sequence[MetaculusQuestion],
-        return_exceptions: Literal[True],
+        return_exceptions: Literal[True] = True,
     ) -> list[ForecastReport | BaseException]: ...
 
     async def forecast_questions(

@@ -37,10 +37,10 @@ class QuestionDecomposer:
 
     async def decompose_into_questions(
         self,
-        fuzzy_topic_or_question: str | None = None,
+        fuzzy_topic_or_question: str | None,
+        related_research: str | None,
+        additional_context: str | None,
         number_of_questions: int = 5,
-        additional_context: str | None = None,
-        related_research: str | None = None,
     ) -> DecompositionResult:
         prompt = clean_indents(
             f"""
@@ -121,10 +121,10 @@ class QuestionDecomposer:
         """
         return asyncio.run(
             QuestionDecomposer().decompose_into_questions(
-                fuzzy_topic_or_question,
-                number_of_questions,
-                additional_criteria_or_context_from_user,
-                related_research,
+                fuzzy_topic_or_question=fuzzy_topic_or_question,
+                number_of_questions=number_of_questions,
+                additional_context=additional_criteria_or_context_from_user,
+                related_research=related_research,
             )
         )
 

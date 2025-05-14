@@ -172,7 +172,7 @@ async def test_code_is_saved_for_benchmark(mocker: Mock) -> None:
     ]
     benchmarks = await Benchmarker(
         forecast_bots=[bot],
-        classes_to_snapshot=[ForecastingTestManager],
+        additional_code_to_snapshot=[ForecastingTestManager],
         questions_to_use=questions,
     ).run_benchmark()
     assert len(benchmarks) == 1
