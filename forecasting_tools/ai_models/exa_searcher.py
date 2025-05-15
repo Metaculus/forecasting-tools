@@ -95,8 +95,8 @@ class SearchInput(BaseModel, Jsonable):
             )
         if start_date and start_date > now_utc:
             raise ValueError("start_published_date must be before today")
-        if end_date and end_date > now_utc:
-            raise ValueError("end_published_date must be before today")
+        if end_date and end_date > now_utc + timedelta(days=1):
+            raise ValueError("end_published_date must be before end of today")
         if start_date and (now_utc - start_date) <= timedelta(hours=3):
             logger.warning(
                 "You are searching for results from within the last 3 hours. This may not return any results."

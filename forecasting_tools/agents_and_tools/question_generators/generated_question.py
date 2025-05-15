@@ -20,14 +20,13 @@ class GeneratedQuestion(SimpleQuestion):
         if report is None or isinstance(report, Exception):
             return False
 
+        # Use heuristics to determine uncertainty of question
         if isinstance(report, BinaryReport):
-            # For binary questions, check if probability is between 10% and 90%
             probability = report.prediction
             is_uncertain = 0.1 <= probability <= 0.9
         elif isinstance(report, NumericReport):
             is_uncertain = True
         elif isinstance(report, MultipleChoiceReport):
-            # For multiple choice, no option should have >90% or <5% probability
             for option in report.prediction.predicted_options:
                 if option.probability > 0.8 or option.probability < 0.05:
                     is_uncertain = False
