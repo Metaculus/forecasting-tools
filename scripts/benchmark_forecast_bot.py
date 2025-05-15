@@ -19,60 +19,75 @@ from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
     Q2TemplateBot2025,
 )
+from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
+    UniformProbabilityBot,
+)
 from forecasting_tools.forecast_helpers.benchmarker import Benchmarker
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 from forecasting_tools.util.custom_logger import CustomLogger
+from run_bot import get_all_bots
 
 logger = logging.getLogger(__name__)
 
 
-async def benchmark_forecast_bot() -> None:
-    num_questions_to_use = 1
+def get_all_tournament_bots() -> list[ForecastBot]:
+    return asyncio.run(get_all_bots())
+
+
+def get_decomposition_bots() -> list[ForecastBot]:
     google_gemini_2_5_pro_preview = GeneralLlm(
         model="openrouter/google/gemini-2.5-pro-preview",
         temperature=0.3,
     )
-    gemini_grounded_model = GeneralLlm.grounded_model(
-        model="openrouter/google/gemini-2.5-pro-preview",
+    perplexity_reasoning_pro = GeneralLlm.search_context_model(
+        model="openrouter/perplexity/sonar-reasoning-pro",
         temperature=0.3,
+        search_context_size="high",
     )
     gpt_4o = GeneralLlm(
         model="openrouter/openai/gpt-4o",
         temperature=0.3,
     )
+    bots = [
+        Q2TemplateBot2025(
+            llms={
+                "default": google_gemini_2_5_pro_preview,
+                "researcher": perplexity_reasoning_pro,
+                "summarizer": gpt_4o,
+            },
+            research_reports_per_question=1,
+            predictions_per_research_report=5,
+        ),
+        Q2TemplateBotWithDecompositionV1(
+            llms={
+                "default": google_gemini_2_5_pro_preview,
+                "decomposer": perplexity_reasoning_pro,
+                "researcher": perplexity_reasoning_pro,
+                "summarizer": gpt_4o,
+            },
+            research_reports_per_question=1,
+            predictions_per_research_report=5,
+        ),
+        Q2TemplateBotWithDecompositionV2(
+            llms={
+                "default": google_gemini_2_5_pro_preview,
+                "decomposer": perplexity_reasoning_pro,
+                "researcher": perplexity_reasoning_pro,
+                "summarizer": gpt_4o,
+            },
+            research_reports_per_question=1,
+            predictions_per_research_report=5,
+        ),
+    ]
+    bots = typeguard.check_type(bots, list[ForecastBot])
+    return bots
+
+
+async def benchmark_forecast_bot() -> None:
+    num_questions_to_use = 1
+
     with MonetaryCostManager() as cost_manager:
-        bots = [
-            Q2TemplateBot2025(
-                llms={
-                    "default": google_gemini_2_5_pro_preview,
-                    "researcher": gemini_grounded_model,
-                    "summarizer": gpt_4o,
-                },
-                research_reports_per_question=1,
-                predictions_per_research_report=5,
-            ),
-            Q2TemplateBotWithDecompositionV1(
-                llms={
-                    "default": google_gemini_2_5_pro_preview,
-                    "decomposer": gemini_grounded_model,
-                    "researcher": gemini_grounded_model,
-                    "summarizer": gpt_4o,
-                },
-                research_reports_per_question=1,
-                predictions_per_research_report=5,
-            ),
-            Q2TemplateBotWithDecompositionV2(
-                llms={
-                    "default": google_gemini_2_5_pro_preview,
-                    "decomposer": gemini_grounded_model,
-                    "researcher": gemini_grounded_model,
-                    "summarizer": gpt_4o,
-                },
-                research_reports_per_question=1,
-                predictions_per_research_report=5,
-            ),
-        ]
-        bots = typeguard.check_type(bots, list[ForecastBot])
+        bots = get_all_tournament_bots()
         chosen_questions = MetaculusApi.get_benchmark_questions(
             num_questions_to_use,
             days_to_resolve_in=6 * 30,  # 6 months
@@ -80,9 +95,9 @@ async def benchmark_forecast_bot() -> None:
         )
         benchmarks = await Benchmarker(
             questions_to_use=chosen_questions,
-            forecast_bots=bots,
+            forecast_bots=bots + [UniformProbabilityBot()],
             file_path_to_save_reports="logs/forecasts/benchmarks/",
-            concurrent_question_batch_size=20,
+            concurrent_question_batch_size=15,
             additional_code_to_snapshot=[
                 QuestionDecomposer,
                 QuestionOperationalizer,
@@ -92,9 +107,14 @@ async def benchmark_forecast_bot() -> None:
             logger.info(
                 f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}"
             )
-            logger.info(
-                f"- Final Score: {benchmark.average_expected_baseline_score}"
-            )
+            try:
+                logger.info(
+                    f"- Final Score: {benchmark.average_expected_baseline_score}"
+                )
+            except Exception:
+                logger.info(
+                    "- Final Score: Couldn't calculate score (potentially no forecasts?)"
+                )
             logger.info(f"- Total Cost: {benchmark.total_cost}")
             logger.info(f"- Time taken: {benchmark.time_taken_in_minutes}")
         logger.info(f"Total Cost: {cost_manager.current_usage}")

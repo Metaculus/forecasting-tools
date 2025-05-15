@@ -60,7 +60,7 @@ class Notepad(BaseModel):
     question: MetaculusQuestion
     total_research_reports_attempted: int = 0
     total_predictions_attempted: int = 0
-    note_entries: dict[str, str] = {}
+    note_entries: dict[str, Any] = {}
 
 
 class ForecastBot(ABC):
@@ -691,7 +691,7 @@ class ForecastBot(ABC):
                 {report.summary}
 
                 <<<<<<<<<<<<<<<<<<<< First Rationale >>>>>>>>>>>>>>>>>>>>>
-                {report.forecast_rationales.split("##")[1][:10000]}
+                {report.first_rationale[:10000]}
                 -------------------------------------------------------------------------------------------
             """
             )
@@ -739,7 +739,7 @@ class ForecastBot(ABC):
                 f"{len(minor_exceptions)} minor exceptions occurred while forecasting: {minor_exceptions}"
             )
 
-        if exceptions and raise_errors:
+        if exceptions:
             for exc in exceptions:
                 logger.error(
                     "Exception occurred during forecasting:\n%s",
@@ -749,13 +749,10 @@ class ForecastBot(ABC):
                         )
                     ),
                 )
-            raise RuntimeError(
-                f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
-            )
-        else:
-            logger.warning(
-                f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
-            )
+            if raise_errors:
+                raise RuntimeError(
+                    f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
+                )
 
     @overload
     def get_llm(

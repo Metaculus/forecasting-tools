@@ -118,15 +118,7 @@ class Benchmarker:
                     reports = await bot.forecast_questions(
                         batch, return_exceptions=True
                     )
-                    exceptions = [
-                        report
-                        for report in reports
-                        if isinstance(report, Exception)
-                    ]
-                    if exceptions:
-                        logger.error(
-                            f"{len(exceptions)} reports failed. Exceptions: {exceptions}"
-                        )
+                    bot.log_report_summary(reports, raise_errors=False)
                     valid_reports = [
                         report
                         for report in reports

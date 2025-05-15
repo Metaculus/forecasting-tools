@@ -112,24 +112,33 @@ class Q2TemplateBotWithDecompositionV1(Q2TemplateBot2025):
         )
 
         formatted_forecasts = ""
+        sub_question_bullets = ""
         for forecast in forecasts:
             if isinstance(forecast, BaseException):
                 logger.error(f"Error forecasting on question: {forecast}")
                 continue
             formatted_forecasts += (
-                f"QUESTION: {forecast.question.question_text}\n"
+                f"QUESTION: {forecast.question.question_text}\n\n"
             )
-            formatted_forecasts += f"PREDICTION: {forecast.make_readable_prediction(forecast.prediction)}\n"
-            formatted_forecasts += f"REASONING: {forecast.summary}\n"
-
+            formatted_forecasts += f"PREDICTION: {forecast.make_readable_prediction(forecast.prediction)}\n\n"
+            formatted_forecasts += f"SUMMARY: {forecast.summary}\n\n----------------------------------------\n\n"
+            sub_question_bullets += f"- {forecast.question.question_text}\n"
         research = clean_indents(
             f"""
             ==================== NEWS ====================
+
             {ask_news_research}
 
             ==================== FORECAST HISTORY ====================
-            Below are some previous forecasts you have made on related questions
+
+            Below are some related questions you have forecasted on before:
+
+            {sub_question_bullets if sub_question_bullets else "<No related questions>"}
+
+            Below are some forecasts you have made on these question:
+
             {formatted_forecasts if formatted_forecasts else "<No previous forecasts>"}
+
             ==================== END ====================
             """
         )
@@ -206,7 +215,7 @@ class Q2TemplateBotWithDecompositionV2(Q2TemplateBot2025):
         combined_research = "\n".join(research)
 
         note_pad = await self._get_notepad(question)
-        note_pad.note_entries[combined_research] = combined_research
+        note_pad.note_entries[combined_research] = sub_questions
 
         return combined_research
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import inspect
 import logging
 import os
@@ -30,7 +31,7 @@ from forecasting_tools.ai_models.model_interfaces.tokens_incur_cost import (
     TokensIncurCost,
 )
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
-    MonetaryCostManager,
+    LitellmCostTracker,
 )
 from forecasting_tools.util import async_batching
 from forecasting_tools.util.misc import (
@@ -254,7 +255,6 @@ class GeneralLlm(
         model_not_supported = model not in supported_model_names
         if model_not_supported:
             message = f"Warning: Model {model} does not support cost tracking."
-            print(message)
             logger.warning(message)
 
         model_tracker.gave_cost_tracking_warning = True
@@ -272,13 +272,10 @@ class GeneralLlm(
         self, *args, **kwargs
     ) -> Any:
         logger.debug(f"Invoking model with args: {args} and kwargs: {kwargs}")
-        MonetaryCostManager.raise_error_if_limit_would_be_reached()
         direct_call_response = await self._mockable_direct_call_to_model(
             *args, **kwargs
         )
         logger.debug(f"Model responded with: {direct_call_response}")
-        cost = direct_call_response.cost
-        MonetaryCostManager.increase_current_usage_in_parent_managers(cost)
         return direct_call_response
 
     async def _mockable_direct_call_to_model(
@@ -309,13 +306,7 @@ class GeneralLlm(
         completion_tokens = usage.completion_tokens
         total_tokens = usage.total_tokens
 
-        cost = response._hidden_params.get(
-            "response_cost"
-        )  # If this has problems, consider using the budgetmanager class
-        if cost is None:
-            cost = 0
-
-        cost += self.calculate_per_request_cost(self.model)
+        cost = LitellmCostTracker.calculate_cost(response._hidden_params)
 
         if (
             response.model_extra
@@ -327,6 +318,10 @@ class GeneralLlm(
             answer = fill_in_citations(
                 citations, answer, use_citation_brackets=False
             )
+
+        await asyncio.sleep(
+            0.0001
+        )  # For whatever reason, you need to await a coroutine to get the cost call back to work
 
         return TextTokenCostResponse(
             data=answer,
@@ -511,19 +506,7 @@ class GeneralLlm(
         completion_cost = (completion_tkns / 1000) * output_cost_per_1k
 
         total_cost = prompt_cost + completion_cost
-        if calculate_full_cost:
-            total_cost += self.calculate_per_request_cost(self.model)
         return total_cost
-
-    @classmethod
-    def calculate_per_request_cost(cls, model: str) -> float:
-        # TODO: Make sure this doesn't get outdated (litellm might implement this locally)
-        cost = 0
-        if "perplexity" in model:
-            cost += 0.005  # There is at least one search costing $0.005 per perplexity request
-            if "pro" in model:
-                cost += 0.005  # There is probably more than one search in pro models
-        return cost
 
     @classmethod
     def to_llm(cls, model_name_or_instance: str | GeneralLlm) -> GeneralLlm:

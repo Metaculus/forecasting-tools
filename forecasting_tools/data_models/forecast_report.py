@@ -51,15 +51,29 @@ class ForecastReport(BaseModel, Jsonable, ABC):
 
     @property
     def summary(self) -> str:
-        return self._get_section_content(index=0, expected_word="summary")
+        return self._get_and_validate_section(
+            index=0, expected_word="summary"
+        ).text_of_section_and_subsections
 
     @property
     def research(self) -> str:
-        return self._get_section_content(index=1, expected_word="research")
+        return self._get_and_validate_section(
+            index=1, expected_word="research"
+        ).text_of_section_and_subsections
 
     @property
     def forecast_rationales(self) -> str:
-        return self._get_section_content(index=2, expected_word="forecast")
+        return self._get_and_validate_section(
+            index=2, expected_word="forecast"
+        ).text_of_section_and_subsections
+
+    @property
+    def first_rationale(self) -> str:
+        return (
+            self._get_and_validate_section(index=2, expected_word="forecast")
+            .sub_sections[0]
+            .text_of_section_and_subsections
+        )
 
     @property
     def expected_baseline_score(self) -> float | None:
@@ -126,13 +140,15 @@ class ForecastReport(BaseModel, Jsonable, ABC):
             "Subclass must implement this abstract method"
         )
 
-    def _get_section_content(self, index: int, expected_word: str) -> str:
+    def _get_and_validate_section(
+        self, index: int, expected_word: str
+    ) -> ReportSection:
         if len(self.report_sections) <= index:
             raise ValueError(f"Report must have at least {index + 1} sections")
-        content = self.report_sections[index].text_of_section_and_subsections
-        first_line = content.split("\n")[0]
+        section = self.report_sections[index]
+        first_line = section.text_of_section_and_subsections.split("\n")[0]
         if expected_word.lower() not in first_line.lower():
             raise ValueError(
                 f"Section must contain the word '{expected_word}'"
             )
-        return content
+        return section

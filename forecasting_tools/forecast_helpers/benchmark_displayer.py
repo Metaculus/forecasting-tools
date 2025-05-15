@@ -58,7 +58,9 @@ def display_score_overview(reports: list[BinaryReport]) -> None:
 def display_stats_for_report_type(
     reports: list[BinaryReport], title: str
 ) -> None:
-    assert len(reports) > 0, "Must have at least one report to display stats"
+    if len(reports) == 0:
+        logger.warning(f"No reports found for {title}")
+        return
     average_expected_baseline_score = (
         BinaryReport.calculate_average_expected_baseline_score(reports)
     )
@@ -470,15 +472,21 @@ def run_benchmark_streamlit_page(
             all_benchmarks: list[BenchmarkForBot] = []
             for file in selected_files:
                 benchmarks = BenchmarkForBot.load_json_from_file_path(file)
-                all_benchmarks.extend(benchmarks)
+                for benchmark in benchmarks:
+                    if len(benchmark.forecast_reports) > 0:
+                        all_benchmarks.append(benchmark)
+
+            logger.info(f"Loaded {len(all_benchmarks)} benchmarks")
 
             perfect_benchmark = make_perfect_benchmark(all_benchmarks[0])
             all_benchmarks.insert(0, perfect_benchmark)
 
-            benchmark_options = [
-                f"{i}: {b.name} (Score: {b.average_expected_baseline_score:.4f})"
-                for i, b in enumerate(all_benchmarks)
-            ]
+            benchmark_options = []
+            for i, b in enumerate(all_benchmarks):
+                benchmark_options.append(
+                    f"{i}: {b.name} (Score: {b.average_expected_baseline_score:.4f})"
+                )
+
             selected_benchmarks = st.multiselect(
                 "Select benchmarks to display:",
                 range(len(all_benchmarks)),
@@ -493,7 +501,7 @@ def run_benchmark_streamlit_page(
                 display_benchmark_comparison_graphs(filtered_benchmarks)
                 display_benchmark_list(filtered_benchmarks)
         except Exception as e:
-            st.error(f"Could not load files. Error: {str(e)}")
+            st.error(f"Error when loading/displaying benchmarks: {str(e)}")
 
 
 if __name__ == "__main__":

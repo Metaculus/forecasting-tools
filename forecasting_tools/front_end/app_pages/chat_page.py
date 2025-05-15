@@ -35,28 +35,13 @@ logger = logging.getLogger(__name__)
 
 
 class ChatMessage:
-    def __init__(self, role: str, content: str, reasoning: str = "") -> None:
+    def __init__(self, role: str, content: str, tool_output: str = "") -> None:
         self.role = role
         self.content = content
-        self.reasoning = reasoning
+        self.tool_output = tool_output
 
     def to_open_ai_message(self) -> dict:
         return {"role": self.role, "content": self.content}
-
-    def to_dict(self) -> dict:
-        return {
-            "role": self.role,
-            "content": self.content,
-            "reasoning": self.reasoning,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "ChatMessage":
-        return cls(
-            role=data.get("role", "assistant"),
-            content=data.get("content", ""),
-            reasoning=data.get("reasoning", ""),
-        )
 
 
 class ChatPage(AppPage):
@@ -67,9 +52,8 @@ class ChatPage(AppPage):
     DEFAULT_MESSAGE: ChatMessage = ChatMessage(
         role="assistant",
         content="How may I assist you today?",
-        reasoning="",
+        tool_output="",
     )
-    MODEL_NAME: str = "openrouter/google/gemini-2.5-pro-preview"
 
     @classmethod
     async def _async_main(cls) -> None:
@@ -79,6 +63,7 @@ class ChatPage(AppPage):
         st.sidebar.button(
             "Clear Chat History", on_click=cls.clear_chat_history
         )
+        model_choice = cls.display_model_selector()
         active_tools = cls.display_tools()
         cls.display_messages(st.session_state.messages)
 
@@ -90,9 +75,22 @@ class ChatPage(AppPage):
                 st.write(prompt)
 
         if st.session_state.messages[-1].role != "assistant":
-            new_messages = await cls.generate_response(prompt, active_tools)
+            new_messages = await cls.generate_response(
+                prompt, active_tools, model_choice
+            )
             st.session_state.messages.extend(new_messages)
             st.rerun()
+
+    @classmethod
+    def display_model_selector(cls) -> str:
+        model_choice = st.sidebar.text_input(
+            "Select a model", value="openrouter/google/gemini-2.5-pro-preview"
+        )
+        if "o1-pro" in model_choice or "gpt-4.5" in model_choice:
+            raise ValueError(
+                "o1 pro and gpt-4.5 are not available for this application."
+            )
+        return model_choice
 
     @classmethod
     def display_tools(cls) -> list[Tool]:
@@ -131,14 +129,17 @@ class ChatPage(AppPage):
             with st.chat_message(message.role):
                 st.write(message.content)
 
-            if message.reasoning.strip():
+            if message.tool_output.strip():
                 with st.sidebar:
                     with st.expander(f"Tool Calls Message {i//2}"):
-                        st.write(message.reasoning)
+                        st.write(message.tool_output)
 
     @classmethod
     async def generate_response(
-        cls, prompt_input: str | None, active_tools: list[Tool]
+        cls,
+        prompt_input: str | None,
+        active_tools: list[Tool],
+        model_choice: str,
     ) -> list[ChatMessage]:
         if prompt_input is None:
             return [
@@ -153,8 +154,7 @@ class ChatPage(AppPage):
             instructions=clean_indents(
                 """
                 You are a helpful assistant.
-                When a tool gives you answers that are cited,
-                you include the links in your responses.
+                When a tool gives you answers that are cited, ALWAYS include the links in your responses.
 
                 If you can, you infer the inputs to tools rather than ask for them.
 
@@ -163,7 +163,7 @@ class ChatPage(AppPage):
                 Whenever possible, please parralelize your tool calls.
                 """
             ),
-            model=LitellmModel(model=cls.MODEL_NAME),
+            model=LitellmModel(model=model_choice),
             tools=active_tools,
             handoffs=[],
         )
@@ -198,7 +198,7 @@ class ChatPage(AppPage):
             ChatMessage(
                 role="assistant",
                 content=ReportDisplayer.clean_markdown(streamed_text),
-                reasoning=ReportDisplayer.clean_markdown(reasoning_text),
+                tool_output=ReportDisplayer.clean_markdown(reasoning_text),
             )
         ]
         return new_messages
