@@ -42,6 +42,17 @@ class LitellmCostTracker(LitellmCustomLogger):
         custom_handler = LitellmCostTracker()
         litellm.callbacks.append(custom_handler)
         LitellmCostTracker._initialized = True
+        names_of_handlers = [
+            handler.__class__.__name__ for handler in litellm.callbacks
+        ]
+        handlers_matching_name = [
+            handler
+            for handler in names_of_handlers
+            if handler == f"{LitellmCostTracker.__name__}"
+        ]
+        assert (
+            len(handlers_matching_name) == 1
+        ), f"LitellmCostTracker should be in callback list only once, but is in list {len(handlers_matching_name)} times"
 
     def log_pre_api_call(self, model, messages, kwargs):  # NOSONAR
         MonetaryCostManager.raise_error_if_limit_would_be_reached()

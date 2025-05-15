@@ -6,13 +6,14 @@ import logging
 import os
 from typing import Any, Literal
 
-import aiohttp
 import litellm
 import typeguard
+from agents.extensions.models.litellm_model import LitellmModel
 from litellm import acompletion, model_cost
 from litellm.files.main import ModelResponse
 from litellm.types.utils import Choices, Usage
 from litellm.utils import token_counter
+from openai import AsyncOpenAI
 
 from forecasting_tools.ai_models.ai_utils.openai_utils import (
     OpenAiUtils,
@@ -33,11 +34,7 @@ from forecasting_tools.ai_models.model_interfaces.tokens_incur_cost import (
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     LitellmCostTracker,
 )
-from forecasting_tools.util import async_batching
-from forecasting_tools.util.misc import (
-    fill_in_citations,
-    raise_for_status_with_additional_info,
-)
+from forecasting_tools.util.misc import fill_in_citations
 
 logger = logging.getLogger(__name__)
 ModelInputType = str | VisionMessageData | list[dict[str, str]]
@@ -47,6 +44,14 @@ class ModelTracker:
     def __init__(self, model: str) -> None:
         self.model = model
         self.gave_cost_tracking_warning = False
+
+
+class AgentSdkLlm(LitellmModel):
+    """
+    Wrapper around openai-agent-sdk's LiteLlm Model for later extension
+    """
+
+    pass
 
 
 class GeneralLlm(
@@ -342,52 +347,38 @@ class GeneralLlm(
             "exa/"
         ), f"model {self.model} is not an exa model but is being called like one"
 
-        payload = {
-            "model": self._litellm_model,
-            "messages": self.model_input_to_message(prompt),
-            "temperature": self.litellm_kwargs["temperature"],
-            "extra_body": {
-                "text": False,
-            },
-        }
+        api_key = self.litellm_kwargs.get("api_key")
+        timeout = self.litellm_kwargs.get("timeout")
+        temperature = self.litellm_kwargs.get("temperature")
+        extra_headers = self.litellm_kwargs.get("extra_headers")
 
-        async with aiohttp.ClientSession() as session:
-            api_key = self.litellm_kwargs.get("api_key")
-            if not api_key:
-                raise ValueError("Exa API key not found in litellm_kwargs")
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}",
-            }
-            extra_headers = self.litellm_kwargs.get("extra_headers")
-            if extra_headers:
-                headers.update(extra_headers)
-            task = session.post(
-                "https://api.exa.ai/chat/completions",
-                headers=headers,
-                json=payload,
-            )
-            timeout = self.litellm_kwargs.get("timeout")
-            if timeout is not None:
-                task = async_batching.wrap_coroutines_with_timeout(
-                    [task], float(timeout)
-                )[0]
-            response = await task
-            raise_for_status_with_additional_info(response)
-            completion = await response.json()
+        client = AsyncOpenAI(
+            base_url="https://api.exa.ai",
+            api_key=api_key,
+        )
 
-        response_text = completion["choices"][0]["message"]["content"]
+        completion = await client.chat.completions.create(
+            model=self._litellm_model,
+            messages=self.model_input_to_message(prompt),  # type: ignore
+            temperature=temperature,
+            timeout=timeout,
+            extra_headers=extra_headers,
+        )
+
+        response_text = completion.choices[0].message.content
         if response_text is None:
             raise ValueError("Response text is None for exa model")
 
-        usage = completion["usage"]
+        usage = completion.usage
         if usage is None:
             raise ValueError("Usage is None for exa model")
+        prompt_tokens = usage.prompt_tokens
+        completion_tokens = usage.completion_tokens
+        total_tokens = usage.total_tokens
 
-        prompt_tokens = usage["prompt_tokens"]
-        completion_tokens = usage["completion_tokens"]
-        total_tokens = usage["total_tokens"]
-        cost = 0  # API claims that there is completion["costDollars"], but I can't find it
+        # TODO: API claims that there is completion["costDollars"], but I can't find it
+        # Additionally we will need to log this separately to monetary cost manager (since litellm uses callbacks)
+        cost = 0
 
         return TextTokenCostResponse(
             data=response_text,

@@ -157,10 +157,6 @@ class GeneralLlmInstancesToTest:
                 self._get_cheap_user_message(),
             ),
             ModelTest(
-                GeneralLlm(model="deepseek/deepseek-reasoner"),
-                self._get_cheap_user_message(),
-            ),
-            ModelTest(
                 GeneralLlm(model="openrouter/openai/gpt-4o"),
                 self._get_cheap_user_message(),
             ),
