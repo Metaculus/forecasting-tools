@@ -59,7 +59,7 @@ def test_search_input_invalid_times_end_in_future() -> None:
             exclude_domains=[],
             include_text=None,
             start_published_date=now - timedelta(days=2),
-            end_published_date=now + timedelta(days=1),
+            end_published_date=now + timedelta(days=2),
         )
 
 
