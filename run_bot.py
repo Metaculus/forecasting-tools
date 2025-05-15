@@ -553,7 +553,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             assert researcher.litellm_kwargs["reasoning_effort"] == "high"
         elif "grounding" in mode.lower():
             researcher = bot.get_llm("researcher", "llm")
-            assert researcher.model.startswith("gemini/")
+            assert researcher.model.startswith(
+                "gemini/"
+            ) or researcher.model.startswith("openrouter/google/")
             assert len(researcher.litellm_kwargs["tools"]) == 1
         elif "deepseek" in mode.lower():
             researcher = bot.get_llm("default", "llm")
