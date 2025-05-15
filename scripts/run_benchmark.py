@@ -83,8 +83,8 @@ def get_decomposition_bots() -> list[ForecastBot]:
     return bots
 
 
-async def benchmark_forecast_bot() -> None:
-    num_questions_to_use = 1
+async def benchmark_forecast_bots() -> None:
+    num_questions_to_use = 22
 
     with MonetaryCostManager() as cost_manager:
         bots = get_all_tournament_bots()
@@ -122,4 +122,4 @@ async def benchmark_forecast_bot() -> None:
 
 if __name__ == "__main__":
     CustomLogger.setup_logging()
-    asyncio.run(benchmark_forecast_bot())
+    asyncio.run(benchmark_forecast_bots())

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import litellm
 from litellm.integrations.custom_logger import (
     CustomLogger as LitellmCustomLogger,
@@ -8,6 +10,8 @@ from litellm.integrations.custom_logger import (
 from forecasting_tools.ai_models.resource_managers.hard_limit_manager import (  # For other files to easily import from this file #NOSONAR
     HardLimitManager,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class MonetaryCostManager(HardLimitManager):
@@ -37,11 +41,6 @@ class LitellmCostTracker(LitellmCustomLogger):
 
     @staticmethod
     def initialize_cost_tracking() -> None:
-        if LitellmCostTracker._initialized:
-            return
-        custom_handler = LitellmCostTracker()
-        litellm.callbacks.append(custom_handler)
-        LitellmCostTracker._initialized = True
         names_of_handlers = [
             handler.__class__.__name__ for handler in litellm.callbacks
         ]
@@ -50,9 +49,17 @@ class LitellmCostTracker(LitellmCustomLogger):
             for handler in names_of_handlers
             if handler == f"{LitellmCostTracker.__name__}"
         ]
-        assert (
-            len(handlers_matching_name) == 1
-        ), f"LitellmCostTracker should be in callback list only once, but is in list {len(handlers_matching_name)} times"
+        handler_already_in_list = len(handlers_matching_name) > 0
+        if handler_already_in_list and not LitellmCostTracker._initialized:
+            logger.warning(
+                "LitellmCostTracker is already in the callback list, but was somehow not initialized."
+            )
+
+        if handler_already_in_list or LitellmCostTracker._initialized:
+            return
+        custom_handler = LitellmCostTracker()
+        litellm.callbacks.append(custom_handler)
+        LitellmCostTracker._initialized = True
 
     def log_pre_api_call(self, model, messages, kwargs):  # NOSONAR
         MonetaryCostManager.raise_error_if_limit_would_be_reached()

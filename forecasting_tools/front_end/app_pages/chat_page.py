@@ -2,7 +2,6 @@ import logging
 
 import streamlit as st
 from agents import Agent, RunItem, Runner, Tool
-from agents.extensions.models.litellm_model import LitellmModel
 from openai.types.responses import ResponseTextDeltaEvent
 
 from forecasting_tools.agents_and_tools.misc_tools import (
@@ -23,6 +22,10 @@ from forecasting_tools.agents_and_tools.question_generators.topic_generator impo
     TopicGenerator,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.general_llm import AgentSdkLlm
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
 from forecasting_tools.forecast_bots.bot_lists import (
     get_all_important_bot_classes,
 )
@@ -63,6 +66,11 @@ class ChatPage(AppPage):
         st.sidebar.button(
             "Clear Chat History", on_click=cls.clear_chat_history
         )
+        if "last_chat_cost" not in st.session_state.keys():
+            st.session_state.last_chat_cost = 0
+        st.sidebar.markdown(
+            f"**Last Chat Cost:** ${st.session_state.last_chat_cost:.7f}"
+        )
         model_choice = cls.display_model_selector()
         active_tools = cls.display_tools()
         cls.display_messages(st.session_state.messages)
@@ -84,7 +92,8 @@ class ChatPage(AppPage):
     @classmethod
     def display_model_selector(cls) -> str:
         model_choice = st.sidebar.text_input(
-            "Select a model", value="openrouter/google/gemini-2.5-pro-preview"
+            "Select a model",
+            value="openrouter/openai/o4-mini",  # "gemini/gemini-2.5-pro-preview-03-25"
         )
         if "o1-pro" in model_choice or "gpt-4.5" in model_choice:
             raise ValueError(
@@ -163,7 +172,7 @@ class ChatPage(AppPage):
                 Whenever possible, please parralelize your tool calls.
                 """
             ),
-            model=LitellmModel(model=model_choice),
+            model=AgentSdkLlm(model=model_choice),
             tools=active_tools,
             handoffs=[],
         )
@@ -171,11 +180,12 @@ class ChatPage(AppPage):
         openai_messages = [
             m.to_open_ai_message() for m in st.session_state.messages
         ]
-        result = Runner.run_streamed(agent, openai_messages, max_turns=20)
-        streamed_text = ""
-        reasoning_text = ""
-        with st.chat_message("assistant"):
-            placeholder = st.empty()
+        with MonetaryCostManager(10) as cost_manager:
+            result = Runner.run_streamed(agent, openai_messages, max_turns=20)
+            streamed_text = ""
+            reasoning_text = ""
+            with st.chat_message("assistant"):
+                placeholder = st.empty()
             with st.spinner("Thinking..."):
                 async for event in result.stream_events():
                     new_reasoning = ""
@@ -193,7 +203,9 @@ class ChatPage(AppPage):
                     placeholder.write(streamed_text)
                     if new_reasoning:
                         st.sidebar.write(new_reasoning)
+
         logger.info(f"Chat finished with output: {streamed_text}")
+        st.session_state.last_chat_cost = cost_manager.current_usage
         new_messages = [
             ChatMessage(
                 role="assistant",

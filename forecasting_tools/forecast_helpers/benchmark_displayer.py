@@ -245,8 +245,15 @@ def display_benchmark_comparison_graphs(
         - Perfect predictor: automatically created and shows what a perfect score (predicting community prediction) would be. To calculate this, it uses same questions as the first benchmark in the list.
         """
     )
-    data_by_benchmark = []
 
+    total_cost = sum(
+        benchmark.total_cost
+        for benchmark in benchmarks
+        if benchmark.total_cost is not None
+    )
+    st.markdown(f"**Total Cost:** ${total_cost:.2f}")
+
+    data_by_benchmark = []
     for index, benchmark in enumerate(benchmarks):
         reports = benchmark.forecast_reports
         reports = typeguard.check_type(reports, list[BinaryReport])

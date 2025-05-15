@@ -7,6 +7,7 @@ import os
 from typing import Any, Literal
 
 import litellm
+import nest_asyncio
 import typeguard
 from agents.extensions.models.litellm_model import LitellmModel
 from litellm import acompletion, model_cost
@@ -36,6 +37,8 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 )
 from forecasting_tools.util.misc import fill_in_citations
 
+nest_asyncio.apply()
+
 logger = logging.getLogger(__name__)
 ModelInputType = str | VisionMessageData | list[dict[str, str]]
 
@@ -51,7 +54,12 @@ class AgentSdkLlm(LitellmModel):
     Wrapper around openai-agent-sdk's LiteLlm Model for later extension
     """
 
-    pass
+    async def get_response(self, *args, **kwargs):  # NOSONAR
+        response = await super().get_response(*args, **kwargs)
+        await asyncio.sleep(
+            0.0001
+        )  # For whatever reason, you need to await a coroutine to get the cost call back to work
+        return response
 
 
 class GeneralLlm(
