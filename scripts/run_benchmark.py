@@ -88,6 +88,8 @@ async def benchmark_forecast_bots() -> None:
 
     with MonetaryCostManager() as cost_manager:
         bots = get_all_tournament_bots()
+        for bot in bots:
+            bot.publish_reports_to_metaculus = False
         chosen_questions = MetaculusApi.get_benchmark_questions(
             num_questions_to_use,
             days_to_resolve_in=6 * 30,  # 6 months
