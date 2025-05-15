@@ -161,20 +161,22 @@ class ChatPage(AppPage):
                 )
             ]
 
+        instructions = clean_indents(
+            """
+            You are a helpful assistant.
+            When a tool gives you answers that are cited, ALWAYS include the links in your responses.
+
+            If you can, you infer the inputs to tools rather than ask for them.
+
+            If a tool call fails, you say so rather than giving a back up answer.
+
+            Whenever possible, please parralelize your tool calls.
+            """
+        )
+
         agent = Agent(
             name="Assistant",
-            instructions=clean_indents(
-                """
-                You are a helpful assistant.
-                When a tool gives you answers that are cited, ALWAYS include the links in your responses.
-
-                If you can, you infer the inputs to tools rather than ask for them.
-
-                If a tool call fails, you say so rather than giving a back up answer.
-
-                Whenever possible, please parralelize your tool calls.
-                """
-            ),
+            instructions=instructions,
             model=AgentSdkLlm(model=model_choice),
             tools=active_tools,
             handoffs=[],
