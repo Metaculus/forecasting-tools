@@ -100,12 +100,14 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     roughly_gpt_4o_mini_cost = 0.005
     roughly_sonnet_3_5_cost = 0.10
 
+    gemini_2_5_pro_preview = "openrouter/google/gemini-2.5-pro-preview"  # "gemini/gemini-2.5-pro-preview-03-25"
+    gemini_default_timeout = 120
     default_perplexity_settings = {
         "web_search_options": {"search_context_size": "high"},
         "reasoning_effort": "high",
     }
     gemini_grounding_llm = GeneralLlm(
-        model="gemini/gemini-2.5-pro-preview-03-25",
+        model=gemini_2_5_pro_preview,
         generationConfig={
             "thinkingConfig": {
                 "thinkingBudget": 0,
@@ -126,9 +128,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": 0.16,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gemini/gemini-2.5-pro-preview-03-25",
+                    model=gemini_2_5_pro_preview,
                     temperature=default_temperature,
-                    timeout=90,
+                    timeout=gemini_default_timeout,
                 ),
                 researcher=gemini_grounding_llm,
             ),
@@ -137,9 +139,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": None,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gemini/gemini-2.5-pro-preview-03-25",
+                    model=gemini_2_5_pro_preview,
                     temperature=default_temperature,
-                    timeout=90,
+                    timeout=gemini_default_timeout,
                 ),
                 researcher=GeneralLlm(
                     model="perplexity/sonar-reasoning-pro",
@@ -151,9 +153,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": None,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gemini/gemini-2.5-pro-preview-03-25",
+                    model=gemini_2_5_pro_preview,
                     temperature=default_temperature,
-                    timeout=90,
+                    timeout=gemini_default_timeout,
                 ),
                 researcher=GeneralLlm(model="exa/exa-pro"),
             ),
@@ -325,7 +327,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 GeneralLlm(
                     model="gemini/gemini-2.5-flash-preview-04-17",
                     temperature=default_temperature,
-                    timeout=90,
+                    timeout=gemini_default_timeout,
                 ),
             ),
         },
@@ -451,9 +453,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": 0.30,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gemini/gemini-2.5-pro-preview-03-25",
+                    model=gemini_2_5_pro_preview,
                     temperature=default_temperature,
-                    timeout=90,
+                    timeout=gemini_default_timeout,
                 ),
             ),
         },

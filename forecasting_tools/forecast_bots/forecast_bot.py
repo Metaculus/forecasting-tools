@@ -682,7 +682,12 @@ class ForecastBot(ABC):
 
         full_summary = "\n"
         full_summary += "-" * 100 + "\n"
+
         for report in valid_reports:
+            try:
+                first_rationale = report.first_rationale
+            except Exception as e:
+                first_rationale = f"Failed to get first rationale: {e}"
             question_summary = clean_indents(
                 f"""
                 URL: {report.question.page_url}
@@ -691,7 +696,7 @@ class ForecastBot(ABC):
                 {report.summary}
 
                 <<<<<<<<<<<<<<<<<<<< First Rationale >>>>>>>>>>>>>>>>>>>>>
-                {report.first_rationale[:10000]}
+                {first_rationale[:10000]}
                 -------------------------------------------------------------------------------------------
             """
             )

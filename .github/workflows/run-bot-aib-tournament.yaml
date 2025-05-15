@@ -21,6 +21,7 @@ jobs:
       INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_gemini_2_5_pro_sonar_reasoning_pro:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -30,6 +31,7 @@ jobs:
       INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_PRO_SONAR_REASONING_PRO }}
       INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_gemini_2_5_exa_pro:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -39,6 +41,7 @@ jobs:
       INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_EXA_PRO }}
       INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_deepseek_r1_sonar_pro:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -217,6 +220,7 @@ jobs:
     secrets:
       INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_FLASH_PREVIEW_TOKEN }}
       INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
