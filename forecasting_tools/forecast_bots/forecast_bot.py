@@ -693,14 +693,6 @@ class ForecastBot(ABC):
             for report in forecast_reports
             if isinstance(report, ForecastReport)
         ]
-        exceptions = [
-            report
-            for report in forecast_reports
-            if isinstance(report, BaseException)
-        ]
-        minor_exceptions = [
-            report.errors for report in valid_reports if report.errors
-        ]
 
         full_summary = "\n"
         full_summary += "-" * 100 + "\n"
@@ -762,10 +754,14 @@ class ForecastBot(ABC):
         full_summary += "-" * 100 + "\n\n\n"
         logger.info(full_summary)
 
-        if minor_exceptions:
-            logger.error(
-                f"{len(minor_exceptions)} minor exceptions occurred while forecasting: {minor_exceptions}"
-            )
+        exceptions = [
+            report
+            for report in forecast_reports
+            if isinstance(report, BaseException)
+        ]
+        minor_exceptions = [
+            error for report in valid_reports for error in report.errors or []
+        ]
 
         if exceptions:
             for exc in exceptions:
@@ -781,6 +777,10 @@ class ForecastBot(ABC):
                 raise RuntimeError(
                     f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
                 )
+        elif minor_exceptions:
+            logger.error(
+                f"{len(minor_exceptions)} minor exceptions occurred while forecasting: {minor_exceptions}"
+            )
 
     @overload
     def get_llm(

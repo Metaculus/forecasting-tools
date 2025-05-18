@@ -287,13 +287,19 @@ class PredictionExtractor:
                 "There should be at least two numbers in lines parsed for percentiles"
             )
         percentile_level = numbers[0]
-        value_at_percentile = numbers[1]
-        value_is_negative = value_at_percentile < 0
+        original_value_at_percentile = numbers[1]
+        value_is_negative = original_value_at_percentile < 0
+
+        value_at_percentile = original_value_at_percentile
         if len(numbers) > 2:
+            if value_at_percentile >= 1000:
+                raise ValueError(
+                    "There should not be more than 3 digits per space separated section for number"
+                )
             for other_number in numbers[2:]:
                 if other_number >= 1000:
                     raise ValueError(
-                        "There should not be more than 3 digits in number section separated by spaces"
+                        "There should not be more than 3 digits per space separated section for number"
                     )
                 if other_number < 0:
                     raise ValueError(
