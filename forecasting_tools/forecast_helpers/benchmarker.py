@@ -19,6 +19,18 @@ from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 logger = logging.getLogger(__name__)
 
 
+class QuestionBatch:
+    def __init__(
+        self,
+        bot: ForecastBot,
+        benchmark: BenchmarkForBot,
+        questions: list[MetaculusQuestion],
+    ):
+        self.bot = bot
+        self.benchmark = benchmark
+        self.questions = questions
+
+
 class Benchmarker:
     """
     This class is used to benchmark a list of forecast bots
@@ -85,8 +97,89 @@ class Benchmarker:
         if self.number_of_questions_to_use is not None:
             assert len(chosen_questions) == self.number_of_questions_to_use
 
+        benchmarks: list[BenchmarkForBot] = self._initialize_benchmarks(
+            self.forecast_bots, chosen_questions
+        )
+
+        batches = self._batch_questions(
+            self.forecast_bots,
+            benchmarks,
+            chosen_questions,
+            self.concurrent_question_batch_size,
+        )
+        for batch in batches:
+            await self._run_a_batch(batch)
+            self._save_benchmarks_to_file_if_configured(benchmarks)
+        return benchmarks
+
+    async def _run_a_batch(self, batch: QuestionBatch) -> None:
+        bot = batch.bot
+        benchmark = batch.benchmark
+        questions = batch.questions
+        with MonetaryCostManager() as cost_manager:
+            start_time = time.time()
+            reports = await bot.forecast_questions(
+                questions, return_exceptions=True
+            )
+            bot.log_report_summary(reports, raise_errors=False)
+            valid_reports = [
+                report
+                for report in reports
+                if not isinstance(report, Exception)
+            ]
+            valid_reports = typeguard.check_type(
+                valid_reports,
+                list[ReportTypes],
+            )
+            new_report_sequence = (
+                list(benchmark.forecast_reports) + valid_reports
+            )
+            benchmark.forecast_reports = new_report_sequence
+            end_time = time.time()
+
+            if benchmark.time_taken_in_minutes is None:
+                benchmark.time_taken_in_minutes = 0
+            if benchmark.total_cost is None:
+                benchmark.total_cost = 0
+            benchmark.total_cost += cost_manager.current_usage
+            benchmark.time_taken_in_minutes += (end_time - start_time) / 60
+
+    @classmethod
+    def _batch_questions(
+        cls,
+        bots: list[ForecastBot],
+        benchmarks: list[BenchmarkForBot],
+        questions: list[MetaculusQuestion],
+        batch_size: int,
+    ) -> list[QuestionBatch]:
+        batches: list[QuestionBatch] = []
+        question_batches = [
+            questions[i : i + batch_size]
+            for i in range(0, len(questions), batch_size)
+        ]
+        for question_batch in question_batches:
+            for bot, benchmark in zip(bots, benchmarks):
+                assert (
+                    benchmark.forecast_bot_class_name == bot.__class__.__name__
+                ), f"Benchmark {benchmark.forecast_bot_class_name} does not match bot {bot.__class__.__name__}"
+                batches.append(
+                    QuestionBatch(
+                        bot=bot, benchmark=benchmark, questions=question_batch
+                    )
+                )
+        assert len(batches) == len(bots) * len(question_batches)
+        assert all(
+            1 <= len(batch.questions) <= batch_size for batch in batches
+        ), "All batches must have the same number of questions"
+        return batches
+
+    def _initialize_benchmarks(
+        self,
+        bots: list[ForecastBot],
+        chosen_questions: list[MetaculusQuestion],
+    ) -> list[BenchmarkForBot]:
         benchmarks: list[BenchmarkForBot] = []
-        for bot in self.forecast_bots:
+        for bot in bots:
             try:
                 source_code = inspect.getsource(bot.__class__)
                 if self.code_to_snapshot:
@@ -108,45 +201,7 @@ class Benchmarker:
                 num_input_questions=len(chosen_questions),
             )
             benchmarks.append(benchmark)
-
-        for bot, benchmark in zip(self.forecast_bots, benchmarks):
-            with MonetaryCostManager() as cost_manager:
-                start_time = time.time()
-                for batch in self._batch_questions(
-                    chosen_questions, self.concurrent_question_batch_size
-                ):
-                    reports = await bot.forecast_questions(
-                        batch, return_exceptions=True
-                    )
-                    bot.log_report_summary(reports, raise_errors=False)
-                    valid_reports = [
-                        report
-                        for report in reports
-                        if not isinstance(report, Exception)
-                    ]
-                    valid_reports = typeguard.check_type(
-                        valid_reports,
-                        list[ReportTypes],
-                    )
-                    new_report_sequence = (
-                        list(benchmark.forecast_reports) + valid_reports
-                    )
-                    benchmark.forecast_reports = new_report_sequence
-                    self._save_benchmarks_to_file_if_configured(benchmarks)
-                end_time = time.time()
-                benchmark.time_taken_in_minutes = (end_time - start_time) / 60
-                benchmark.total_cost = cost_manager.current_usage
-        self._save_benchmarks_to_file_if_configured(benchmarks)
         return benchmarks
-
-    @classmethod
-    def _batch_questions(
-        cls, questions: list[MetaculusQuestion], batch_size: int
-    ) -> list[list[MetaculusQuestion]]:
-        return [
-            questions[i : i + batch_size]
-            for i in range(0, len(questions), batch_size)
-        ]
 
     def _save_benchmarks_to_file_if_configured(
         self, benchmarks: list[BenchmarkForBot]
