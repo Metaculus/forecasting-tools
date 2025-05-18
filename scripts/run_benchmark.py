@@ -72,7 +72,7 @@ def get_decomposition_bots() -> list[ForecastBot]:
             llms={
                 "default": google_gemini_2_5_pro_preview,
                 "decomposer": perplexity_reasoning_pro,
-                # "researcher": perplexity_reasoning_pro,
+                "researcher": "asknews/news-summaries",
                 "summarizer": gpt_4o,
             },
             research_reports_per_question=1,
