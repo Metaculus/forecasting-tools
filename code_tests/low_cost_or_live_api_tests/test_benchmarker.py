@@ -7,8 +7,10 @@ import pytest
 
 from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
     ForecastingTestManager,
+    MockBot,
 )
 from forecasting_tools.data_models.benchmark_for_bot import BenchmarkForBot
+from forecasting_tools.data_models.questions import BinaryQuestion
 from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
     Q2TemplateBot2025,
 )
@@ -234,3 +236,36 @@ def test_benchmark_for_bot_naming_and_description() -> None:
     )
     assert benchmark.name == "explicit name"
     assert benchmark.description == "explicit description"
+
+
+class FailingBot(MockBot):
+    async def _run_forecast_on_binary(
+        self, question: BinaryQuestion, research: str
+    ):  # NOSONAR
+        if question.question_text == "fail":
+            raise RuntimeError("Simulated failure")
+        return await super()._run_forecast_on_binary(question, research)
+
+
+async def test_failed_and_missing_forecasts_are_tracked(mocker: Mock) -> None:
+    bot = FailingBot()
+
+    questions = [
+        ForecastingTestManager.get_fake_binary_question() for _ in range(2)
+    ] + [ForecastingTestManager.get_fake_binary_question() for _ in range(2)]
+    questions[1].question_text = "fail"
+    questions[3].question_text = "fail"
+
+    benchmarks = await Benchmarker(
+        forecast_bots=[bot],
+        questions_to_use=questions,
+        concurrent_question_batch_size=2,
+    ).run_benchmark()
+    benchmark = benchmarks[0]
+
+    assert benchmark.num_input_questions == 4
+    assert len(benchmark.forecast_reports) == 2
+    assert benchmark.num_failed_forecasts == 2
+    assert all(
+        "Simulated failure" in err for err in benchmark.failed_report_errors
+    )

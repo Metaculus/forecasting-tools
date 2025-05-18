@@ -104,13 +104,13 @@ class OutputsText(AiModel, ABC):
             )
         except Exception as e:
             raise ValueError(
-                f"Error transforming response to type {normal_complex_or_pydantic_type}: {e}. Response was: {cleaned_response}"
+                f"Error transforming response to type {normal_complex_or_pydantic_type}: {e}. Response in triple backticks was: ```{cleaned_response}```. Input was: ```{input}```"
             )
         if not validate_complex_type(
             transformed_response, normal_complex_or_pydantic_type
         ):
             raise TypeError(
-                f"Model did not return {normal_complex_or_pydantic_type}. Output was: {cleaned_response}"
+                f"Model did not return {normal_complex_or_pydantic_type}. Output in triple backticks was: ```{cleaned_response}```. Input was: ```{input}```"
             )
         return transformed_response
 

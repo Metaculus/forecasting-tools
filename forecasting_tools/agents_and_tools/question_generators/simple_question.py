@@ -23,11 +23,26 @@ class SimpleQuestion(BaseModel, Jsonable):
     background_information: str
     expected_resolution_date: datetime
     question_type: Literal["binary", "numeric", "multiple_choice"] = "binary"
-    options: list[str] = Field(default_factory=list)
-    open_upper_bound: bool | None = None
-    open_lower_bound: bool | None = None
-    max_value: float | None = None
-    min_value: float | None = None
+    options: list[str] = Field(
+        default_factory=list,
+        description="Options for multiple choice question. Empty if numeric or binary",
+    )
+    open_upper_bound: bool | None = Field(
+        default=None,
+        description="Whether there can be a value higher than upper bound. Only used for numeric questions.",
+    )
+    open_lower_bound: bool | None = Field(
+        default=None,
+        description="Whether there can be a value lower than lower bound. Only used for numeric questions.",
+    )
+    max_value: float | None = Field(
+        default=None,
+        description="The max value that the answer to the question can be. Only used for numeric questions.",
+    )
+    min_value: float | None = Field(
+        default=None,
+        description="The min value that the answer to the question can be. Only used for numeric questions.",
+    )
 
     @classmethod
     def get_field_descriptions(cls) -> str:
@@ -42,8 +57,8 @@ class SimpleQuestion(BaseModel, Jsonable):
             - options: The options for the question, only used for multiple_choice questions. Empty list for other question types.
             - open_upper_bound: Whether there can be a value higher than upper bound (e.g. if the value is a percentag, 100 is the max the bound is closed, but number of certifications in a population has an open upper bound), only used for numeric questions.
             - open_lower_bound: Whether there can be a value lower than lower bound (e.g. distances can't be negative the bound is closed at 0, but profit margins can be negative so the bound is open), only used for numeric questions.
-            - max_value: The max value that the question can be. If bound is closed then choose the max number. If bound is open then pick a really really big number. Only used for numeric questions. (e.g. 100 for a percentage, 1000 for a number of certifications from an small org, 100000 for a number of new houses built in a large city in a year)
-            - min_value: The min value that the question can be. If bound is closed then choose the min number. If bound is open then pick a really really negative number. Only used for numeric questions. (e.g. 0 for a percentage, 0 for a number of certifications from a small org, -10000000 for a medium company net profit)
+            - max_value: The max value that the answer to the question can be. If bound is closed then choose the max number. If bound is open then pick a really really big number. Only used for numeric questions. (e.g. 100 for a percentage, 1000 for a number of certifications from an small org, 100000 for a number of new houses built in a large city in a year)
+            - min_value: The min value that the answer to the question can be. If bound is closed then choose the min number. If bound is open then pick a really really negative number. Only used for numeric questions. (e.g. 0 for a percentage, 0 for a number of certifications from a small org, -10000000 for a medium company net profit)
             """
         )
 

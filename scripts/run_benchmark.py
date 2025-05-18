@@ -39,7 +39,8 @@ def get_decomposition_bots() -> list[ForecastBot]:
         timeout=120,
     )
     perplexity_reasoning_pro = GeneralLlm.search_context_model(
-        model="perplexity/sonar-reasoning-pro",
+        # model="perplexity/sonar-reasoning-pro",
+        model="openrouter/perplexity/sonar-reasoning-pro",
         temperature=0.3,
         search_context_size="high",
     )
@@ -51,7 +52,7 @@ def get_decomposition_bots() -> list[ForecastBot]:
         Q2TemplateBot2025(
             llms={
                 "default": google_gemini_2_5_pro_preview,
-                "researcher": perplexity_reasoning_pro,
+                "researcher": "asknews/news-summaries",
                 "summarizer": gpt_4o,
             },
             research_reports_per_question=1,
@@ -71,7 +72,7 @@ def get_decomposition_bots() -> list[ForecastBot]:
             llms={
                 "default": google_gemini_2_5_pro_preview,
                 "decomposer": perplexity_reasoning_pro,
-                "researcher": perplexity_reasoning_pro,
+                # "researcher": perplexity_reasoning_pro,
                 "summarizer": gpt_4o,
             },
             research_reports_per_question=1,
@@ -84,26 +85,26 @@ def get_decomposition_bots() -> list[ForecastBot]:
 
 async def benchmark_forecast_bots() -> None:
     num_questions_to_use = 100
+    concurrent_batch_size = 2
+    bots = get_decomposition_bots()
+    additional_code_to_snapshot = [
+        QuestionDecomposer,
+        QuestionOperationalizer,
+    ]
+    chosen_questions = MetaculusApi.get_benchmark_questions(
+        num_questions_to_use,
+        days_to_resolve_in=365,  # 6 * 30,  # 6 months
+        max_days_since_opening=365,
+    )
 
     with MonetaryCostManager() as cost_manager:
-        bots = get_decomposition_bots()
-        additional_code_to_snapshot = [
-            QuestionDecomposer,
-            QuestionOperationalizer,
-        ]
-        chosen_questions = MetaculusApi.get_benchmark_questions(
-            num_questions_to_use,
-            days_to_resolve_in=365,  # 6 * 30,  # 6 months
-            max_days_since_opening=365,
-        )
-
         for bot in bots:
             bot.publish_reports_to_metaculus = False
         benchmarks = await Benchmarker(
             questions_to_use=chosen_questions,
             forecast_bots=bots,
             file_path_to_save_reports="logs/forecasts/benchmarks/",
-            concurrent_question_batch_size=2,
+            concurrent_question_batch_size=concurrent_batch_size,
             additional_code_to_snapshot=additional_code_to_snapshot,
         ).run_benchmark()
         for i, benchmark in enumerate(benchmarks):

@@ -194,33 +194,38 @@ class Q2TemplateBotWithDecompositionV2(Q2TemplateBot2025):
         )
         sub_questions = decomposition_result.questions
 
-        all_questions_to_research = [question.question_text] + sub_questions
-        research_tasks = []
-        for question_title in all_questions_to_research:
-            prompt = clean_indents(
-                f"""
-                You are an assistant to a superforecaster.
-                The superforecaster will give you a question they intend to forecast on.
-                To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-                You do not produce forecasts yourself.
+        # all_questions_to_research = [question.question_text] + sub_questions
+        # research_tasks = []
+        # for question_title in all_questions_to_research:
+        #     prompt = clean_indents(
+        #         f"""
+        #         You are an assistant to a superforecaster.
+        #         The superforecaster will give you a question they intend to forecast on.
+        #         To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
+        #         You do not produce forecasts yourself.
 
-                Question:
-                {question_title}
-                """
-            )
-            task = self.get_llm("researcher", "llm").invoke(prompt)
-            research_tasks.append(task)
+        #         Question:
+        #         {question_title}
+        #         """
+        #     )
+        #     task = self.get_llm("researcher", "llm").invoke(prompt)
+        #     research_tasks.append(task)
 
-        research: list[str] = []
-        for task in research_tasks:
-            await asyncio.sleep(15)
-            new_research = await task
-            research.append(
-                new_research
-            )  # TODO: Make this parallel (this is a hack to avoid perplexity rate limits)
+        # research: list[str] = []
+        # # for task in research_tasks:
+        # #     await asyncio.sleep(15)
+        # #     new_research = await task
+        # #     research.append(
+        # #         new_research
+        # #     )  # TODO: Make this parallel (this is a hack to avoid perplexity rate limits)
         # research: list[str] = await asyncio.gather(*research_tasks)
-        combined_research = "\n".join(research)
+        # combined_research = "\n".join(research)
 
+        researcher = self.get_llm("researcher")
+        assert researcher == "asknews/news-summaries"
+        combined_research = await AskNewsSearcher().get_formatted_news_async(
+            question.question_text
+        )
         note_pad = await self._get_notepad(question)
         note_pad.note_entries[combined_research] = sub_questions
 

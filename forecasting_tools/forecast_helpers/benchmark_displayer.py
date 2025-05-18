@@ -158,15 +158,18 @@ def display_benchmark_list(benchmarks: list[BenchmarkForBot]) -> None:
     with st.expander(benchmark.name, expanded=False):
         st.markdown(f"**Description:** {benchmark.description}")
         st.markdown(
-            f"**Estimated successful forecasts:** {len(benchmark.forecast_reports)}"
+            f"**Number of Input Questions:** {benchmark.num_input_questions}"
         )
-        estimated_failed_forecast_reports = (
-            (benchmark.num_input_questions - len(benchmark.forecast_reports))
-            if benchmark.num_input_questions is not None
+        st.markdown(
+            f"**Number of Successful forecasts:** {len(benchmark.forecast_reports)}"
+        )
+        failed_forecast_reports = (
+            benchmark.num_failed_forecasts
+            if benchmark.num_failed_forecasts is not None
             else "N/A"
         )
         st.markdown(
-            f"**Estimated failed forecasts:** {estimated_failed_forecast_reports}"
+            f"**Number of Failed forecasts:** {failed_forecast_reports}"
         )
         st.markdown(
             f"**Time Taken (minutes):** {benchmark.time_taken_in_minutes}"
@@ -196,6 +199,12 @@ def display_benchmark_list(benchmarks: list[BenchmarkForBot]) -> None:
     if benchmark.code:
         with st.expander("Forecast Bot Code", expanded=False):
             st.code(benchmark.code, language="python")
+
+    if benchmark.failed_report_errors:
+        with st.expander("Failed Forecast Errors", expanded=False):
+            st.markdown("### Failed Forecast Errors")
+            for error in benchmark.failed_report_errors:
+                st.markdown(f"**Error:** {error}")
 
     # Display deviation scores and questions for this benchmark
     reports = benchmark.forecast_reports
@@ -264,7 +273,10 @@ def display_benchmark_comparison_graphs(
     )
     st.markdown(f"**Total Cost:** ${total_cost:.2f}")
     st.markdown(
-        f"**Number of input questions between benchmarks:** {set(benchmark.num_input_questions for benchmark in benchmarks if benchmark.num_input_questions is not None)}"
+        f"**Number of input questions (set of all observed inputs values):** {set(benchmark.num_input_questions for benchmark in benchmarks if benchmark.num_input_questions is not None)}"
+    )
+    st.markdown(
+        f"**Total number of failed forecasts:** {sum(benchmark.num_failed_forecasts for benchmark in benchmarks if benchmark.num_failed_forecasts is not None)}"
     )
 
     data_by_benchmark = []
@@ -491,11 +503,14 @@ def run_benchmark_streamlit_page(
     if selected_files:
         try:
             all_benchmarks: list[BenchmarkForBot] = []
+            failed_benchmarks: list[BenchmarkForBot] = []
             for file in selected_files:
                 benchmarks = BenchmarkForBot.load_json_from_file_path(file)
                 for benchmark in benchmarks:
                     if len(benchmark.forecast_reports) > 0:
                         all_benchmarks.append(benchmark)
+                    else:
+                        failed_benchmarks.append(benchmark)
 
             logger.info(f"Loaded {len(all_benchmarks)} benchmarks")
 
@@ -514,6 +529,17 @@ def run_benchmark_streamlit_page(
                 default=range(len(all_benchmarks)),
                 format_func=lambda i: benchmark_options[i],
             )
+
+            with st.expander("Empty/Errored Benchmarks", expanded=False):
+                st.write(
+                    "These are benchmark files that have 0 successful forecasts"
+                )
+                for benchmark in failed_benchmarks:
+                    st.write(f"#### {benchmark.name}")
+                    for error in benchmark.failed_report_errors:
+                        st.write(f"- **Error:** {error}")
+                    if not benchmark.failed_report_errors:
+                        st.write("- No errors")
 
             if selected_benchmarks:
                 filtered_benchmarks = [

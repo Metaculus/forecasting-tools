@@ -125,11 +125,19 @@ class Benchmarker:
             valid_reports = [
                 report
                 for report in reports
-                if not isinstance(report, Exception)
+                if not isinstance(report, BaseException)
             ]
             valid_reports = typeguard.check_type(
                 valid_reports,
                 list[ReportTypes],
+            )
+            failed_reports: list[BaseException] = [
+                report
+                for report in reports
+                if isinstance(report, BaseException)
+            ]
+            benchmark.failed_report_errors.extend(
+                [str(report) for report in failed_reports]
             )
             new_report_sequence = (
                 list(benchmark.forecast_reports) + valid_reports
