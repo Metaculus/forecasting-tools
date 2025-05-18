@@ -9,7 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 def test_question_decomposer_runs() -> None:
-    question_decomposer = QuestionDecomposer()
+    question_decomposer = QuestionDecomposer(
+        model="openrouter/openai/gpt-4o-mini:online"
+    )
     result = asyncio.run(
         question_decomposer.decompose_into_questions(
             "Will humanity go extinct before 2100?",
