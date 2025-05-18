@@ -1094,8 +1094,9 @@ class SheetOrganizer:
                     - DO NOT give a bad rating for a field having the question is only open for a short time (this is a testing spot forecasting)
                     - DO NOT give a bad rating for a field having ".p". This will use a parent url to get the question.
                     - DO NOT give a bad rating for the close date being long before the resolution date. The close date is just when the forecasters stop forecasting.
+                    - DO NOT give a bad rating for a question saying "as of <date in last 2 months> the state of <x> was <y>" even if the question will be published in the next week
                     - 90% of questions are good. If in doubt, say "good"
-                    - Today is {datetime.now().strftime("%Y-%m-%d")}
+                    - Today is {datetime.now().strftime("%Y-%m-%d")} and these questions were created in the last 1-4 weeks
 
                     Respond ONLY with a JSON object in the following format:
                     {{

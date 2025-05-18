@@ -158,6 +158,17 @@ def display_benchmark_list(benchmarks: list[BenchmarkForBot]) -> None:
     with st.expander(benchmark.name, expanded=False):
         st.markdown(f"**Description:** {benchmark.description}")
         st.markdown(
+            f"**Estimated successful forecasts:** {len(benchmark.forecast_reports)}"
+        )
+        estimated_failed_forecast_reports = (
+            (benchmark.num_input_questions - len(benchmark.forecast_reports))
+            if benchmark.num_input_questions is not None
+            else "N/A"
+        )
+        st.markdown(
+            f"**Estimated failed forecasts:** {estimated_failed_forecast_reports}"
+        )
+        st.markdown(
             f"**Time Taken (minutes):** {benchmark.time_taken_in_minutes}"
         )
         st.markdown(f"**Total Cost:** {benchmark.total_cost}")
@@ -252,6 +263,9 @@ def display_benchmark_comparison_graphs(
         if benchmark.total_cost is not None
     )
     st.markdown(f"**Total Cost:** ${total_cost:.2f}")
+    st.markdown(
+        f"**Number of input questions between benchmarks:** {set(benchmark.num_input_questions for benchmark in benchmarks if benchmark.num_input_questions is not None)}"
+    )
 
     data_by_benchmark = []
     for index, benchmark in enumerate(benchmarks):

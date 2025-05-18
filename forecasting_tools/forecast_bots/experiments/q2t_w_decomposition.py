@@ -211,7 +211,14 @@ class Q2TemplateBotWithDecompositionV2(Q2TemplateBot2025):
             task = self.get_llm("researcher", "llm").invoke(prompt)
             research_tasks.append(task)
 
-        research: list[str] = await asyncio.gather(*research_tasks)
+        research: list[str] = []
+        for task in research_tasks:
+            await asyncio.sleep(15)
+            new_research = await task
+            research.append(
+                new_research
+            )  # TODO: Make this parallel (this is a hack to avoid perplexity rate limits)
+        # research: list[str] = await asyncio.gather(*research_tasks)
         combined_research = "\n".join(research)
 
         note_pad = await self._get_notepad(question)

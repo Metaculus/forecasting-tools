@@ -415,13 +415,17 @@ def create_numeric_question(
         (
             """
             Percentile 20: -$20
-            Percentile 40: -$10.45
-            Percentile 60: $30
+            Percentile 40: -£10.45
+            Percentile 60: -$ 9
+            Percentile 70: - $8
+            Percentile 80: £ 31
             """,
             [
                 Percentile(value=-20, percentile=0.2),
                 Percentile(value=-10.45, percentile=0.4),
-                Percentile(value=30, percentile=0.6),
+                Percentile(value=-9, percentile=0.6),
+                Percentile(value=-8, percentile=0.7),
+                Percentile(value=31, percentile=0.8),
             ],
             create_numeric_question(),
         ),
@@ -528,6 +532,98 @@ def create_numeric_question(
             ],
             create_numeric_question(magnitude_units="millions"),
         ),
+        (
+            """
+            Notes before including "I think that percentile 10 should be 12, but won't list it".
+
+            Percentile 20: 1000000
+            Percentile 40: 2,000,000
+            Percentile 60: $3,000,000
+            """,
+            [
+                Percentile(value=1000000, percentile=0.2),
+                Percentile(value=2000000, percentile=0.4),
+                Percentile(value=3000000, percentile=0.6),
+            ],
+            create_numeric_question(),
+        ),
+        (
+            """
+            I think that percentile 10 should be 12, but won't list it
+            The percentile for 10 should be 800
+            The Percentile for 10 should be 1000
+            Percentile number 10 should be 400
+
+            Percentile 20: 1000000
+            Percentile 40: 2,000,000
+            Percentile 60: $3,000,000
+
+            Finally, that is where I think this should actually be Percentile 10: 12
+            """,
+            [
+                Percentile(value=1000000, percentile=0.2),
+                Percentile(value=2000000, percentile=0.4),
+                Percentile(value=3000000, percentile=0.6),
+            ],
+            create_numeric_question(),
+        ),
+        (  # testing with non breaking spaces for commas (gpt o3 uses this)
+            """
+            Percentile 10: 7 000
+            Percentile 20: 9 000
+            Percentile 40: 11 000
+            Percentile 60: 12 500
+            Percentile 80: 14 500
+            Percentile 90: 17 000
+            """,
+            [
+                Percentile(value=7000, percentile=0.1),
+                Percentile(value=9000, percentile=0.2),
+                Percentile(value=11000, percentile=0.4),
+                Percentile(value=12500, percentile=0.6),
+                Percentile(value=14500, percentile=0.8),
+                Percentile(value=17000, percentile=0.9),
+            ],
+            create_numeric_question(),
+        ),
+        (  # Testing with regular spaces (in case o3 decides this is also a good idea)
+            """
+            Percentile 10: 7 000
+            Percentile 20: 9 000
+            Percentile 40: 11 000
+            Percentile 60: 12 500
+            Percentile 80: 14 500
+            Percentile 90: 17 000
+            """,
+            [
+                Percentile(value=7000, percentile=0.1),
+                Percentile(value=9000, percentile=0.2),
+                Percentile(value=11000, percentile=0.4),
+                Percentile(value=12500, percentile=0.6),
+                Percentile(value=14500, percentile=0.8),
+                Percentile(value=17000, percentile=0.9),
+            ],
+            create_numeric_question(),
+        ),
+        (  # Testing complicated spaces
+            """
+            Percentile 10: -7 000 432
+            Percentile 20: 9 000 432
+            Percentile 40: 11 000 432
+            Percentile 60: 12 500 432
+            Percentile 80: $14 500 432
+            Percentile 90: 17 000 432.432
+            """,
+            [
+                Percentile(value=-7000432, percentile=0.1),
+                Percentile(value=9000432, percentile=0.2),
+                Percentile(value=11000432, percentile=0.4),
+                Percentile(value=12500432, percentile=0.6),
+                Percentile(value=14500432, percentile=0.8),
+                Percentile(value=17000432.432, percentile=0.9),
+            ],
+            create_numeric_question(),
+        ),
         # (
         #     """
         #     Percentile 20: 1,000,000
@@ -564,6 +660,9 @@ def test_numeric_parsing(
     numeric_distribution = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
         gpt_response, question
     )
+    assert len(numeric_distribution.declared_percentiles) == len(
+        expected_percentiles
+    ), f"Expected {len(expected_percentiles)} percentiles, but got {len(numeric_distribution.declared_percentiles)}"
     for declared_percentile, expected_percentile in zip(
         numeric_distribution.declared_percentiles, expected_percentiles
     ):
@@ -572,6 +671,45 @@ def test_numeric_parsing(
         )
         assert declared_percentile.percentile == pytest.approx(
             expected_percentile.percentile
+        )
+
+
+@pytest.mark.parametrize(
+    "gpt_response",
+    [
+        """
+        There are no percentiles here
+        """,
+        """
+        Percentile 10: A
+        Percentile 20: B
+        Percentile 30: C
+        """,
+        """
+        Percentile: 10 12
+        Percentile: 20 14
+        Percentile: 30 16
+        """,
+        """
+        Percentile 101: 10
+        Percentile 201: 14
+        Percentile 301: 16
+        """,
+        """
+        Percentile 0.1: 10
+        Percentile 0.2: 14
+        Percentile 0.3: 16
+        """,
+        """
+        Percentile 10: 7 000 -432
+        Percentile 20: 9 000 -432
+        """,
+    ],
+)
+def test_numeric_parsing_failure(gpt_response: str) -> None:
+    with pytest.raises(ValueError):
+        PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+            gpt_response, create_numeric_question()
         )
 
 

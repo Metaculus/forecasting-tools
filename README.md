@@ -20,23 +20,25 @@ This repository contains forecasting and research tools built with Python and St
 Here are the tools most likely to be useful to you:
 - 🎯 **Forecasting Bot:** General forecaster that integrates with the Metaculus AI benchmarking competition and provides a number of utilities. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the aggregation/API code, etc)
 - 🔌 **Metaculus API Wrapper:** for interacting with questions and tournaments
-- 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run you bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected log scores.
-- 🔍 **Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and GPT. Its a better (but slightly more expensive) alternative to Perplexity.ai that is configurable, more accurate, able to decide on filters, able to link to exact paragraphs, etc.
-- 🔑 **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
+- 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run you bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected baseline scores.
+
 
 Here are some other features of the project:
+- **Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and GPT. It is more configurable than Perplexity AI, allowing you to use any AI model, instruct the AI to decide on filters, get citations linking to exact paragraphs, etc.
+- **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
 - **Base Rate Researcher:** for calculating event probabilities (still experimental)
 - **Niche List Researcher:** for analyzing very specific lists of past events or items (still experimental)
 - **Fermi Estimator:** for breaking down numerical estimates (still experimental)
 - **Monetary Cost Manager:** for tracking AI and API expenses
+- **Other experimental tools:** See the demo site for other AI forecasting tools that this project supports (not all are documented)
 
 All the examples below are in a Jupyter Notebook called `README.ipynb` which you can run locally to test the package (make sure to run the first cell though).
 
-If you decide you want to join the Metaculus AI Benchmarking Tournament, it is recommended that your start [here](https://github.com/Metaculus/metac-bot-template). This repo is very easy to set up and allows you to get going in 30min.
+If you decide you want to join the Metaculus AI Benchmarking Tournament, it is recommended that your start [here](https://github.com/Metaculus/metac-bot-template). This repo is easy to start with and has a 30min tutorial for how to set it up.
 
 Join the [discord](https://discord.gg/Dtq4JNdXnw) for updates and to give feedback (btw feedback is very appreciated, even just a quick "I did/didn't decide to use tool X for reason Y, though am busy and don't have time to elaborate" is helpful to know)
 
-Note: This package is still in an experimental phase. The goal is to keep the package API fairly stable, though no guarantees are given at this phase. There will be special effort to keep the ForecastBot and TemplateBot APIs consistent.
+Note: This package is still in an experimental phase. The goal is to keep the package API fairly stable, though no guarantees are given at this phase especially with experimental tools. There will be special effort to keep the ForecastBot and TemplateBot APIs consistent.
 
 
 # Forecasting Bot Building
@@ -234,12 +236,9 @@ from forecasting_tools import (
     TemplateBot,
     BinaryQuestion,
     ReasonedPrediction,
-    SmartSearcher,
     GeneralLlm,
-    PredictionExtractor,
     Notepad
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 import random
 
 class NotepadBot(TemplateBot):

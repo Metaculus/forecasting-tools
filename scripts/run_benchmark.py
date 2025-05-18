@@ -19,9 +19,6 @@ from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
     Q2TemplateBot2025,
 )
-from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
-    UniformProbabilityBot,
-)
 from forecasting_tools.forecast_helpers.benchmarker import Benchmarker
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 from forecasting_tools.util.custom_logger import CustomLogger
@@ -36,16 +33,18 @@ def get_all_tournament_bots() -> list[ForecastBot]:
 
 def get_decomposition_bots() -> list[ForecastBot]:
     google_gemini_2_5_pro_preview = GeneralLlm(
+        # model="gemini/gemini-2.5-pro-preview-03-25",
         model="openrouter/google/gemini-2.5-pro-preview",
         temperature=0.3,
+        timeout=120,
     )
     perplexity_reasoning_pro = GeneralLlm.search_context_model(
-        model="openrouter/perplexity/sonar-reasoning-pro",
+        model="perplexity/sonar-reasoning-pro",
         temperature=0.3,
         search_context_size="high",
     )
     gpt_4o = GeneralLlm(
-        model="openrouter/openai/gpt-4o",
+        model="openai/gpt-4o",
         temperature=0.3,
     )
     bots = [
@@ -84,26 +83,28 @@ def get_decomposition_bots() -> list[ForecastBot]:
 
 
 async def benchmark_forecast_bots() -> None:
-    num_questions_to_use = 22
+    num_questions_to_use = 100
 
     with MonetaryCostManager() as cost_manager:
-        bots = get_all_tournament_bots()
-        for bot in bots:
-            bot.publish_reports_to_metaculus = False
+        bots = get_decomposition_bots()
+        additional_code_to_snapshot = [
+            QuestionDecomposer,
+            QuestionOperationalizer,
+        ]
         chosen_questions = MetaculusApi.get_benchmark_questions(
             num_questions_to_use,
-            days_to_resolve_in=6 * 30,  # 6 months
+            days_to_resolve_in=365,  # 6 * 30,  # 6 months
             max_days_since_opening=365,
         )
+
+        for bot in bots:
+            bot.publish_reports_to_metaculus = False
         benchmarks = await Benchmarker(
             questions_to_use=chosen_questions,
-            forecast_bots=bots + [UniformProbabilityBot()],
+            forecast_bots=bots,
             file_path_to_save_reports="logs/forecasts/benchmarks/",
-            concurrent_question_batch_size=15,
-            additional_code_to_snapshot=[
-                QuestionDecomposer,
-                QuestionOperationalizer,
-            ],
+            concurrent_question_batch_size=2,
+            additional_code_to_snapshot=additional_code_to_snapshot,
         ).run_benchmark()
         for i, benchmark in enumerate(benchmarks):
             logger.info(

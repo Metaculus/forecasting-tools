@@ -149,6 +149,6 @@ class ForecastReport(BaseModel, Jsonable, ABC):
         first_line = section.text_of_section_and_subsections.split("\n")[0]
         if expected_word.lower() not in first_line.lower():
             raise ValueError(
-                f"Section must contain the word '{expected_word}'"
+                f"The indexes for the sections are probably off. Target section title should contain the word '{expected_word}'"
             )
         return section
