@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "forecasting-tools"
-version = "0.2.38"
+version = "0.2.39"
 description = "AI forecasting and research tools to help humans reason about and forecast the future"
 authors = ["Benjamin Wilson <mokoresearch@gmail.com>"]
 license = "MIT"
