@@ -20,7 +20,7 @@ This repository contains forecasting and research tools built with Python and St
 Here are the tools most likely to be useful to you:
 - 🎯 **Forecasting Bot:** General forecaster that integrates with the Metaculus AI benchmarking competition and provides a number of utilities. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the aggregation/API code, etc)
 - 🔌 **Metaculus API Wrapper:** for interacting with questions and tournaments
-- 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run you bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected baseline scores.
+- 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run your bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected baseline scores.
 
 
 Here are some other features of the project:

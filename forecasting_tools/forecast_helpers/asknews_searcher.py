@@ -33,8 +33,6 @@ class AskNewsSearcher:
     ) -> None:
         self.client_id = client_id or os.getenv("ASKNEWS_CLIENT_ID")
         self.client_secret = client_secret or os.getenv("ASKNEWS_SECRET")
-        self.base_url = "https://api.asknews.app/v1"
-        self.token_url = "https://auth.asknews.app/oauth2/token"
 
         if not self.client_id or not self.client_secret:
             raise ValueError("ASKNEWS_CLIENT_ID or ASKNEWS_SECRET is not set")
@@ -47,41 +45,43 @@ class AskNewsSearcher:
         Use the AskNews `news` endpoint to get news context for your query.
         The full API reference can be found here: https://docs.asknews.app/en/reference#get-/v1/news/search
         """
-        ask = AsyncAskNewsSDK(
+        async with AsyncAskNewsSDK(
             client_id=self.client_id,
             client_secret=self.client_secret,
             scopes=set(["news"]),
-        )
+        ) as ask:
 
-        # get the latest news related to the query (within the past 48 hours)
-        hot_response = await ask.news.search_news(
-            query=query,  # your natural language query
-            n_articles=6,  # control the number of articles to include in the context, originally 5
-            return_type="both",
-            strategy="latest news",  # enforces looking at the latest news only
-        )
+            # get the latest news related to the query (within the past 48 hours)
+            hot_response = await ask.news.search_news(
+                query=query,  # your natural language query
+                n_articles=6,  # control the number of articles to include in the context, originally 5
+                return_type="both",
+                strategy="latest news",  # enforces looking at the latest news only
+            )
 
-        # get context from the "historical" database that contains a news archive going back to 2023
-        historical_response = await ask.news.search_news(
-            query=query,
-            n_articles=10,
-            return_type="both",
-            strategy="news knowledge",  # looks for relevant news within the past 60 days
-        )
+            # get context from the "historical" database that contains a news archive going back to 2023
+            historical_response = await ask.news.search_news(
+                query=query,
+                n_articles=10,
+                return_type="both",
+                strategy="news knowledge",  # looks for relevant news within the past 60 days
+            )
 
-        hot_articles = hot_response.as_dicts
-        historical_articles = historical_response.as_dicts
-        formatted_articles = "Here are the relevant news articles:\n\n"
+            hot_articles = hot_response.as_dicts
+            historical_articles = historical_response.as_dicts
+            formatted_articles = "Here are the relevant news articles:\n\n"
 
-        if hot_articles:
-            formatted_articles += self._format_articles(hot_articles)
-        if historical_articles:
-            formatted_articles += self._format_articles(historical_articles)
-        if not hot_articles and not historical_articles:
-            formatted_articles += "No articles were found.\n\n"
+            if hot_articles:
+                formatted_articles += self._format_articles(hot_articles)
+            if historical_articles:
+                formatted_articles += self._format_articles(
+                    historical_articles
+                )
+            if not hot_articles and not historical_articles:
+                formatted_articles += "No articles were found.\n\n"
+                return formatted_articles
+
             return formatted_articles
-
-        return formatted_articles
 
     def _format_articles(self, articles: list[SearchResponseDictItem]) -> str:
         formatted_articles = ""
@@ -138,22 +138,22 @@ class AskNewsSearcher:
             raise ImportError(
                 "Most recent version of asknews package not installed, deep research will not work. Run `poetry add asknews@0.11.6`"
             )
-        sdk = AsyncAskNewsSDK(
+        async with AsyncAskNewsSDK(
             client_id=self.client_id,
             client_secret=self.client_secret,
             scopes={"chat", "news", "stories", "analytics"},
-        )
-        response = await sdk.chat.get_deep_news(
-            messages=[{"role": "user", "content": query}],
-            search_depth=search_depth,
-            max_depth=max_depth,
-            sources=sources,
-            stream=False,
-            return_sources=False,
-            model=model,
-            inline_citations="numbered",
-        )
-        if not isinstance(response, CreateDeepNewsResponse):
-            raise ValueError("Response is not a CreateDeepNewsResponse")
+        ) as sdk:
+            response = await sdk.chat.get_deep_news(
+                messages=[{"role": "user", "content": query}],
+                search_depth=search_depth,
+                max_depth=max_depth,
+                sources=sources,
+                stream=False,
+                return_sources=False,
+                model=model,
+                inline_citations="numbered",
+            )
+            if not isinstance(response, CreateDeepNewsResponse):
+                raise ValueError("Response is not a CreateDeepNewsResponse")
 
-        return response
+            return response

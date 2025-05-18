@@ -704,9 +704,13 @@ def test_numeric_parsing(
         Percentile 10: 7 000 -432
         Percentile 20: 9 000 -432
         """,
+        # """
+        # Percentile 10: 7 000432
+        # Percentile 20: 9 000432
+        # """,
         """
-        Percentile 10: 7 000432
-        Percentile 20: 9 000432
+        Percentile 10: 7 010432
+        Percentile 20: 9 006432
         """,
         """
         Percentile 10: 7000 432
