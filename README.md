@@ -34,7 +34,7 @@ Here are some other features of the project:
 
 All the examples below are in a Jupyter Notebook called `README.ipynb` which you can run locally to test the package (make sure to run the first cell though).
 
-If you decide you want to join the Metaculus AI Benchmarking Tournament, it is recommended that your start [here](https://github.com/Metaculus/metac-bot-template). This repo is easy to start with and has a 30min tutorial for how to set it up.
+If you decide you want to join the Metaculus AI Benchmarking Tournament, it is recommended that you start [here](https://github.com/Metaculus/metac-bot-template). This repo is easy to start with and has a 30min tutorial for how to set it up.
 
 Join the [discord](https://discord.gg/Dtq4JNdXnw) for updates and to give feedback (btw feedback is very appreciated, even just a quick "I did/didn't decide to use tool X for reason Y, though am busy and don't have time to elaborate" is helpful to know)
 

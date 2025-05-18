@@ -607,20 +607,20 @@ def create_numeric_question(
         ),
         (  # Testing complicated spaces
             """
-            Percentile 10: -7 000 432
-            Percentile 20: 9 000 432
+            Percentile 10: -9 123 432
+            Percentile 20: -$7 123 432
             Percentile 40: 11 000 432
             Percentile 60: 12 500 432
             Percentile 80: $14 500 432
-            Percentile 90: 17 000 432.432
+            Percentile 90: 17 020 432.432
             """,
             [
-                Percentile(value=-7000432, percentile=0.1),
-                Percentile(value=9000432, percentile=0.2),
+                Percentile(value=-9123432, percentile=0.1),
+                Percentile(value=-7123432, percentile=0.2),
                 Percentile(value=11000432, percentile=0.4),
                 Percentile(value=12500432, percentile=0.6),
                 Percentile(value=14500432, percentile=0.8),
-                Percentile(value=17000432.432, percentile=0.9),
+                Percentile(value=17020432.432, percentile=0.9),
             ],
             create_numeric_question(),
         ),
