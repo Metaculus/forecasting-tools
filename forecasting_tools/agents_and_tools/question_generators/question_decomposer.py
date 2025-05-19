@@ -43,53 +43,11 @@ class QuestionDecomposer:
         additional_context: str | None,
         number_of_questions: int = 5,
     ) -> DecompositionResult:
+        # NOTE: prompt v5 has been best so far
         prompt = clean_indents(
-            f"""
+            """
             # Instructions
-            You are a research assistant to a superforecaster
-
-            You want to take an overarching topic or question they have given you and decompose
-            it into a list of sub questions that that will lead to better understanding and forecasting
-            the topic or question.
-
-            Your research process should look like this:
-            1. First get general news on the topic
-            2. Then pick 3 things to follow up with. Search perplexity with these in parallel
-            3. Then brainstorm 2x the number of question requested number of key questions requested
-            4. Pick your top questions
-            5. Give your final answer as:
-                - Reasoning
-                - Research Summary
-                - List of Questions
-
-            Don't forget to INCLUDE Links (including to each question if possible)!
-            Copy the links IN FULL to all your answers so others can know where you got your information.
-
-            # Question requireemnts
-            - The question can be forecast and will be resolvable with public information
-                - Good: "Will SpaceX launch a rocket in 2023?"
-                - Bad: "Will Elon mention his intention to launch in a private meeting by the end of 2023?"
-            - The question should be specific and not vague
-            - The question should have an inferred date
-            - The question should shed light on the topic and have high VOI (Value of Information)
-
-            # Good candidates for follow up question to get context
-            - Anything that shed light on a good base rate (especially ones that already have data)
-            - If there might be a index, site, etc that would allow for a clear resolution
-            - Consider if it would be best to ask a binary ("Will X happen"), numeric ("How many?"), or multiple choice question ("Which of these will occur?")
-
-
-            # Your Task
-            ## Topic/Question to Decompose
-            Please decompose the following topic or question into a list of {number_of_questions} sub questions.
-
-            Question/Topic: {fuzzy_topic_or_question}
-
-            ## Additional Context/Criteria
-            {additional_context}
-
-            ## Related Research
-            {related_research}
+            You are a research assistant to a superforecaster helping both the superforecaster and his clients.
             """
         )
         final_output = await self.model.invoke(prompt)

@@ -41,6 +41,7 @@ jobs:
       INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_o3_high_token:
     uses: ./.github/workflows/run-bot-launcher.yaml

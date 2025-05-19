@@ -1,10 +1,9 @@
 import asyncio
 
-from agents import Tool, function_tool
-
 from forecasting_tools.agents_and_tools.question_generators.simple_question import (
     SimpleQuestion,
 )
+from forecasting_tools.ai_models.agent_wrappers import AgentTool, agent_tool
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
@@ -17,7 +16,7 @@ from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 from forecasting_tools.util.misc import get_schema_of_base_model
 
 
-@function_tool
+@agent_tool
 async def get_general_news_with_asknews(topic: str) -> str:
     """
     Get general news context for a topic using AskNews.
@@ -27,14 +26,15 @@ async def get_general_news_with_asknews(topic: str) -> str:
     return await AskNewsSearcher().get_formatted_news_async(topic)
 
 
-@function_tool
-async def perplexity_search(query: str) -> str:
+@agent_tool
+async def perplexity_pro_search(query: str) -> str:
     """
     Use Perplexity (sonar-reasoning-pro) to search for information on a topic.
     This will provide a LLM answer with citations.
+    This is Perplexity's highest quality search model.
     """
     llm = GeneralLlm(
-        model="perplexity/sonar-reasoning-pro",
+        model="openrouter/perplexity/sonar-reasoning-pro",
         reasoning_effort="high",
         web_search_options={"search_context_size": "high"},
         populate_citations=True,
@@ -42,7 +42,23 @@ async def perplexity_search(query: str) -> str:
     return await llm.invoke(query)
 
 
-@function_tool
+@agent_tool
+async def perplexity_quick_search(query: str) -> str:
+    """
+    Use Perplexity (sonar) to search for information on a topic.
+    This will provide a LLM answer with citations.
+    This is Perplexity's fastest but lowest quality search model.
+    Good for getting a simple and quick answer to a question
+    """
+    llm = GeneralLlm(
+        model="openrouter/perplexity/sonar",
+        web_search_options={"search_context_size": "high"},
+        populate_citations=True,
+    )
+    return await llm.invoke(query)
+
+
+@agent_tool
 async def smart_searcher_search(query: str) -> str:
     """
     Use SmartSearcher to search for information on a topic.
@@ -52,7 +68,7 @@ async def smart_searcher_search(query: str) -> str:
     return await SmartSearcher(model="o4-mini").invoke(query)
 
 
-@function_tool
+@agent_tool
 def grab_question_details_from_metaculus(url: str) -> MetaculusQuestion:
     """
     This function grabs the details of a question from a Metaculus URL.
@@ -62,7 +78,7 @@ def grab_question_details_from_metaculus(url: str) -> MetaculusQuestion:
     return question
 
 
-@function_tool
+@agent_tool
 def grab_open_questions_from_tournament(
     tournament_id_or_slug: int | str,
 ) -> list[MetaculusQuestion]:
@@ -79,7 +95,7 @@ def grab_open_questions_from_tournament(
 
 def create_tool_for_forecasting_bot(
     bot_or_class: type[ForecastBot] | ForecastBot,
-) -> Tool:
+) -> AgentTool:
     if isinstance(bot_or_class, type):
         bot = bot_or_class()
     else:
@@ -95,7 +111,7 @@ def create_tool_for_forecasting_bot(
         """
     )
 
-    @function_tool(description_override=description)
+    @agent_tool(description_override=description)
     def forecast_question_tool(question: SimpleQuestion) -> str:
         metaculus_question = (
             SimpleQuestion.simple_questions_to_metaculus_questions([question])[

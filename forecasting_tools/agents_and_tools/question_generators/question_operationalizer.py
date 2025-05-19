@@ -1,10 +1,9 @@
 import random
 
-from agents import function_tool
-
 from forecasting_tools.agents_and_tools.question_generators.simple_question import (
     SimpleQuestion,
 )
+from forecasting_tools.ai_models.agent_wrappers import agent_tool
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.data_organizer import DataOrganizer
@@ -91,7 +90,7 @@ class QuestionOperationalizer:
             raise ValueError("No question generated from the title.")
         return questions
 
-    @function_tool
+    @agent_tool
     @staticmethod
     def question_operationalizer_tool(
         question_title: str, related_research: str

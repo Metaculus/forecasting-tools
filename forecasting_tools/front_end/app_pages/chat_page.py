@@ -9,7 +9,8 @@ from forecasting_tools.agents_and_tools.misc_tools import (
     get_general_news_with_asknews,
     grab_open_questions_from_tournament,
     grab_question_details_from_metaculus,
-    perplexity_search,
+    perplexity_pro_search,
+    perplexity_quick_search,
     smart_searcher_search,
 )
 from forecasting_tools.agents_and_tools.question_generators.question_decomposer import (
@@ -21,8 +22,8 @@ from forecasting_tools.agents_and_tools.question_generators.question_operational
 from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator,
 )
+from forecasting_tools.ai_models.agent_wrappers import AgentSdkLlm
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.ai_models.general_llm import AgentSdkLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
@@ -110,12 +111,13 @@ class ChatPage(AppPage):
             TopicGenerator().find_random_headlines_tool,
             QuestionDecomposer().decompose_into_questions_tool,
             QuestionOperationalizer().question_operationalizer_tool,
-            perplexity_search,
+            perplexity_pro_search,
             get_general_news_with_asknews,
             smart_searcher_search,
             grab_question_details_from_metaculus,
             grab_open_questions_from_tournament,
             TopicGenerator().get_headlines_on_random_company_tool,
+            perplexity_quick_search,
         ]
 
         bot_options = get_all_important_bot_classes()
