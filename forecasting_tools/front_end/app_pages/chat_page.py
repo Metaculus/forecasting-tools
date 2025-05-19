@@ -22,7 +22,7 @@ from forecasting_tools.agents_and_tools.question_generators.question_operational
 from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator,
 )
-from forecasting_tools.ai_models.agent_wrappers import AgentSdkLlm
+from forecasting_tools.ai_models.agent_wrappers import AgentSdkLlm, AgentTool
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -129,11 +129,39 @@ class ChatPage(AppPage):
         default_tools.append(create_tool_for_forecasting_bot(bot))
 
         active_tools: list[Tool] = []
-        with st.sidebar:
+        with st.sidebar.expander("Select Tools"):
+            tool_names = [tool.name for tool in default_tools]
+            all_checked = all(
+                st.session_state.get(f"tool_{name}", True)
+                for name in tool_names
+            )
+            toggle_label = "Toggle all Tools"
+            if st.button(toggle_label):
+                for name in tool_names:
+                    st.session_state[f"tool_{name}"] = not all_checked
             for tool in default_tools:
-                tool_active = st.checkbox(tool.name, value=True)
+                key = f"tool_{tool.name}"
+                tool_active = st.checkbox(
+                    tool.name, value=st.session_state.get(key, True), key=key
+                )
                 if tool_active:
                     active_tools.append(tool)
+
+        with st.sidebar.expander("Tool Explanations"):
+            for tool in active_tools:
+                if isinstance(tool, AgentTool):
+                    st.write(
+                        clean_indents(
+                            f"""
+                            **{tool.name}**
+
+                            {clean_indents(tool.description)}
+
+                            ---
+
+                            """
+                        )
+                    )
 
         return active_tools
 
@@ -166,13 +194,11 @@ class ChatPage(AppPage):
         instructions = clean_indents(
             """
             You are a helpful assistant.
-            When a tool gives you answers that are cited, ALWAYS include the links in your responses.
-
-            If you can, you infer the inputs to tools rather than ask for them.
-
-            If a tool call fails, you say so rather than giving a back up answer.
-
-            Whenever possible, please parralelize your tool calls.
+            - When a tool gives you answers that are cited, ALWAYS include the links in your responses.
+            - If you can, you infer the inputs to tools rather than ask for them.
+            - If a tool call fails, you say so rather than giving a back up answer.
+            - Whenever possible, please parralelize your tool calls and split tasks into parallel subtasks.
+            - By default, restate ALL the output that tools give you in readable markdown to the user.
             """
         )
 

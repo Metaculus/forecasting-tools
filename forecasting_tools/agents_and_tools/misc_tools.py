@@ -65,7 +65,7 @@ async def smart_searcher_search(query: str) -> str:
     This will provide a LLM answer with citations.
     Citations will include url text fragments for faster fact checking.
     """
-    return await SmartSearcher(model="o4-mini").invoke(query)
+    return await SmartSearcher(model="openrouter/openai/o4-mini").invoke(query)
 
 
 @agent_tool
