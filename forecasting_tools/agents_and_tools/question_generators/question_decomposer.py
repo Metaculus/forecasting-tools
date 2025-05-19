@@ -1,15 +1,25 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
-from agents import function_tool
 from pydantic import BaseModel
 
+from forecasting_tools.agents_and_tools.misc_tools import (
+    perplexity_quick_search,
+)
+from forecasting_tools.ai_models.agent_wrappers import (
+    AgentRunner,
+    AiAgent,
+    agent_tool,
+)
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecast_helpers.structure_output import (
     structure_output,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class DecomposedQuestion(BaseModel):
@@ -32,9 +42,13 @@ class DecompositionResult(BaseModel):
 class QuestionDecomposer:
     def __init__(
         self,
-        model: str | GeneralLlm = "openrouter/perplexity/sonar-reasoning-pro",
+        model: str | GeneralLlm = "openrouter/anthropic/claude-3.7-sonnet",
     ) -> None:
-        self.model: GeneralLlm = GeneralLlm.to_llm(model)
+        if isinstance(model, GeneralLlm):
+            logger.warning(
+                "You are using GeneralLlm for QuestionDecomposer. Converting to model name."
+            )
+        self.model: str = GeneralLlm.to_model_name(model)
 
     async def decompose_into_questions(
         self,
@@ -45,18 +59,96 @@ class QuestionDecomposer:
     ) -> DecompositionResult:
         # NOTE: prompt v5 has been best so far
         prompt = clean_indents(
-            """
+            f"""
             # Instructions
             You are a research assistant to a superforecaster helping both the superforecaster and his clients.
+
+            You want to take an overarching topic or question they have given you and decompose it into a list of sub questions that that will lead to better understanding and forecasting the topic or question.
+
+            Follow these instructions:
+            1. Run 3 parallel searches for background information
+            2. Come up with {number_of_questions} question ideas and run (in parallel) a search on each of them asking:
+            > "How has [question] resolved in the past? Please provide a link to how to find this value or if you cannot find an exact resolution source, to suggest another question".
+            3. Iterate until you have a list of questions and how they have resolved in the past
+            3. Pick your top questions
+            4. Give your final answer in the requested format
+
+            # Question requireemnts
+            - The question hold shed light on the topic and have high VOI (Value of Information)
+            - The question can be forecast and will be resolvable with public information
+                - Good: "Will SpaceX launch a rocket on May 2nd 2023?"
+                - Bad: "Will Elon mention his intention to launch a rocket on May 2nd 2023 in a private meeting?"
+            - The question should be specific and not vague
+            - The question should have a resolution date
+            - Once the the resolution date has passed, the question should be resolvable with 0.5-1.5hr of research
+                - Bad: "Will a research paper in a established journal find that a new knee surgery technique reduces follow up surgery with significance by Dec 31 2023?" (To resolve this you have to do extensive research into all new research in a field)
+                - Good: "Will public dataset X at URL Y show the number of follow ups to knee surgeries decrease by Z% by Dec 31 2023?" (requires only some math on a few data points at a known URL)
+            - A good resolution source exists
+                - Bad: "On 15 January 2026, will the general sentiment be generally positive for knee surgery professionals with at least 10 years of experience concerning ACL reconstruction research?" (There is no wasy to research this online. You would have to run a large study on knee professionals)
+                - Good: "As of 15 January 2026, how many 'recruiting study' search results will there be on ClinicalTrials.gov when searching 'ACL reconstruction' in 'intervention/treatment'?" (requires only a search on a known website)
+            - Don't forget to INCLUDE Links if you found any! Copy the links IN FULL to all your answers so others can know where you got your information.
+            - The questions should match any additional criteria that the superforecaster/client has given you
+
+            # Format
+            You should give your response in the below format
+
+            ```
+            **General Research and Reasoning**:
+            [Your background research, scratch pad notes, and explanation of your approach]
+
+            **Question 1:**
+            - Title: [Question Title]
+            - Resolution process: [How you would resolve the question]
+            - Expected resolution date: [Date you would resolve the question]
+            - Background information: [Define terms and signficance that might not be obvious]
+
+            **Question 2:**
+            - Title: [Question Title]
+            - Resolution process: [How you would resolve the question]
+            - Expected resolution date: [Date you would resolve the question]
+            - Background information: [Define terms and signficance that might not be obvious]
+
+            ... etc ...
+            ```
+
+            # Reiteration of your priorities
+            The most important thing to get right is high VOI and high resolvability. Focus on these.
+
+            # Things to consider
+            - Anything that shed light on a good base rate (especially ones that already have data)
+            - If there might be a index, established database, site, etc that would allow for a clear resolution
+            - Consider if it would be best to ask a binary ("Will X happen"), numeric ("How many?"), or multiple choice question ("Which of these will occur?")
+
+
+            # Your Task
+            ## Topic/Question to Decompose
+            Please decompose the following topic or question into a list of {number_of_questions} sub questions.
+
+            Question/Topic: {fuzzy_topic_or_question}
+
+            ## Additional Context/Criteria
+            Here is some additional context/criteria that the superforecaster has mentioned:
+            {additional_context}
+
+            ## Related Research
+            Here is some research that has already been done:
+            {related_research}
             """
         )
-        final_output = await self.model.invoke(prompt)
+        agent = AiAgent(
+            name="Question Decomposer",
+            instructions=prompt,
+            model=self.model,
+            tools=[perplexity_quick_search],
+            handoffs=[],
+        )
+        result = await AgentRunner.run(agent, prompt)
         structured_output = await structure_output(
-            str(final_output), DecompositionResult
+            str(result.final_output), DecompositionResult
         )
         return structured_output
 
-    @function_tool
+    @agent_tool
     @staticmethod
     def decompose_into_questions_tool(
         fuzzy_topic_or_question: str,
@@ -76,7 +168,7 @@ class QuestionDecomposer:
         Returns:
             A DecompositionResult object with the following fields:
             - reasoning: The reasoning for the decomposition.
-            - questions: A list of sub questions.
+            - questions: A list of sub questions and metadata
         """
         return asyncio.run(
             QuestionDecomposer().decompose_into_questions(
@@ -111,7 +203,7 @@ class QuestionDecomposer:
 #     ## Topic/Question to Decompose
 #     Please decompose the following topic or question into a list of {number_of_questions} areas/themes/ideas.
 
-#     Question/Topic: {fuzzy_topic_or_question}
+#     Thistion/Topic: {fuzzy_topic_or_question}
 
 #     ## Additional Context/Criteria
 #     Here is some additional context/criteria that the superforecaster has mentioned:

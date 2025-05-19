@@ -38,10 +38,6 @@ class AiAgent(Agent):
     pass
 
 
-# def agent_tool(*args, **kwargs) -> AgentTool | Callable[[ToolFunction[...]], AgentTool]:
-#     return function_tool(*args, **kwargs)
-
-
 @overload
 def agent_tool(func: ToolFunction[...], **kwargs) -> FunctionTool:
     """Overload for usage as @function_tool (no parentheses)."""
