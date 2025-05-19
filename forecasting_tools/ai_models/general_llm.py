@@ -278,7 +278,12 @@ class GeneralLlm(
                 prompt
             )
         )
-        return response.data
+        data = response.data
+        if data == "":
+            raise RuntimeError(
+                f"LLM answer is an empty string. The model was {self.model} and the prompt was: {prompt}"
+            )
+        return data
 
     @RetryableModel._retry_according_to_model_allowed_tries
     async def _invoke_with_request_cost_time_and_token_limits_and_retry(

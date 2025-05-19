@@ -51,7 +51,7 @@ class QuestionOperationalizer:
                 - For numeric questions, the range should not be an obvious number
                 - For multiple choice questions, probability for each option should not be more than 80% or less than 5%
             - The question should be clear, specific, and resolvable with public information
-                - Good: "Will SpaceX launch a rocket in 2023?"
+                - Good: "Will SpaceX launch a rocket on May 2nd 2023?"
                 - Bad: "Will Elon mention his intention to launch in a private meeting by the end of 2023?"
             - Resolution criteria should be unambiguous (everyone should agree on the answer once it resolves)
             - Make sure the time horizon is appropriate - not too short or too long
@@ -81,6 +81,10 @@ class QuestionOperationalizer:
         ).strip()
 
         final_output = await self.model.invoke(input_prompt)
+        if not final_output:
+            raise RuntimeError(
+                f"LLM answer is an empty string. The prompt was: {input_prompt}"
+            )
 
         questions = await structure_output(final_output, SimpleQuestion)
         if not questions:

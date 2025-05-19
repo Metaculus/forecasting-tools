@@ -84,7 +84,7 @@ def get_decomposition_bots() -> list[ForecastBot]:
 
 
 async def benchmark_forecast_bots() -> None:
-    num_questions_to_use = 100
+    num_questions_to_use = 500
     concurrent_batch_size = 2
     bots = get_decomposition_bots()
     additional_code_to_snapshot = [

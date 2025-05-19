@@ -74,6 +74,45 @@ async def test_benchmarks_run_properly_with_mocked_bot(
         )
 
 
+async def test_correct_number_of_final_forecasts_for_multiple_bots() -> None:
+    class Bot1(MockBot):
+        pass
+
+    class Bot2(MockBot):
+        pass
+
+    class Bot3(MockBot):
+        pass
+
+    bot1 = Bot1()
+    bot2 = Bot2()
+    bot3 = Bot3()
+
+    benchmarks = await Benchmarker(
+        forecast_bots=[bot1, bot2, bot3],
+        number_of_questions_to_use=30,
+        concurrent_question_batch_size=4,
+    ).run_benchmark()
+
+    assert len(benchmarks) == 3
+    for i, benchmark in enumerate(benchmarks):
+        assert benchmarks[i].forecast_bot_class_name == f"Bot{i + 1}"
+        assert len(benchmark.forecast_reports) == 30
+        assert benchmark.num_input_questions == 30
+        assert benchmark.num_failed_forecasts == 0
+        assert_all_benchmark_object_fields_are_not_none(benchmark, 30)
+
+    bot1_forecasts = benchmarks[0].forecast_reports
+    bot2_forecasts = benchmarks[1].forecast_reports
+    bot3_forecasts = benchmarks[2].forecast_reports
+    assert (
+        len(set(bot1_forecasts))
+        == len(set(bot2_forecasts))
+        == len(set(bot3_forecasts))
+        == len(set(bot1_forecasts + bot2_forecasts + bot3_forecasts))
+    )
+
+
 def assert_all_benchmark_object_fields_are_not_none(
     benchmark: BenchmarkForBot, num_questions: int
 ) -> None:

@@ -2,17 +2,31 @@ import asyncio
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 
-for i in range(10):
-    llm1 = GeneralLlm(
-        model="metaculus/gpt-4o", api_key="this-is-to-keep-it-from-erroring"
-    )
-    llm2 = GeneralLlm(
+llms = [
+    GeneralLlm(model="metaculus/gpt-4o"),
+    GeneralLlm(
         model="metaculus/claude-3-5-sonnet-20241022",
-        api_key="this-is-to-keep-it-from-erroring",
-    )
-    response1 = asyncio.run(llm1.invoke("What is your name?"))
-    response2 = asyncio.run(llm2.invoke("What is your name?"))
-    print("-" * 100)
+    ),
+    GeneralLlm.thinking_budget_model(
+        model="metaculus/claude-3-7-sonnet-latest",
+    ),
+    GeneralLlm(model="metaculus/o1"),
+    GeneralLlm(
+        model="metaculus/o4-mini",
+    ),
+    GeneralLlm(
+        model="metaculus/gpt-4.1",
+    ),
+    GeneralLlm(
+        model="metaculus/gpt-4o-mini",
+    ),
+    GeneralLlm(
+        model="metaculus/o3-mini",
+    ),
+]
+
+for i, llm in enumerate(llms):
+    response = asyncio.run(llm.invoke("What is your name?"))
     print(f"Response {i+1}:")
-    print(response1)
-    print(response2)
+    print(response)
+    print("-" * 100)

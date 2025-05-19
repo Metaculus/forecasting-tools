@@ -271,12 +271,20 @@ def display_benchmark_comparison_graphs(
         for benchmark in benchmarks
         if benchmark.total_cost is not None
     )
+    st.markdown("### Overview")
     st.markdown(f"**Total Cost:** ${total_cost:.2f}")
     st.markdown(
         f"**Number of input questions (set of all observed inputs values):** {set(benchmark.num_input_questions for benchmark in benchmarks if benchmark.num_input_questions is not None)}"
     )
     st.markdown(
         f"**Total number of failed forecasts:** {sum(benchmark.num_failed_forecasts for benchmark in benchmarks if benchmark.num_failed_forecasts is not None)}"
+    )
+    confidence_level = st.sidebar.slider(
+        "Error Bar Confidence Level",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.90,
+        step=0.1,
     )
 
     data_by_benchmark = []
@@ -337,7 +345,6 @@ def display_benchmark_comparison_graphs(
             average_uncertain_deviation_score = None
 
         benchmark_name = f"{index}: {benchmark.name}"
-        confidence_level = 0.90
 
         data_by_benchmark.extend(
             [
@@ -460,6 +467,40 @@ def make_perfect_benchmark(
     return perfect_benchmark
 
 
+def display_errors_of_benchmarks(benchmarks: list[BenchmarkForBot]) -> None:
+    benchmarks_with_zero_forecasts = [
+        benchmark
+        for benchmark in benchmarks
+        if len(benchmark.forecast_reports) == 0
+    ]
+    benchmarks_with_errors = [
+        benchmark for benchmark in benchmarks if benchmark.failed_report_errors
+    ]
+
+    if not benchmarks_with_zero_forecasts and not benchmarks_with_errors:
+        return
+
+    with st.expander("Empty/Errored Benchmarks", expanded=False):
+        if benchmarks_with_zero_forecasts:
+            st.write(
+                "These are benchmark files that have 0 successful forecasts"
+            )
+        for benchmark in benchmarks_with_zero_forecasts:
+            st.write(f"- {benchmark.name}")
+
+        if benchmarks_with_errors:
+            st.write("These are benchmark files that have errors")
+            st.write(
+                f"Total errors: {sum(len(benchmark.failed_report_errors) for benchmark in benchmarks_with_errors)}"
+            )
+        for benchmark in benchmarks_with_errors:
+            st.write(
+                f"#### {len(benchmark.failed_report_errors)} Error for {benchmark.name}"
+            )
+            for error in benchmark.failed_report_errors:
+                st.write(f"- **Error:** {error}")
+
+
 def run_benchmark_streamlit_page(
     input: list[BenchmarkForBot] | str | None = None,
 ) -> None:
@@ -474,6 +515,7 @@ def run_benchmark_streamlit_page(
     Files containing "bench" in the name and ending in '.json' will be collected as benchmark files
     from the project directory tree.
     """
+    # TODO: Refactor this file. It doesn't match the cleanliness standards of the rest of the code base.
 
     st.title("Benchmark Viewer")
 
@@ -502,48 +544,40 @@ def run_benchmark_streamlit_page(
 
     if selected_files:
         try:
+            all_successful_benchmarks: list[BenchmarkForBot] = []
             all_benchmarks: list[BenchmarkForBot] = []
-            failed_benchmarks: list[BenchmarkForBot] = []
             for file in selected_files:
                 benchmarks = BenchmarkForBot.load_json_from_file_path(file)
                 for benchmark in benchmarks:
+                    all_benchmarks.append(benchmark)
                     if len(benchmark.forecast_reports) > 0:
-                        all_benchmarks.append(benchmark)
-                    else:
-                        failed_benchmarks.append(benchmark)
+                        all_successful_benchmarks.append(benchmark)
 
-            logger.info(f"Loaded {len(all_benchmarks)} benchmarks")
+            logger.info(f"Loaded {len(all_successful_benchmarks)} benchmarks")
 
-            perfect_benchmark = make_perfect_benchmark(all_benchmarks[0])
-            all_benchmarks.insert(0, perfect_benchmark)
+            perfect_benchmark = make_perfect_benchmark(
+                all_successful_benchmarks[0]
+            )
+            all_successful_benchmarks.insert(0, perfect_benchmark)
 
             benchmark_options = []
-            for i, b in enumerate(all_benchmarks):
+            for i, b in enumerate(all_successful_benchmarks):
                 benchmark_options.append(
                     f"{i}: {b.name} (Score: {b.average_expected_baseline_score:.4f})"
                 )
 
             selected_benchmarks = st.multiselect(
                 "Select benchmarks to display:",
-                range(len(all_benchmarks)),
-                default=range(len(all_benchmarks)),
+                range(len(all_successful_benchmarks)),
+                default=range(len(all_successful_benchmarks)),
                 format_func=lambda i: benchmark_options[i],
             )
 
-            with st.expander("Empty/Errored Benchmarks", expanded=False):
-                st.write(
-                    "These are benchmark files that have 0 successful forecasts"
-                )
-                for benchmark in failed_benchmarks:
-                    st.write(f"#### {benchmark.name}")
-                    for error in benchmark.failed_report_errors:
-                        st.write(f"- **Error:** {error}")
-                    if not benchmark.failed_report_errors:
-                        st.write("- No errors")
+            display_errors_of_benchmarks(all_benchmarks)
 
             if selected_benchmarks:
                 filtered_benchmarks = [
-                    all_benchmarks[i] for i in selected_benchmarks
+                    all_successful_benchmarks[i] for i in selected_benchmarks
                 ]
                 display_benchmark_comparison_graphs(filtered_benchmarks)
                 display_benchmark_list(filtered_benchmarks)

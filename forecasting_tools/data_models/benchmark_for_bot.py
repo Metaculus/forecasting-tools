@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any
 
 import typeguard
 from pydantic import AliasChoices, BaseModel, Field
@@ -30,9 +30,7 @@ class BenchmarkForBot(BaseModel, Jsonable):
     git_commit_hash: str
     forecast_bot_config: dict[str, Any]
     code: str | None = None
-    forecast_reports: Sequence[
-        BinaryReport | NumericReport | MultipleChoiceReport
-    ]
+    forecast_reports: list[BinaryReport | NumericReport | MultipleChoiceReport]
     failed_report_errors: list[str] = Field(default_factory=list)
 
     @property
