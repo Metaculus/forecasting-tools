@@ -73,7 +73,7 @@ class QuestionDecomposer:
             Follow these instructions:
             1. Get general news on the topic
             2. Run follow up searches (either quick or via general news) to double click on some potential interesting topics that could lead to good questions
-            3. Iteraively run searches (run multiple at a time if you can) until you feel ready to make questions. Don't go through more than 5 iterations on this.
+            3. Iteratively run searches (run multiple at a time if you can) until you feel ready to make questions. Don't go through more than 5 iterations on this.
             4. Come up with {number_of_questions} question ideas and run (in parallel) a quick search on each of them asking:
             > "How has [question] resolved in the past? Please provide a link to how to find this value or if you cannot find an exact resolution source, to suggest another question".
             5. Ask yourself if the question matches the criteria, and if you have a valid past resolution..
@@ -93,7 +93,7 @@ class QuestionDecomposer:
                 - Bad: "Will a research paper in a established journal find that a new knee surgery technique reduces follow up surgery with significance by Dec 31 2023?" (To resolve this you have to do extensive research into all new research in a field)
                 - Good: "Will public dataset X at URL Y show the number of follow ups to knee surgeries decrease by Z% by Dec 31 2023?" (requires only some math on a few data points at a known URL)
             - A good resolution source exists
-                - Bad: "On 15 January 2026, will the general sentiment be generally positive for knee surgery professionals with at least 10 years of experience concerning ACL reconstruction research?" (There is no wasy to research this online. You would have to run a large study on knee professionals)
+                - Bad: "On 15 January 2026, will the general sentiment be generally positive for knee surgery professionals with at least 10 years of experience concerning ACL reconstruction research?" (There is no way to research this online. You would have to run a large study on knee professionals)
                 - Good: "As of 15 January 2026, how many 'recruiting study' search results will there be on ClinicalTrials.gov when searching 'ACL reconstruction' in 'intervention/treatment'?" (requires only a search on a known website)
             - Don't forget to INCLUDE Links if you found any! Copy the links IN FULL to all your answers so others can know where you got your information.
             - The questions should match any additional criteria that the superforecaster/client has given you
@@ -201,7 +201,7 @@ class QuestionDecomposer:
             Don't forget to INCLUDE Links (including to each question if possible)!
             Copy the links IN FULL to all your answers so others can know where you got your information.
 
-            # Question requireemnts
+            # Question requirements
             - The question can be forecast and will be resolvable with public information
                 - Good: "Will SpaceX launch a rocket in 2023?"
                 - Bad: "Will Elon mention his intention to launch in a private meeting by the end of 2023?"
@@ -277,6 +277,8 @@ class QuestionDecomposer:
                 additional_context=additional_criteria_or_context_from_user,
                 related_research=related_research,
             )
+        else:
+            raise ValueError(f"Invalid mode: {mode}")
         return asyncio.run(task)
 
 

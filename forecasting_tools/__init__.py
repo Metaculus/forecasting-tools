@@ -1,3 +1,5 @@
+import nest_asyncio
+
 from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
     BaseRateResearcher as BaseRateResearcher,
 )
@@ -137,3 +139,5 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
 from forecasting_tools.forecast_helpers.smart_searcher import (
     SmartSearcher as SmartSearcher,
 )
+
+nest_asyncio.apply()

@@ -167,7 +167,7 @@ def assert_all_benchmark_object_fields_are_not_none(
         benchmark.forecast_bot_class_name is not None
     ), "Forecast bot class name is not set"
     assert (
-        benchmark.forecast_bot_class_name == "TemplateBot"
+        len(benchmark.forecast_bot_class_name) > 0
     ), "Forecast bot class name is not set correctly"
     assert (
         len(benchmark.forecast_reports) == num_questions

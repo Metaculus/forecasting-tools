@@ -1,9 +1,12 @@
 import asyncio
 from typing import Callable, overload
 
+import nest_asyncio
 from agents import Agent, FunctionTool, Runner, function_tool
 from agents.extensions.models.litellm_model import LitellmModel
 from agents.tool import ToolFunction
+
+nest_asyncio.apply()
 
 
 class AgentSdkLlm(LitellmModel):

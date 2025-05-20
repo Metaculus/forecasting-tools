@@ -178,7 +178,7 @@ class Benchmarker:
         assert len(batches) == len(bots) * len(question_batches)
         assert all(
             1 <= len(batch.questions) <= batch_size for batch in batches
-        ), "All batches must have the same number of questions"
+        ), "All batches must have questions and be below batch size"
         return batches
 
     def _initialize_benchmarks(

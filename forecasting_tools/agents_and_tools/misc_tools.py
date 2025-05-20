@@ -68,7 +68,7 @@ async def smart_searcher_search(query: str) -> str:
 
 
 @agent_tool
-async def grab_question_details_from_metaculus(
+def grab_question_details_from_metaculus(
     url_or_id: str | int,
 ) -> MetaculusQuestion:
     """
@@ -83,7 +83,7 @@ async def grab_question_details_from_metaculus(
 
 
 @agent_tool
-async def grab_open_questions_from_tournament(
+def grab_open_questions_from_tournament(
     tournament_id_or_slug: int | str,
 ) -> list[MetaculusQuestion]:
     """

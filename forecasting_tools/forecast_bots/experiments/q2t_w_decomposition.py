@@ -165,7 +165,7 @@ class Q2TemplateBotWithDecompositionV2(Q2TemplateBot2025):
             "default": gemini_model,
             "summarizer": "gpt-4o-mini",
             "decomposer": gemini_grounded_model,
-            "researcher": gemini_grounded_model,
+            "researcher": "asknews/news-summaries",
         }
 
     async def run_research(self, question: MetaculusQuestion) -> str:

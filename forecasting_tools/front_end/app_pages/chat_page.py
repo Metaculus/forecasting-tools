@@ -160,15 +160,15 @@ class ChatPage(AppPage):
     @classmethod
     def get_chat_tools(cls) -> list[Tool]:
         return [
-            TopicGenerator().find_random_headlines_tool,
-            QuestionDecomposer().decompose_into_questions_tool,
-            QuestionOperationalizer().question_operationalizer_tool,
+            TopicGenerator.find_random_headlines_tool,
+            QuestionDecomposer.decompose_into_questions_tool,
+            QuestionOperationalizer.question_operationalizer_tool,
             perplexity_pro_search,
             get_general_news_with_asknews,
             smart_searcher_search,
             grab_question_details_from_metaculus,
             grab_open_questions_from_tournament,
-            TopicGenerator().get_headlines_on_random_company_tool,
+            TopicGenerator.get_headlines_on_random_company_tool,
             perplexity_quick_search,
         ]
 
@@ -323,7 +323,7 @@ class ChatPage(AppPage):
             - When a tool gives you answers that are cited, ALWAYS include the links in your responses. Keep the links inline as much as you can.
             - If you can, you infer the inputs to tools rather than ask for them.
             - If a tool call fails, you say so rather than giving a back up answer.
-            - Whenever possible, please parralelize your tool calls and split tasks into parallel subtasks. However, don't do this if tasks are dependent on each other (e.g. you need metaculus question information to run a forecast)
+            - Whenever possible, please paralelize your tool calls and split tasks into parallel subtasks. However, don't do this if tasks are dependent on each other (e.g. you need metaculus question information to run a forecast)
             - By default, restate ALL the output that tools give you in readable markdown to the user. Do this even if the tool output is long.
             """
         )

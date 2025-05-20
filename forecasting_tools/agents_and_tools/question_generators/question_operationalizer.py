@@ -1,3 +1,4 @@
+import asyncio
 import random
 
 from forecasting_tools.agents_and_tools.question_generators.simple_question import (
@@ -101,15 +102,12 @@ class QuestionOperationalizer:
         Args:
             question_title: The title of the question to operationalize
             related_research: Include as much research as possible to help make a good question (especially include possible resolution sources)
-
-        Returns:
-            A SimpleQuestion object with all fields filled out
         """
-        import asyncio
 
-        return asyncio.run(
+        result = asyncio.run(
             QuestionOperationalizer().operationalize_question(
                 question_title,
                 related_research,
             )
         )
+        return result
