@@ -1,8 +1,11 @@
 import logging
+import os
+import time
 
 import streamlit as st
 from agents import Agent, RunItem, Runner, Tool, trace
 from openai.types.responses import ResponseTextDeltaEvent
+from pydantic import BaseModel
 
 from forecasting_tools.agents_and_tools.misc_tools import (
     create_tool_for_forecasting_bot,
@@ -34,8 +37,17 @@ from forecasting_tools.front_end.helpers.app_page import AppPage
 from forecasting_tools.front_end.helpers.report_displayer import (
     ReportDisplayer,
 )
+from forecasting_tools.util.jsonable import Jsonable
 
 logger = logging.getLogger(__name__)
+
+
+class ChatSession(BaseModel, Jsonable):
+    name: str
+    messages: list[dict]
+    trace_id: str | None = None
+    last_chat_cost: float | None = None
+    last_chat_duration: float | None = None
 
 
 class ChatPage(AppPage):
@@ -50,12 +62,24 @@ class ChatPage(AppPage):
 
     @classmethod
     async def _async_main(cls) -> None:
+
         if "messages" not in st.session_state.keys():
             st.session_state.messages = [cls.DEFAULT_MESSAGE]
+
+        if len(st.session_state.messages) <= 1:
+            st.success(
+                "Welcome to the [forecasting-tools](https://github.com/Metaculus/forecasting-tools) chatbot! "
+                "Choose which tools you want to use, "
+                "and check out the premade examples for what the chat can do! "
+                "Click 'Clear Chat History' to start a new conversation. "
+            )
 
         cls.display_top_sidebar_items()
         model_choice = cls.display_model_selector()
         active_tools = cls.display_tools()
+        cls.display_chat_metadata()
+        cls.display_premade_examples()
+        st.sidebar.write("---")
         cls.display_messages(st.session_state.messages)
 
         if prompt := st.chat_input():
@@ -67,8 +91,11 @@ class ChatPage(AppPage):
 
         if st.session_state.messages[-1]["role"] != "assistant":
             with MonetaryCostManager(10) as cost_manager:
+                start_time = time.time()
                 await cls.generate_response(prompt, active_tools, model_choice)
                 st.session_state.last_chat_cost = cost_manager.current_usage
+                end_time = time.time()
+                st.session_state.last_chat_duration = end_time - start_time
             st.rerun()
 
     @classmethod
@@ -103,28 +130,20 @@ class ChatPage(AppPage):
                 else:
                     text = content
                 st.write(ReportDisplayer.clean_markdown(text))
-            # TODO: Deal with tool output
-            # if message.tool_output.strip():
-            #     with st.sidebar:
-            #         with st.expander(f"Tool Calls Message {i//2}"):
-            #             st.write(message.tool_output)
 
     @classmethod
     def display_top_sidebar_items(cls) -> None:
+        local_streamlit_mode = (
+            os.getenv("LOCAL_STREAMLIT_MODE", "false").lower() == "true"
+        )
+        if local_streamlit_mode:
+            if st.sidebar.checkbox("Debug Mode", value=True):
+                st.session_state["debug_mode"] = True
+            else:
+                st.session_state["debug_mode"] = False
         st.sidebar.button(
             "Clear Chat History", on_click=cls.clear_chat_history
         )
-        if "last_chat_cost" not in st.session_state.keys():
-            st.session_state.last_chat_cost = 0
-        if st.session_state.last_chat_cost > 0:
-            st.sidebar.markdown(
-                f"**Last Chat Cost:** ${st.session_state.last_chat_cost:.7f}"
-            )
-        if "trace_id" in st.session_state.keys():
-            trace_id = st.session_state.trace_id
-            st.sidebar.markdown(
-                f"**Last Conversation ID:** [{trace_id}](https://platform.openai.com/traces/trace?trace_id={trace_id})"
-            )
 
     @classmethod
     def display_model_selector(cls) -> str:
@@ -177,9 +196,13 @@ class ChatPage(AppPage):
                     st.session_state[f"tool_{name}"] = not all_checked
             for tool in default_tools:
                 key = f"tool_{tool.name}"
-                tool_active = st.checkbox(
-                    tool.name, value=st.session_state.get(key, True), key=key
-                )
+                # Ensure the key exists in session_state with a default of True if not already set
+                if key not in st.session_state:
+                    st.session_state[key] = True
+
+                # Create the checkbox. It will use the value from st.session_state[key].
+                tool_active = st.checkbox(tool.name, key=key)
+
                 if tool_active:
                     active_tools.append(tool)
 
@@ -209,9 +232,82 @@ class ChatPage(AppPage):
                             """
                         )
                     )
-        st.sidebar.write("---")
-
         return active_tools
+
+    @classmethod
+    def display_chat_metadata(cls) -> None:
+        with st.sidebar.expander("Chat Metadata"):
+            if "last_chat_cost" not in st.session_state.keys():
+                st.session_state.last_chat_cost = 0
+            if st.session_state.last_chat_cost > 0:
+                st.markdown(
+                    f"**Last Chat Cost:** ${st.session_state.last_chat_cost:.7f}"
+                )
+            if "last_chat_duration" in st.session_state.keys():
+                st.markdown(
+                    f"**Last Chat Duration:** {st.session_state.last_chat_duration:.2f} seconds"
+                )
+            if "trace_id" in st.session_state.keys():
+                trace_id = st.session_state.trace_id
+                st.markdown(
+                    f"**Last Conversation ID:** [{trace_id}](https://platform.openai.com/traces/trace?trace_id={trace_id})"
+                )
+
+    @classmethod
+    def display_premade_examples(cls) -> None:
+        save_path = "front_end/saved_chats.json"
+        debug_mode = st.session_state.get("debug_mode", False)
+        try:
+            saved_sessions = ChatSession.load_json_from_file_path(save_path)
+        except Exception:
+            saved_sessions = []
+            st.sidebar.warning("No saved chat sessions found")
+        with st.sidebar.expander("Premade Examples"):
+            if saved_sessions:
+                for session in saved_sessions:
+                    if st.button(session.name, key=session.name):
+                        st.session_state.messages = session.messages
+                        if session.trace_id:
+                            st.session_state.trace_id = session.trace_id
+                        if session.last_chat_cost:
+                            st.session_state.last_chat_cost = (
+                                session.last_chat_cost
+                            )
+                        if session.last_chat_duration:
+                            st.session_state.last_chat_duration = (
+                                session.last_chat_duration
+                            )
+                        st.rerun()
+                    if debug_mode:
+                        if st.button("🗑️", key=f"delete_{session.name}"):
+                            saved_sessions.remove(session)
+                            ChatSession.save_object_list_to_file_path(
+                                saved_sessions, save_path
+                            )
+                            st.sidebar.success(
+                                f"Chat session '{session.name}' deleted."
+                            )
+                            st.rerun()
+            if debug_mode:
+                if "chat_save_name" not in st.session_state:
+                    st.session_state["chat_save_name"] = ""
+                st.text_input("Chat Session Name", key="chat_save_name")
+                if st.button("Save Chat Session"):
+                    chat_session = ChatSession(
+                        name=st.session_state["chat_save_name"],
+                        messages=st.session_state.messages,
+                        trace_id=st.session_state.trace_id,
+                        last_chat_cost=st.session_state.last_chat_cost,
+                        last_chat_duration=st.session_state.last_chat_duration,
+                    )
+                    saved_sessions.append(chat_session)
+                    ChatSession.save_object_list_to_file_path(
+                        saved_sessions, save_path
+                    )
+                    st.sidebar.success(
+                        f"Chat session '{chat_session.name}' saved."
+                    )
+                    st.rerun()
 
     @classmethod
     async def generate_response(
@@ -226,11 +322,11 @@ class ChatPage(AppPage):
         instructions = clean_indents(
             """
             You are a helpful assistant.
-            - When a tool gives you answers that are cited, ALWAYS include the links in your responses.
+            - When a tool gives you answers that are cited, ALWAYS include the links in your responses. Keep the links inline as much as you can.
             - If you can, you infer the inputs to tools rather than ask for them.
             - If a tool call fails, you say so rather than giving a back up answer.
-            - Whenever possible, please parralelize your tool calls and split tasks into parallel subtasks.
-            - By default, restate ALL the output that tools give you in readable markdown to the user.
+            - Whenever possible, please parralelize your tool calls and split tasks into parallel subtasks. However, don't do this if tasks are dependent on each other (e.g. you need metaculus question information to run a forecast)
+            - By default, restate ALL the output that tools give you in readable markdown to the user. Do this even if the tool output is long.
             """
         )
 
