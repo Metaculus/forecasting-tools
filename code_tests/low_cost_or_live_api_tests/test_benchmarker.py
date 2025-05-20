@@ -103,13 +103,13 @@ async def test_correct_number_of_final_forecasts_for_multiple_bots() -> None:
         assert_all_benchmark_object_fields_are_not_none(benchmark, 30)
 
     bot1_questions = [
-        r.question.question_title for r in benchmarks[0].forecast_reports
+        r.question.question_text for r in benchmarks[0].forecast_reports
     ]
     bot2_questions = [
-        r.question.question_title for r in benchmarks[1].forecast_reports
+        r.question.question_text for r in benchmarks[1].forecast_reports
     ]
     bot3_questions = [
-        r.question.question_title for r in benchmarks[2].forecast_reports
+        r.question.question_text for r in benchmarks[2].forecast_reports
     ]
     assert (
         len(set(bot1_questions))
