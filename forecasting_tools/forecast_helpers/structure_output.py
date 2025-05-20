@@ -9,7 +9,9 @@ T = TypeVar("T")
 
 
 async def structure_output(
-    output: str, output_type: type[T], model: GeneralLlm | str = "gpt-4.1-mini"
+    output: str,
+    output_type: type[T],
+    model: GeneralLlm | str = "openrouter/openai/gpt-4.1-mini",
 ) -> T:
     if not output:
         raise ValueError("Output is empty")
