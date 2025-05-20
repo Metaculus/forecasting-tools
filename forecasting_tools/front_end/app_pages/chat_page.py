@@ -1,7 +1,7 @@
 import logging
 
 import streamlit as st
-from agents import Agent, RunItem, Runner, Tool
+from agents import Agent, RunItem, Runner, Tool, trace
 from openai.types.responses import ResponseTextDeltaEvent
 
 from forecasting_tools.agents_and_tools.misc_tools import (
@@ -64,15 +64,7 @@ class ChatPage(AppPage):
         if "messages" not in st.session_state.keys():
             st.session_state.messages = [cls.DEFAULT_MESSAGE]
 
-        st.sidebar.button(
-            "Clear Chat History", on_click=cls.clear_chat_history
-        )
-        if "last_chat_cost" not in st.session_state.keys():
-            st.session_state.last_chat_cost = 0
-        if st.session_state.last_chat_cost > 0:
-            st.sidebar.markdown(
-                f"**Last Chat Cost:** ${st.session_state.last_chat_cost:.7f}"
-            )
+        cls.display_top_sidebar_items()
         model_choice = cls.display_model_selector()
         active_tools = cls.display_tools()
         cls.display_messages(st.session_state.messages)
@@ -92,6 +84,23 @@ class ChatPage(AppPage):
                 st.session_state.last_chat_cost = cost_manager.current_usage
             st.session_state.messages.extend(new_messages)
             st.rerun()
+
+    @classmethod
+    def display_top_sidebar_items(cls) -> None:
+        st.sidebar.button(
+            "Clear Chat History", on_click=cls.clear_chat_history
+        )
+        if "last_chat_cost" not in st.session_state.keys():
+            st.session_state.last_chat_cost = 0
+        if st.session_state.last_chat_cost > 0:
+            st.sidebar.markdown(
+                f"**Last Chat Cost:** ${st.session_state.last_chat_cost:.7f}"
+            )
+        if "trace_id" in st.session_state.keys():
+            trace_id = st.session_state.trace_id
+            st.sidebar.markdown(
+                f"**Last Conversation ID:** [{trace_id}](https://platform.openai.com/traces/trace?trace_id={trace_id})"
+            )
 
     @classmethod
     def display_model_selector(cls) -> str:
@@ -227,26 +236,29 @@ class ChatPage(AppPage):
         openai_messages = [
             m.to_open_ai_message() for m in st.session_state.messages
         ]
-        result = Runner.run_streamed(agent, openai_messages, max_turns=20)
-        streamed_text = ""
-        reasoning_text = ""
-        with st.chat_message("assistant"):
-            placeholder = st.empty()
-        with st.spinner("Thinking..."):
-            async for event in result.stream_events():
-                new_reasoning = ""
-                if event.type == "raw_response_event" and isinstance(
-                    event.data, ResponseTextDeltaEvent
-                ):
-                    streamed_text += event.data.delta
-                elif event.type == "run_item_stream_event":
-                    new_reasoning = f"{cls._grab_text_of_item(event.item)}\n\n"
-                    reasoning_text += new_reasoning  # TODO: Don't define this as reasoning, but as a new tool-role message
-                # elif event.type == "agent_updated_stream_event":
-                #     reasoning_text += f"Agent updated: {event.new_agent.name}\n\n"
-                placeholder.write(streamed_text)
-                if new_reasoning:
-                    st.sidebar.write(new_reasoning)
+        with trace("Chat App") as chat_trace:
+            result = Runner.run_streamed(agent, openai_messages, max_turns=20)
+            streamed_text = ""
+            reasoning_text = ""
+            with st.chat_message("assistant"):
+                placeholder = st.empty()
+            with st.spinner("Thinking..."):
+                async for event in result.stream_events():
+                    new_reasoning = ""
+                    if event.type == "raw_response_event" and isinstance(
+                        event.data, ResponseTextDeltaEvent
+                    ):
+                        streamed_text += event.data.delta
+                    elif event.type == "run_item_stream_event":
+                        new_reasoning = (
+                            f"{cls._grab_text_of_item(event.item)}\n\n"
+                        )
+                        reasoning_text += new_reasoning  # TODO: Don't define this as reasoning, but as a new tool-role message
+                    # elif event.type == "agent_updated_stream_event":
+                    #     reasoning_text += f"Agent updated: {event.new_agent.name}\n\n"
+                    placeholder.write(streamed_text)
+                    if new_reasoning:
+                        st.sidebar.write(new_reasoning)
 
         logger.info(f"Chat finished with output: {streamed_text}")
         new_messages = [
@@ -256,6 +268,7 @@ class ChatPage(AppPage):
                 tool_output=ReportDisplayer.clean_markdown(reasoning_text),
             )
         ]
+        st.session_state.trace_id = chat_trace.trace_id
         return new_messages
 
     @classmethod
@@ -289,6 +302,7 @@ class ChatPage(AppPage):
     @classmethod
     def clear_chat_history(cls) -> None:
         st.session_state.messages = [cls.DEFAULT_MESSAGE]
+        st.session_state.trace_id = None
 
 
 if __name__ == "__main__":

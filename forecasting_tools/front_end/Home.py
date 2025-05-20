@@ -23,9 +23,6 @@ from forecasting_tools.front_end.app_pages.key_factors_page import (
 from forecasting_tools.front_end.app_pages.niche_list_researcher_page import (
     NicheListResearchPage,
 )
-from forecasting_tools.front_end.app_pages.question_generation_page import (
-    QuestionGeneratorPage,
-)
 from forecasting_tools.front_end.helpers.app_page import AppPage
 from forecasting_tools.util.custom_logger import CustomLogger
 
@@ -41,7 +38,6 @@ class HomePage(AppPage):
     NICHE_LIST_RESEARCH_PAGE: type[AppPage] = NicheListResearchPage
     ESTIMATOR_PAGE: type[AppPage] = EstimatorPage
     KEY_FACTORS_PAGE: type[AppPage] = KeyFactorsPage
-    QUESTION_GENERATION_PAGE: type[AppPage] = QuestionGeneratorPage
     BENCHMARK_PAGE: type[AppPage] = BenchmarkPage
     NON_HOME_PAGES: list[type[AppPage]] = [
         CHAT_PAGE,
@@ -50,7 +46,6 @@ class HomePage(AppPage):
         BASE_RATE_PAGE,
         NICHE_LIST_RESEARCH_PAGE,
         ESTIMATOR_PAGE,
-        QUESTION_GENERATION_PAGE,
     ]
 
     @classmethod
