@@ -19,23 +19,9 @@ class AgentSdkLlm(LitellmModel):
         return response
 
 
-class AgentRunner(Runner):
-    """
-    Wrapper around OpenAI AgentSDK Runner in case changes are needed in the future
-    """
-
-    pass
-
-
+AgentRunner = Runner  # Alias for Runner for later extension
 AgentTool = FunctionTool  # Alias for FunctionTool for later extension
-
-
-class AiAgent(Agent):
-    """
-    Wrapper around OpenAI AgentSDK Agent for later extension
-    """
-
-    pass
+AiAgent = Agent  # Alias for Agent for later extension
 
 
 @overload

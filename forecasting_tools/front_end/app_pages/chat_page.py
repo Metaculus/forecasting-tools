@@ -96,7 +96,7 @@ class ChatPage(AppPage):
     @classmethod
     def display_model_selector(cls) -> str:
         model_choice = st.sidebar.text_input(
-            "Select a model",
+            "Select model for chat (not tools)",
             value="openrouter/google/gemini-2.5-pro-preview",  # "gemini/gemini-2.5-pro-preview-03-25"
         )
         if "o1-pro" in model_choice or "gpt-4.5" in model_choice:
@@ -150,12 +150,23 @@ class ChatPage(AppPage):
         with st.sidebar.expander("Tool Explanations"):
             for tool in active_tools:
                 if isinstance(tool, AgentTool):
+                    property_description = ""
+                    for property_name, metadata in tool.params_json_schema[
+                        "properties"
+                    ].items():
+                        description = metadata.get(
+                            "description", "No description provided"
+                        )
+                        field_type = metadata.get("type", "No type provided")
+                        property_description += f"- {property_name}: {description} (type: {field_type})\n"
                     st.write(
                         clean_indents(
                             f"""
                             **{tool.name}**
 
                             {clean_indents(tool.description)}
+
+                            {clean_indents(property_description)}
 
                             ---
 

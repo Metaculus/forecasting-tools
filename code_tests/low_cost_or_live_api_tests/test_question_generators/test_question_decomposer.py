@@ -13,7 +13,7 @@ def test_question_decomposer_runs() -> None:
         model="openrouter/openai/gpt-4o-mini:online"
     )
     result = asyncio.run(
-        question_decomposer.decompose_into_questions(
+        question_decomposer.decompose_into_questions_deep(
             "Will humanity go extinct before 2100?",
             related_research=None,
             additional_context=None,

@@ -269,8 +269,7 @@ class TopicGenerator:
     @staticmethod
     def get_headlines_on_random_company_tool() -> str:
         """
-        By picking a random company, finds a list of news items on the company.
-        Output: List of news items on the company.
+        By picking a randomly generated Ticker symbol, finds a list of news items on a company.
         """
         company, topics = asyncio.run(
             TopicGenerator.get_news_on_random_company()

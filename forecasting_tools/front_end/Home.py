@@ -51,7 +51,6 @@ class HomePage(AppPage):
         NICHE_LIST_RESEARCH_PAGE,
         ESTIMATOR_PAGE,
         QUESTION_GENERATION_PAGE,
-        # BENCHMARK_PAGE, # Enabled by env variable
     ]
 
     @classmethod
@@ -78,8 +77,8 @@ def run_forecasting_streamlit_app() -> None:
 
 if __name__ == "__main__":
     dotenv.load_dotenv()
-    CustomLogger.clear_latest_log_files()
     if "logger_initialized" not in st.session_state:
+        CustomLogger.clear_latest_log_files()
         CustomLogger.setup_logging()
         st.session_state["logger_initialized"] = True
     run_forecasting_streamlit_app()
