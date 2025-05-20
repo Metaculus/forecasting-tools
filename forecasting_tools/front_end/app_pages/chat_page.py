@@ -106,8 +106,8 @@ class ChatPage(AppPage):
         return model_choice
 
     @classmethod
-    def display_tools(cls) -> list[Tool]:
-        default_tools: list[Tool] = [
+    def get_chat_tools(cls) -> list[Tool]:
+        return [
             TopicGenerator().find_random_headlines_tool,
             QuestionDecomposer().decompose_into_questions_tool,
             QuestionOperationalizer().question_operationalizer_tool,
@@ -120,6 +120,9 @@ class ChatPage(AppPage):
             perplexity_quick_search,
         ]
 
+    @classmethod
+    def display_tools(cls) -> list[Tool]:
+        default_tools: list[Tool] = cls.get_chat_tools()
         bot_options = get_all_important_bot_classes()
         bot_choice = st.sidebar.selectbox(
             "Select a bot for forecast_question_tool",
