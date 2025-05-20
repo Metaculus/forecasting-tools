@@ -13,7 +13,6 @@ from forecasting_tools.forecast_helpers.metaculus_api import (
     MetaculusQuestion,
 )
 from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
-from forecasting_tools.util.misc import get_schema_of_base_model
 
 
 @agent_tool
@@ -69,17 +68,22 @@ async def smart_searcher_search(query: str) -> str:
 
 
 @agent_tool
-def grab_question_details_from_metaculus(url: str) -> MetaculusQuestion:
+async def grab_question_details_from_metaculus(
+    url_or_id: str | int,
+) -> MetaculusQuestion:
     """
-    This function grabs the details of a question from a Metaculus URL.
+    This function grabs the details of a question from a Metaculus URL or ID.
     """
-    question = MetaculusApi.get_question_by_url(url)
+    if isinstance(url_or_id, int):
+        question = MetaculusApi.get_question_by_post_id(url_or_id)
+    else:
+        question = MetaculusApi.get_question_by_url(url_or_id)
     question.api_json = {}
     return question
 
 
 @agent_tool
-def grab_open_questions_from_tournament(
+async def grab_open_questions_from_tournament(
     tournament_id_or_slug: int | str,
 ) -> list[MetaculusQuestion]:
     """
@@ -102,12 +106,8 @@ def create_tool_for_forecasting_bot(
         bot = bot_or_class
 
     description = clean_indents(
-        f"""
+        """
         Forecast a SimpleQuestion (simplified binary, numeric, or multiple choice question) using a forecasting bot.
-        Output: Forecast and research report
-
-        A simple question has the following format:
-        {get_schema_of_base_model(SimpleQuestion)}
         """
     )
 

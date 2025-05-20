@@ -196,11 +196,9 @@ class ChatPage(AppPage):
                     st.session_state[f"tool_{name}"] = not all_checked
             for tool in default_tools:
                 key = f"tool_{tool.name}"
-                # Ensure the key exists in session_state with a default of True if not already set
                 if key not in st.session_state:
                     st.session_state[key] = True
 
-                # Create the checkbox. It will use the value from st.session_state[key].
                 tool_active = st.checkbox(tool.name, key=key)
 
                 if tool_active:
@@ -365,6 +363,20 @@ class ChatPage(AppPage):
         logger.info(f"Chat finished with output: {streamed_text}")
         st.session_state.messages = result.to_input_list()
         st.session_state.trace_id = chat_trace.trace_id
+
+        last_3_messages = st.session_state.messages[-3:]
+        for message in last_3_messages:
+            if (
+                "type" in message
+                and message["type"] == "function_call_output"
+                and "gemini" in model_choice
+                and "question_details" in message["call_id"]
+            ):
+                last_message = st.session_state.messages[-1]
+                output = message["output"]
+                last_message["content"][0][
+                    "text"
+                ] += f"\n\n---\n\nNOTICE: There is a bug in gemini tool calling in OpenAI agents SDK, here is the content. Consider using o4-mini:\n\n {output}."
 
     @classmethod
     def _grab_text_of_item(cls, item: RunItem) -> str:
