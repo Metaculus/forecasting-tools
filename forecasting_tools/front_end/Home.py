@@ -59,7 +59,7 @@ class HomePage(AppPage):
 
 def run_forecasting_streamlit_app() -> None:
     all_pages = [HomePage] + HomePage.NON_HOME_PAGES
-    if os.getenv("RUN_BENCHMARK_PAGE", "false").lower() == "true":
+    if os.getenv("LOCAL_STREAMLIT_MODE", "false").lower() == "true":
         all_pages.append(HomePage.BENCHMARK_PAGE)
     navigation = st.navigation(
         [page.convert_to_streamlit_page() for page in all_pages]

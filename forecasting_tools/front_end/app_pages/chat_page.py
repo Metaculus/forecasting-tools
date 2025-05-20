@@ -38,26 +38,15 @@ from forecasting_tools.front_end.helpers.report_displayer import (
 logger = logging.getLogger(__name__)
 
 
-class ChatMessage:
-    def __init__(self, role: str, content: str, tool_output: str = "") -> None:
-        self.role = role
-        self.content = content
-        self.tool_output = tool_output
-
-    def to_open_ai_message(self) -> dict:
-        return {"role": self.role, "content": self.content}
-
-
 class ChatPage(AppPage):
     PAGE_DISPLAY_NAME: str = "💬 Chatbot"
     URL_PATH: str = "/chat"
     ENABLE_HEADER: bool = False
     ENABLE_FOOTER: bool = False
-    DEFAULT_MESSAGE: ChatMessage = ChatMessage(
-        role="assistant",
-        content="How may I assist you today?",
-        tool_output="",
-    )
+    DEFAULT_MESSAGE: dict = {
+        "role": "assistant",
+        "content": "How may I assist you today?",
+    }
 
     @classmethod
     async def _async_main(cls) -> None:
@@ -71,19 +60,54 @@ class ChatPage(AppPage):
 
         if prompt := st.chat_input():
             st.session_state.messages.append(
-                ChatMessage(role="user", content=prompt)
+                {"role": "user", "content": prompt}
             )
             with st.chat_message("user"):
                 st.write(prompt)
 
-        if st.session_state.messages[-1].role != "assistant":
+        if st.session_state.messages[-1]["role"] != "assistant":
             with MonetaryCostManager(10) as cost_manager:
-                new_messages = await cls.generate_response(
-                    prompt, active_tools, model_choice
-                )
+                await cls.generate_response(prompt, active_tools, model_choice)
                 st.session_state.last_chat_cost = cost_manager.current_usage
-            st.session_state.messages.extend(new_messages)
             st.rerun()
+
+    @classmethod
+    def display_messages(cls, messages: list[dict]) -> None:
+        assistant_message_num = 0
+        for message in messages:
+            output_emoji = "🔍"
+            call_emoji = "📞"
+            if "type" in message and message["type"] == "function_call":
+                call_id = message["call_id"]
+                with st.sidebar.expander(
+                    f"{call_emoji}M{assistant_message_num} Call: {call_id}"
+                ):
+                    st.write(f"Function: {message['name']}")
+                    st.write(f"Arguments: {message['arguments']}")
+                    continue
+            if "type" in message and message["type"] == "function_call_output":
+                call_id = message["call_id"]
+                with st.sidebar.expander(
+                    f"{output_emoji}M{assistant_message_num} Output: {call_id}"
+                ):
+                    st.write(message["output"])
+                    continue
+
+            role = message["role"]
+            with st.chat_message(role):
+                if role == "assistant":
+                    assistant_message_num += 1
+                content = message["content"]
+                if isinstance(content, list):
+                    text = content[0]["text"]
+                else:
+                    text = content
+                st.write(ReportDisplayer.clean_markdown(text))
+            # TODO: Deal with tool output
+            # if message.tool_output.strip():
+            #     with st.sidebar:
+            #         with st.expander(f"Tool Calls Message {i//2}"):
+            #             st.write(message.tool_output)
 
     @classmethod
     def display_top_sidebar_items(cls) -> None:
@@ -185,19 +209,9 @@ class ChatPage(AppPage):
                             """
                         )
                     )
+        st.sidebar.write("---")
 
         return active_tools
-
-    @classmethod
-    def display_messages(cls, messages: list[ChatMessage]) -> None:
-        for i, message in enumerate(messages):
-            with st.chat_message(message.role):
-                st.write(message.content)
-
-            if message.tool_output.strip():
-                with st.sidebar:
-                    with st.expander(f"Tool Calls Message {i//2}"):
-                        st.write(message.tool_output)
 
     @classmethod
     async def generate_response(
@@ -205,14 +219,9 @@ class ChatPage(AppPage):
         prompt_input: str | None,
         active_tools: list[Tool],
         model_choice: str,
-    ) -> list[ChatMessage]:
-        if prompt_input is None:
-            return [
-                ChatMessage(
-                    role="assistant",
-                    content="You didn't enter any message",
-                )
-            ]
+    ) -> None:
+        if not prompt_input:
+            return
 
         instructions = clean_indents(
             """
@@ -233,13 +242,11 @@ class ChatPage(AppPage):
             handoffs=[],
         )
 
-        openai_messages = [
-            m.to_open_ai_message() for m in st.session_state.messages
-        ]
         with trace("Chat App") as chat_trace:
-            result = Runner.run_streamed(agent, openai_messages, max_turns=20)
+            result = Runner.run_streamed(
+                agent, st.session_state.messages, max_turns=20
+            )
             streamed_text = ""
-            reasoning_text = ""
             with st.chat_message("assistant"):
                 placeholder = st.empty()
             with st.spinner("Thinking..."):
@@ -253,7 +260,6 @@ class ChatPage(AppPage):
                         new_reasoning = (
                             f"{cls._grab_text_of_item(event.item)}\n\n"
                         )
-                        reasoning_text += new_reasoning  # TODO: Don't define this as reasoning, but as a new tool-role message
                     # elif event.type == "agent_updated_stream_event":
                     #     reasoning_text += f"Agent updated: {event.new_agent.name}\n\n"
                     placeholder.write(streamed_text)
@@ -261,15 +267,8 @@ class ChatPage(AppPage):
                         st.sidebar.write(new_reasoning)
 
         logger.info(f"Chat finished with output: {streamed_text}")
-        new_messages = [
-            ChatMessage(
-                role="assistant",
-                content=ReportDisplayer.clean_markdown(streamed_text),
-                tool_output=ReportDisplayer.clean_markdown(reasoning_text),
-            )
-        ]
+        st.session_state.messages = result.to_input_list()
         st.session_state.trace_id = chat_trace.trace_id
-        return new_messages
 
     @classmethod
     def _grab_text_of_item(cls, item: RunItem) -> str:
