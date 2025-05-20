@@ -174,7 +174,7 @@ class QuestionDecomposer:
         additional_context: str | None,
         number_of_questions: int = 5,
         model: str | GeneralLlm = GeneralLlm.search_context_model(
-            "openrouter/perplexity/sonar-reasoning-pro"
+            "openrouter/perplexity/sonar"
         ),
     ) -> DecompositionResult:
         llm = GeneralLlm.to_llm(model)
