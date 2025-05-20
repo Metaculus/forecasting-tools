@@ -60,7 +60,7 @@ async def structure_output(
         - Do not fill in fields that are not explicitly given and required in the text
         - Do not summarize any of the text. Only give direct quotes (with only slight formatting changes)
         - If the text is completely unrelated to the requested type please just say "{type_not_found}"
-        - DO NOT exclude links if links are provided with the intended answer please keep the links
+        - DO NOT exclude links if links are provided with the intended answer please keep the links. Copy all them as they are shown in the text.
 
         If 'final answers' are mentioned, please prioritize using them to fill your structured response (i.e. avoid using intermediary steps)
         Here is the text:
@@ -80,6 +80,9 @@ async def structure_output(
         {output_type}
 
         {pydantic_instructions}
+
+
+        Remember to include links!
         """
     ).strip()
 
