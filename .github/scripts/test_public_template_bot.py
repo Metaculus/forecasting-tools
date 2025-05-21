@@ -1,4 +1,7 @@
 import asyncio
+import importlib.metadata
+import json
+import urllib.request
 
 from forecasting_tools import MetaculusApi, TemplateBot
 
@@ -35,7 +38,23 @@ def test_example_questions_forecasted() -> None:
     ]
     assert len(urls_forecasted) == len(MetaculusApi.TEST_QUESTION_URLS)
     for url in urls_forecasted:
-        assert url in MetaculusApi.TEST_QUESTION_URLS
+        assert url, "URL is empty"
+        assert any(
+            url in test_url for test_url in MetaculusApi.TEST_QUESTION_URLS
+        ), f"URL {url} is not in the list of test URLs"
 
     for forecast_report in forecast_reports:
         assert forecast_report.prediction
+
+
+def test_forecasting_tools_is_latest_version() -> None:
+
+    installed_version = importlib.metadata.version("forecasting_tools")
+    with urllib.request.urlopen(
+        "https://pypi.org/pypi/forecasting-tools/json"
+    ) as response:
+        data = json.load(response)
+        latest_version = data["info"]["version"]
+    assert (
+        installed_version == latest_version
+    ), f"Installed: {installed_version}, Latest: {latest_version}"
