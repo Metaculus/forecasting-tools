@@ -25,6 +25,8 @@ jobs:
           installer-parallel: true
       - name: Copy template pyproject.toml
         run: cp .github/scripts/pyproject.public-template-bot.toml pyproject.toml
+      - name: Generate lock file
+        run: poetry lock
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
       - name: Run template bot test
