@@ -2,10 +2,15 @@ name: Test public template bot usage
 
 on:
   workflow_dispatch:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  # pull_request:
+  #   types: [opened, synchronize, reopened]
+  #   branches:
+  #     - "main"
+  push:
     branches:
       - "main"
+  schedule:
+    - cron: '0 2 * * *' # every day at 2:00 AM
 
 jobs:
   template-bot-test:
