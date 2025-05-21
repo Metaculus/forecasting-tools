@@ -7,8 +7,7 @@ It is run by workflows in the .github/workflows directory.
 import argparse
 import asyncio
 import logging
-import os
-from typing import Any, Literal
+from typing import Any
 
 import dotenv
 
@@ -20,10 +19,6 @@ from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
 )
 from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
     UniformProbabilityBot,
-)
-from forecasting_tools.forecast_helpers.forecast_database_manager import (
-    ForecastDatabaseManager,
-    ForecastRunType,
 )
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 
@@ -562,50 +557,6 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             assert researcher.model.startswith("openrouter/deepseek/")
 
     return mode_base_bot_mapping
-
-
-def _make_sure_search_keys_dont_conflict(
-    mode: Literal["asknews-mode", "exa-mode", "perplexity-mode"],
-) -> None:
-    if mode == "asknews-mode":
-        assert not os.getenv(
-            "PERPLEXITY_API_KEY"
-        ), "Perplexity API key is set, but it should not be set for asknews-mode"
-        assert not os.getenv(
-            "EXA_API_KEY"
-        ), "Exa API key is set, but it should not be set for asknews-mode"
-        assert os.getenv(
-            "ASKNEWS_SECRET"
-        ), "Asknews secret key is not set for asknews-mode"
-    elif mode == "exa-mode":
-        assert not os.getenv(
-            "PERPLEXITY_API_KEY"
-        ), "Perplexity API key is set, but it should not be set for exa-mode"
-        assert not os.getenv(
-            "ASKNEWS_SECRET"
-        ), "Asknews secret key is set, but it should not be set for exa-mode"
-        assert os.getenv("EXA_API_KEY"), "Exa API key is not set for exa-mode"
-    elif mode == "perplexity-mode":
-        assert not os.getenv(
-            "EXA_API_KEY"
-        ), "Exa API key is set, but it should not be set for perplexity-mode"
-        assert not os.getenv(
-            "ASKNEWS_SECRET"
-        ), "Asknews secret key is set, but it should not be set for perplexity-mode"
-        assert os.getenv(
-            "PERPLEXITY_API_KEY"
-        ), "Perplexity API key is not set for perplexity-mode"
-
-
-async def _save_reports_to_database(reports: list[ForecastReport]) -> None:
-    for report in reports:
-        await asyncio.sleep(5)
-        try:
-            ForecastDatabaseManager.add_forecast_report_to_database(
-                report, ForecastRunType.REGULAR_FORECAST
-            )
-        except Exception as e:
-            logger.error(f"Error adding forecast report to database: {e}")
 
 
 if __name__ == "__main__":

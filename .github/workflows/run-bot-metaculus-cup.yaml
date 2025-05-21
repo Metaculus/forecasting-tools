@@ -1,4 +1,4 @@
-name: Run Bot for the Metaculus Cup
+name: Metaculus Cup Run Bot
 
 on:
   workflow_dispatch:

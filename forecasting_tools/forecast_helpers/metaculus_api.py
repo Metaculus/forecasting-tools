@@ -49,6 +49,11 @@ class MetaculusApi:
     METACULUS_CUP_2025_1_ID = 32726
     CURRENT_METACULUS_CUP_ID = "metaculus-cup"
     CURRENT_AI_COMPETITION_ID = AI_COMPETITION_ID_Q2
+    TEST_QUESTION_URLS = [
+        "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
+        "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
+        "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
+    ]
 
     API_BASE_URL = "https://www.metaculus.com/api"
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100

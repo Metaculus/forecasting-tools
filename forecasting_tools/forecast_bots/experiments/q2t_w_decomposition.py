@@ -78,13 +78,14 @@ class Q2TemplateBotWithDecompositionV1(Q2TemplateBot2025):
         )
 
         model = self.get_llm("decomposer", "llm")
-        decomposition_result = await QuestionDecomposer(
-            model=model
-        ).decompose_into_questions_deep(
-            fuzzy_topic_or_question=question.question_text,
-            number_of_questions=5,
-            related_research=ask_news_research,
-            additional_context=question_context,
+        decomposition_result = (
+            await QuestionDecomposer().decompose_into_questions_deep(
+                model=model,
+                fuzzy_topic_or_question=question.question_text,
+                number_of_questions=5,
+                related_research=ask_news_research,
+                additional_context=question_context,
+            )
         )
         logger.info(f"Decomposition result: {decomposition_result}")
 
@@ -184,13 +185,14 @@ class Q2TemplateBotWithDecompositionV2(Q2TemplateBot2025):
             """
         )
         model = self.get_llm("decomposer", "llm")
-        decomposition_result = await QuestionDecomposer(
-            model=model,
-        ).decompose_into_questions_deep(
-            fuzzy_topic_or_question=question.question_text,
-            number_of_questions=5,
-            related_research=None,
-            additional_context=additional_context,
+        decomposition_result = (
+            await QuestionDecomposer().decompose_into_questions_deep(
+                model=model,
+                fuzzy_topic_or_question=question.question_text,
+                number_of_questions=5,
+                related_research=None,
+                additional_context=additional_context,
+            )
         )
         sub_questions = decomposition_result.questions
 

@@ -41,6 +41,6 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
-      - name: "Run he backend unit tests"
+      - name: "Run the unit tests"
         if: ${{ !cancelled() }}
         run: poetry run pytest ./code_tests/unit_tests
