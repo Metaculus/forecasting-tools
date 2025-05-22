@@ -259,6 +259,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     model="o3",
                     temperature=1,
                     reasoning_effort="high",
+                    timeout=300,
                 ),
             ),
         },
