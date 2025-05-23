@@ -177,7 +177,7 @@ class ChatPage(AppPage):
         default_tools: list[Tool] = cls.get_chat_tools()
         bot_options = get_all_important_bot_classes()
         bot_choice = st.sidebar.selectbox(
-            "Select a bot for forecast_question_tool",
+            "Select a bot for forecast_question_tool (Main Bot is best)",
             [bot.__name__ for bot in bot_options],
         )
         bot = next(bot for bot in bot_options if bot.__name__ == bot_choice)

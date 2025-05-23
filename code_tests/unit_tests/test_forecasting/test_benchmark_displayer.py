@@ -1,6 +1,6 @@
 from streamlit.testing.v1 import AppTest
 
-from forecasting_tools.forecast_helpers.benchmark_displayer import (
+from forecasting_tools.benchmarking.benchmark_displayer import (
     run_benchmark_streamlit_page,
 )
 

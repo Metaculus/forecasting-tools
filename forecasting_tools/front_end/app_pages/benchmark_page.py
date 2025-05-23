@@ -1,6 +1,6 @@
 import logging
 
-from forecasting_tools.forecast_helpers.benchmark_displayer import (
+from forecasting_tools.benchmarking.benchmark_displayer import (
     run_benchmark_streamlit_page,
 )
 from forecasting_tools.front_end.helpers.app_page import AppPage

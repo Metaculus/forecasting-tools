@@ -1,18 +1,20 @@
 import asyncio
 import importlib.metadata
 import json
+import os
 import urllib.request
 
 from forecasting_tools import MetaculusApi, TemplateBot
 
 
 def test_example_questions_forecasted() -> None:
+    folder_to_save_reports_to = "logs/reports/"
     template_bot = TemplateBot(
         research_reports_per_question=1,
         predictions_per_research_report=5,
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=True,
-        folder_to_save_reports_to=None,
+        folder_to_save_reports_to=folder_to_save_reports_to,
         skip_previously_forecasted_questions=False,
         # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
         #     "default": GeneralLlm(
@@ -45,6 +47,9 @@ def test_example_questions_forecasted() -> None:
 
     for forecast_report in forecast_reports:
         assert forecast_report.prediction
+
+    assert os.path.exists(folder_to_save_reports_to)
+    assert os.listdir(folder_to_save_reports_to)
 
 
 def test_forecasting_tools_is_latest_version() -> None:

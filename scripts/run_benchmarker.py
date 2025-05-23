@@ -9,6 +9,7 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.benchmarking.benchmarker import Benchmarker
 from forecasting_tools.forecast_bots.experiments.q2t_w_decomposition import (
     Q2TemplateBotWithDecompositionV1,
     Q2TemplateBotWithDecompositionV2,
@@ -19,7 +20,6 @@ from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
     Q2TemplateBot2025,
 )
-from forecasting_tools.forecast_helpers.benchmarker import Benchmarker
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 from forecasting_tools.util.custom_logger import CustomLogger
 from run_bot import get_all_bots
