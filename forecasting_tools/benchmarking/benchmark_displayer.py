@@ -8,7 +8,7 @@ import plotly.graph_objs as go
 import streamlit as st
 import typeguard
 
-from forecasting_tools.data_models.benchmark_for_bot import BenchmarkForBot
+from forecasting_tools.benchmarking.benchmark_for_bot import BenchmarkForBot
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.front_end.helpers.report_displayer import (

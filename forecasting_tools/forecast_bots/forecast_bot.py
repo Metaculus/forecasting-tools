@@ -78,6 +78,7 @@ class ForecastBot(ABC):
         folder_to_save_reports_to: str | None = None,
         skip_previously_forecasted_questions: bool = False,
         llms: dict[str, str | GeneralLlm] | None = None,
+        exclude_from_config_dict: list[str] | None = None,
     ) -> None:
         assert (
             research_reports_per_question > 0
@@ -95,6 +96,7 @@ class ForecastBot(ABC):
         self.skip_previously_forecasted_questions = (
             skip_previously_forecasted_questions
         )
+        self.exclude_from_config_dict = exclude_from_config_dict or []
         self._note_pads: list[Notepad] = []
         self._note_pad_lock = asyncio.Lock()
         self._llms = llms or self._llm_config_defaults()
@@ -290,6 +292,7 @@ class ForecastBot(ABC):
                 or name == "kwargs"
                 or name == "args"
                 or name == "llms"
+                or name in self.exclude_from_config_dict
             ):
                 continue
             value = getattr(self, name)

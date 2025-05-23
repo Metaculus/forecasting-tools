@@ -207,9 +207,8 @@ class GeneralLlm(
             }
             if self.litellm_kwargs.get("api_key") is None:
                 self.litellm_kwargs["api_key"] = METACULUS_TOKEN
-        elif self._use_exa:
-            if self.litellm_kwargs.get("api_key") is None:
-                self.litellm_kwargs["api_key"] = os.getenv("EXA_API_KEY")
+        elif self._use_exa and self.litellm_kwargs.get("api_key") is None:
+            self.litellm_kwargs["api_key"] = os.getenv("EXA_API_KEY")
 
         valid_acompletion_params = set(
             inspect.signature(acompletion).parameters.keys()
@@ -223,40 +222,6 @@ class GeneralLlm(
             )
 
         self._give_cost_tracking_warning_if_needed()
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "original_model": self.model,
-            "allowed_tries": self.allowed_tries,
-            **{k: v for k, v in self.litellm_kwargs.items()},
-        }
-
-    @classmethod
-    def _get_default_timeout(cls, model: str) -> int:
-        all_keys = cls._defaults.keys()
-        matching_keys = [key for key in all_keys if key in model]
-        if not matching_keys:
-            return 60
-        return cls._defaults[matching_keys[-1]]["timeout"]
-
-    def _give_cost_tracking_warning_if_needed(self) -> None:
-        model = self._litellm_model
-        model_tracker = self._model_trackers.get(model)
-        if model_tracker is None:
-            self._model_trackers[model] = ModelTracker(model)
-        model_tracker = self._model_trackers[model]
-
-        if model_tracker.gave_cost_tracking_warning:
-            return
-
-        assert isinstance(model_cost, dict)
-        supported_model_names = model_cost.keys()
-        model_not_supported = model not in supported_model_names
-        if model_not_supported:
-            message = f"Warning: Model {model} does not support cost tracking."
-            logger.warning(message)
-
-        model_tracker.gave_cost_tracking_warning = True
 
     async def invoke(self, prompt: ModelInputType) -> str:
         response: TextTokenCostResponse = (
@@ -428,6 +393,40 @@ class GeneralLlm(
         messages = typeguard.check_type(messages, list[dict[str, str]])
         return messages
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "original_model": self.model,
+            "allowed_tries": self.allowed_tries,
+            **{k: v for k, v in self.litellm_kwargs.items()},
+        }
+
+    @classmethod
+    def _get_default_timeout(cls, model: str) -> int:
+        all_keys = cls._defaults.keys()
+        matching_keys = [key for key in all_keys if key in model]
+        if not matching_keys:
+            return 60
+        return cls._defaults[matching_keys[-1]]["timeout"]
+
+    def _give_cost_tracking_warning_if_needed(self) -> None:
+        model = self._litellm_model
+        model_tracker = self._model_trackers.get(model)
+        if model_tracker is None:
+            self._model_trackers[model] = ModelTracker(model)
+        model_tracker = self._model_trackers[model]
+
+        if model_tracker.gave_cost_tracking_warning:
+            return
+
+        assert isinstance(model_cost, dict)
+        supported_model_names = model_cost.keys()
+        model_not_supported = model not in supported_model_names
+        if model_not_supported:
+            message = f"Warning: Model {model} does not support cost tracking."
+            logger.warning(message)
+
+        model_tracker.gave_cost_tracking_warning = True
+
     ################################## Methods For Mocking/Testing ##################################
 
     def _get_mock_return_for_direct_call_to_model_using_cheap_input(
@@ -497,6 +496,8 @@ class GeneralLlm(
 
         total_cost = prompt_cost + completion_cost
         return total_cost
+
+    ################################### Convenience Methods ###################################
 
     @classmethod
     def to_llm(cls, model_name_or_instance: str | GeneralLlm) -> GeneralLlm:
