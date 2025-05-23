@@ -1,8 +1,8 @@
 import asyncio
-from datetime import datetime
 
 from pydantic import BaseModel
 
+from forecasting_tools.agents_and_tools.misc_tools import perplexity_pro_search
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
     AgentSdkLlm,
@@ -68,10 +68,13 @@ class PromptOptimizer:
         evaluation_questions: list[QuestionResearchSnapshot],
         num_prompts_to_try: int,
         forecast_llm: GeneralLlm,
+        ideation_llm_name: str,
     ) -> None:
         self.evaluation_questions = evaluation_questions
         self.num_prompts_to_try = num_prompts_to_try
         self.forecast_llm = forecast_llm
+        self.ideation_llm_name = ideation_llm_name
+        self.research_type = ResearchType.ASK_NEWS_SUMMARIES
 
     async def create_optimized_prompt(
         self,
@@ -92,16 +95,19 @@ class PromptOptimizer:
     async def get_prompt_ideas(self) -> list[str]:
         agent = AiAgent(
             name="Prompt Ideator",
-            model=AgentSdkLlm("gpt-4o"),
+            model=AgentSdkLlm(self.ideation_llm_name),
             instructions=clean_indents(
                 f"""
                 Please come up with {self.num_prompts_to_try} prompt ideas that asks a bot to forecast binary questions.
                 There must be a final binary float given at the end, make sure to request for this.
 
                 Consider general forecasting principles that are used in superforecasting.
-                Give your
+                Give your ideas in a list format.
+
+                If you need to, run up to 10 searches finding unique ways to approach the prompt.
                 """
             ),
+            tools=[perplexity_pro_search],
         )
         output = await AgentRunner.run(
             agent, f"Please generate {self.num_prompts_to_try} prompt ideas"
@@ -112,7 +118,7 @@ class PromptOptimizer:
     async def prompt_idea_to_prompt_string(self, prompt_idea: str) -> str:
         agent = AiAgent(
             name="Prompt Implementor",
-            model=AgentSdkLlm("gpt-4o"),
+            model=AgentSdkLlm(self.ideation_llm_name),
             instructions=clean_indents(
                 f"""
                 You need to implement a prompt that asks a bot to forecast binary questions.
@@ -121,7 +127,7 @@ class PromptOptimizer:
                 The prompt should implement the below idea:
                 {prompt_idea}
 
-                This is a template string, and so you should add the following variables to the prompt:
+                This is a template prompt, and so you should add the following variables to the prompt:
                 {{question_text}}
                 {{background_info}}
                 {{resolution_criteria}}
@@ -134,7 +140,7 @@ class PromptOptimizer:
         )
         output = await AgentRunner.run(
             agent,
-            "Please implement a prompt. Return the prompt and nothing bot the prompt. The prompt will be implemented as is",
+            "Please implement a prompt. Return the prompt and nothing but the prompt. The prompt will be run as is",
         )
         return output.final_output
 
@@ -150,8 +156,7 @@ class PromptOptimizer:
             bot = CustomizableBot(
                 prompt=config.prompt_template,
                 research_snapshots=self.evaluation_questions,
-                research_type=ResearchType.ASK_NEWS_SUMMARIES,
-                today=datetime.now(),
+                research_type=self.research_type,
                 research_reports_per_question=config.research_reports_per_question,
                 predictions_per_research_report=config.predictions_per_research_report,
                 llms={

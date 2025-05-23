@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from forecasting_tools.benchmarking.question_research_snapshot import (
     QuestionResearchSnapshot,
@@ -30,7 +29,6 @@ class CustomizableBot(ForecastBot):
         prompt: str,
         research_snapshots: list[QuestionResearchSnapshot],
         research_type: ResearchType,
-        today: datetime,
         exclude_from_config_dict: list[str] | None = ["research_snapshots"],
         *args,
         **kwargs,
@@ -41,7 +39,6 @@ class CustomizableBot(ForecastBot):
         self.prompt = prompt
         self.research_snapshots = research_snapshots
         self.research_type = research_type
-        self.today = today
 
         unique_questions = list(
             set([snapshot.question for snapshot in research_snapshots])
@@ -69,7 +66,7 @@ class CustomizableBot(ForecastBot):
             background_info=question.background_info,
             resolution_criteria=question.resolution_criteria,
             fine_print=question.fine_print,
-            today=self.today.strftime("%Y-%m-%d"),
+            today=question.date_accessed.strftime("%Y-%m-%d"),
             research=research,
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
