@@ -386,7 +386,10 @@ class MetaculusApi:
             questions
         ), "Not all questions found are unique"
 
-        random_sample = random.sample(questions, num_questions)
+        if len(questions) > num_questions:
+            random_sample = random.sample(questions, num_questions)
+        else:
+            random_sample = questions
         logger.info(
             f"Sampled {len(random_sample)} questions from {len(questions)} questions that matched the filterwhich were taken from {total_pages} randomly selected pages which each had at max {cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST} questions matching the filter"
         )

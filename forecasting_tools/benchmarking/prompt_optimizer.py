@@ -1,6 +1,6 @@
 import asyncio
-
-from pydantic import BaseModel
+import logging
+from dataclasses import dataclass
 
 from forecasting_tools.agents_and_tools.misc_tools import perplexity_pro_search
 from forecasting_tools.ai_models.agent_wrappers import (
@@ -20,17 +20,20 @@ from forecasting_tools.benchmarking.question_research_snapshot import (
 from forecasting_tools.forecast_helpers.structure_output import (
     structure_output,
 )
-from forecasting_tools.util.jsonable import Jsonable
+
+logger = logging.getLogger(__name__)
 
 
-class PromptConfig(BaseModel):
+@dataclass
+class PromptConfig:
     prompt_template: str
     llm: GeneralLlm
     research_reports_per_question: int = 1
     predictions_per_research_report: int = 5
 
 
-class EvaluatedPrompt(BaseModel):
+@dataclass
+class EvaluatedPrompt:
     prompt_config: PromptConfig
     benchmark: BenchmarkForBot
 
@@ -43,7 +46,8 @@ class EvaluatedPrompt(BaseModel):
         return self.prompt_config.prompt_template
 
 
-class OptimizationResult(BaseModel, Jsonable):
+@dataclass
+class OptimizationResult:
     evaluated_prompts: list[EvaluatedPrompt]
 
     @property
@@ -86,7 +90,7 @@ class PromptOptimizer:
             PromptConfig(prompt_template=prompt, llm=self.forecast_llm)
             for prompt in prompt_templates
         ]
-        evaluated_prompts = await self.evaluate_prompt(configs)
+        evaluated_prompts = await self.evaluate_prompts(configs)
         sorted_evaluated_prompts = sorted(
             evaluated_prompts, key=lambda x: x.score, reverse=True
         )
@@ -113,6 +117,7 @@ class PromptOptimizer:
             agent, f"Please generate {self.num_prompts_to_try} prompt ideas"
         )
         ideas = await structure_output(output.final_output, list[str])
+        logger.info(f"Generated {len(ideas)} prompt ideas: {ideas}")
         return ideas
 
     async def prompt_idea_to_prompt_string(self, prompt_idea: str) -> str:
@@ -142,9 +147,11 @@ class PromptOptimizer:
             agent,
             "Please implement a prompt. Return the prompt and nothing but the prompt. The prompt will be run as is",
         )
-        return output.final_output
+        prompt = output.final_output
+        logger.info(f"Generated prompt:\n{prompt}")
+        return prompt
 
-    async def evaluate_prompt(
+    async def evaluate_prompts(
         self, configurations: list[PromptConfig]
     ) -> list[EvaluatedPrompt]:
         bots = []
@@ -162,7 +169,7 @@ class PromptOptimizer:
                 llms={
                     "default": config.llm,
                 },
-                publish_to_metaculus=False,
+                publish_reports_to_metaculus=False,
             )
             bots.append(bot)
         benchmarker = Benchmarker(

@@ -6,6 +6,8 @@ from agents import Agent, FunctionTool, Runner, function_tool
 from agents.extensions.models.litellm_model import LitellmModel
 from agents.tool import ToolFunction
 
+from forecasting_tools.ai_models.model_tracker import ModelTracker
+
 nest_asyncio.apply()
 
 
@@ -15,6 +17,7 @@ class AgentSdkLlm(LitellmModel):
     """
 
     async def get_response(self, *args, **kwargs):  # NOSONAR
+        ModelTracker.give_cost_tracking_warning_if_needed(self.model)
         response = await super().get_response(*args, **kwargs)
         await asyncio.sleep(
             0.0001

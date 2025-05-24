@@ -31,6 +31,7 @@ from forecasting_tools.ai_models.model_interfaces.retryable_model import (
 from forecasting_tools.ai_models.model_interfaces.tokens_incur_cost import (
     TokensIncurCost,
 )
+from forecasting_tools.ai_models.model_tracker import ModelTracker
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     LitellmCostTracker,
 )
@@ -40,12 +41,6 @@ nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
 ModelInputType = str | VisionMessageData | list[dict[str, str]]
-
-
-class ModelTracker:
-    def __init__(self, model: str) -> None:
-        self.model = model
-        self.gave_cost_tracking_warning = False
 
 
 class GeneralLlm(
@@ -60,7 +55,6 @@ class GeneralLlm(
     Litellm support every model, most every parameter, and acts as one interface for every provider.
     """
 
-    _model_trackers: dict[str, ModelTracker] = {}
     _defaults: dict[str, Any] = {
         "gpt-4o": {
             "timeout": 40,
@@ -158,23 +152,18 @@ class GeneralLlm(
         anthropic_prefix = "anthropic/"
         self._use_metaculus_proxy = model.startswith(metaculus_prefix)
         self._use_exa = model.startswith(exa_prefix)
+        prefixes_in_operational_order = [
+            metaculus_prefix,
+            exa_prefix,
+            openai_prefix,
+            anthropic_prefix,
+        ]
 
+        # prefix removal is to help with matching with model cost lists
         self._litellm_model = model
-        if self._use_metaculus_proxy:
-            self._litellm_model = self._litellm_model.removeprefix(
-                metaculus_prefix
-            )
-        if self._litellm_model.startswith(exa_prefix):
-            self._litellm_model = self._litellm_model.removeprefix(exa_prefix)
-        if self._litellm_model.startswith(openai_prefix):
-            # prefix removal is to help with matching with model cost lists
-            self._litellm_model = self._litellm_model.removeprefix(
-                openai_prefix
-            )
-        if self._litellm_model.startswith(anthropic_prefix):
-            self._litellm_model = self._litellm_model.removeprefix(
-                anthropic_prefix
-            )
+        for prefix in prefixes_in_operational_order:
+            if self._litellm_model.startswith(prefix):
+                self._litellm_model = self._litellm_model.removeprefix(prefix)
 
         self.litellm_kwargs = kwargs
         self.litellm_kwargs["model"] = self._litellm_model
@@ -221,7 +210,7 @@ class GeneralLlm(
                 f"The following parameters are not valid for litellm's acompletion: {invalid_params}"
             )
 
-        self._give_cost_tracking_warning_if_needed()
+        ModelTracker.give_cost_tracking_warning_if_needed(self._litellm_model)
 
     async def invoke(self, prompt: ModelInputType) -> str:
         response: TextTokenCostResponse = (
@@ -407,25 +396,6 @@ class GeneralLlm(
         if not matching_keys:
             return 60
         return cls._defaults[matching_keys[-1]]["timeout"]
-
-    def _give_cost_tracking_warning_if_needed(self) -> None:
-        model = self._litellm_model
-        model_tracker = self._model_trackers.get(model)
-        if model_tracker is None:
-            self._model_trackers[model] = ModelTracker(model)
-        model_tracker = self._model_trackers[model]
-
-        if model_tracker.gave_cost_tracking_warning:
-            return
-
-        assert isinstance(model_cost, dict)
-        supported_model_names = model_cost.keys()
-        model_not_supported = model not in supported_model_names
-        if model_not_supported:
-            message = f"Warning: Model {model} does not support cost tracking."
-            logger.warning(message)
-
-        model_tracker.gave_cost_tracking_warning = True
 
     ################################## Methods For Mocking/Testing ##################################
 
