@@ -91,9 +91,15 @@ def create_bot(
 
 def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     default_temperature = 0.3
+
+    # NOTE: Anything that uses the "roughly" cost value (other than the original model the variable matches to)
+    # is estimated value and was not measured directly. These estimates were derived from Litellm's pricing functionality.
     roughly_gpt_4o_cost = 0.05
     roughly_gpt_4o_mini_cost = 0.005
     roughly_sonnet_3_5_cost = 0.10
+    roughly_gemini_2_5_pro_preview_cost = 0.30  # TODO: Double check this
+    roughly_deepseek_r1_cost = 0.039
+    guess_at_deepseek_plus_search = roughly_deepseek_r1_cost + 0.015
 
     gemini_2_5_pro_preview = "openrouter/google/gemini-2.5-pro-preview"  # "gemini/gemini-2.5-pro-preview-03-25"
     gemini_default_timeout = 120
@@ -131,7 +137,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GEMINI_2_5_PRO_SONAR_REASONING_PRO": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
             "bot": create_bot(
                 GeneralLlm(
                     model=gemini_2_5_pro_preview,
@@ -145,7 +151,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GEMINI_2_5_EXA_PRO": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
             "bot": create_bot(
                 GeneralLlm(
                     model=gemini_2_5_pro_preview,
@@ -156,7 +162,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_R1_SONAR_PRO": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher=GeneralLlm(
@@ -166,7 +172,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_R1_SONAR": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher=GeneralLlm(
@@ -176,7 +182,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_R1_SONAR_DEEP_RESEARCH": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher=GeneralLlm(
@@ -186,7 +192,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_R1_SONAR_REASONING_PRO": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher=GeneralLlm(
@@ -196,7 +202,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_R1_SONAR_REASONING": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher=GeneralLlm(
@@ -206,7 +212,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_ONLY_SONAR_REASONING_PRO": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 GeneralLlm(
                     model="perplexity/sonar-reasoning-pro",
@@ -216,7 +222,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_R1_GPT_4O_SEARCH_PREVIEW": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher=GeneralLlm(
@@ -225,35 +231,35 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_R1_GEMINI_2_5_PRO_GROUNDING": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher=gemini_grounding_llm,
             ),
         },
         "METAC_DEEPSEEK_R1_EXA_SMART_SEARCHER": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher="smart-searcher/openrouter/deepseek/deepseek-r1",
             ),
         },
         "METAC_DEEPSEEK_R1_ASK_EXA_PRO": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher=GeneralLlm(model="exa/exa-pro"),
             ),
         },
         "METAC_DEEPSEEK_R1_DEEPNEWS": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
                 researcher="asknews/deep-research/high-depth",
             ),
         },
         "METAC_O3_HIGH_TOKEN": {
-            "estimated_cost_per_question": 0.62,
+            "estimated_cost_per_question": 0.7,
             "bot": create_bot(
                 GeneralLlm(
                     model="o3",
@@ -264,7 +270,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_O3_TOKEN": {
-            "estimated_cost_per_question": 0.43,
+            "estimated_cost_per_question": 0.5,
             "bot": create_bot(
                 GeneralLlm(
                     model="o3",
@@ -274,7 +280,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_O4_MINI_HIGH_TOKEN": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": 0.07,
             "bot": create_bot(
                 GeneralLlm(
                     model="o4-mini",
@@ -284,7 +290,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_O4_MINI_TOKEN": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": 0.043,
             "bot": create_bot(
                 GeneralLlm(
                     model="o4-mini",
@@ -294,13 +300,13 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_4_1_TOKEN": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": 0.07,
             "bot": create_bot(
                 GeneralLlm(model="gpt-4.1", temperature=default_temperature),
             ),
         },
         "METAC_4_1_MINI_TOKEN": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": 0.015,
             "bot": create_bot(
                 GeneralLlm(
                     model="gpt-4.1-mini",
@@ -309,7 +315,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_4_1_NANO_TOKEN": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
             "bot": create_bot(
                 GeneralLlm(
                     model="gpt-4.1-nano",
@@ -338,7 +344,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_O1_TOKEN": {
-            "estimated_cost_per_question": 0.8,
+            "estimated_cost_per_question": 1.15,
             "bot": create_bot(
                 GeneralLlm(
                     model="o1",
@@ -446,7 +452,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN": {
-            "estimated_cost_per_question": 0.30,
+            "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
             "bot": create_bot(
                 GeneralLlm(
                     model=gemini_2_5_pro_preview,
@@ -483,7 +489,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_R1_TOKEN": {
-            "estimated_cost_per_question": roughly_gpt_4o_cost,
+            "estimated_cost_per_question": 0.039,
             "bot": create_bot(
                 GeneralLlm(
                     model="openrouter/deepseek/deepseek-r1",

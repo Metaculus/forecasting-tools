@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from forecasting_tools.forecast_helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.forecast_helpers.metaculus_api import MetaculusQuestion
+from forecasting_tools.util.jsonable import Jsonable
 
 
 class ResearchType(Enum):
@@ -18,7 +19,7 @@ class ResearchItem(BaseModel):
     type: ResearchType
 
 
-class QuestionResearchSnapshot(BaseModel):
+class QuestionResearchSnapshot(BaseModel, Jsonable):
     question: MetaculusQuestion
     research_items: list[ResearchItem]
     time_stamp: datetime = Field(default_factory=datetime.now)

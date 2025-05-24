@@ -93,8 +93,6 @@ async def benchmark_forecast_bots() -> None:
     ]
     chosen_questions = MetaculusApi.get_benchmark_questions(
         num_questions_to_use,
-        days_to_resolve_in=365,  # 6 * 30,  # 6 months
-        max_days_since_opening=365,
     )
 
     with MonetaryCostManager() as cost_manager:

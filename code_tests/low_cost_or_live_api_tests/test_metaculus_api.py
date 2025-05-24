@@ -324,6 +324,30 @@ async def test_get_questions_from_tournament_with_filter(
     assert_basic_attributes_at_percentage(questions, 0.8)
 
 
+async def test_error_when_not_enough_questions_matching_filter() -> None:
+    single_question_filter = ApiFilter(
+        close_time_gt=datetime(2024, 1, 15),
+        close_time_lt=datetime(2024, 1, 20),
+        allowed_tournaments=["quarterly-cup-2024q1"],
+    )
+
+    # Error if we ask for 2 questions but only 1 matches the filter
+    with pytest.raises(ValueError):
+        await MetaculusApi.get_questions_matching_filter(
+            single_question_filter,
+            num_questions=2,
+            error_if_question_target_missed=True,
+        )
+
+    # No error if we ask for 1 question but only 1 matches the filter
+    questions = await MetaculusApi.get_questions_matching_filter(
+        single_question_filter,
+        num_questions=1,
+        error_if_question_target_missed=False,
+    )
+    assert len(questions) == 1
+
+
 @pytest.mark.skip(reason="This test takes a while to run")
 @pytest.mark.parametrize(
     "status_filter",

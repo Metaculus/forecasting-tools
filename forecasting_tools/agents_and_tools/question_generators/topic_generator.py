@@ -254,7 +254,7 @@ class TopicGenerator:
     @staticmethod
     def find_random_headlines_tool() -> str:
         """
-        By picking a random countery/industry/etc, finds a list of random headlines to help come up with ideas for questions to forecast.
+        By making search terms from a list of random things (random country, industry, etc), finds a list of random headlines to help come up with ideas for questions to forecast.
         Output: List of topics that include links to the source.
         """
         topics = asyncio.run(
