@@ -114,7 +114,7 @@ class PromptOptimizer:
         num_prompts_to_try: int,
         forecast_llm: GeneralLlm,
         ideation_llm_name: str,
-        evaluation_batch_size: int = 100,
+        evaluation_batch_size: int = 20,
         file_or_folder_to_save_benchmarks: str | None = None,
     ) -> None:
         self.evaluation_questions = evaluation_questions
@@ -133,15 +133,7 @@ class PromptOptimizer:
         ideas = await self.get_prompt_ideas()
         tasks = [self.prompt_idea_to_prompt_string(idea) for idea in ideas]
         prompt_templates = await asyncio.gather(*tasks)
-        configs = []
-        for prompt, idea in zip(prompt_templates, ideas):
-            configs.append(
-                PromptConfig(
-                    prompt_template=prompt,
-                    llm=self.forecast_llm,
-                    original_idea=idea,
-                )
-            )
+
         control_group_config = PromptConfig(
             prompt_template=CONTROL_GROUP_PROMPT,
             llm=self.forecast_llm,
@@ -150,7 +142,16 @@ class PromptOptimizer:
                 idea="The control group is a group of questions that are not optimized for the prompt. It is used to evaluate the performance of the optimized prompt.",
             ),
         )
-        configs.append(control_group_config)
+
+        configs = [control_group_config]
+        for prompt, idea in zip(prompt_templates, ideas):
+            configs.append(
+                PromptConfig(
+                    prompt_template=prompt,
+                    llm=self.forecast_llm,
+                    original_idea=idea,
+                )
+            )
         evaluated_prompts = await self.evaluate_prompts(configs)
         sorted_evaluated_prompts = sorted(
             evaluated_prompts, key=lambda x: x.score, reverse=True

@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 async def run_optimizer() -> None:
+    # -------- Configure the optimizer -----
     evaluation_questions = QuestionResearchSnapshot.load_json_from_file_path(
         "logs/forecasts/question_snapshots_v2_157qs.json"
     )
@@ -23,13 +24,16 @@ async def run_optimizer() -> None:
     for snapshot in evaluation_questions:
         snapshot.question.background_info = None
 
+    # ----- Run the optimizer -----
+
     logger.info(f"Loaded {len(evaluation_questions)} evaluation questions")
     optimizer = PromptOptimizer(
         evaluation_questions=evaluation_questions,
-        num_prompts_to_try=10,
+        num_prompts_to_try=25,
         forecast_llm=forecast_llm,
         ideation_llm_name=ideation_llm,
         file_or_folder_to_save_benchmarks="logs/forecasts/benchmarks/",
+        evaluation_batch_size=80,
     )
     evaluation_result = await optimizer.create_optimized_prompt()
     evaluated_prompts = evaluation_result.evaluated_prompts
