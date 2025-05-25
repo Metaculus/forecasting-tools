@@ -13,6 +13,13 @@ from forecasting_tools.benchmarking.question_research_snapshot import (
     ResearchType,
 )
 
+fake_question_1 = ForecastingTestManager.get_fake_binary_question(
+    question_text="Q1"
+)
+fake_question_2 = ForecastingTestManager.get_fake_binary_question(
+    question_text="Q2"
+)
+
 
 @pytest.fixture
 def mock_llm() -> MagicMock:
@@ -23,11 +30,9 @@ def mock_llm() -> MagicMock:
 
 @pytest.fixture
 def research_snapshots() -> list[QuestionResearchSnapshot]:
-    q1 = ForecastingTestManager.get_fake_binary_question(question_text="Q1")
-    q2 = ForecastingTestManager.get_fake_binary_question(question_text="Q2")
     return [
         QuestionResearchSnapshot(
-            question=q1,
+            question=fake_question_1,
             research_items=[
                 ResearchItem(
                     research="q1_news", type=ResearchType.ASK_NEWS_SUMMARIES
@@ -35,7 +40,7 @@ def research_snapshots() -> list[QuestionResearchSnapshot]:
             ],
         ),
         QuestionResearchSnapshot(
-            question=q2,
+            question=fake_question_2,
             research_items=[
                 ResearchItem(
                     research="q2_news", type=ResearchType.ASK_NEWS_SUMMARIES
@@ -60,9 +65,7 @@ def customizable_bot(
 async def test_customizable_bot_run_research_success(
     customizable_bot: CustomizableBot,
 ) -> None:
-    question = ForecastingTestManager.get_fake_binary_question(
-        question_text="Q1"
-    )
+    question = fake_question_1
     research = await customizable_bot.run_research(question)
     assert research == "q1_news"
 

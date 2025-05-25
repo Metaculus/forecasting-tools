@@ -8,7 +8,7 @@ from forecasting_tools.data_models.numeric_report import NumericReport
 
 
 def test_benchmark_for_bot() -> None:
-    read_path = "code_tests/unit_tests/test_forecasting/forecasting_test_data/benchmark_object_examples.json"
+    read_path = "code_tests/unit_tests/test_data_models/forecasting_test_data/benchmark_object_examples.json"
     temp_write_path = "temp/temp_benchmark_object_examples.json"
     jsonable_assertations.assert_reading_and_printing_from_file_works(
         BenchmarkForBot,

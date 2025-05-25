@@ -12,6 +12,8 @@ from forecasting_tools.util.jsonable import Jsonable
 
 class ResearchType(Enum):
     ASK_NEWS_SUMMARIES = "ask_news_summaries"
+    ASK_NEWS_DEEP_RESEARCH = "ask_news_deep_research"
+    # TODO: Add other research types
     # PERPLEXITY_SEARCHES = "perplexity_searches"
     # EXA_SEARCHES = "exa_searches"
     # SMART_SEARCHES = "smart_searches"

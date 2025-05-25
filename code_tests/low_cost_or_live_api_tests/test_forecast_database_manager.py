@@ -57,7 +57,7 @@ async def test_base_rate_report_can_be_added_to_coda() -> None:
 
 
 def get_forecast_example_reports() -> list[ForecastReport]:
-    metaculus_data_path = "code_tests/unit_tests/test_forecasting/forecasting_test_data/metaculus_forecast_report_examples.json"
+    metaculus_data_path = "code_tests/unit_tests/test_data_models/forecasting_test_data/metaculus_forecast_report_examples.json"
     metaculus_reports = DataOrganizer.load_reports_from_file_path(
         metaculus_data_path
     )
@@ -65,7 +65,7 @@ def get_forecast_example_reports() -> list[ForecastReport]:
 
 
 def get_base_rate_example_reports() -> list[BaseRateReport]:
-    base_rate_data_path = "code_tests/unit_tests/test_forecasting/forecasting_test_data/base_rate_reports.json"
+    base_rate_data_path = "code_tests/unit_tests/test_data_models/forecasting_test_data/base_rate_reports.json"
     base_rate_reports = BaseRateReport.load_json_from_file_path(
         base_rate_data_path
     )

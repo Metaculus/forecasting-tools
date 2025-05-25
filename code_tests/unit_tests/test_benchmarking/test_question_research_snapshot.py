@@ -16,7 +16,9 @@ def test_get_research_for_type_success() -> None:
         ResearchItem(
             research="news data", type=ResearchType.ASK_NEWS_SUMMARIES
         ),
-        ResearchItem(research="other data", type="other_type"),  # type: ignore
+        ResearchItem(
+            research="other data", type=ResearchType.ASK_NEWS_DEEP_RESEARCH
+        ),
     ]
     snapshot = QuestionResearchSnapshot(
         question=question, research_items=research_items
@@ -31,7 +33,9 @@ def test_get_research_for_type_success() -> None:
 def test_get_research_for_type_not_found() -> None:
     question = ForecastingTestManager.get_fake_binary_question()
     research_items = [
-        ResearchItem(research="other data", type="other_type"),  # type: ignore
+        ResearchItem(
+            research="other data", type=ResearchType.ASK_NEWS_DEEP_RESEARCH
+        ),
     ]
     snapshot = QuestionResearchSnapshot(
         question=question, research_items=research_items

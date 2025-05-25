@@ -11,7 +11,7 @@ from forecasting_tools.data_models.questions import (
 
 def test_metaculus_question_is_jsonable() -> None:
     temp_writing_path = "temp/temp_metaculus_question.json"
-    read_report_path = "code_tests/unit_tests/test_forecasting/forecasting_test_data/metaculus_questions.json"
+    read_report_path = "code_tests/unit_tests/test_data_models/forecasting_test_data/metaculus_questions.json"
     questions = DataOrganizer.load_questions_from_file_path(read_report_path)
     assert any(isinstance(question, NumericQuestion) for question in questions)
     assert any(isinstance(question, BinaryQuestion) for question in questions)
