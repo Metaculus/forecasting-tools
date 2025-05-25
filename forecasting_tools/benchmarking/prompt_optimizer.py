@@ -164,6 +164,8 @@ class PromptOptimizer:
             model=AgentSdkLlm(self.ideation_llm_name),
             instructions=clean_indents(
                 f"""
+                You are creating instructions for an AI forecaster to forecast binary questions about the future.
+
                 Please come up with {self.num_prompts_to_try} prompt ideas that asks a bot to forecast binary questions.
                 There must be a final binary float given at the end, make sure to request for this.
 
@@ -172,15 +174,27 @@ class PromptOptimizer:
 
                 If you need to, run up to 10 searches finding unique ways to approach the prompt.
 
+                For instance a prompt that focuses on base rates, fermi estimates, scope sensitivity, etc.
+                You should probably include a number of these at once.
+
+                For instance one prompt might include consider all of the following:
+                - The time left until the outcome to the question is known.
+                - The status quo outcome if nothing changed.
+                - A brief description of a scenario that results in a No or Yes outcome.
+                - base rates
+                - other estimation techniques
+
+                Consider different formats of asking the question (which order, what items should influence what other items)?
+
                 Return a list of ideas in the format:
                 **1-6 word title**
-                Idea 1
+                Idea Process 1
 
                 **1-6 word title**
-                Idea 2
+                Idea Process 2
 
                 **1-6 word title**
-                Idea 3
+                Idea Process 3
                 """
             ),
             tools=[perplexity_pro_search],

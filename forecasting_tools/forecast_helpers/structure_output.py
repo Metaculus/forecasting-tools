@@ -11,7 +11,7 @@ T = TypeVar("T")
 async def structure_output(
     output: str,
     output_type: type[T],
-    model: GeneralLlm | str = "openrouter/openai/gpt-4.1-nano",
+    model: GeneralLlm | str = "openrouter/openai/gpt-4.1-mini",
 ) -> T:
     if not output:
         raise ValueError("Output is empty")
@@ -82,7 +82,7 @@ async def structure_output(
         {pydantic_instructions}
 
 
-        Remember to include links!
+        Please return an answer in the format given to you, and remember to include links if they are included!
         """
     ).strip()
 
