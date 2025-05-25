@@ -17,11 +17,13 @@ async def snapshot_questions() -> None:
         target_questions_to_use,
         error_if_question_target_missed=False,
     )
+    for question in chosen_questions:
+        assert question.community_prediction_at_access_time is not None
     snapshots = []
     file_name = (
-        f"logs/forecasts/question_snapshots_v1_{len(chosen_questions)}qs.json"
+        f"logs/forecasts/question_snapshots_v2_{len(chosen_questions)}qs.json"
     )
-    batch_size = 10
+    batch_size = 20
     num_batches = math.ceil(len(chosen_questions) / batch_size)
     for batch_index in range(num_batches):
         batch_questions = chosen_questions[

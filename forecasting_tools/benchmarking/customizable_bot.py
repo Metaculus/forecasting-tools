@@ -1,5 +1,6 @@
 import logging
 
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.benchmarking.question_research_snapshot import (
     QuestionResearchSnapshot,
     ResearchType,
@@ -29,22 +30,39 @@ class CustomizableBot(ForecastBot):
         prompt: str,
         research_snapshots: list[QuestionResearchSnapshot],
         research_type: ResearchType,
-        exclude_from_config_dict: list[str] | None = ["research_snapshots"],
+        parameters_to_exclude_from_config_dict: list[str] | None = [
+            "research_snapshots"
+        ],
         *args,
         **kwargs,
     ) -> None:
         super().__init__(
-            *args, exclude_from_config_dict=exclude_from_config_dict, **kwargs
+            *args,
+            parameters_to_exclude_from_config_dict=parameters_to_exclude_from_config_dict,
+            **kwargs,
         )
         self.prompt = prompt
         self.research_snapshots = research_snapshots
         self.research_type = research_type
 
         unique_questions = list(
-            set([snapshot.question for snapshot in research_snapshots])
+            set(
+                [
+                    snapshot.question.question_text
+                    for snapshot in research_snapshots
+                ]
+            )
         )
         if len(unique_questions) != len(research_snapshots):
             raise ValueError("Research snapshots must have unique questions")
+
+    @classmethod
+    def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm | None]:
+        return {
+            "default": None,
+            "summarizer": None,
+            "researcher": None,
+        }
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         matching_snapshots = [
@@ -75,6 +93,10 @@ class CustomizableBot(ForecastBot):
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction}"
         )
+        if prediction >= 1:
+            prediction = 0.999
+        if prediction <= 0:
+            prediction = 0.001
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )

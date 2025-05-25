@@ -5,13 +5,18 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
+from forecasting_tools.data_models.data_organizer import QuestionTypes
 from forecasting_tools.forecast_helpers.asknews_searcher import AskNewsSearcher
-from forecasting_tools.forecast_helpers.metaculus_api import MetaculusQuestion
 from forecasting_tools.util.jsonable import Jsonable
 
 
 class ResearchType(Enum):
     ASK_NEWS_SUMMARIES = "ask_news_summaries"
+    # PERPLEXITY_SEARCHES = "perplexity_searches"
+    # EXA_SEARCHES = "exa_searches"
+    # SMART_SEARCHES = "smart_searches"
+    # GOOGLE_GROUNDING = "google_grounding"
+    # ONE_SENTENCE_BACKGROUND_INFO = "one_sentence_background_info"
 
 
 class ResearchItem(BaseModel):
@@ -20,13 +25,13 @@ class ResearchItem(BaseModel):
 
 
 class QuestionResearchSnapshot(BaseModel, Jsonable):
-    question: MetaculusQuestion
+    question: QuestionTypes
     research_items: list[ResearchItem]
     time_stamp: datetime = Field(default_factory=datetime.now)
 
     @classmethod
     async def create_snapshot_of_question(
-        cls, question: MetaculusQuestion
+        cls, question: QuestionTypes
     ) -> QuestionResearchSnapshot:
         ask_news_summaries = await AskNewsSearcher().get_formatted_news_async(
             question.question_text

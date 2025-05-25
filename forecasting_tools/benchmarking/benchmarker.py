@@ -63,6 +63,13 @@ class Benchmarker:
             raise ValueError(
                 "Either number_of_questions_to_use or questions_to_use must be provided"
             )
+        if file_path_to_save_reports and not (
+            file_path_to_save_reports.endswith("/")
+            or file_path_to_save_reports.endswith(".json")
+        ):
+            raise ValueError(
+                "file_path_to_save_reports must end with '/' (folder) or '.json'"
+            )
 
         self.forecast_bots = forecast_bots
         self.number_of_questions_to_use = number_of_questions_to_use
@@ -107,7 +114,7 @@ class Benchmarker:
         )
         for batch in batches:
             await self._run_a_batch(batch)
-            self._save_benchmarks_to_file_if_configured(benchmarks)
+            self.save_benchmarks_to_file_if_configured(benchmarks)
         return benchmarks
 
     async def _run_a_batch(self, batch: QuestionBatch) -> None:
@@ -194,17 +201,24 @@ class Benchmarker:
             benchmarks.append(benchmark)
         return benchmarks
 
-    def _save_benchmarks_to_file_if_configured(
+    def save_benchmarks_to_file_if_configured(
         self, benchmarks: list[BenchmarkForBot]
     ) -> None:
         if self.file_path_to_save_reports is None:
             return
-        file_path_to_save_reports = (
-            f"{self.file_path_to_save_reports}"
-            f"benchmarks_"
-            f"{self.initialization_timestamp.strftime('%Y-%m-%d_%H-%M-%S')}"
-            f".json"
-        )
+        if self.file_path_to_save_reports.endswith("/"):
+            file_path_to_save_reports = (
+                f"{self.file_path_to_save_reports}"
+                f"benchmarks_"
+                f"{self.initialization_timestamp.strftime('%Y-%m-%d_%H-%M-%S')}"
+                f".json"
+            )
+        elif self.file_path_to_save_reports.endswith(".json"):
+            file_path_to_save_reports = self.file_path_to_save_reports
+        else:
+            raise ValueError(
+                "file_path_to_save_reports must end with '/' or '.json'"
+            )
         BenchmarkForBot.save_object_list_to_file_path(
             benchmarks, file_path_to_save_reports
         )

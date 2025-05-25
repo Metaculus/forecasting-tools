@@ -43,11 +43,21 @@ class GroceryItem(BaseModel):
                 GroceryItem(item_name="oranges", quantity=3),
             ],
         ),
+        (
+            "How many piano tuners are there in New York City? Let me break this down step by step:\n\n1. Population of NYC: ~8.5 million\n2. Average household size: ~2.5 people\n3. Number of households: 8.5M/2.5 = 3.4M households\n4. % of households with pianos: ~1%\n5. Number of pianos: 3.4M * 0.01 = 34,000 pianos\n6. Pianos tuned per year: ~1 per piano\n7. Tunings per tuner per year: ~200 (5 per day * 40 weeks)\n8. Number of tuners needed: 34,000/200 = 170 tuners\n\nFinal answer: 170 piano tuners",
+            float,
+            170.0,
+        ),
+        (
+            "How many piano tuners are there in New York City? Let me break this down step by step:\n\n1. Population of NYC: ~8.5 million\n2. Average household size: ~2.5 people\n3. Number of households: 8.5M/2.5 = 3.4M households\n4. % of households with pianos: ~1%\n5. Number of pianos: 3.4M * 0.01 = 34,000 pianos\n6. Pianos tuned per year: ~1 per piano\n7. Tunings per tuner per year: ~200 (5 per day * 40 weeks)\n8. Number of tuners needed: 34,000/200 = 170 tuners\n\nThus my final from the previous question is 30%",
+            float,
+            0.3,
+        ),
     ],
 )
 @pytest.mark.asyncio
 async def test_structure_output_parametrized(
     output: str, output_type: type, expected: Any
 ) -> None:
-    result = await structure_output(output, output_type, "gpt-4o-mini")
+    result = await structure_output(output, output_type)
     assert result == expected

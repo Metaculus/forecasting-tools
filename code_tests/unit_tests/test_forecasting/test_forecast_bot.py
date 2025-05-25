@@ -338,3 +338,27 @@ async def test_notepad_counts_research_and_prediction_attempts() -> None:
         notepad.total_predictions_attempted
         == predictions_per_report * research_reports
     )
+
+
+async def test_summarize_research_returns_disabled_message_when_false() -> (
+    None
+):
+    bot = MockBot(enable_summarize_research=False)
+    question = ForecastingTestManager.get_fake_binary_question()
+    result = await bot.summarize_research(question, "some research")
+    assert "disabled" in result.lower()
+
+
+async def test_summarize_research_calls_llm_and_returns_output() -> None:
+    bot = MockBot(enable_summarize_research=True)
+    question = ForecastingTestManager.get_fake_binary_question()
+    result = await bot.summarize_research(question, "some research")
+    assert "mock" in result.lower()
+
+
+def test_conflicting_summarize_research_and_use_summary_raises() -> None:
+    with pytest.raises(Exception):
+        MockBot(
+            enable_summarize_research=False,
+            use_research_summary_to_forecast=True,
+        )

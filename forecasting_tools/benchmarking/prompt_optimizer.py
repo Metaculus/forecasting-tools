@@ -2,6 +2,8 @@ import asyncio
 import logging
 from dataclasses import dataclass
 
+from pydantic import BaseModel
+
 from forecasting_tools.agents_and_tools.misc_tools import perplexity_pro_search
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
@@ -24,10 +26,49 @@ from forecasting_tools.forecast_helpers.structure_output import (
 logger = logging.getLogger(__name__)
 
 
+CONTROL_GROUP_PROMPT = """
+You are a professional forecaster interviewing for a job.
+
+Your interview question is:
+{question_text}
+
+Question background:
+{background_info}
+
+
+This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
+{resolution_criteria}
+
+{fine_print}
+
+
+Your research assistant says:
+{research}
+
+Today is {today}.
+
+Before answering you write:
+(a) The time left until the outcome to the question is known.
+(b) The status quo outcome if nothing changed.
+(c) A brief description of a scenario that results in a No outcome.
+(d) A brief description of a scenario that results in a Yes outcome.
+
+You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+
+The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+"""
+
+
+class QuestionIdea(BaseModel):
+    short_name: str
+    idea: str
+
+
 @dataclass
 class PromptConfig:
     prompt_template: str
     llm: GeneralLlm
+    original_idea: QuestionIdea
     research_reports_per_question: int = 1
     predictions_per_research_report: int = 5
 
@@ -73,12 +114,18 @@ class PromptOptimizer:
         num_prompts_to_try: int,
         forecast_llm: GeneralLlm,
         ideation_llm_name: str,
+        evaluation_batch_size: int = 100,
+        file_or_folder_to_save_benchmarks: str | None = None,
     ) -> None:
         self.evaluation_questions = evaluation_questions
         self.num_prompts_to_try = num_prompts_to_try
         self.forecast_llm = forecast_llm
         self.ideation_llm_name = ideation_llm_name
         self.research_type = ResearchType.ASK_NEWS_SUMMARIES
+        self.concurrent_evaluation_batch_size = evaluation_batch_size
+        self.file_or_folder_to_save_benchmarks = (
+            file_or_folder_to_save_benchmarks
+        )
 
     async def create_optimized_prompt(
         self,
@@ -86,17 +133,31 @@ class PromptOptimizer:
         ideas = await self.get_prompt_ideas()
         tasks = [self.prompt_idea_to_prompt_string(idea) for idea in ideas]
         prompt_templates = await asyncio.gather(*tasks)
-        configs = [
-            PromptConfig(prompt_template=prompt, llm=self.forecast_llm)
-            for prompt in prompt_templates
-        ]
+        configs = []
+        for prompt, idea in zip(prompt_templates, ideas):
+            configs.append(
+                PromptConfig(
+                    prompt_template=prompt,
+                    llm=self.forecast_llm,
+                    original_idea=idea,
+                )
+            )
+        control_group_config = PromptConfig(
+            prompt_template=CONTROL_GROUP_PROMPT,
+            llm=self.forecast_llm,
+            original_idea=QuestionIdea(
+                short_name="Control Group",
+                idea="The control group is a group of questions that are not optimized for the prompt. It is used to evaluate the performance of the optimized prompt.",
+            ),
+        )
+        configs.append(control_group_config)
         evaluated_prompts = await self.evaluate_prompts(configs)
         sorted_evaluated_prompts = sorted(
             evaluated_prompts, key=lambda x: x.score, reverse=True
         )
         return OptimizationResult(evaluated_prompts=sorted_evaluated_prompts)
 
-    async def get_prompt_ideas(self) -> list[str]:
+    async def get_prompt_ideas(self) -> list[QuestionIdea]:
         agent = AiAgent(
             name="Prompt Ideator",
             model=AgentSdkLlm(self.ideation_llm_name),
@@ -109,6 +170,16 @@ class PromptOptimizer:
                 Give your ideas in a list format.
 
                 If you need to, run up to 10 searches finding unique ways to approach the prompt.
+
+                Return a list of ideas in the format:
+                **1-6 word title**
+                Idea 1
+
+                **1-6 word title**
+                Idea 2
+
+                **1-6 word title**
+                Idea 3
                 """
             ),
             tools=[perplexity_pro_search],
@@ -116,11 +187,13 @@ class PromptOptimizer:
         output = await AgentRunner.run(
             agent, f"Please generate {self.num_prompts_to_try} prompt ideas"
         )
-        ideas = await structure_output(output.final_output, list[str])
+        ideas = await structure_output(output.final_output, list[QuestionIdea])
         logger.info(f"Generated {len(ideas)} prompt ideas: {ideas}")
         return ideas
 
-    async def prompt_idea_to_prompt_string(self, prompt_idea: str) -> str:
+    async def prompt_idea_to_prompt_string(
+        self, prompt_idea: QuestionIdea
+    ) -> str:
         agent = AiAgent(
             name="Prompt Implementor",
             model=AgentSdkLlm(self.ideation_llm_name),
@@ -130,7 +203,8 @@ class PromptOptimizer:
                 There must be a final binary float given at the end, make sure to request for this.
 
                 The prompt should implement the below idea:
-                {prompt_idea}
+                Name: {prompt_idea.short_name}
+                Idea: {prompt_idea.idea}
 
                 This is a template prompt, and so you should add the following variables to the prompt:
                 {{question_text}}
@@ -170,6 +244,7 @@ class PromptOptimizer:
                     "default": config.llm,
                 },
                 publish_reports_to_metaculus=False,
+                enable_summarize_research=False,
             )
             bots.append(bot)
         benchmarker = Benchmarker(
@@ -177,12 +252,18 @@ class PromptOptimizer:
             questions_to_use=[
                 snapshot.question for snapshot in self.evaluation_questions
             ],
+            concurrent_question_batch_size=self.concurrent_evaluation_batch_size,
+            file_path_to_save_reports=self.file_or_folder_to_save_benchmarks,
         )
         benchmarks = await benchmarker.run_benchmark()
         evaluated_prompts: list[EvaluatedPrompt] = []
         for config, benchmark in zip(configurations, benchmarks):
             benchmark.code = config.prompt_template
+            benchmark.forecast_bot_class_name = (
+                config.original_idea.short_name.replace(" ", "_")
+            )
             evaluated_prompts.append(
                 EvaluatedPrompt(prompt_config=config, benchmark=benchmark)
             )
+        benchmarker.save_benchmarks_to_file_if_configured(benchmarks)
         return evaluated_prompts

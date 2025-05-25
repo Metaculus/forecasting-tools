@@ -459,9 +459,20 @@ def make_perfect_benchmark(
     reports_of_perfect_benchmark = typeguard.check_type(
         reports_of_perfect_benchmark, list[BinaryReport]
     )
+    reports_without_community_predictions: list[BinaryReport] = []
     for report in reports_of_perfect_benchmark:
-        assert report.community_prediction is not None
-        report.prediction = report.community_prediction
+        if report.community_prediction is None:
+            reports_without_community_predictions.append(report)
+        else:
+            report.prediction = report.community_prediction
+    if reports_without_community_predictions:
+        urls = [
+            report.question.page_url
+            for report in reports_without_community_predictions
+        ]
+        raise ValueError(
+            f"Found {len(reports_without_community_predictions)} reports without community predictions: {urls}"
+        )
     perfect_benchmark.forecast_reports = reports_of_perfect_benchmark
     perfect_benchmark.explicit_name = "Perfect Predictor"
     return perfect_benchmark
@@ -582,7 +593,9 @@ def run_benchmark_streamlit_page(
                 display_benchmark_comparison_graphs(filtered_benchmarks)
                 display_benchmark_list(filtered_benchmarks)
         except Exception as e:
-            st.error(f"Error when loading/displaying benchmarks: {str(e)}")
+            st.error(
+                f"Error when loading/displaying benchmarks: {e.__class__.__name__}: {str(e)}"
+            )
 
 
 if __name__ == "__main__":
