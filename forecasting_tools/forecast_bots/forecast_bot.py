@@ -262,11 +262,13 @@ class ForecastBot(ABC):
     async def summarize_research(
         self, question: MetaculusQuestion, research: str
     ) -> str:
-        logger.info(f"Summarizing research for question: {question.page_url}")
         if not self.enable_summarize_research:
             return "Summarize research was disabled for this run"
 
         try:
+            logger.info(
+                f"Summarizing research for question: {question.page_url}"
+            )
             model = self.get_llm("summarizer", "llm")
             prompt = clean_indents(
                 f"""

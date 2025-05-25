@@ -277,7 +277,16 @@ def display_benchmark_comparison_graphs(
         f"**Number of input questions (set of all observed inputs values):** {set(benchmark.num_input_questions for benchmark in benchmarks if benchmark.num_input_questions is not None)}"
     )
     st.markdown(
+        f"**Set of number of forecast reports for benchmarks:** {set(len(benchmark.forecast_reports) for benchmark in benchmarks if benchmark.forecast_reports is not None)}"
+    )
+    st.markdown(
         f"**Total number of failed forecasts:** {sum(benchmark.num_failed_forecasts for benchmark in benchmarks if benchmark.num_failed_forecasts is not None)}"
+    )
+    st.markdown(
+        f"**Average time per benchmark:** {sum(benchmark.time_taken_in_minutes for benchmark in benchmarks if benchmark.time_taken_in_minutes is not None) / len(benchmarks):.2f} minutes"
+    )
+    st.markdown(
+        f"**Total time taken:** {sum(benchmark.time_taken_in_minutes for benchmark in benchmarks if benchmark.time_taken_in_minutes is not None):.2f} minutes"
     )
     confidence_level = st.sidebar.slider(
         "Error Bar Confidence Level",

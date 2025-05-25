@@ -43,10 +43,12 @@ class ForecastingTestManager:
 
     @classmethod
     def get_fake_binary_question(
-        cls, community_prediction: float | None = 0.7
+        cls,
+        community_prediction: float | None = 0.7,
+        question_text: str = "Will TikTok be banned in the US?",
     ) -> BinaryQuestion:
         question = BinaryQuestion(
-            question_text="Will TikTok be banned in the US?",
+            question_text=question_text,
             community_prediction_at_access_time=community_prediction,
         )
         return question
