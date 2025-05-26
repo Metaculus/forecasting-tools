@@ -20,7 +20,8 @@ async def run_optimizer() -> None:
         model="openrouter/openai/gpt-4.1-nano",
         temperature=0.3,
     )
-    ideation_llm = "openrouter/google/gemini-2.5-pro-preview"
+    # ideation_llm = "openrouter/google/gemini-2.5-pro-preview"
+    ideation_llm = "openrouter/anthropic/claude-sonnet-4"
     for snapshot in evaluation_questions:
         snapshot.question.background_info = None
     num_prompts_to_try = 25

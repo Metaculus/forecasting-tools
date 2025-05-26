@@ -108,15 +108,13 @@ class ForecastReport(BaseModel, Jsonable, ABC):
             validated_scores: list[float] = typeguard.check_type(
                 scores, list[float]
             )
-            average_deviation_score = sum(validated_scores) / len(
-                validated_scores
-            )
+            average_score = sum(validated_scores) / len(validated_scores)
         except Exception as e:
             raise ValueError(
                 f"Error calculating average expected baseline score. {len(reports)} reports. "
                 f"There were {len([score for score in scores if score is None])} None scores. Error: {e}"
             ) from e
-        return average_deviation_score
+        return average_score
 
     @classmethod
     @abstractmethod
