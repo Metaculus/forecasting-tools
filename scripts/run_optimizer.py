@@ -2,9 +2,11 @@ import asyncio
 import logging
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.benchmarking.prompt_evaluator import PromptEvaluator
 from forecasting_tools.benchmarking.prompt_optimizer import PromptOptimizer
 from forecasting_tools.benchmarking.question_research_snapshot import (
     QuestionResearchSnapshot,
+    ResearchType,
 )
 from forecasting_tools.util.custom_logger import CustomLogger
 
@@ -32,13 +34,17 @@ async def run_optimizer() -> None:
     for run in range(full_runs):
         logger.info(f"Run {run + 1} of {full_runs}")
         logger.info(f"Loaded {len(evaluation_questions)} evaluation questions")
-        optimizer = PromptOptimizer(
+        evaluator = PromptEvaluator(
             evaluation_questions=evaluation_questions,
+            research_type=ResearchType.ASK_NEWS_SUMMARIES,
+            concurrent_evaluation_batch_size=questions_batch_size,
+            file_or_folder_to_save_benchmarks="logs/forecasts/benchmarks/",
+        )
+        optimizer = PromptOptimizer(
             num_prompts_to_try=num_prompts_to_try,
             forecast_llm=forecast_llm,
             ideation_llm_name=ideation_llm,
-            file_or_folder_to_save_benchmarks="logs/forecasts/benchmarks/",
-            evaluation_batch_size=questions_batch_size,
+            evaluator=evaluator,
         )
         evaluation_result = await optimizer.create_optimized_prompt()
         evaluated_prompts = evaluation_result.evaluated_prompts

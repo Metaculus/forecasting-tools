@@ -19,6 +19,8 @@ from forecasting_tools.util.stats import ConfidenceIntervalCalculator
 
 logger = logging.getLogger(__name__)
 
+PERFECT_PREDICTOR_NAME = "Perfect Predictor"
+
 
 def get_json_files(directory: str) -> list[str]:
     json_files = []
@@ -251,10 +253,43 @@ def calculate_expected_baseline_margin_of_error(
     return margin_of_error
 
 
+def display_overview_stats(input_benchmarks: list[BenchmarkForBot]) -> None:
+    benchmarks = [
+        benchmark
+        for benchmark in input_benchmarks
+        if benchmark.explicit_name != PERFECT_PREDICTOR_NAME
+    ]
+    total_cost = sum(
+        benchmark.total_cost
+        for benchmark in benchmarks
+        if benchmark.total_cost is not None
+    )
+    st.markdown("### Overview")
+    st.markdown(f"**Total Cost:** ${total_cost:.2f}")
+    st.markdown(
+        f"**Number of input questions (set of all observed inputs values for all benchmarks):** {set(benchmark.num_input_questions for benchmark in benchmarks if benchmark.num_input_questions is not None)}"
+    )
+    st.markdown(
+        f"**Number of forecast reports for benchmarks (set of all observed number of forecast reports for all benchmarks):** {set(len(benchmark.forecast_reports) for benchmark in benchmarks if benchmark.forecast_reports is not None)}"
+    )
+    st.markdown(
+        f"**Total number of failed forecasts:** {sum(benchmark.num_failed_forecasts for benchmark in benchmarks if benchmark.num_failed_forecasts is not None)}"
+    )
+    st.markdown(
+        f"**Average time per benchmark:** {sum(benchmark.time_taken_in_minutes for benchmark in benchmarks if benchmark.time_taken_in_minutes is not None) / len(benchmarks):.2f} minutes"
+    )
+    st.markdown(
+        f"**Total time taken:** {sum(benchmark.time_taken_in_minutes for benchmark in benchmarks if benchmark.time_taken_in_minutes is not None):.2f} minutes"
+    )
+    st.markdown(
+        f"**First benchmark's date:** {benchmarks[0].timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+
+
 def display_benchmark_comparison_graphs(
     benchmarks: list[BenchmarkForBot],
 ) -> None:
-    st.markdown("# Benchmark Score Comparisons")
+    st.markdown("### To Note")
     st.markdown(
         """
         Note that there are seasonal changes with the certainty of questions (e.g. there are more certain questions near the end of the year).
@@ -266,28 +301,6 @@ def display_benchmark_comparison_graphs(
         """
     )
 
-    total_cost = sum(
-        benchmark.total_cost
-        for benchmark in benchmarks
-        if benchmark.total_cost is not None
-    )
-    st.markdown("### Overview")
-    st.markdown(f"**Total Cost:** ${total_cost:.2f}")
-    st.markdown(
-        f"**Number of input questions (set of all observed inputs values):** {set(benchmark.num_input_questions for benchmark in benchmarks if benchmark.num_input_questions is not None)}"
-    )
-    st.markdown(
-        f"**Set of number of forecast reports for benchmarks:** {set(len(benchmark.forecast_reports) for benchmark in benchmarks if benchmark.forecast_reports is not None)}"
-    )
-    st.markdown(
-        f"**Total number of failed forecasts:** {sum(benchmark.num_failed_forecasts for benchmark in benchmarks if benchmark.num_failed_forecasts is not None)}"
-    )
-    st.markdown(
-        f"**Average time per benchmark:** {sum(benchmark.time_taken_in_minutes for benchmark in benchmarks if benchmark.time_taken_in_minutes is not None) / len(benchmarks):.2f} minutes"
-    )
-    st.markdown(
-        f"**Total time taken:** {sum(benchmark.time_taken_in_minutes for benchmark in benchmarks if benchmark.time_taken_in_minutes is not None):.2f} minutes"
-    )
     confidence_level = st.sidebar.slider(
         "Error Bar Confidence Level",
         min_value=0.0,
@@ -295,7 +308,6 @@ def display_benchmark_comparison_graphs(
         value=0.90,
         step=0.1,
     )
-
     data_by_benchmark = []
     for index, benchmark in enumerate(benchmarks):
         reports = benchmark.forecast_reports
@@ -483,7 +495,7 @@ def make_perfect_benchmark(
             f"Found {len(reports_without_community_predictions)} reports without community predictions: {urls}"
         )
     perfect_benchmark.forecast_reports = reports_of_perfect_benchmark
-    perfect_benchmark.explicit_name = "Perfect Predictor"
+    perfect_benchmark.explicit_name = PERFECT_PREDICTOR_NAME
     return perfect_benchmark
 
 
@@ -521,6 +533,13 @@ def display_errors_of_benchmarks(benchmarks: list[BenchmarkForBot]) -> None:
                 st.write(f"- **Error:** {error}")
 
 
+def display_main_page(benchmarks: list[BenchmarkForBot]) -> None:
+    st.markdown("# Benchmark Score Comparisons")
+    display_overview_stats(benchmarks)
+    display_benchmark_comparison_graphs(benchmarks)
+    display_benchmark_list(benchmarks)
+
+
 def run_benchmark_streamlit_page(
     input: list[BenchmarkForBot] | str | None = None,
 ) -> None:
@@ -540,8 +559,7 @@ def run_benchmark_streamlit_page(
     st.title("Benchmark Viewer")
 
     if isinstance(input, list):
-        display_benchmark_comparison_graphs(input)
-        display_benchmark_list(input)
+        display_main_page(input)
         return
     elif isinstance(input, str):
         project_directory = input
@@ -599,8 +617,7 @@ def run_benchmark_streamlit_page(
                 filtered_benchmarks = [
                     all_successful_benchmarks[i] for i in selected_benchmarks
                 ]
-                display_benchmark_comparison_graphs(filtered_benchmarks)
-                display_benchmark_list(filtered_benchmarks)
+                display_main_page(filtered_benchmarks)
         except Exception as e:
             st.error(
                 f"Error when loading/displaying benchmarks: {e.__class__.__name__}: {str(e)}"

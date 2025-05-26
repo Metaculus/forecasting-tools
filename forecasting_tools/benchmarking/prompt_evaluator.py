@@ -1,3 +1,5 @@
+import typeguard
+
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.benchmarking.benchmark_for_bot import BenchmarkForBot
 from forecasting_tools.benchmarking.benchmarker import Benchmarker
@@ -15,6 +17,7 @@ from forecasting_tools.benchmarking.question_research_snapshot import (
     QuestionResearchSnapshot,
     ResearchType,
 )
+from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 
 
 class PromptEvaluator:
@@ -36,8 +39,9 @@ class PromptEvaluator:
 
     async def evaluate_prompts(
         self, configurations: list[PromptConfig]
-    ) -> list[EvaluatedPrompt]:
+    ) -> OptimizationResult:
         bots = self._configs_to_bots(configurations)
+        bots = typeguard.check_type(bots, list[ForecastBot])
         benchmarker = Benchmarker(
             forecast_bots=bots,
             questions_to_use=[
@@ -57,7 +61,7 @@ class PromptEvaluator:
                 EvaluatedPrompt(prompt_config=config, benchmark=benchmark)
             )
         benchmarker.save_benchmarks_to_file_if_configured(benchmarks)
-        return evaluated_prompts
+        return OptimizationResult(evaluated_prompts=evaluated_prompts)
 
     def _configs_to_bots(
         self, configs: list[PromptConfig]
@@ -103,7 +107,7 @@ class PromptEvaluator:
         )
         return bot
 
-    async def evaluate_benchmarked_prompts_with_higher_model(
+    async def evaluate_benchmarked_prompts_with_another_model(
         self,
         benchmark_file: str,
         forecast_llm: GeneralLlm,
@@ -137,7 +141,7 @@ class PromptEvaluator:
             )
             configs.append(best_prompt_config)
         evaluation_result = await self.evaluate_prompts(configs)
-        return OptimizationResult(evaluated_prompts=evaluation_result)
+        return evaluation_result
 
     @classmethod
     def _get_best_benchmark_prompt(
