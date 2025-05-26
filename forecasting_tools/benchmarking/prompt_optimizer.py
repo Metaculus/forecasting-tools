@@ -53,7 +53,7 @@ class PromptOptimizer:
             prompt_template=ControlGroupPrompt.get_prompt(),
             llm=self.forecast_llm,
             original_idea=PromptIdea(
-                short_name=f"Control Group v{ControlGroupPrompt.version}",
+                short_name=f"Control Group v{ControlGroupPrompt.version()}",
                 idea="The control group is a group of questions that are not optimized for the prompt. It is used to evaluate the performance of the optimized prompt.",
             ),
         )

@@ -1,6 +1,7 @@
 import logging
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.benchmarking.prompt_data_models import PromptIdea
 from forecasting_tools.benchmarking.question_research_snapshot import (
     QuestionResearchSnapshot,
     ResearchType,
@@ -30,6 +31,7 @@ class CustomizableBot(ForecastBot):
         prompt: str,
         research_snapshots: list[QuestionResearchSnapshot],
         research_type: ResearchType,
+        originating_idea: PromptIdea | None,
         parameters_to_exclude_from_config_dict: list[str] | None = [
             "research_snapshots"
         ],
@@ -44,6 +46,7 @@ class CustomizableBot(ForecastBot):
         self.prompt = prompt
         self.research_snapshots = research_snapshots
         self.research_type = research_type
+        self.originating_idea = originating_idea  # As of May 26, 2025 This parameter is logged in the config for the bot, even if not used here.
 
         unique_questions = list(
             set(

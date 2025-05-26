@@ -3,8 +3,8 @@ class ControlGroupPrompt:
     def get_prompt(cls) -> str:
         return _CONTROL_GROUP_PROMPT
 
-    @property
-    def version(self) -> str:
+    @classmethod
+    def version(cls) -> str:
         return _VERSION
 
 

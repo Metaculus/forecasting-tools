@@ -306,7 +306,7 @@ def display_benchmark_comparison_graphs(
         min_value=0.0,
         max_value=1.0,
         value=0.90,
-        step=0.1,
+        step=0.05,
     )
     data_by_benchmark = []
     for index, benchmark in enumerate(benchmarks):
