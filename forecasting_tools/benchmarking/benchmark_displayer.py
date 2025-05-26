@@ -540,6 +540,23 @@ def display_main_page(benchmarks: list[BenchmarkForBot]) -> None:
     display_benchmark_list(benchmarks)
 
 
+def load_benchmarks_from_files(
+    file_paths: list[str],
+) -> tuple[list[BenchmarkForBot], list[BenchmarkForBot]]:
+    all_successful_benchmarks: list[BenchmarkForBot] = []
+    all_benchmarks: list[BenchmarkForBot] = []
+    for file in file_paths:
+        benchmarks = BenchmarkForBot.load_json_from_file_path(file)
+        for benchmark in benchmarks:
+            all_benchmarks.append(benchmark)
+            if len(benchmark.forecast_reports) > 0:
+                all_successful_benchmarks.append(benchmark)
+    return all_successful_benchmarks, all_benchmarks
+
+
+load_benchmarks_from_files = st.cache_data(load_benchmarks_from_files)
+
+
 def run_benchmark_streamlit_page(
     input: list[BenchmarkForBot] | str | None = None,
 ) -> None:
@@ -582,14 +599,9 @@ def run_benchmark_streamlit_page(
 
     if selected_files:
         try:
-            all_successful_benchmarks: list[BenchmarkForBot] = []
-            all_benchmarks: list[BenchmarkForBot] = []
-            for file in selected_files:
-                benchmarks = BenchmarkForBot.load_json_from_file_path(file)
-                for benchmark in benchmarks:
-                    all_benchmarks.append(benchmark)
-                    if len(benchmark.forecast_reports) > 0:
-                        all_successful_benchmarks.append(benchmark)
+            all_successful_benchmarks, all_benchmarks = (
+                load_benchmarks_from_files(selected_files)
+            )
 
             logger.info(f"Loaded {len(all_successful_benchmarks)} benchmarks")
 

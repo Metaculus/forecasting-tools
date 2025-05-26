@@ -109,13 +109,13 @@ class PromptEvaluator:
 
     async def evaluate_benchmarked_prompts_with_another_model(
         self,
-        benchmark_file: str,
+        benchmark_files: list[str],
         forecast_llm: GeneralLlm,
         top_n_prompts: int = 1,
         include_control_group_prompt: bool = True,
     ) -> OptimizationResult:
         best_benchmarks = self._get_best_benchmark_prompt(
-            benchmark_file, top_n_prompts
+            benchmark_files, top_n_prompts
         )
 
         configs = []
@@ -145,11 +145,14 @@ class PromptEvaluator:
 
     @classmethod
     def _get_best_benchmark_prompt(
-        cls, file_path: str, top_n_prompts: int = 1
+        cls, file_paths: list[str], top_n_prompts: int = 1
     ) -> list[BenchmarkForBot]:
-        benchmarks = BenchmarkForBot.load_json_from_file_path(file_path)
+        all_benchmarks = []
+        for file_path in file_paths:
+            benchmarks = BenchmarkForBot.load_json_from_file_path(file_path)
+            all_benchmarks.extend(benchmarks)
         sorted_benchmarks = sorted(
-            benchmarks,
+            all_benchmarks,
             key=lambda x: x.average_expected_baseline_score,
             reverse=True,
         )
