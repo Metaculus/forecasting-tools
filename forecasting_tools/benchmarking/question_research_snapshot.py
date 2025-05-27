@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from forecasting_tools.data_models.data_organizer import QuestionTypes
 from forecasting_tools.forecast_helpers.asknews_searcher import AskNewsSearcher
@@ -24,6 +24,15 @@ class ResearchType(Enum):
 class ResearchItem(BaseModel):
     research: str
     type: ResearchType
+
+    @field_validator("research")
+    @classmethod
+    def validate_research_not_empty(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError(
+                "Research field cannot be empty or contain only whitespace"
+            )
+        return value
 
 
 class QuestionResearchSnapshot(BaseModel, Jsonable):

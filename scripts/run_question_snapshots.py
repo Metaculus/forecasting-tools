@@ -12,18 +12,24 @@ logger = logging.getLogger(__name__)
 
 
 async def snapshot_questions() -> None:
+    # --- Parameters ---
     target_questions_to_use = 500
     chosen_questions = MetaculusApi.get_benchmark_questions(
         target_questions_to_use,
+        max_days_since_opening=365 + 180,
+        days_to_resolve_in=None,
+        num_forecasters_gte=30,
         error_if_question_target_missed=False,
     )
+    file_name = f"logs/forecasts/question_snapshots_v5_{len(chosen_questions)}qs__>30f__<1.5yr_open.json"
+    batch_size = 20
+
+    # --- Execute the snapshotting ---
+    logger.info(f"Retrieved {len(chosen_questions)} questions")
     for question in chosen_questions:
         assert question.community_prediction_at_access_time is not None
     snapshots = []
-    file_name = (
-        f"logs/forecasts/question_snapshots_v2_{len(chosen_questions)}qs.json"
-    )
-    batch_size = 20
+
     num_batches = math.ceil(len(chosen_questions) / batch_size)
     for batch_index in range(num_batches):
         batch_questions = chosen_questions[

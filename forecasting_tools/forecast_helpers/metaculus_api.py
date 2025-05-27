@@ -7,6 +7,7 @@ import math
 import os
 import random
 import re
+import time
 from datetime import datetime, timedelta
 from typing import Any, Literal, TypeVar
 
@@ -212,12 +213,16 @@ class MetaculusApi:
     def get_benchmark_questions(
         cls,
         num_of_questions_to_return: int,
-        days_to_resolve_in: int = 365,
-        max_days_since_opening: int | None = None,
+        days_to_resolve_in: int | None = 365,
+        max_days_since_opening: int | None = 365,
         num_forecasters_gte: int = 40,
         error_if_question_target_missed: bool = True,
     ) -> list[BinaryQuestion]:
-        date_into_future = datetime.now() + timedelta(days=days_to_resolve_in)
+        date_into_future = (
+            datetime.now() + timedelta(days=days_to_resolve_in)
+            if days_to_resolve_in
+            else None
+        )
         date_into_past = (
             datetime.now() - timedelta(days=max_days_since_opening)
             if max_days_since_opening
@@ -311,7 +316,7 @@ class MetaculusApi:
                 logger.warning(
                     f"Error processing post ID {q['id']}: {e.__class__.__name__} {e}"
                 )
-
+        time.sleep(2)
         return questions
 
     @classmethod
@@ -376,8 +381,6 @@ class MetaculusApi:
             )
             questions.extend(page_questions)
 
-            await asyncio.sleep(0.2)
-
         if len(questions) < num_questions and error_if_not_enough_questions:
             raise ValueError(
                 f"Exhausted all {total_pages} pages but only found {len(questions)} questions, needed {num_questions}. Set error_if_not_enough_questions to False to return as many as possible"
@@ -418,7 +421,6 @@ class MetaculusApi:
             if not continue_searching:
                 more_questions_available = False
             page_num += 1
-            await asyncio.sleep(0.1)
         return questions[:num_questions]
 
     @classmethod

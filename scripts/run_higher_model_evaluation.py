@@ -19,7 +19,7 @@ async def run_higher_model_evaluation() -> None:
     )
     questions_batch_size = 80
     forecast_llm = GeneralLlm(
-        model="openrouter/deepseek/deepseek-r1",
+        model="openrouter/anthropic/claude-sonnet-4",
         temperature=0.3,
     )
     benchmark_files = [
@@ -27,8 +27,8 @@ async def run_higher_model_evaluation() -> None:
         "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v3__nano_157qs.json",
         "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v4__nano_157qs.json",
     ]
-    top_n_prompts = 4
-    include_worse_benchmark = True
+    top_n_prompts = 1
+    include_worse_benchmark = False
 
     # --- Run the evaluation ---
     evaluator = PromptEvaluator(
