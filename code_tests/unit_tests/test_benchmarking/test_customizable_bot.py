@@ -7,6 +7,7 @@ from code_tests.unit_tests.test_forecasting.forecasting_test_manager import (
 )
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.benchmarking.customizable_bot import CustomizableBot
+from forecasting_tools.benchmarking.prompt_data_models import PromptIdea
 from forecasting_tools.benchmarking.question_research_snapshot import (
     QuestionResearchSnapshot,
     ResearchItem,
@@ -59,6 +60,10 @@ def customizable_bot(
         research_snapshots=research_snapshots,
         research_type=ResearchType.ASK_NEWS_SUMMARIES,
         llms={"default": mock_llm},
+        originating_idea=PromptIdea(
+            short_name="Test idea",
+            idea="Test idea process",
+        ),
     )
 
 
@@ -108,4 +113,8 @@ async def test_customizable_bot_run_research_duplicate_questions_in_snapshots(
             research_snapshots=snapshots,
             research_type=ResearchType.ASK_NEWS_SUMMARIES,
             llms={"default": mock_llm},
+            originating_idea=PromptIdea(
+                short_name="Test idea",
+                idea="Test idea process",
+            ),
         )
