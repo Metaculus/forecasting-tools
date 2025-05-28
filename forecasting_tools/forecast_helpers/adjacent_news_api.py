@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 from datetime import datetime
 from typing import Any, Literal
 
@@ -18,7 +19,7 @@ class AdjacentQuestion(BaseModel):
     question_text: str
     description: str | None = None
     rules: str | None = None
-    status: Literal["open"]
+    status: Literal["active"]
     probability_at_access_time: float | None = None
     num_forecasters: int | None = None
     liquidity: float | None = None
@@ -42,7 +43,7 @@ class AdjacentQuestion(BaseModel):
         created_at = cls._parse_api_date(api_json.get("created_at"))
 
         # Map API fields to our model fields
-        return cls(
+        question = cls(
             question_text=api_json.get("question", ""),
             description=api_json.get("description"),
             rules=api_json.get("rules"),
@@ -59,6 +60,7 @@ class AdjacentQuestion(BaseModel):
             link=api_json.get("link"),
             api_json=api_json,
         )
+        return question
 
     @classmethod
     def _parse_api_date(
@@ -112,7 +114,7 @@ class AdjacentNewsApi:
     """
 
     API_BASE_URL = "https://api.data.adj.news"
-    MAX_MARKETS_PER_REQUEST = 100
+    MAX_MARKETS_PER_REQUEST = 500
 
     @classmethod
     def get_questions_matching_filter(
@@ -120,11 +122,14 @@ class AdjacentNewsApi:
         api_filter: AdjacentFilter,
         num_questions: int | None = None,
         error_if_market_target_missed: bool = True,
+        max_pages: int = 10,
     ) -> list[AdjacentQuestion]:
         if num_questions is not None:
             assert num_questions > 0, "Must request at least one market"
 
-        markets = cls._filter_sequential_strategy(api_filter, num_questions)
+        markets = cls._walk_through_pagination(
+            api_filter, num_questions, max_pages=max_pages
+        )
 
         if (
             num_questions is not None
@@ -138,22 +143,19 @@ class AdjacentNewsApi:
         if len(set(m.market_id for m in markets)) != len(markets):
             raise ValueError("Not all markets found are unique")
 
+        if (
+            num_questions
+            and len(markets) != num_questions
+            and error_if_market_target_missed
+        ):
+            raise ValueError(
+                f"Requested number of markets ({num_questions}) does not match number of markets found ({len(markets)})"
+            )
+
         logger.info(
             f"Returning {len(markets)} markets matching the Adjacent News API filter"
         )
         return markets
-
-    @classmethod
-    def get_question_by_id(cls, market_id: str) -> AdjacentQuestion:
-        logger.info(f"Retrieving market details for market {market_id}")
-        url = f"{cls.API_BASE_URL}/api/markets/{market_id}"
-        auth_headers = cls._get_auth_headers()
-        response = requests.get(url, headers=auth_headers["headers"])
-        raise_for_status_with_additional_info(response)
-        json_market = json.loads(response.content)
-        market = AdjacentQuestion.from_adjacent_api_json(json_market)
-        logger.info(f"Retrieved market details for market {market_id}")
-        return market
 
     @classmethod
     def _get_auth_headers(cls) -> dict[str, dict[str, str]]:
@@ -170,53 +172,33 @@ class AdjacentNewsApi:
         }
 
     @classmethod
-    def _get_markets_from_api(
-        cls, params: dict[str, Any]
-    ) -> list[AdjacentQuestion]:
-        num_requested = params.get("limit")
-        assert (
-            num_requested is None
-            or num_requested <= cls.MAX_MARKETS_PER_REQUEST
-        ), f"You cannot get more than {cls.MAX_MARKETS_PER_REQUEST} markets at a time"
-
-        url = f"{cls.API_BASE_URL}/api/markets"
-        auth_headers = cls._get_auth_headers()
-        response = requests.get(
-            url, params=params, headers=auth_headers["headers"]
-        )
-        raise_for_status_with_additional_info(response)
-        data = json.loads(response.content)
-
-        markets = []
-        for market_data in data["data"]:
-            markets.append(
-                AdjacentQuestion.from_adjacent_api_json(market_data)
-            )
-        return markets
-
-    @classmethod
-    def _filter_sequential_strategy(
-        cls, api_filter: AdjacentFilter, num_markets: int | None
+    def _walk_through_pagination(
+        cls,
+        api_filter: AdjacentFilter,
+        num_markets: int | None,
+        max_pages: int,
     ) -> list[AdjacentQuestion]:
         if num_markets is None:
-            markets = cls._grab_filtered_markets_with_offset(api_filter, 0)
+            markets, _ = cls._grab_filtered_markets_with_offset(api_filter, 0)
             return markets
 
         markets: list[AdjacentQuestion] = []
         more_markets_available = True
         page_num = 0
 
-        while len(markets) < num_markets and more_markets_available:
-            offset = page_num * cls.MAX_MARKETS_PER_REQUEST
-            new_markets = cls._grab_filtered_markets_with_offset(
-                api_filter, offset
+        while (
+            len(markets) < num_markets
+            and more_markets_available
+            and page_num < max_pages
+        ):
+            logger.info(
+                f"Getting page {page_num} of markets. Found {len(markets)} markets so far."
             )
-
-            if not new_markets:
-                more_markets_available = False
-            else:
-                markets.extend(new_markets)
-
+            offset = page_num * cls.MAX_MARKETS_PER_REQUEST
+            new_markets, more_markets_available = (
+                cls._grab_filtered_markets_with_offset(api_filter, offset)
+            )
+            markets.extend(new_markets)
             page_num += 1
 
         return markets[:num_markets]
@@ -226,7 +208,7 @@ class AdjacentNewsApi:
         cls,
         api_filter: AdjacentFilter,
         offset: int = 0,
-    ) -> list[AdjacentQuestion]:
+    ) -> tuple[list[AdjacentQuestion], bool]:
         url_params: dict[str, Any] = {
             "limit": cls.MAX_MARKETS_PER_REQUEST,
             "offset": offset,
@@ -265,7 +247,7 @@ class AdjacentNewsApi:
         if api_filter.include_resolved:
             url_params["include_resolved"] = "true"
 
-        markets = cls._get_markets_from_api(url_params)
+        markets, more_markets_available = cls._get_markets_from_api(url_params)
 
         # Apply local filters that aren't supported by the API
         if api_filter.liquidity_min is not None:
@@ -322,4 +304,31 @@ class AdjacentNewsApi:
                 and m.end_date <= api_filter.end_date_before
             ]
 
-        return markets
+        return markets, more_markets_available
+
+    @classmethod
+    def _get_markets_from_api(
+        cls, params: dict[str, Any]
+    ) -> tuple[list[AdjacentQuestion], bool]:
+        num_requested = params.get("limit")
+        assert (
+            num_requested is None
+            or num_requested <= cls.MAX_MARKETS_PER_REQUEST
+        ), f"You cannot get more than {cls.MAX_MARKETS_PER_REQUEST} markets at a time"
+
+        url = f"{cls.API_BASE_URL}/api/markets"
+        auth_headers = cls._get_auth_headers()
+        response = requests.get(
+            url, params=params, headers=auth_headers["headers"]
+        )
+        raise_for_status_with_additional_info(response)
+        data = json.loads(response.content)
+
+        markets = []
+        for market_data in data["data"]:
+            markets.append(
+                AdjacentQuestion.from_adjacent_api_json(market_data)
+            )
+        more_markets_available = data["meta"]["hasMore"]
+        time.sleep(1)
+        return markets, more_markets_available

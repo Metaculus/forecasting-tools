@@ -15,20 +15,20 @@ logger = logging.getLogger(__name__)
 async def run_higher_model_evaluation() -> None:
     # --- Evaluation Parameters ---
     evaluation_questions = QuestionResearchSnapshot.load_json_from_file_path(
-        "logs/forecasts/question_snapshots_v2_157qs.json"
+        "logs/forecasts/question_snapshots_v5_222qs__>30f__<1.5yr_open.json"
     )
-    questions_batch_size = 80
+    questions_batch_size = 111
     forecast_llm = GeneralLlm(
-        model="openrouter/anthropic/claude-sonnet-4",
+        model="openrouter/openai/gpt-4.1-nano",
         temperature=0.3,
     )
     benchmark_files = [
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v2__nano_157qs.json",
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v3__nano_157qs.json",
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v4__nano_157qs.json",
+        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v1.2__nano_157qs.json",
+        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v1.3__nano_157qs.json",
+        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v1.4__nano_157qs.json",
     ]
-    top_n_prompts = 1
-    include_worse_benchmark = False
+    top_n_prompts = 3
+    include_worse_benchmark = True
 
     # --- Run the evaluation ---
     evaluator = PromptEvaluator(
@@ -37,14 +37,12 @@ async def run_higher_model_evaluation() -> None:
         concurrent_evaluation_batch_size=questions_batch_size,
         file_or_folder_to_save_benchmarks="logs/forecasts/benchmarks/",
     )
-    evaluation_result = (
-        await evaluator.evaluate_benchmarked_prompts_with_another_model(
-            forecast_llm=forecast_llm,
-            benchmark_files=benchmark_files,
-            top_n_prompts=top_n_prompts,
-            include_control_group_prompt=True,
-            include_worst_prompt=include_worse_benchmark,
-        )
+    evaluation_result = await evaluator.evaluate_best_benchmarked_prompts(
+        forecast_llm=forecast_llm,
+        benchmark_files=benchmark_files,
+        top_n_prompts=top_n_prompts,
+        include_control_group_prompt=True,
+        include_worst_prompt=include_worse_benchmark,
     )
     for evaluated_prompt in evaluation_result.evaluated_prompts:
         logger.info(

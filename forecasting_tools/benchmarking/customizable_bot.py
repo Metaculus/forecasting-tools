@@ -1,5 +1,7 @@
 import logging
 
+from pydantic import BaseModel
+
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.benchmarking.prompt_data_models import PromptIdea
 from forecasting_tools.benchmarking.question_research_snapshot import (
@@ -82,6 +84,18 @@ class CustomizableBot(ForecastBot):
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
+        required_variables = [
+            "{question_text}",
+            "{resolution_criteria}",
+            "{today}",
+            "{research}",
+        ]
+
+        for required_variable in required_variables:
+            if required_variable not in self.prompt:
+                raise ValueError(
+                    f"Prompt {self.prompt} does not contain {required_variable}"
+                )
         prompt = self.prompt.format(
             question_text=question.question_text,
             background_info=question.background_info,
@@ -92,7 +106,15 @@ class CustomizableBot(ForecastBot):
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
-        prediction: float = await structure_output(reasoning, float)
+
+        class BinaryPrediction(BaseModel):
+            prediction: float
+
+        binary_prediction: BinaryPrediction = await structure_output(
+            reasoning, BinaryPrediction
+        )
+        prediction = binary_prediction.prediction
+
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction}"
         )

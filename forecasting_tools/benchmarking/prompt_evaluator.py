@@ -105,7 +105,7 @@ class PromptEvaluator:
         )
         return bot
 
-    async def evaluate_benchmarked_prompts_with_another_model(
+    async def evaluate_best_benchmarked_prompts(
         self,
         benchmark_files: list[str],
         forecast_llm: GeneralLlm,
@@ -140,8 +140,8 @@ class PromptEvaluator:
                 prompt_template=prompt,
                 llm=forecast_llm,
                 original_idea=PromptIdea(
-                    short_name=f"{benchmark.forecast_bot_class_name}_w_better_model",
-                    idea=f"Run the prompt from {benchmark.forecast_bot_class_name} with a better model (specifically {forecast_llm.model})",
+                    short_name=f"{benchmark.forecast_bot_class_name}_variation",
+                    idea=f"Evaluate the prompt from {benchmark.forecast_bot_class_name} with model {forecast_llm.model} and {len(self.evaluation_questions)} questions",
                 ),
             )
             configs.append(best_prompt_config)
