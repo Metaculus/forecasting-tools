@@ -19,18 +19,24 @@ class AdjacentQuestion(BaseModel):
     question_text: str
     description: str | None = None
     rules: str | None = None
-    status: Literal["active"]
+    status: Literal[
+        "active"
+    ]  # TODO: Figure out what other statuses are possible
     probability_at_access_time: float | None = None
     num_forecasters: int | None = None
     liquidity: float | None = None
     platform: str
     market_id: str
     market_type: str
+    category: str | None = None
+    tags: list[str] | None = None
     end_date: datetime | None = None
     created_at: datetime | None = None
+    resolution_date: datetime | None = None
     volume: float | None = None
     link: str | None = None
     date_accessed: datetime = Field(default_factory=datetime.now)
+    comment_count: int | None = None
     api_json: dict = Field(
         description="The API JSON response used to create the market",
         default_factory=dict,
@@ -41,12 +47,13 @@ class AdjacentQuestion(BaseModel):
         # Parse datetime fields
         end_date = cls._parse_api_date(api_json.get("end_date"))
         created_at = cls._parse_api_date(api_json.get("created_at"))
+        resolution_date = cls._parse_api_date(api_json.get("resolution_date"))
 
         # Map API fields to our model fields
         question = cls(
-            question_text=api_json.get("question", ""),
+            question_text=api_json["question"],
             description=api_json.get("description"),
-            rules=api_json.get("rules"),
+            rules=api_json["rules"],
             status=api_json.get("status", ""),
             probability_at_access_time=api_json.get("probability"),
             num_forecasters=api_json.get("trades_count"),
@@ -54,10 +61,14 @@ class AdjacentQuestion(BaseModel):
             platform=api_json.get("platform", ""),
             market_id=api_json.get("market_id", ""),
             market_type=api_json.get("market_type", ""),
+            category=api_json.get("category", ""),
+            tags=api_json.get("tags", []),
             end_date=end_date,
             created_at=created_at,
+            resolution_date=resolution_date,
             volume=api_json.get("volume"),
             link=api_json.get("link"),
+            comment_count=api_json.get("comment_count"),
             api_json=api_json,
         )
         return question
@@ -105,6 +116,8 @@ class AdjacentFilter(BaseModel):
     volume_max: float | None = None
     include_closed: bool = False
     include_resolved: bool = False
+    tag: str | None = None
+    category: str | None = None
 
 
 class AdjacentNewsApi:
@@ -212,7 +225,7 @@ class AdjacentNewsApi:
         url_params: dict[str, Any] = {
             "limit": cls.MAX_MARKETS_PER_REQUEST,
             "offset": offset,
-            "sort_by": "updated_at",
+            "sort_by": "created_at",
             "sort_dir": "desc",
         }
 
@@ -246,6 +259,12 @@ class AdjacentNewsApi:
 
         if api_filter.include_resolved:
             url_params["include_resolved"] = "true"
+
+        if api_filter.category:
+            url_params["category"] = api_filter.category
+
+        if api_filter.tag:
+            url_params["tag"] = api_filter.tag
 
         markets, more_markets_available = cls._get_markets_from_api(url_params)
 
@@ -308,7 +327,7 @@ class AdjacentNewsApi:
 
     @classmethod
     def _get_markets_from_api(
-        cls, params: dict[str, Any]
+        cls, params: dict[str, Any], sleep_time: float = 10
     ) -> tuple[list[AdjacentQuestion], bool]:
         num_requested = params.get("limit")
         assert (
@@ -330,5 +349,5 @@ class AdjacentNewsApi:
                 AdjacentQuestion.from_adjacent_api_json(market_data)
             )
         more_markets_available = data["meta"]["hasMore"]
-        time.sleep(1)
+        time.sleep(sleep_time)
         return markets, more_markets_available

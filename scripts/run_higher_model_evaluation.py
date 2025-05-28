@@ -15,8 +15,9 @@ logger = logging.getLogger(__name__)
 async def run_higher_model_evaluation() -> None:
     # --- Evaluation Parameters ---
     evaluation_questions = QuestionResearchSnapshot.load_json_from_file_path(
-        "logs/forecasts/question_snapshots_v5_222qs__>30f__<1.5yr_open.json"
+        "logs/forecasts/question_snapshots_v1.5_222qs__>30f__<1.5yr_open.json"
     )
+
     questions_batch_size = 111
     forecast_llm = GeneralLlm(
         model="openrouter/openai/gpt-4.1-nano",

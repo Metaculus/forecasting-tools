@@ -213,9 +213,9 @@ class MetaculusApi:
     def get_benchmark_questions(
         cls,
         num_of_questions_to_return: int,
-        days_to_resolve_in: int | None = 365,
+        days_to_resolve_in: int | None = None,
         max_days_since_opening: int | None = 365,
-        num_forecasters_gte: int = 40,
+        num_forecasters_gte: int = 30,
         error_if_question_target_missed: bool = True,
     ) -> list[BinaryQuestion]:
         date_into_future = (
@@ -531,9 +531,10 @@ class MetaculusApi:
             )
 
         if api_filter.community_prediction_exists is not None:
-            assert api_filter.allowed_types == [
-                "binary"
-            ], "Community prediction filter only works for binary questions at the moment"
+            if not any(t in api_filter.allowed_types for t in ["binary"]):
+                raise ValueError(
+                    "Community prediction filter only works for binary questions at the moment"
+                )
             questions = typeguard.check_type(questions, list[BinaryQuestion])
             questions = cls._filter_questions_by_community_prediction_exists(
                 questions, api_filter.community_prediction_exists
