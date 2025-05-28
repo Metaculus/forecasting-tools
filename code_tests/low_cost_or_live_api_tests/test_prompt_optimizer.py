@@ -5,6 +5,7 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.benchmarking.prompt_evaluator import PromptEvaluator
 from forecasting_tools.benchmarking.prompt_optimizer import PromptOptimizer
 from forecasting_tools.benchmarking.question_research_snapshot import (
     QuestionResearchSnapshot,
@@ -13,7 +14,7 @@ from forecasting_tools.benchmarking.question_research_snapshot import (
 )
 
 
-async def test_prompt_optimizer():
+async def test_prompt_optimizer() -> None:
     question = ForecastingTestManager.get_fake_binary_question()
     research_snapshot = QuestionResearchSnapshot(
         question=question,
@@ -24,8 +25,14 @@ async def test_prompt_optimizer():
             )
         ],
     )
-    prompt_optimizer = PromptOptimizer(
+    evaluator = PromptEvaluator(
         evaluation_questions=[research_snapshot],
+        research_type=ResearchType.ASK_NEWS_SUMMARIES,
+        concurrent_evaluation_batch_size=10,
+        file_or_folder_to_save_benchmarks=None,
+    )
+    prompt_optimizer = PromptOptimizer(
+        evaluator=evaluator,
         num_prompts_to_try=1,
         forecast_llm=GeneralLlm(model="gpt-4.1-nano"),
         ideation_llm_name="gpt-4.1-nano",

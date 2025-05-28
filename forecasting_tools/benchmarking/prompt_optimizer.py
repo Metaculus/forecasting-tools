@@ -67,7 +67,8 @@ class PromptOptimizer:
                     original_idea=idea,
                 )
             )
-        evaluated_prompts = await self.evaluator.evaluate_prompts(configs)
+        evaluation_result = await self.evaluator.evaluate_prompts(configs)
+        evaluated_prompts = evaluation_result.evaluated_prompts
         sorted_evaluated_prompts = sorted(
             evaluated_prompts, key=lambda x: x.score, reverse=True
         )

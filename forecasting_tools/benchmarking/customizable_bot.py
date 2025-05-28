@@ -1,6 +1,6 @@
 import logging
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.benchmarking.prompt_data_models import PromptIdea
@@ -25,6 +25,19 @@ from forecasting_tools.forecast_helpers.structure_output import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class BinaryPrediction(BaseModel):
+    prediction: float
+
+    @field_validator("prediction")
+    @classmethod
+    def validate_prediction_range(cls, value: float) -> float:
+        if value < 0.001:
+            raise ValueError("Prediction must be at least 0.001")
+        if value > 0.999:
+            raise ValueError("Prediction must be at most 0.999")
+        return value
 
 
 class CustomizableBot(ForecastBot):
@@ -106,9 +119,6 @@ class CustomizableBot(ForecastBot):
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
-
-        class BinaryPrediction(BaseModel):
-            prediction: float
 
         binary_prediction: BinaryPrediction = await structure_output(
             reasoning, BinaryPrediction

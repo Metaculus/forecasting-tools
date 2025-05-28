@@ -286,7 +286,7 @@ class ForecastBot(ABC):
             return summary
         except Exception as e:
             if self.use_research_summary_to_forecast:
-                raise e
+                raise e  # If the summary is needed for research, then returning the normal error message as the research will confuse the AI
             logger.warning(f"Could not summarize research. {e}")
             return (
                 f"{e.__class__.__name__} exception while summarizing research"

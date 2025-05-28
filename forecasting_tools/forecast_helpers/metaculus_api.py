@@ -282,6 +282,11 @@ class MetaculusApi:
     def _get_questions_from_api(
         cls, params: dict[str, Any]
     ) -> list[MetaculusQuestion]:
+        random_sleep_time = random.uniform(2, 3)
+        logger.debug(
+            f"Sleeping for {random_sleep_time:.1f} seconds before next request"
+        )
+        time.sleep(random_sleep_time)
         num_requested = params.get("limit")
         assert (
             num_requested is None
@@ -316,7 +321,7 @@ class MetaculusApi:
                 logger.warning(
                     f"Error processing post ID {q['id']}: {e.__class__.__name__} {e}"
                 )
-        time.sleep(2)
+
         return questions
 
     @classmethod

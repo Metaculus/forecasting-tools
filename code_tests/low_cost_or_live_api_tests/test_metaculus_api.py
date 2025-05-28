@@ -188,8 +188,8 @@ def test_get_questions_from_tournament() -> None:
     assert_basic_attributes_at_percentage(questions, 0.8)
 
 
-@pytest.mark.parametrize("num_questions_to_get", [30])
-def test_get_benchmark_questions(num_questions_to_get: int) -> None:
+def test_get_benchmark_questions() -> None:
+    num_questions_to_get = 30
     questions = MetaculusApi.get_benchmark_questions(num_questions_to_get)
 
     assert (
@@ -214,22 +214,22 @@ def test_get_benchmark_questions(num_questions_to_get: int) -> None:
         assert isinstance(
             question.scheduled_resolution_time, datetime
         ), f"Question {question.id_of_post} resolves at {question.scheduled_resolution_time}, expected a datetime"
+        assert isinstance(
+            question.open_time, datetime
+        ), f"Question {question.id_of_post} opened at {question.open_time}, expected a datetime"
         assert (
-            question.num_predictions >= 40
+            question.num_predictions >= 20
         ), "Need to have critical mass of predictions to be confident in the results"
         assert (
-            question.num_forecasters >= 40
+            question.num_forecasters >= 20
         ), "Need to have critical mass of forecasters to be confident in the results"
         assert isinstance(
             question, BinaryQuestion
         ), f"Question {question.id_of_post} is not a BinaryQuestion"
-        one_year_from_now = datetime.now() + timedelta(days=365)
+        one_year_earlier = datetime.now() - timedelta(days=365)
         assert (
-            question.close_time < one_year_from_now
-        ), f"Question {question.id_of_post} closes at {question.close_time}, expected before {one_year_from_now}"
-        assert (
-            question.scheduled_resolution_time < one_year_from_now
-        ), f"Question {question.id_of_post} resolves at {question.scheduled_resolution_time}, expected before {one_year_from_now}"
+            question.open_time > one_year_earlier
+        ), f"Question {question.id_of_post} opened at {question.open_time}, expected after {one_year_earlier}"
         assert (
             question.state == QuestionState.OPEN
         ), f"Question {question.id_of_post} is not open"

@@ -63,13 +63,6 @@ class Benchmarker:
             raise ValueError(
                 "Either number_of_questions_to_use or questions_to_use must be provided"
             )
-        if file_path_to_save_reports and not (
-            file_path_to_save_reports.endswith("/")
-            or file_path_to_save_reports.endswith(".json")
-        ):
-            raise ValueError(
-                "file_path_to_save_reports must end with '/' (folder) or '.json'"
-            )
 
         self.forecast_bots = forecast_bots
         self.number_of_questions_to_use = number_of_questions_to_use
@@ -77,6 +70,7 @@ class Benchmarker:
         if (
             file_path_to_save_reports is not None
             and not file_path_to_save_reports.endswith("/")
+            and not file_path_to_save_reports.endswith(".json")
         ):
             file_path_to_save_reports += "/"
         self.file_path_to_save_reports = file_path_to_save_reports
@@ -206,18 +200,16 @@ class Benchmarker:
     ) -> None:
         if self.file_path_to_save_reports is None:
             return
-        if self.file_path_to_save_reports.endswith("/"):
+        if self.file_path_to_save_reports.endswith(".json"):
+            file_path_to_save_reports = self.file_path_to_save_reports
+        else:
+            if not self.file_path_to_save_reports.endswith("/"):
+                self.file_path_to_save_reports += "/"
             file_path_to_save_reports = (
                 f"{self.file_path_to_save_reports}"
                 f"benchmarks_"
                 f"{self.initialization_timestamp.strftime('%Y-%m-%d_%H-%M-%S')}"
                 f".json"
-            )
-        elif self.file_path_to_save_reports.endswith(".json"):
-            file_path_to_save_reports = self.file_path_to_save_reports
-        else:
-            raise ValueError(
-                "file_path_to_save_reports must end with '/' or '.json'"
             )
         BenchmarkForBot.save_object_list_to_file_path(
             benchmarks, file_path_to_save_reports

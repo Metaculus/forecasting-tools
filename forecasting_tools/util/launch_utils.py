@@ -1335,7 +1335,7 @@ if __name__ == "__main__":
             bot_output_file_path="temp/bot_questions.csv",
             pro_output_file_path="temp/pro_questions.csv",
             num_pro_questions=11,
-            chance_to_skip_slot=0.0,  # TODO: Change this back to 0.12
+            chance_to_skip_slot=0.12,
             start_date=start_date,
             end_date=end_date,
         )
