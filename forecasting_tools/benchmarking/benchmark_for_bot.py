@@ -53,6 +53,31 @@ class BenchmarkForBot(BaseModel, Jsonable):
             reports
         )
 
+    def get_top_n_forecast_reports(self, n: int) -> list[ForecastReport]:
+        reports = self._get_sorted_forecast_reports()
+        return reports[:n]
+
+    def get_bottom_n_forecast_reports(self, n: int) -> list[ForecastReport]:
+        reports = self._get_sorted_forecast_reports()
+        return reports[-n:]
+
+    def _get_sorted_forecast_reports(self) -> list[ForecastReport]:
+        if len(self.forecast_reports) == 0:
+            raise ValueError("No forecast reports in benchmark")
+        shallow_copied_reports = self.forecast_reports.copy()
+        reports = typeguard.check_type(
+            shallow_copied_reports,
+            list[ForecastReport],
+        )
+        for report in reports:
+            if report.expected_baseline_score is None:
+                raise ValueError(
+                    "No expected baseline score in forecast report"
+                )
+        reports.sort(key=lambda x: x.expected_baseline_score, reverse=True)  # type: ignore
+        assert reports[0].expected_baseline_score >= reports[-1].expected_baseline_score, "Expected baseline scores are not sorted"  # type: ignore
+        return reports
+
     @property
     def name(self) -> str:
         if self.explicit_name is not None:

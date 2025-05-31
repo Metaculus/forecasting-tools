@@ -1,5 +1,7 @@
+import json
 import os
 import re
+import tempfile
 from unittest.mock import Mock, mock_open, patch
 
 from forecasting_tools.util import file_manipulation
@@ -143,3 +145,37 @@ def test_no__with_open__usage() -> None:
     assert (
         not violations
     ), f"Found 'with open()' usage in the following files: {violations}. Only use 'with open()' in {file_manipulation_name}"
+
+
+def test_add_to_jsonl_file_and_load_json_and_jsonl() -> None:
+    test_data1 = {"a": 1, "b": 2}
+    test_data2 = {"a": 3, "b": 4}
+    test_data3 = {"a": 5, "b": 6}
+    test_list = [test_data1, test_data2, test_data3]
+
+    with tempfile.NamedTemporaryFile(
+        suffix=".jsonl", delete=True
+    ) as temp_jsonl, tempfile.NamedTemporaryFile(
+        suffix=".json", delete=True
+    ) as temp_json:
+        temp_jsonl_path = temp_jsonl.name
+        temp_json_path = temp_json.name
+
+        with patch.dict(os.environ, {"FILE_WRITING_ALLOWED": "TRUE"}):
+            file_manipulation.add_to_jsonl_file(
+                temp_jsonl_path, [test_data1, test_data2]
+            )
+            file_manipulation.add_to_jsonl_file(temp_jsonl_path, [test_data3])
+            loaded_jsonl = file_manipulation.load_jsonl_file(temp_jsonl_path)
+            assert loaded_jsonl == test_list
+
+            with open(temp_json_path, "w") as f:
+                json.dump(test_list, f)
+            loaded_json = file_manipulation.load_json_file(temp_json_path)
+            assert loaded_json == test_list
+
+        with patch.dict(os.environ, {"FILE_WRITING_ALLOWED": "FALSE"}):
+            test_data4 = {"a": 5, "b": 6}
+            file_manipulation.add_to_jsonl_file(temp_jsonl_path, [test_data4])
+            loaded_jsonl = file_manipulation.load_jsonl_file(temp_jsonl_path)
+            assert loaded_jsonl == test_list

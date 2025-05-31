@@ -27,5 +27,6 @@ extend-exclude = [
     "*.csl",
     "*.css",
     "*.ipynb",
-    "*.json"
+    "*.json",
+    "*.jsonl",
 ]

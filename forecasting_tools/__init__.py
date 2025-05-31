@@ -59,6 +59,9 @@ from forecasting_tools.benchmarking.benchmark_for_bot import (
 from forecasting_tools.benchmarking.benchmarker import (
     Benchmarker as Benchmarker,
 )
+from forecasting_tools.benchmarking.prompt_optimizer import (
+    PromptOptimizer as PromptOptimizer,
+)
 from forecasting_tools.data_models.binary_report import (
     BinaryReport as BinaryReport,
 )

@@ -12,6 +12,7 @@ async def structure_output(
     output: str,
     output_type: type[T],
     model: GeneralLlm | str = "openrouter/openai/gpt-4.1-mini",
+    allowed_tries: int = 3,
 ) -> T:
     if not output:
         raise ValueError("Output is empty")
@@ -88,6 +89,10 @@ async def structure_output(
 
     llm = GeneralLlm.to_llm(model)
 
-    result = await llm.invoke_and_return_verified_type(prompt, output_type)
+    result = await llm.invoke_and_return_verified_type(
+        prompt,
+        output_type,
+        allowed_invoke_tries_for_failed_output=allowed_tries,
+    )
 
     return result

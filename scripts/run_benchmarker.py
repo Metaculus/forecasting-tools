@@ -3,26 +3,16 @@ from __future__ import annotations
 import asyncio
 import logging
 
-import typeguard
-
-from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
 from forecasting_tools.benchmarking.benchmarker import Benchmarker
-from forecasting_tools.forecast_bots.experiments.q2t_w_decomposition import (
-    Q2TemplateBotWithDecompositionV1,
-    Q2TemplateBotWithDecompositionV2,
-    QuestionDecomposer,
-    QuestionOperationalizer,
+from forecasting_tools.benchmarking.question_research_snapshot import (
+    QuestionResearchSnapshot,
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
-from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
-    Q2TemplateBot2025,
-)
-from forecasting_tools.forecast_helpers.metaculus_api import MetaculusApi
 from forecasting_tools.util.custom_logger import CustomLogger
-from run_bot import get_all_bots
+from run_bot import configure_and_run_bot, get_all_bots
 
 logger = logging.getLogger(__name__)
 
@@ -31,69 +21,52 @@ def get_all_tournament_bots() -> list[ForecastBot]:
     return asyncio.run(get_all_bots())
 
 
-def get_decomposition_bots() -> list[ForecastBot]:
-    google_gemini_2_5_pro_preview = GeneralLlm(
-        # model="gemini/gemini-2.5-pro-preview-03-25",
-        model="openrouter/google/gemini-2.5-pro-preview",
-        temperature=0.3,
-        timeout=120,
-    )
-    perplexity_reasoning_pro = GeneralLlm.search_context_model(
-        # model="perplexity/sonar-reasoning-pro",
-        model="openrouter/perplexity/sonar-reasoning-pro",
-        temperature=0.3,
-        search_context_size="high",
-    )
-    gpt_4o = GeneralLlm(
-        model="openai/gpt-4o",
-        temperature=0.3,
-    )
-    bots = [
-        Q2TemplateBot2025(
-            llms={
-                "default": google_gemini_2_5_pro_preview,
-                "researcher": "asknews/news-summaries",
-                "summarizer": gpt_4o,
-            },
-            research_reports_per_question=1,
-            predictions_per_research_report=5,
-        ),
-        Q2TemplateBotWithDecompositionV1(
-            llms={
-                "default": google_gemini_2_5_pro_preview,
-                "decomposer": perplexity_reasoning_pro,
-                "researcher": perplexity_reasoning_pro,
-                "summarizer": gpt_4o,
-            },
-            research_reports_per_question=1,
-            predictions_per_research_report=5,
-        ),
-        Q2TemplateBotWithDecompositionV2(
-            llms={
-                "default": google_gemini_2_5_pro_preview,
-                "decomposer": perplexity_reasoning_pro,
-                "researcher": "asknews/news-summaries",
-                "summarizer": gpt_4o,
-            },
-            research_reports_per_question=1,
-            predictions_per_research_report=5,
-        ),
+def get_chosen_q2_bots() -> list[ForecastBot]:
+    # Expected cost: $126
+    chosen_bot_names = [
+        "METAC_DEEPSEEK_R1_TOKEN",  # Regular Deepseek
+        "METAC_GPT_4O_TOKEN",  # Regular gpt-4o
+        "METAC_O1_TOKEN",  # Regular o1
+        "METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN",  # Regular Gemini
+        # "METAC_O3_HIGH_TOKEN",  # o3-high
     ]
-    bots = typeguard.check_type(bots, list[ForecastBot])
+
+    bots = []
+    for bot_name in chosen_bot_names:
+        bot = asyncio.run(
+            configure_and_run_bot(bot_name, return_bot_dont_run=True)
+        )
+        assert isinstance(bot, ForecastBot)
+        bots.append(bot)
+
     return bots
 
 
 async def benchmark_forecast_bots() -> None:
-    num_questions_to_use = 500
-    concurrent_batch_size = 2
-    bots = get_decomposition_bots()
-    additional_code_to_snapshot = [
-        QuestionDecomposer,
-        QuestionOperationalizer,
-    ]
-    chosen_questions = MetaculusApi.get_benchmark_questions(
-        num_questions_to_use,
+    # ----- Configure the benchmarker -----
+    concurrent_batch_size = 15
+    bots = get_chosen_q2_bots()
+    additional_code_to_snapshot = []
+    # num_questions_to_use = 150
+    # chosen_questions = MetaculusApi.get_benchmark_questions(
+    #     num_questions_to_use,
+    # )
+    snapshots = QuestionResearchSnapshot.load_json_from_file_path(
+        "logs/forecasts/question_snapshots_v1.6.train__112qs.json"
     )
+    chosen_questions = [snapshot.question for snapshot in snapshots]
+    remove_background_info = True  # AIB (and real life questions) often don't have detailed background info
+    num_predictions_per_report: int | None = 1
+
+    # ----- Run the benchmarker -----
+
+    if remove_background_info:
+        for question in chosen_questions:
+            question.background_info = None
+
+    if num_predictions_per_report is not None:
+        for bot in bots:
+            bot.predictions_per_research_report = num_predictions_per_report
 
     with MonetaryCostManager() as cost_manager:
         for bot in bots:
@@ -125,3 +98,55 @@ async def benchmark_forecast_bots() -> None:
 if __name__ == "__main__":
     CustomLogger.setup_logging()
     asyncio.run(benchmark_forecast_bots())
+
+
+# def get_decomposition_bots() -> list[ForecastBot]:
+#     google_gemini_2_5_pro_preview = GeneralLlm(
+#         # model="gemini/gemini-2.5-pro-preview-03-25",
+#         model="openrouter/google/gemini-2.5-pro-preview",
+#         temperature=0.3,
+#         timeout=120,
+#     )
+#     perplexity_reasoning_pro = GeneralLlm.search_context_model(
+#         # model="perplexity/sonar-reasoning-pro",
+#         model="openrouter/perplexity/sonar-reasoning-pro",
+#         temperature=0.3,
+#         search_context_size="high",
+#     )
+#     gpt_4o = GeneralLlm(
+#         model="openai/gpt-4o",
+#         temperature=0.3,
+#     )
+#     bots = [
+#         Q2TemplateBot2025(
+#             llms={
+#                 "default": google_gemini_2_5_pro_preview,
+#                 "researcher": "asknews/news-summaries",
+#                 "summarizer": gpt_4o,
+#             },
+#             research_reports_per_question=1,
+#             predictions_per_research_report=5,
+#         ),
+#         Q2TemplateBotWithDecompositionV1(
+#             llms={
+#                 "default": google_gemini_2_5_pro_preview,
+#                 "decomposer": perplexity_reasoning_pro,
+#                 "researcher": perplexity_reasoning_pro,
+#                 "summarizer": gpt_4o,
+#             },
+#             research_reports_per_question=1,
+#             predictions_per_research_report=5,
+#         ),
+#         Q2TemplateBotWithDecompositionV2(
+#             llms={
+#                 "default": google_gemini_2_5_pro_preview,
+#                 "decomposer": perplexity_reasoning_pro,
+#                 "researcher": "asknews/news-summaries",
+#                 "summarizer": gpt_4o,
+#             },
+#             research_reports_per_question=1,
+#             predictions_per_research_report=5,
+#         ),
+#     ]
+#     bots = typeguard.check_type(bots, list[ForecastBot])
+#     return bots

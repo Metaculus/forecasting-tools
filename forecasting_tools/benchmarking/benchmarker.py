@@ -23,10 +23,12 @@ class QuestionBatch:
         bot: ForecastBot,
         benchmark: BenchmarkForBot,
         questions: list[MetaculusQuestion],
+        is_last_batch_for_benchmark: bool,
     ):
         self.bot = bot
         self.benchmark = benchmark
         self.questions = questions
+        self.is_last_batch_for_benchmark = is_last_batch_for_benchmark
 
 
 class Benchmarker:
@@ -73,7 +75,7 @@ class Benchmarker:
             and not file_path_to_save_reports.endswith(".json")
         ):
             file_path_to_save_reports += "/"
-        self.file_path_to_save_reports = file_path_to_save_reports
+        self._file_path_to_save_reports = file_path_to_save_reports
         self.initialization_timestamp = datetime.now()
         self.concurrent_question_batch_size = concurrent_question_batch_size
         self.code_to_snapshot = additional_code_to_snapshot
@@ -106,9 +108,19 @@ class Benchmarker:
             chosen_questions,
             self.concurrent_question_batch_size,
         )
-        for batch in batches:
-            await self._run_a_batch(batch)
-            self.save_benchmarks_to_file_if_configured(benchmarks)
+        try:
+            for batch in batches:
+                await self._run_a_batch(batch)
+                if batch.is_last_batch_for_benchmark:
+                    self._append_benchmarks_to_jsonl_if_configured(
+                        [batch.benchmark]
+                    )
+        except KeyboardInterrupt:
+            logger.warning(
+                "KeyboardInterrupt detected, saving current benchmark progress."
+            )
+            self._append_benchmarks_to_jsonl_if_configured([batch.benchmark])
+            raise
         return benchmarks
 
     async def _run_a_batch(self, batch: QuestionBatch) -> None:
@@ -164,14 +176,18 @@ class Benchmarker:
             questions[i : i + batch_size]
             for i in range(0, len(questions), batch_size)
         ]
-        for question_batch in question_batches:
-            for bot, benchmark in zip(bots, benchmarks):
+        for bot, benchmark in zip(bots, benchmarks):
+            for i, question_batch in enumerate(question_batches):
+                is_last_batch = i == len(question_batches) - 1
                 assert (
                     benchmark.forecast_bot_class_name == bot.__class__.__name__
                 ), f"Benchmark {benchmark.forecast_bot_class_name} does not match bot {bot.__class__.__name__}"
                 batches.append(
                     QuestionBatch(
-                        bot=bot, benchmark=benchmark, questions=question_batch
+                        bot=bot,
+                        benchmark=benchmark,
+                        questions=question_batch,
+                        is_last_batch_for_benchmark=is_last_batch,
                     )
                 )
         assert len(batches) == len(bots) * len(question_batches)
@@ -195,22 +211,27 @@ class Benchmarker:
             benchmarks.append(benchmark)
         return benchmarks
 
-    def save_benchmarks_to_file_if_configured(
+    @property
+    def benchmark_file_path(self) -> str | None:
+        if self._file_path_to_save_reports is None:
+            return None
+        file_path = self._file_path_to_save_reports
+        if file_path.endswith(".json"):
+            file_path = file_path[:-5] + ".jsonl"
+        elif not file_path.endswith(".jsonl"):
+            if not file_path.endswith("/"):
+                file_path += "/"
+            file_path = (
+                f"{file_path}benchmarks_"
+                f"{self.initialization_timestamp.strftime('%Y-%m-%d_%H-%M-%S')}"
+                f".jsonl"
+            )
+        return file_path
+
+    def _append_benchmarks_to_jsonl_if_configured(
         self, benchmarks: list[BenchmarkForBot]
     ) -> None:
-        if self.file_path_to_save_reports is None:
+        file_path = self.benchmark_file_path
+        if file_path is None:
             return
-        if self.file_path_to_save_reports.endswith(".json"):
-            file_path_to_save_reports = self.file_path_to_save_reports
-        else:
-            if not self.file_path_to_save_reports.endswith("/"):
-                self.file_path_to_save_reports += "/"
-            file_path_to_save_reports = (
-                f"{self.file_path_to_save_reports}"
-                f"benchmarks_"
-                f"{self.initialization_timestamp.strftime('%Y-%m-%d_%H-%M-%S')}"
-                f".json"
-            )
-        BenchmarkForBot.save_object_list_to_file_path(
-            benchmarks, file_path_to_save_reports
-        )
+        BenchmarkForBot.add_objects_to_jsonl_file(benchmarks, file_path)

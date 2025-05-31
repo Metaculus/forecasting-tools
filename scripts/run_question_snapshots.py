@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import math
+import random
 
 from forecasting_tools.benchmarking.question_research_snapshot import (
     QuestionResearchSnapshot,
@@ -18,14 +19,11 @@ async def snapshot_questions() -> None:
         target_questions_to_use,
         max_days_since_opening=365 + 180,
         days_to_resolve_in=None,
-        num_forecasters_gte=20,
+        num_forecasters_gte=15,
         error_if_question_target_missed=False,
     )
-    file_name = f"logs/forecasts/question_snapshots_v1.6_{len(chosen_questions)}qs__>20f__<1.5yr_open.json"
+    file_name = f"logs/forecasts/question_snapshots_v1.6_{len(chosen_questions)}qs__>15f__<1.5yr_open.json"
     batch_size = 20
-    raise NotImplementedError(
-        f"Found {len(chosen_questions)} questions, but this script is not implemented yet"
-    )
 
     # --- Execute the snapshotting ---
     logger.info(f"Retrieved {len(chosen_questions)} questions")
@@ -45,6 +43,7 @@ async def snapshot_questions() -> None:
             ]
         )
         snapshots.extend(batch_snapshots)
+        random.shuffle(snapshots)
         QuestionResearchSnapshot.save_object_list_to_file_path(
             snapshots, file_name
         )

@@ -219,10 +219,6 @@ class GeneralLlm(
             )
         )
         data = response.data
-        if data == "":
-            raise RuntimeError(
-                f"LLM answer is an empty string. The model was {self.model} and the prompt was: {prompt}"
-            )
         return data
 
     @RetryableModel._retry_according_to_model_allowed_tries
@@ -264,6 +260,14 @@ class GeneralLlm(
         completion_tokens = usage.completion_tokens
         total_tokens = usage.total_tokens
 
+        if answer == "":
+            logger.warning(
+                f"Model {self.model} returned an empty string as an answer. Raising exception (though this will probably result in a retry)"
+            )
+            raise RuntimeError(
+                f"LLM answer is an empty string. The model was {self.model} and the prompt was: {prompt}"
+            )
+
         cost = LitellmCostTracker.calculate_cost(response._hidden_params)
 
         if (
@@ -279,7 +283,7 @@ class GeneralLlm(
 
         await asyncio.sleep(
             0.0001
-        )  # For whatever reason, you need to await a coroutine to get the cost call back to work
+        )  # For whatever reason, you need to await a coroutine to get the litellm cost call back to work
 
         return TextTokenCostResponse(
             data=answer,
@@ -451,7 +455,7 @@ class GeneralLlm(
         model_cost_data = model_cost.get(self._litellm_model)
         if model_cost_data is None:
             raise ValueError(
-                f"Model {self._litellm_model} is not supported by model_cost"
+                f"Model {self._litellm_model} is not supported by litellm's model_cost dictionary"
             )
 
         input_cost_per_1k = (

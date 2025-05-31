@@ -1,4 +1,5 @@
 import os
+import random
 import shutil
 
 from forecasting_tools.util.jsonable import Jsonable
@@ -7,8 +8,11 @@ from forecasting_tools.util.jsonable import Jsonable
 def assert_reading_and_printing_from_file_works(
     jsonable_class_to_test: type[Jsonable],
     read_path: str,
-    temp_write_path: str,
+    temp_write_path: str | None = None,
 ) -> None:
+    if temp_write_path is None:
+        random_number = random.randint(0, 1000000)
+        temp_write_path = f"temp/temp_{random_number}.json"
     if "temp" not in temp_write_path and "tmp" not in temp_write_path:
         raise ValueError(
             f"temp_write_path must contain the word 'temp' to prevent accidental deletion of important files. temp_write_path: {temp_write_path}"

@@ -26,7 +26,9 @@ def get_json_files(directory: str) -> list[str]:
     json_files = []
     for root, _, files in os.walk(directory):
         for file in files:
-            if file.endswith(".json") and "bench" in file.lower():
+            if (
+                file.endswith(".json") or file.endswith(".jsonl")
+            ) and "bench" in file.lower():
                 full_path = os.path.join(root, file)
                 json_files.append(full_path)
     return sorted(json_files)
@@ -411,7 +413,7 @@ def display_benchmark_comparison_graphs(
     st.markdown(
         "Higher score indicates better performance. Read more about baseline score "
         "[here](https://www.metaculus.com/help/scores-faq/#:~:text=The%20Baseline%20score%20compares,probability%20to%20all%20outcomes.). "
-        "Expected baseline score is equal to `c * (np.log2(p) + 1.0) + (1.0 - c) * (np.log2(1.0 - p) + 1.0)` "
+        "Expected baseline score is equal to `100 * (c * (np.log2(p) + 1.0) + (1.0 - c) * (np.log2(1.0 - p) + 1.0))` "
         "where c is the community prediction and p is your prediction. "
         "This is the expected value of the baseline score and is a proper score assuming the community prediction is the true probability. "
         f"Error bars are for a {confidence_level*100}% confidence interval. If an error bar is 0, then either:\n"

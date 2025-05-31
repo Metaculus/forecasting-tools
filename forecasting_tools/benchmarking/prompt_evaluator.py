@@ -60,10 +60,14 @@ class PromptEvaluator:
             benchmark.forecast_bot_class_name = (
                 config.original_idea.short_name.replace(" ", "_")
             )
-            evaluated_prompts.append(
-                EvaluatedPrompt(prompt_config=config, benchmark=benchmark)
-            )
-        benchmarker.save_benchmarks_to_file_if_configured(benchmarks)
+            if len(benchmark.forecast_reports) > 0:
+                evaluated_prompts.append(
+                    EvaluatedPrompt(prompt_config=config, benchmark=benchmark)
+                )
+            else:
+                logger.error(
+                    f"Not including {config.original_idea.short_name} in evaluation report because it has no forecast reports"
+                )
         return OptimizationResult(evaluated_prompts=evaluated_prompts)
 
     def _configs_to_bots(
@@ -75,35 +79,25 @@ class PromptEvaluator:
                 raise NotImplementedError(
                     "Currently only supports one research report per question"
                 )
-            bot = self._create_customizable_bot(
-                config=config,
+            custom_class_name = config.original_idea.short_name.replace(
+                " ", "_"
+            )
+            CustomBotClass = type(custom_class_name, (CustomizableBot,), {})
+            bot = CustomBotClass(
+                originating_idea=config.original_idea,
+                prompt=config.prompt_template,
                 research_snapshots=self.evaluation_questions,
                 research_type=self.research_type,
+                research_reports_per_question=config.research_reports_per_question,
+                predictions_per_research_report=config.predictions_per_research_report,
+                llms={
+                    "default": config.llm,
+                },
+                publish_reports_to_metaculus=False,
+                enable_summarize_research=False,
             )
             bots.append(bot)
         return bots
-
-    @classmethod
-    def _create_customizable_bot(
-        cls,
-        config: PromptConfig,
-        research_snapshots: list[QuestionResearchSnapshot],
-        research_type: ResearchType,
-    ) -> CustomizableBot:
-        bot = CustomizableBot(
-            originating_idea=config.original_idea,
-            prompt=config.prompt_template,
-            research_snapshots=research_snapshots,
-            research_type=research_type,
-            research_reports_per_question=config.research_reports_per_question,
-            predictions_per_research_report=config.predictions_per_research_report,
-            llms={
-                "default": config.llm,
-            },
-            publish_reports_to_metaculus=False,
-            enable_summarize_research=False,
-        )
-        return bot
 
     async def evaluate_best_benchmarked_prompts(
         self,
@@ -112,6 +106,8 @@ class PromptEvaluator:
         top_n_prompts: int = 1,
         include_control_group_prompt: bool = True,
         include_worst_prompt: bool = False,
+        research_reports_per_question: int = 1,
+        num_predictions_per_research_report: int = 1,
     ) -> OptimizationResult:
         best_benchmarks = self._get_best_benchmark_prompt(
             benchmark_files, top_n_prompts, include_worst_prompt
@@ -129,6 +125,8 @@ class PromptEvaluator:
                     short_name=f"Control Group v{ControlGroupPrompt.version()}",
                     idea="The control group is a group of questions that are not optimized for the prompt. It is used to evaluate the performance of the optimized prompt.",
                 ),
+                predictions_per_research_report=num_predictions_per_research_report,
+                research_reports_per_question=research_reports_per_question,
             )
             configs.append(control_group_config)
         for benchmark in best_benchmarks:
@@ -140,7 +138,7 @@ class PromptEvaluator:
                 prompt_template=prompt,
                 llm=forecast_llm,
                 original_idea=PromptIdea(
-                    short_name=f"{benchmark.forecast_bot_class_name}_variation",
+                    short_name=f"{benchmark.forecast_bot_class_name}",
                     idea=f"Evaluate the prompt from {benchmark.forecast_bot_class_name} with model {forecast_llm.model} and {len(self.evaluation_questions)} questions",
                 ),
             )

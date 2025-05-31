@@ -17,7 +17,7 @@ class PromptConfig:
     llm: GeneralLlm
     original_idea: PromptIdea
     research_reports_per_question: int = 1
-    predictions_per_research_report: int = 5
+    predictions_per_research_report: int = 1
 
 
 @dataclass

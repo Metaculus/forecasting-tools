@@ -51,7 +51,10 @@ class Jsonable(ABC):
     def _use__from_json__to_convert_project_file_path_to_object_list(
         cls: type[T], project_file_path: str
     ) -> list[T]:
-        jsons = file_manipulation.load_json_file(project_file_path)
+        if project_file_path.endswith(".jsonl"):
+            jsons = file_manipulation.load_jsonl_file(project_file_path)
+        else:
+            jsons = file_manipulation.load_json_file(project_file_path)
         assert isinstance(
             jsons, list
         ), f"The json file at {project_file_path} did not contain a list."
@@ -63,6 +66,15 @@ class Jsonable(ABC):
         objects: list[T], file_path_from_top_of_project: str
     ) -> None:
         file_manipulation.write_json_file(
+            file_path_from_top_of_project,
+            [object.to_json() for object in objects],
+        )
+
+    @staticmethod
+    def add_objects_to_jsonl_file(
+        objects: list[T], file_path_from_top_of_project: str
+    ) -> None:
+        file_manipulation.add_to_jsonl_file(
             file_path_from_top_of_project,
             [object.to_json() for object in objects],
         )

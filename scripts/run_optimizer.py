@@ -16,23 +16,24 @@ logger = logging.getLogger(__name__)
 async def run_optimizer() -> None:
     # -------- Configure the optimizer -----
     evaluation_questions = QuestionResearchSnapshot.load_json_from_file_path(
-        "logs/forecasts/question_snapshots_v2_157qs.json"
+        "logs/forecasts/question_snapshots_v1.6.train__112qs.json"
     )
     forecast_llm = GeneralLlm(
-        model="openrouter/openai/gpt-4.1-nano",
+        model="openrouter/deepseek/deepseek-r1",
         temperature=0.3,
     )
     ideation_llm = "openrouter/google/gemini-2.5-pro-preview"
-    # ideation_llm = "openrouter/anthropic/claude-sonnet-4"
-    for snapshot in evaluation_questions:
-        snapshot.question.background_info = None
-    num_prompts_to_try = 25
-    full_runs = 5
-    questions_batch_size = 80
+    remove_background_info = True
+    start_fresh_optimization_runs = 1
+    num_iterations_per_run = 4
+    questions_batch_size = 112
 
     # ----- Run the optimizer -----
-    for run in range(full_runs):
-        logger.info(f"Run {run + 1} of {full_runs}")
+    if remove_background_info:
+        for snapshot in evaluation_questions:
+            snapshot.question.background_info = None
+    for run in range(start_fresh_optimization_runs):
+        logger.info(f"Run {run + 1} of {start_fresh_optimization_runs}")
         logger.info(f"Loaded {len(evaluation_questions)} evaluation questions")
         evaluator = PromptEvaluator(
             evaluation_questions=evaluation_questions,
@@ -41,7 +42,7 @@ async def run_optimizer() -> None:
             file_or_folder_to_save_benchmarks="logs/forecasts/benchmarks/",
         )
         optimizer = PromptOptimizer(
-            num_prompts_to_try=num_prompts_to_try,
+            iterations=num_iterations_per_run,
             forecast_llm=forecast_llm,
             ideation_llm_name=ideation_llm,
             evaluator=evaluator,

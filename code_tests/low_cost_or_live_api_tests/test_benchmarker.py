@@ -26,22 +26,48 @@ async def test_file_is_made_for_benchmark(
     if ForecastingTestManager.quarterly_cup_is_not_active():
         pytest.skip("Quarterly cup is not active")
 
-    bot_type = TemplateBot
-    bot = bot_type()
+    class MockBot1(MockBot):
+        pass
 
-    ForecastingTestManager.mock_forecast_bot_run_forecast(bot_type, mocker)
+    class MockBot2(MockBot):
+        pass
+
+    bots_to_use = [MockBot1(), MockBot2()]
 
     benchmark_dir = tmp_path / "benchmarks"
     benchmark_dir.mkdir()
 
+    chosen_questions = [
+        ForecastingTestManager.get_fake_binary_question() for _ in range(10)
+    ]
     await Benchmarker(
-        forecast_bots=[bot],
-        number_of_questions_to_use=10,
+        forecast_bots=bots_to_use,
+        questions_to_use=chosen_questions,
         file_path_to_save_reports=str(benchmark_dir),
+        concurrent_question_batch_size=2,
     ).run_benchmark()
 
     created_files = list(benchmark_dir.iterdir())
-    assert len(created_files) > 0, "No new benchmark report file was created"
+    assert (
+        len(created_files) == 1
+    ), "Only one benchmark report file should be created"
+    benchmark_file = created_files[0]
+    assert benchmark_file.name.startswith("benchmarks_")
+    assert benchmark_file.name.endswith(".jsonl")
+
+    benchmarks_created = BenchmarkForBot.load_json_from_file_path(
+        str(benchmark_file)
+    )
+    assert len(benchmarks_created) == len(
+        bots_to_use
+    ), "Number of benchmarks created should be equal to number of bots"
+    bots_benchmarked = set()
+    for benchmark in benchmarks_created:
+        bot_name = benchmark.forecast_bot_class_name
+        assert (
+            bot_name not in bots_benchmarked
+        ), "There should only be one benchmark object per bot"
+        bots_benchmarked.add(bot_name)
 
     for created_file in created_files:
         created_file.unlink()
@@ -88,9 +114,12 @@ async def test_correct_number_of_final_forecasts_for_multiple_bots() -> None:
     bot2 = Bot2()
     bot3 = Bot3()
 
+    chosen_questions = [
+        ForecastingTestManager.get_fake_binary_question() for _ in range(30)
+    ]
     benchmarks = await Benchmarker(
         forecast_bots=[bot1, bot2, bot3],
-        number_of_questions_to_use=30,
+        questions_to_use=chosen_questions,
         concurrent_question_batch_size=4,
     ).run_benchmark()
 

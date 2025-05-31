@@ -200,6 +200,17 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["0", "1", "2"],
             [0.2, 0.7, 0.1],
         ),
+        (  # Test option names within each other
+            """
+            Stuff including Two and Greater than Two.
+
+            Two: 20
+            Greater than Two: 70
+            Greater than: 10
+            """,
+            ["Two", "Greater than Two", "Greater than"],
+            [0.2, 0.7, 0.1],
+        ),
         (  # Test special characters
             """
             - '≥0 and ≤20.0': 20
@@ -324,11 +335,27 @@ def test_multiple_choice_extraction_success(
             """,
             ["Blue", "Green", "Yellow"],
         ),
+        (  # Test total probability < 1 by only a bit
+            """
+            Option Blue: 0.3
+            Option Green: 0.2
+            Option Yellow: 0.49
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
         (  # Test total probabiliby > 1
             """
             Option Blue: 0.5
             Option Green: 0.7
             Option Yellow: 0.8
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
+        (  # Test total probabiliby > 1 by only a bit
+            """
+            Option Blue: 0.3
+            Option Green: 0.2
+            Option Yellow: 0.51
             """,
             ["Blue", "Green", "Yellow"],
         ),
@@ -732,6 +759,13 @@ def test_numeric_parsing_failure(gpt_response: str) -> None:
             """
             Text before
             Probability: 30%
+            """,
+            0.3,
+        ),
+        (
+            """
+            Text before
+            Probability: 30 %
             """,
             0.3,
         ),

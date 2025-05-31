@@ -251,7 +251,7 @@ class QuestionDecomposer:
             number_of_questions: The number of questions to decompose the topic or question into. Default to 5.
             related_research: If you are running in fast mode, include as much research as possible to help make a good question (especially include important drivers/influencers of the topic). Otherwise set research to None by default
             additional_criteria_or_context_from_user: Additional criteria or context from the user (default to None)
-            mode: The mode to use for the decomposition. Default to "deep"
+            mode: The mode to use for the decomposition. Default to "deep" mode as most people will want this.
 
         Returns:
             A DecompositionResult object with the following fields:

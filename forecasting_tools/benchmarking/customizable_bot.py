@@ -28,11 +28,16 @@ logger = logging.getLogger(__name__)
 
 
 class BinaryPrediction(BaseModel):
-    prediction: float
+    prediction_in_decimal: float
 
-    @field_validator("prediction")
+    @field_validator("prediction_in_decimal")
     @classmethod
     def validate_prediction_range(cls, value: float) -> float:
+        if value == 0:
+            return 0.001
+        if value == 1:
+            return 0.999
+
         if value < 0.001:
             raise ValueError("Prediction must be at least 0.001")
         if value > 0.999:
@@ -123,7 +128,7 @@ class CustomizableBot(ForecastBot):
         binary_prediction: BinaryPrediction = await structure_output(
             reasoning, BinaryPrediction
         )
-        prediction = binary_prediction.prediction
+        prediction = binary_prediction.prediction_in_decimal
 
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction}"

@@ -34,7 +34,7 @@ class PredictionExtractor:
         assert (
             max_prediction >= min_prediction
         ), f"Max prediction {max_prediction} is not greater than or equal to min prediction {min_prediction}"
-        matches = re.findall(r"(\d+)%", text)
+        matches = re.findall(r"(\d+)\s*%", text)
         if matches:
             # Return the last number found before a '%'
             original_number = int(matches[-1]) / 100

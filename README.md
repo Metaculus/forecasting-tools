@@ -324,19 +324,19 @@ for benchmark in benchmarks[:2]:
     Cost: $0.019155650000000003
 
 
-The ideal number of questions to get a good sense of whether one bot is better than another can vary. 100+ should tell your something decent. See [this analysis](https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world) for exploration of the numbers. With too few questions, the results could just be statistical noise, though how many questions you need depends highly on the difference in skill of your bots. There can sometimes be decent skill difference between even top forecasters allowing for less than 100 questions being useful for ranking people with confidence.
+The ideal number of questions to get a good sense of whether one bot is better than another can vary. 100+ should tell your something decent. See [this analysis](https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world) for exploration of the numbers. With too few questions, the results could just be statistical noise, though how many questions you need depends highly on the difference in skill of your bot versions.
 
-If you use the average expected baseline score higher score is better. The scoring measures the expected value of your score without needing an actual resolution by assuming that the community prediction is the 'true probability'. Under this assumption, expected baseline scores are a proper score (see analysis in `scripts/simulate_a_tournament.ipynb`)
+If you use the average expected baseline score, higher score is better. The scoring measures the expected value of your score without needing an actual resolution by assuming that the community prediction is the 'true probability'. Under this assumption, expected baseline scores are a proper score (see analysis in `scripts/simulate_a_tournament.ipynb`)
 
-As of Mar 27, 2025 the benchmarker automatically selects a random set of questions from Metaculus that:
+As of May 29, 2025 the benchmarker automatically selects a random set of questions from Metaculus that:
 - Are binary questions (yes/no)
 - Are currently open
-- Will resolve within the next year
-- Have at least 40 forecasters
+- Opened within the last year
+- Have at least 30 forecasters
 - Have a community prediction
 - Are not part of a group question
 
-Note that sometimes there are not many questions matching these filters (e.g. at the beginning of a new year when a good portion questions were just resolved). As of last edit there are plans to expand this to numeric and multiple choice, but right now it just benchmarks binary questions.
+Note that sometimes there are not many questions matching these filters (e.g. at the beginning of a new year when a majority of open questions were just resolved). As of last edit there are plans to expand this to numeric and multiple choice, but right now it just benchmarks binary questions.
 
 You can grab these questions without using the Benchmarker by running the below
 
