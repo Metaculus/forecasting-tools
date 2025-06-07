@@ -9,6 +9,7 @@ from agents import Agent, RunItem, Runner, Tool, trace
 from openai.types.responses import ResponseTextDeltaEvent
 from pydantic import BaseModel
 
+from forecasting_tools.agents_and_tools.data_analyzer import DataAnalyzer
 from forecasting_tools.agents_and_tools.misc_tools import (
     create_tool_for_forecasting_bot,
     get_general_news_with_asknews,
@@ -189,6 +190,7 @@ class ChatPage(AppPage):
             TopicGenerator.get_headlines_on_random_company_tool,
             perplexity_quick_search,
             InfoHazardIdentifier.info_hazard_identifier_tool,
+            DataAnalyzer.data_analysis_tool,
         ]
 
     @classmethod

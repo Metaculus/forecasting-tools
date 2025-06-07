@@ -2,7 +2,13 @@ import asyncio
 from typing import Callable, overload
 
 import nest_asyncio
-from agents import Agent, FunctionTool, Runner, function_tool
+from agents import (
+    Agent,
+    CodeInterpreterTool,
+    FunctionTool,
+    Runner,
+    function_tool,
+)
 from agents.extensions.models.litellm_model import LitellmModel
 from agents.tool import ToolFunction
 
@@ -28,6 +34,7 @@ class AgentSdkLlm(LitellmModel):
 AgentRunner = Runner  # Alias for Runner for later extension
 AgentTool = FunctionTool  # Alias for FunctionTool for later extension
 AiAgent = Agent  # Alias for Agent for later extension
+CodingTool = CodeInterpreterTool
 
 
 @overload
