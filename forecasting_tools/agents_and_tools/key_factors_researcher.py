@@ -9,11 +9,11 @@ from pydantic import BaseModel, Field, field_validator
 from forecasting_tools.agents_and_tools.base_rates.deduplicator import (
     Deduplicator,
 )
-from forecasting_tools.agents_and_tools.configured_llms import (
+from forecasting_tools.agents_and_tools.deprecated.configured_llms import (
     AdvancedLlm,
     BasicLlm,
 )
-from forecasting_tools.agents_and_tools.research_coordinator import (
+from forecasting_tools.agents_and_tools.deprecated.research_coordinator import (
     ResearchCoordinator,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents

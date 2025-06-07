@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from forecasting_tools.agents_and_tools.research_coordinator import (
+from forecasting_tools.agents_and_tools.deprecated.research_coordinator import (
     ResearchCoordinator,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents

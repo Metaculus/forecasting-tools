@@ -6,14 +6,18 @@ from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
     BaseRateReport,
     BaseRateResearcher,
 )
-from forecasting_tools.agents_and_tools.configured_llms import BasicLlm
-from forecasting_tools.agents_and_tools.general_researcher import (
+from forecasting_tools.agents_and_tools.deprecated.configured_llms import (
+    BasicLlm,
+)
+from forecasting_tools.agents_and_tools.deprecated.general_researcher import (
     GeneralResearcher,
 )
-from forecasting_tools.agents_and_tools.question_responder import (
+from forecasting_tools.agents_and_tools.deprecated.question_responder import (
     QuestionResponder,
 )
-from forecasting_tools.agents_and_tools.question_router import QuestionRouter
+from forecasting_tools.agents_and_tools.deprecated.question_router import (
+    QuestionRouter,
+)
 from forecasting_tools.ai_models.ai_utils.ai_misc import (
     clean_indents,
     strip_code_block_markdown,

@@ -8,7 +8,9 @@ import requests
 from openai import OpenAI
 from sklearn.metrics.pairwise import cosine_similarity
 
-from forecasting_tools.agents_and_tools.configured_llms import BasicLlm
+from forecasting_tools.agents_and_tools.deprecated.configured_llms import (
+    BasicLlm,
+)
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.forecast_helpers.smart_searcher import SmartSearcher
 from forecasting_tools.util.misc import raise_for_status_with_additional_info

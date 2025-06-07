@@ -2,7 +2,7 @@ import asyncio
 import logging
 from datetime import datetime
 
-from forecasting_tools.agents_and_tools.general_researcher import (
+from forecasting_tools.agents_and_tools.deprecated.general_researcher import (
     GeneralResearcher,
 )
 from forecasting_tools.agents_and_tools.key_factors_researcher import (
