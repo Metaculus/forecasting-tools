@@ -358,7 +358,7 @@ class ResearchCoordinator:
 
             # Instructions
             Please make a markdown report with three sections:
-            1. Research Overview: Give 2 paragraphs summarazing the the research done. Surface things people would want to know for a forecast.
+            1. Research Overview: Give 2 paragraphs summarazing the research done. Surface things people would want to know for a forecast.
             2. Possible Base Rates: Make one bullet point for each unique possible base rate. Prioritize numbers, and do some calculations to find historical rates if possible (e.g. if you find there are 3 successful X out of 10 X total, then state your calculation and say 3 successful X out of 10 X total is 30% success rate).
             3. Pros Section: Make one bullet point for each unique pro. These should be inside view adjustments that would move your forecast up.
             4. Cons Section: Make one bullet point for each unique con. These should be outside view adjustments that would move your forecast down.

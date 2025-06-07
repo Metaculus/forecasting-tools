@@ -426,6 +426,7 @@ def display_benchmark_comparison_graphs(
         "max"
     )
     df["Is Best Expected"] = df["Expected Baseline Score"] == max_scores
+    font_size = 11
 
     fig = px.bar(
         df,
@@ -436,7 +437,11 @@ def display_benchmark_comparison_graphs(
         title="Expected Baseline Scores by Benchmark and Category",
         error_y="Baseline Error",
     )
-    fig.update_layout(yaxis_title="Expected Baseline Score")
+    fig.update_layout(
+        yaxis_title="Expected Baseline Score",
+        xaxis=dict(tickfont=dict(size=font_size)),
+        yaxis=dict(tickfont=dict(size=font_size), dtick=10),
+    )
 
     add_star_annotations(
         fig, df, "Benchmark", "Expected Baseline Score", "Is Best Expected"
@@ -463,7 +468,11 @@ def display_benchmark_comparison_graphs(
         barmode="group",
         title="Deviation Scores by Benchmark and Category",
     )
-    fig.update_layout(yaxis_title="Deviation Score (percentage points)")
+    fig.update_layout(
+        yaxis_title="Deviation Score",
+        xaxis=dict(tickfont=dict(size=font_size)),
+        yaxis=dict(tickfont=dict(size=font_size)),
+    )
 
     add_star_annotations(
         fig, df, "Benchmark", "Deviation Score", "Is Best Deviation"

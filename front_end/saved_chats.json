@@ -155,7 +155,7 @@
             },
             {
                 "role": "user",
-                "content": "Please analyze whether these questions are info-hazards?:\n\n- Will there be a run on the bank in the next month?\n- If John Doe attempted to rob Mr. FooBar, would he succeed?\n- What are the chances of each of the following allowing me to invent a weapon more powerful than our most powerful nuke?  [Option X, Y, Z]\n- Will AI cause a disaster that results in > 1 million deaths before 2030?\n- Who will win March Madness next year?\n"
+                "content": "Please analyze whether these questions are info-hazards:\n\n- Will there be a run on the bank in the next month?\n- If John Doe attempted to rob Mr. FooBar, would he succeed?\n- What are the chances of each of the following allowing me to invent a weapon more powerful than our most powerful nuke?  [Option X, Y, Z]\n- Will AI cause a disaster that results in > 1 million deaths before 2030?\n- Who will win March Madness next year?\n"
             },
             {
                 "arguments": "{\"question_text\":\"Will there be a run on the bank in the next month?\"}",

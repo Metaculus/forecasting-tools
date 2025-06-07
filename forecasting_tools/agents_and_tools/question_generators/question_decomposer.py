@@ -89,7 +89,7 @@ class QuestionDecomposer:
                 - Bad: "Will Elon mention his intention to launch a rocket on May 2nd 2023 in a private meeting?"
             - The question should be specific and not vague
             - The question should have a resolution date
-            - Once the the resolution date has passed, the question should be resolvable with 0.5-1.5hr of research
+            - Once the resolution date has passed, the question should be resolvable with 0.5-1.5hr of research
                 - Bad: "Will a research paper in a established journal find that a new knee surgery technique reduces follow up surgery with significance by Dec 31 2023?" (To resolve this you have to do extensive research into all new research in a field)
                 - Good: "Will public dataset X at URL Y show the number of follow ups to knee surgeries decrease by Z% by Dec 31 2023?" (requires only some math on a few data points at a known URL)
             - A good resolution source exists

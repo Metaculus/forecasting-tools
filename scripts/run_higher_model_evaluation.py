@@ -15,55 +15,69 @@ logger = logging.getLogger(__name__)
 async def run_higher_model_evaluation() -> None:
     # --- Evaluation Parameters ---
     evaluation_questions = QuestionResearchSnapshot.load_json_from_file_path(
-        "logs/forecasts/question_snapshots_v1.6.test__230qs.json"
+        "logs/forecasts/benchmarks/question_snapshots_v1.6.test__230qs.json"
     )
 
     questions_batch_size = 115
-    forecast_llm = GeneralLlm(
-        model="openrouter/openai/gpt-4.1-nano",
-        temperature=0.3,
-    )
-    benchmark_files = [
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v2.1__nano_112qs.json",
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v2.2__nano_112qs.json",
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v2.3__nano_112qs.json",
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v2.4__nano_112qs.json",
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v2.5__nano_112qs.json",
+    forecast_llms = [
+        GeneralLlm(
+            model="openrouter/openai/gpt-4.1-nano",
+            temperature=0.3,
+        ),
+        GeneralLlm(
+            model="openrouter/anthropic/claude-sonnet-4",
+            temperature=0.3,
+        ),
+        GeneralLlm(
+            model="openrouter/openai/o4-mini",
+            # temperature=0.3,
+        ),
+        GeneralLlm(
+            model="openrouter/deepseek/deepseek-r1",
+            temperature=0.3,
+        ),
     ]
-    top_n_prompts = 3
-    include_worse_benchmark = True
+    benchmark_files = [
+        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v4.1__gpt4.1_112qs.jsonl",
+        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v4.2__gpt4.1_112qs.jsonl",
+        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v4.3__gpt4.1_112qs.jsonl",
+        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v4.4__gpt4.1_112qs.jsonl",
+    ]
+    top_n_prompts = 2
+    include_worse_benchmark = False
     research_reports_per_question = 1
     num_predictions_per_research_report = 1
 
     # --- Run the evaluation ---
-    evaluator = PromptEvaluator(
-        evaluation_questions=evaluation_questions,
-        research_type=ResearchType.ASK_NEWS_SUMMARIES,
-        concurrent_evaluation_batch_size=questions_batch_size,
-        file_or_folder_to_save_benchmarks="logs/forecasts/benchmarks/",
-    )
-    evaluation_result = await evaluator.evaluate_best_benchmarked_prompts(
-        forecast_llm=forecast_llm,
-        benchmark_files=benchmark_files,
-        top_n_prompts=top_n_prompts,
-        include_control_group_prompt=True,
-        include_worst_prompt=include_worse_benchmark,
-        research_reports_per_question=research_reports_per_question,
-        num_predictions_per_research_report=num_predictions_per_research_report,
-    )
-    for evaluated_prompt in evaluation_result.evaluated_prompts:
-        logger.info(
-            f"Name: {evaluated_prompt.prompt_config.original_idea.short_name}"
+    for forecast_llm in forecast_llms:
+        evaluator = PromptEvaluator(
+            evaluation_questions=evaluation_questions,
+            research_type=ResearchType.ASK_NEWS_SUMMARIES,
+            concurrent_evaluation_batch_size=questions_batch_size,
+            file_or_folder_to_save_benchmarks="logs/forecasts/benchmarks/",
         )
-        logger.info(f"Config: {evaluated_prompt.prompt_config}")
-        logger.info(f"Code: {evaluated_prompt.benchmark.code}")
-        logger.info(
-            f"Forecast Bot Class Name: {evaluated_prompt.benchmark.forecast_bot_class_name}"
+        evaluation_result = await evaluator.evaluate_best_benchmarked_prompts(
+            forecast_llm=forecast_llm,
+            benchmark_files=benchmark_files,
+            top_n_prompts=top_n_prompts,
+            include_control_group_prompt=True,
+            include_worst_prompt=include_worse_benchmark,
+            research_reports_per_question=research_reports_per_question,
+            num_predictions_per_research_report=num_predictions_per_research_report,
         )
-        logger.info(f"Cost: {evaluated_prompt.benchmark.total_cost}")
-        logger.info(f"Score: {evaluated_prompt.score}")
+        for evaluated_prompt in evaluation_result.evaluated_prompts:
+            logger.info(
+                f"Name: {evaluated_prompt.prompt_config.original_idea.short_name}"
+            )
+            logger.info(f"Config: {evaluated_prompt.prompt_config}")
+            logger.info(f"Code: {evaluated_prompt.benchmark.code}")
+            logger.info(
+                f"Forecast Bot Class Name: {evaluated_prompt.benchmark.forecast_bot_class_name}"
+            )
+            logger.info(f"Cost: {evaluated_prompt.benchmark.total_cost}")
+            logger.info(f"Score: {evaluated_prompt.score}")
 
-    logger.info(f"Best prompt: {evaluation_result.best_prompt}")
+        logger.info(f"Best prompt: {evaluation_result.best_prompt}")
 
 
 if __name__ == "__main__":

@@ -175,9 +175,6 @@ class ChatPage(AppPage):
             )
         st.session_state["model_choice"] = model_choice
 
-        # # TODO: When future versions of openai-agents come out, check if AgentSdkLlm works
-        # st.session_state["model_choice"] = DEFAULT_MODEL
-
     @classmethod
     def get_chat_tools(cls) -> list[Tool]:
         return [

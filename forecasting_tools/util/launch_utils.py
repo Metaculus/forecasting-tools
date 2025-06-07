@@ -1326,8 +1326,8 @@ class SheetOrganizer:
 if __name__ == "__main__":
     CustomLogger.setup_logging()
 
-    # start_date = SheetOrganizer.compute_upcoming_day("monday")
-    start_date = datetime(year=2025, month=6, day=2)
+    start_date = SheetOrganizer.compute_upcoming_day("monday")
+    # start_date = datetime(year=2025, month=6, day=2)
     end_date = SheetOrganizer.compute_upcoming_day("friday")
     logger.info(f"Start date: {start_date}, End date: {end_date}")
     asyncio.run(
@@ -1335,8 +1335,8 @@ if __name__ == "__main__":
             input_file_path="temp/input_launch_questions.csv",
             bot_output_file_path="temp/bot_questions.csv",
             pro_output_file_path="temp/pro_questions.csv",
-            num_pro_questions=11,
-            chance_to_skip_slot=0.20,
+            num_pro_questions=13,
+            chance_to_skip_slot=0.8,
             start_date=start_date,
             end_date=end_date,
         )

@@ -375,7 +375,7 @@ class PromptOptimizer:
                 {{resolution_criteria}} - 1-2 paragraphs of resolution criteria
                 {{fine_print}} - 1-2 paragraphs of fine print
                 {{today}} - The current date in the format YYYY-MM-DD
-                {{research}} - 4-20 paragraphs of research
+                {{research}} - Will contain 4-20 paragraphs of research
 
                 Make sure to include the above variables in the prompt (e.g. in braces), and don't add any additional variables.
                 Return the prompt and nothing but the prompt. The prompt will be run as is.

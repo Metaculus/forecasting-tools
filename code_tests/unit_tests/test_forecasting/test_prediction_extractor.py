@@ -102,23 +102,23 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["One", "Two", "Three"],
             [33.33 / 100, 33.33 / 100, 33.34 / 100],
         ),
-        (  # Check Probabilities are normalized
+        (  # Check Probabilities are normalized (off by 0.01)
             """
-            Option One: 0.3
-            Option Two: 0.3
-            Option Three: 0.3
+            Option One: 0.33
+            Option Two: 0.33
+            Option Three: 0.33
             """,
             ["One", "Two", "Three"],
             [1 / 3, 1 / 3, 1 / 3],
         ),
-        (  # Check Probabilities are normalized
+        (  # Check Probabilities are normalized (off by 0.01)
             """
-            Option One: 0.5
-            Option Two: 0.2
-            Option Three: 0.2
+            Option One: 0.497
+            Option Two: 0.247
+            Option Three: 0.247
             """,
             ["One", "Two", "Three"],
-            [0.55555555, 0.22222222, 0.22222222],
+            [0.5, 0.25, 0.25],
         ),
         (  # If probabilieis given as A B C, the ordering is used to match options.
             """
@@ -200,6 +200,26 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             ["0", "1", "2"],
             [0.2, 0.7, 0.1],
         ),
+        (  # Test special characters (ñ)
+            """
+            **Final Probabilities**:
+            - Daemon Wayans Jr.: 15%
+            - David Schwimmer: 10%
+            - George Lopez: 15%
+            - Jude Law: 5%
+            - Sam McCarthy: 10%
+            - Xolo Maridueña: 45%
+            """,
+            [
+                "Daemon Wayans Jr.",
+                "David Schwimmer",
+                "George Lopez",
+                "Jude Law",
+                "Sam McCarthy",
+                "Xolo Mariduena",
+            ],
+            [0.15, 0.10, 0.15, 0.05, 0.10, 0.45],
+        ),
         (  # Test option names within each other
             """
             Stuff including Two and Greater than Two.
@@ -209,6 +229,15 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             Greater than: 10
             """,
             ["Two", "Greater than Two", "Greater than"],
+            [0.2, 0.7, 0.1],
+        ),
+        (
+            """
+            Zero to One: 20
+            Exactly Two: 70
+            Greater than Two: 10
+            """,
+            ["Zero to One", "Exactly Two", "Greater than Two"],
             [0.2, 0.7, 0.1],
         ),
         (  # Test special characters
@@ -364,6 +393,24 @@ def test_multiple_choice_extraction_success(
             Blue: -0.5
             Green: 0.3
             Yellow: 0.2
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
+        (  # Test repeated option v1
+            """
+            Blue: 0.5
+            Yellow: 0.2
+            Green: 0.3
+            Yellow: 0.2
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
+        (  # Test repeated option v2
+            """
+            Blue: 0.5
+            Yellow: 0.1
+            Green: 0.3
+            Yellow: 0.1
             """,
             ["Blue", "Green", "Yellow"],
         ),

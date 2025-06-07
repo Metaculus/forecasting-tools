@@ -19,7 +19,7 @@ async def run_optimizer() -> None:
         "logs/forecasts/question_snapshots_v1.6.train__112qs.json"
     )
     forecast_llm = GeneralLlm(
-        model="openrouter/deepseek/deepseek-r1",
+        model="openrouter/openai/gpt-4.1",
         temperature=0.3,
     )
     ideation_llm = "openrouter/google/gemini-2.5-pro-preview"

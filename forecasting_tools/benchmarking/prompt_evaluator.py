@@ -139,7 +139,7 @@ class PromptEvaluator:
                 llm=forecast_llm,
                 original_idea=PromptIdea(
                     short_name=f"{benchmark.forecast_bot_class_name}",
-                    idea=f"Evaluate the prompt from {benchmark.forecast_bot_class_name} with model {forecast_llm.model} and {len(self.evaluation_questions)} questions",
+                    idea=f"Evaluate the prompt from {benchmark.forecast_bot_class_name} (originally found from a different dataset/origin) with model {forecast_llm.model} and {len(self.evaluation_questions)} questions",
                 ),
             )
             configs.append(best_prompt_config)
@@ -162,7 +162,9 @@ class PromptEvaluator:
             logger.info(
                 f"Loaded {len(benchmarks)} benchmarks from {file_path}"
             )
-            all_benchmarks.extend(benchmarks)
+            for benchmark in benchmarks:
+                if len(benchmark.forecast_reports) > 0:
+                    all_benchmarks.append(benchmark)
         sorted_benchmarks = sorted(
             all_benchmarks,
             key=lambda x: x.average_expected_baseline_score,

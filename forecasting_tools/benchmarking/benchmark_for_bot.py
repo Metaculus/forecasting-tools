@@ -85,6 +85,9 @@ class BenchmarkForBot(BaseModel, Jsonable):
 
         if self.forecast_bot_class_name is not None:
             class_name = f"{self.forecast_bot_class_name}"
+            max_length = 25
+            if len(class_name) > max_length:
+                class_name = class_name[:max_length] + "..."
         else:
             class_name = "n/a"
 
@@ -97,7 +100,7 @@ class BenchmarkForBot(BaseModel, Jsonable):
             ]
             num_runs_name = f"{research_reports} x {predictions}"
         except Exception:
-            num_runs_name = "n/a"
+            num_runs_name = ""
 
         try:
             llms = self.forecast_bot_config["llms"]
@@ -106,11 +109,18 @@ class BenchmarkForBot(BaseModel, Jsonable):
                 default_llm = llms["default"]["original_model"]
             except Exception:
                 default_llm = llms["default"]
-            default_llm_display = default_llm[:50]
+            final_path_part = default_llm.split("/")[-1]
+            default_llm_display = final_path_part[:50]
         except Exception:
-            default_llm = "n/a"
+            default_llm_display = "n/a"
 
-        name = f"{class_name} | {num_runs_name} | {default_llm_display}"
+        name = ""
+        if class_name:
+            name += class_name
+        if num_runs_name:
+            name += f" | {num_runs_name}"
+        if default_llm_display:
+            name += f" | {default_llm_display}"
         return name[:75]
 
     @property

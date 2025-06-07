@@ -59,7 +59,7 @@ jobs:
 
       - name: Run bot
         run: |
-          poetry run python run_bot.py ${{ inputs.bot_name }}
+          poetry run python run_bots.py ${{ inputs.bot_name }}
         env:
           METACULUS_TOKEN: ${{ secrets.INPUT_METACULUS_TOKEN }}
           ASKNEWS_CLIENT_ID: ${{ secrets.INPUT_ASKNEWS_CLIENT_ID }}

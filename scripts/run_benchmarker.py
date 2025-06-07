@@ -12,7 +12,7 @@ from forecasting_tools.benchmarking.question_research_snapshot import (
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.util.custom_logger import CustomLogger
-from run_bot import configure_and_run_bot, get_all_bots
+from run_bots import configure_and_run_bot, get_all_bots
 
 logger = logging.getLogger(__name__)
 

@@ -21,9 +21,11 @@ Here are the tools most likely to be useful to you:
 - 🎯 **Forecasting Bot:** General forecaster that integrates with the Metaculus AI benchmarking competition and provides a number of utilities. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the aggregation/API code, etc)
 - 🔌 **Metaculus API Wrapper:** for interacting with questions and tournaments
 - 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run your bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected baseline scores.
+- 🤖 **In-House Metaculus Bots**: You can see all the bots that Metaculus is running on their site in `run_bots.py`
 
-
-Here are some other features of the project:
+Here are some other features of the project (not all are documented yet):
+- **Prompt Optimizer:** for letting AI iterate through 100+ forecasting bot prompts
+- **Question Decomposer/Operationalizer:** To turn a question or topic into relevant forecastable sub-questions
 - **Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and GPT. It is more configurable than Perplexity AI, allowing you to use any AI model, instruct the AI to decide on filters, get citations linking to exact paragraphs, etc.
 - **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
 - **Base Rate Researcher:** for calculating event probabilities (still experimental)
@@ -370,7 +372,7 @@ json_object: dict = single_benchmark.to_json()
 new_benchmark: BenchmarkForBot = BenchmarkForBot.from_json(json_object)
 ```
 
-Once you have benchmark files in your project directory you can run `streamlit run forecasting_tools/forecast_helpers/benchmark_displayer.py` to get a UI with the benchmarks. You can also put `forecasting-tools.run_benchmark_streamlit_page()` into a new file, and run this file with streamlit to achieve the same results. This will allow you to see metrics side by side, explore code of past bots, see the actual bot responses, etc. It will pull in any files in your directory that contain "bench" in the name and are json.
+Once you have benchmark files in your project directory you can run `streamlit run forecasting_tools/benchmarking/benchmark_displayer.py` to get a UI with the benchmarks. You can also put `forecasting-tools.run_benchmark_streamlit_page()` into a new file, and run this file with streamlit to achieve the same results. This will allow you to see metrics side by side, explore code of past bots, see the actual bot responses, etc. It will pull in any files in your directory that contain "bench" in the name and are json. Results may take a while to load for large benchmark files.
 
 ![Benchmark Displayer Top](./docs/images/benchmark_top_screen.png)
 ![Benchmark Displayer Bottom](./docs/images/benchmark_bottom_screen.png)
@@ -844,7 +846,7 @@ There are many ways to manager Docker containers, but generally if you download 
 If you choose not to run Docker, you can use poetry to set up a local virtual environment. If you are on Ubuntu, you should be able to just read through and then run `.devcontainer/postinstall.sh`. If you aren't on Ubuntu, check out the links in the postinstall file for where install instructions for dependencies were originally found. You may also want to take a look at VSCode extensions that would be installed (see the list in the `.devcontainer/devcontainer.json` file) so that some VSCode workplace settings work out of the box (e.g. automatic Black Formatting).
 
 ## Private/Custom Code
-Given you have forked, if you have a custom bot you don't want committed to the repository when you add code the the package, its probably best to create a branch locally that holds your custom branch in order to leave the main branch open to pull updates or push changes you want to add. If you add all your custom files in a new folder (e.g. custom) then you shouldn't have merge conflicts, and can more easily remove the folder when ready to pull or push.
+Given you have forked, if you have a custom bot you don't want committed to the repository when you add code to the package, its probably best to create a branch locally that holds your custom branch in order to leave the main branch open to pull updates or push changes you want to add. If you add all your custom files in a new folder (e.g. custom) then you shouldn't have merge conflicts, and can more easily remove the folder when ready to pull or push.
 
 If you want to add your bot to the package, feel free to add your bot under `forecasting/forecast_bots/community` and other helper classes under folders that make sense.
 
