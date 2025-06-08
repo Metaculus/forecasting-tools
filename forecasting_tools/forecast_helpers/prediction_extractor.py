@@ -1,6 +1,9 @@
 import logging
 import re
 import string
+from dataclasses import dataclass
+
+from unidecode import unidecode
 
 from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOption,
@@ -50,9 +53,9 @@ class PredictionExtractor:
                 f"Could not extract prediction from response. The text was: {text}"
             )
 
-    @staticmethod
+    @classmethod
     def extract_option_list_with_percentage_afterwards(
-        text: str, options: list[str]
+        cls, text: str, options: list[str]
     ) -> PredictedOptionList:
         if not text or text.strip() == "":
             raise ValueError(
@@ -91,8 +94,10 @@ class PredictionExtractor:
         raise_exceptions = True
         for option_list in option_lists_to_try:
             try:
-                option_probabilities = PredictionExtractor._extract_option_probabilities_through_name_matching(
-                    text, option_list
+                option_probabilities = (
+                    cls._extract_option_probabilities_through_name_matching(
+                        text, option_list
+                    )
                 )
             except Exception as e:
                 exceptions.append(e)
@@ -110,10 +115,8 @@ class PredictionExtractor:
             options
         ), f"Number of option probabilities {len(option_probabilities)} does not match number of options {len(options)}"
 
-        normalized_option_probabilities = (
-            PredictionExtractor._normalize_option_probabilities(
-                option_probabilities
-            )
+        normalized_option_probabilities = cls._normalize_option_probabilities(
+            option_probabilities
         )
 
         predicted_options: list[PredictedOption] = []
@@ -127,45 +130,103 @@ class PredictionExtractor:
 
         return PredictedOptionList(predicted_options=predicted_options)
 
-    @staticmethod
+    @classmethod
     def _extract_option_probabilities_through_name_matching(
-        text: str, options: list[str]
+        cls, text: str, options: list[str]
     ) -> list[float]:
         option_probabilities = []
         for expected_option in options:
-            expected_option = expected_option.strip()
-            probability_found = False
-            matching_lines = []
+            escaped = re.escape(cls._clean_text(expected_option))
+            # pattern = (
+            #     fr"""^\s*[^A-Za-z0-9]*           # leading bullets / quotes / spaces
+            #         {escaped}                    # the key phrase (case-insensitive)
+            #         \s*[^A-Za-z0-9]+             # at least one non-alnum delimiter (e.g. ':')
+            #         \s*                          # optional space
+            #         (-?                          #  ⎫ capture group 1 = number
+            #             \d[\d,]*                 #  |  digits with optional thousands commas
+            #             (?:\.\d+)?               #  |  optional decimal part
+            #         )                            #  ⎭
+            #     """
+            # )
+            # pattern = rf"""^\s*\W*                 # any leading non-word stuff
+            #     {escaped}               # the key phrase itself
+            #     (?![\w.,-])             # MUST NOT be followed by word, comma, hyphen
+            #     \s*\W*:\s*              # optional spaces + non-word chars ending with ':'
+            #     (-?                     #  ⎫  capture group 1 = the number
+            #     \d[\d,]*             #  |  digits with optional comma thousands
+            #     (?:\.\d+)?           #  |  optional decimal
+            #     )                       #  ⎭
+            #     """
+            pattern = rf"""^\s*\W*                 # any leading non-word stuff
+                {escaped}               # the key phrase itself
+                (?![\w.,-])             # must NOT be followed by word/comma/period/hyphen
+                \s*\W*                  # optional quotes / spaces after the phrase
+                [|:]                    # delimiter can be ‘:’ or table ‘|’
+                \s*                     # optional space
+                (-?                     # ⎫ capture group 1 = number
+                    \d[\d,]*            # | digits with optional thousands commas
+                    (?:\.\d+)?          # | optional decimal part
+                )                       # ⎭
+                """
+            compiled_pattern = re.compile(pattern, re.IGNORECASE | re.VERBOSE)
+
+            @dataclass
+            class MatchingLine:
+                line: str
+                probability: float  # decimal or percentage (convert later)
+
+            matching_lines: list[MatchingLine] = []
             for line in text.split("\n"):
-                pattern = rf".*(?:^|[^0-9.])(?:{re.escape(expected_option.lower())})(?:\s*|\s*['\"]?\s*)[^.,0-9]+(-?\d*\.\d+|-?\d+).*"
-                match = re.match(pattern, line.strip().lower())
+                match = compiled_pattern.search(cls._clean_text(line))
                 if match:
-                    matching_lines.append(line)
+                    probability = float(match.group(1).replace(",", ""))
+                    matching_lines.append(
+                        MatchingLine(line=line, probability=probability)
+                    )
 
-            if matching_lines:
-                last_matching_line = matching_lines[-1]
-                numbers_as_string = re.findall(
-                    r"-?\d+(?:,\d{3})*(?:\.\d+)?", last_matching_line
-                )
-                numbers_as_float = [
-                    float(num.replace(",", "")) for num in numbers_as_string
-                ]
-                if len(numbers_as_float) >= 1:
-                    last_number = numbers_as_float[-1]
-                    assert (
-                        0 <= last_number <= 100
-                    ), f"Probability {last_number} is not between 0 and 100 for option: {expected_option}"
-                    option_probabilities.append(last_number)
-                    probability_found = True
-
-            if not probability_found:
+            if len(matching_lines) != 1:
                 raise ValueError(
-                    f"No probability found for option: {expected_option}"
+                    f"Expected exactly one match for pattern '{expected_option}', found {len(matching_lines)}. Lines included: {matching_lines}"
                 )
+            matching_line = matching_lines[0]
+            option_probabilities.append(matching_line.probability)
+
+            # matching_lines = []
+            # for line in text.split("\n"):
+            #     pattern = rf".*(?:^|[^0-9.])(?:{re.escape(expected_option.lower())})(?:\s*|\s*['\"]?\s*)[^.,0-9]+(-?\d*\.\d+|-?\d+).*"
+            #     match = re.match(pattern, line.strip().lower())
+            #     if match:
+            #         matching_lines.append(line)
+
+            # if matching_lines:
+            #     last_matching_line = matching_lines[-1]
+            #     numbers_as_string = re.findall(
+            #         r"-?\d+(?:,\d{3})*(?:\.\d+)?", last_matching_line
+            #     )
+            #     numbers_as_float = [
+            #         float(num.replace(",", "")) for num in numbers_as_string
+            #     ]
+            #     if len(numbers_as_float) >= 1:
+            #         last_number = numbers_as_float[-1]
+            #         assert (
+            #             0 <= last_number <= 100
+            #         ), f"Probability {last_number} is not between 0 and 100 for option: {expected_option}"
+            #         option_probabilities.append(last_number)
+            #         probability_found = True
+
+            # if not probability_found:
+            #     raise ValueError(
+            #         f"No probability found for option: {expected_option}"
+            #     )
         return option_probabilities
 
-    @staticmethod
+    @classmethod
+    def _clean_text(cls, text: str) -> str:
+        return unidecode(text.strip().lower())
+
+    @classmethod
     def _normalize_option_probabilities(
+        cls,
         option_probabilities: list[float],
     ) -> list[float]:
         total_sum = sum(option_probabilities)

@@ -118,7 +118,7 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             Option Three: 0.247
             """,
             ["One", "Two", "Three"],
-            [0.5, 0.25, 0.25],
+            [0.501, 0.249, 0.249],
         ),
         (  # If probabilieis given as A B C, the ordering is used to match options.
             """
@@ -227,6 +227,17 @@ from forecasting_tools.forecast_helpers.prediction_extractor import (
             Two: 20
             Greater than Two: 70
             Greater than: 10
+            """,
+            ["Two", "Greater than Two", "Greater than"],
+            [0.2, 0.7, 0.1],
+        ),
+        (
+            """
+            Stuff including Two and Greater than Two.
+
+            - Two: 20
+            - Greater than Two: 70
+            - Greater than: 10
             """,
             ["Two", "Greater than Two", "Greater than"],
             [0.2, 0.7, 0.1],
