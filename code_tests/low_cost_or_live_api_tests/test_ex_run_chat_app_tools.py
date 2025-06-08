@@ -31,7 +31,9 @@ async def test_chat_app_function_tools(
         If the results make sense generally, and there are no errors say: "<TOOL SUCCESSFULLY TESTED>"
         If there are errors, or the results indicate that the tool does something very different than expected say: "<TOOL FAILED TEST>" and then state the error/output verbatim then explain why the output is not right.
 
-        For metaculus question tools, use the question ID 37328 and tournament slug "metaculus-cup"
+        Here is what to do for some specific tools:
+        - For metaculus question tools, use the question ID 37328 and tournament slug "metaculus-cup"
+        - For data analyzer tool, use the file ID "file-KCPeaFiP8Szp7PnhXVPFH5" and file name "bot_forecasts_q1.csv" and ask for number of binary questions
         """
     )
     llm = AgentSdkLlm(model="openrouter/openai/gpt-4.1")
@@ -51,3 +53,10 @@ async def test_chat_app_function_tools(
         assert (
             False
         ), f"Tool did not return a valid response. The LLM says: {final_answer}"
+
+
+# TODO: Test the below:
+# - File upload works in chat app
+# - Data analyzer works with pdf
+# - Ability to use and upload multiple files
+# - Files are not uploaded again if they are already uploaded
