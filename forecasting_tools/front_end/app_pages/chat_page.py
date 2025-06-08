@@ -6,6 +6,7 @@ import time
 
 import streamlit as st
 from agents import Agent, RunItem, Runner, Tool, trace
+from openai import OpenAI
 from openai.types.responses import ResponseTextDeltaEvent
 from pydantic import BaseModel
 
@@ -62,6 +63,11 @@ class ChatSession(BaseModel, Jsonable):
     last_chat_duration: float | None = None
 
 
+class SessionFile(BaseModel):
+    file_id: str
+    file_name: str
+
+
 class ChatPage(AppPage):
     PAGE_DISPLAY_NAME: str = "💬 Chatbot"
     URL_PATH: str = "/chat"
@@ -85,16 +91,17 @@ class ChatPage(AppPage):
         active_tools = cls.display_tools()
         cls.display_chat_metadata()
         cls.display_premade_examples()
+        cls.display_chat_files()
         st.sidebar.write("---")
         cls.display_messages(st.session_state.messages)
+        prompt = cls.display_chat_bar()
 
-        if prompt := st.chat_input():
+        if prompt:
             st.session_state.messages.append(
                 {"role": "user", "content": prompt}
             )
             with st.chat_message("user"):
                 st.write(prompt)
-
         if st.session_state.messages[-1]["role"] != "assistant":
             with MonetaryCostManager(10) as cost_manager:
                 start_time = time.time()
@@ -105,11 +112,50 @@ class ChatPage(AppPage):
             st.rerun()
 
     @classmethod
+    def display_chat_bar(cls) -> str | None:
+        if chat_input := st.chat_input(accept_file=True):
+            prompt = chat_input.text
+
+            input_files = chat_input.files
+            if "chat_files" not in st.session_state.keys():
+                st.session_state.chat_files = []
+            session_files = st.session_state.chat_files
+
+            if input_files:
+                client = OpenAI()
+                for input_file in input_files:
+                    if input_file.name in [
+                        file.file_name for file in session_files
+                    ]:
+                        continue
+                    file = client.files.create(
+                        file=input_file, purpose="assistants"
+                    )
+                    session_files.append(
+                        SessionFile(file_id=file.id, file_name=input_file.name)
+                    )
+                    prompt += f"\n\n*[User uploaded file: {input_file.name}]*"
+
+            st.session_state.chat_files = session_files
+        else:
+            prompt = None
+        return prompt
+
+    @classmethod
+    def display_chat_files(cls) -> None:
+        if "chat_files" not in st.session_state.keys():
+            st.session_state.chat_files = []
+        session_files: list[SessionFile] = st.session_state.chat_files
+        with st.sidebar.expander("📁 Uploaded Files", expanded=True):
+            for i, file in enumerate(session_files):
+                st.write(f"File {i+1}: `{file.file_name}`")
+
+    @classmethod
     def display_messages(cls, messages: list[dict]) -> None:
         assistant_message_num = 0
         st.sidebar.write("**Tool Calls and Outputs:**")
         for message in messages:
-            output_emoji = "🔍"
+            output_emoji = "📝"
             call_emoji = "📞"
             if "type" in message and message["type"] == "function_call":
                 call_id = message["name"]
@@ -199,7 +245,7 @@ class ChatPage(AppPage):
         bot_options = get_all_important_bot_classes()
 
         active_tools: list[Tool] = []
-        with st.sidebar.expander("Select Tools"):
+        with st.sidebar.expander("🛠️ Select Tools"):
             bot_choice = st.selectbox(
                 "Select a bot for forecast_question_tool (Main Bot is best)",
                 [bot.__name__ for bot in bot_options],
@@ -230,7 +276,7 @@ class ChatPage(AppPage):
                 if tool_active:
                     active_tools.append(tool)
 
-        with st.sidebar.expander("Tool Explanations"):
+        with st.sidebar.expander("ℹ️ Tool Explanations"):
             for tool in active_tools:
                 if isinstance(tool, AgentTool):
                     property_description = ""
@@ -260,7 +306,7 @@ class ChatPage(AppPage):
 
     @classmethod
     def display_chat_metadata(cls) -> None:
-        with st.sidebar.expander("Chat Metadata"):
+        with st.sidebar.expander("📈 Chat Metadata"):
             debug_mode = st.session_state.get("debug_mode", False)
             if "last_chat_cost" not in st.session_state.keys():
                 st.session_state.last_chat_cost = 0
@@ -299,6 +345,8 @@ class ChatPage(AppPage):
             )
             if saved_sessions:
                 for session in saved_sessions:
+                    if "Archived" in session.name:
+                        continue
                     if st.button(session.name, key=session.name):
                         st.session_state.messages = session.messages
                         st.session_state.model_choice = session.model_choice
@@ -312,6 +360,9 @@ class ChatPage(AppPage):
                             st.session_state.last_chat_duration = (
                                 session.last_chat_duration
                             )
+                        logger.info(
+                            f"Chat session '{session.name}' loaded. Rerunning app"
+                        )
                         st.rerun()
                     if debug_mode:
                         if st.button("🗑️", key=f"delete_{session.name}"):
@@ -321,6 +372,9 @@ class ChatPage(AppPage):
                             )
                             st.sidebar.success(
                                 f"Chat session '{session.name}' deleted."
+                            )
+                            logger.info(
+                                f"Chat session '{session.name}' deleted. Rerunning app"
                             )
                             st.rerun()
             if debug_mode:
@@ -343,6 +397,9 @@ class ChatPage(AppPage):
                     st.sidebar.success(
                         f"Chat session '{chat_session.name}' saved."
                     )
+                    logger.info(
+                        f"Chat session '{chat_session.name}' saved. Rerunning app"
+                    )
                     st.rerun()
 
     @classmethod
@@ -354,16 +411,25 @@ class ChatPage(AppPage):
         if not prompt_input:
             return
 
+        chat_files: list[SessionFile] = st.session_state.chat_files
+        file_instructions = "You have access to the following files:\n"
+        for file in chat_files:
+            file_instructions += (
+                f"- File Name: {file.file_name} | File ID: {file.file_id}\n\n"
+            )
+
         instructions = clean_indents(
-            """
+            f"""
             You are a helpful assistant.
             - When a tool gives you answers that are cited, ALWAYS include the links in your responses. Keep the links inline as much as you can.
             - If you can, you infer the inputs to tools rather than ask for them.
-            - If a tool call fails, you say so rather than giving a back up answer.
+            - If a tool call fails, you say so rather than giving a back up answer. ALWAYS state errors. NEVER give a back up answer.
             - Whenever possible, please paralelize your tool calls and split tasks into parallel subtasks. However, don't do this if tasks are dependent on each other (e.g. you need metaculus question information BEFORE running a forecast)
             - By default, restate ALL the output that tools give you in readable markdown to the user. Do this even if the tool output is long.
             - Format your response as Markdown parsable in streamlit.write() function
             - If the forecast_question_tool is available, always use this when forecasting unless someone asks you not to.
+
+            {file_instructions if chat_files else ""}
             """
         )
 
@@ -454,6 +520,7 @@ class ChatPage(AppPage):
     def clear_chat_history(cls) -> None:
         st.session_state.messages = [cls.DEFAULT_MESSAGE]
         st.session_state.trace_id = None
+        st.session_state.chat_files = []
 
 
 if __name__ == "__main__":

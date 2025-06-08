@@ -1,6 +1,6 @@
 import asyncio
 
-from openai import OpenAI
+from pydantic import BaseModel
 
 from forecasting_tools.agents_and_tools.misc_tools import (
     perplexity_quick_search,
@@ -11,39 +11,50 @@ from forecasting_tools.ai_models.agent_wrappers import (
     CodingTool,
     agent_tool,
 )
+from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+
+
+class AvailableFile(BaseModel):
+    file_name: str
+    file_id: str
 
 
 class DataAnalyzer:
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, model: str = "gpt-4o") -> None:
+        self.model = model
 
-    async def run_data_analysis(self, instructions: str) -> str:
-        # client = OpenAI()
-
-        # resp = client.responses.create(
-        #     model="gpt-4.1",
-        #     tools=[
-        #         {
-        #             "type": "code_interpreter",
-        #             "container": { "type": "auto" }
-        #         }
-        #     ],
-        #     instructions="You are a personal math tutor. When asked a math question, write and run code to answer the question.",
-        #     input="I need to solve the equation 3x + 11 = 14. Can you help me?",
-        # )
-
-        # return resp.output_text
-
-        client = OpenAI()
-        file = client.files.create(
-            file=open("temp/bot_questions.csv", "rb"), purpose="assistants"
+    async def run_data_analysis(
+        self,
+        instructions: str,
+        additional_context: str | None = None,
+        available_files: list[AvailableFile] | None = None,
+    ) -> str:
+        if not available_files:
+            available_files = []
+        available_files_context = "\n".join(
+            [
+                f"- File Name: {file.file_name} | File ID: {file.file_id}"
+                for file in available_files
+            ]
         )
-
         agent = AiAgent(
             name="Data Analyzer",
-            instructions=instructions,
-            model="gpt-4o",
+            instructions=clean_indents(
+                f"""
+                You are a data analyst who uses code to solve problems.
+
+                You have been given the following instructions:
+                {instructions}
+
+                You have been given the following additional context:
+                {additional_context}
+
+                You have access to the following files:
+                {available_files_context}
+            """
+            ),
+            model=self.model,
             tools=[
                 perplexity_quick_search,
                 CodingTool(
@@ -51,7 +62,9 @@ class DataAnalyzer:
                         "type": "code_interpreter",
                         "container": {
                             "type": "auto",
-                            "file_ids": [file.id],
+                            "file_ids": [
+                                file.file_id for file in available_files
+                            ],
                         },
                     }
                 ),
@@ -59,78 +72,33 @@ class DataAnalyzer:
             handoffs=[],
         )
         result = await AgentRunner.run(
-            agent, "Please follow your custom instructions.", max_turns=10
+            agent, "Please follow your instructions.", max_turns=10
         )
         return result.final_output
 
-        # client = openai.OpenAI()
-
-        # file = client.files.create(
-        #     file=open("temp/bot_questions.csv", "rb"),
-        #     purpose='assistants'
-        # )
-
-        # # Step 1: Create an Assistant
-        # assistant = client.beta.assistants.create(
-        #     name="Data Analyst Assistant",
-        #     instructions="You are a personal Data Analyst Assistant",
-        #     model="gpt-4o",
-        #     tools=[{"type": "code_interpreter"}],
-        #     file_ids=[file.id]
-        # )
-
-        # # Step 2: Create a Thread
-        # thread = client.beta.threads.create()
-
-        # # Step 3: Add a Message to a Thread
-        # message = client.beta.threads.messages.create(
-        #     thread_id=thread.id,
-        #     role="user",
-        #     content=instructions
-        # )
-
-        # # Step 4: Run the Assistant
-        # run = client.beta.threads.runs.create(
-        #     thread_id=thread.id,
-        #     assistant_id=assistant.id,
-        #     instructions=instructions
-        # )
-
-        # answer = run.model_dump_json(indent=4)
-
-        # while True:
-        #     # Wait for 5 seconds
-        #     time.sleep(5)
-
-        #     # Retrieve the run status
-        #     run_status = client.beta.threads.runs.retrieve(
-        #         thread_id=thread.id,
-        #         run_id=run.id
-        #     )
-        #     answer += run_status.model_dump_json(indent=4)
-
-        #     # If run is completed, get messages
-        #     if run_status.status == 'completed':
-        #         messages = client.beta.threads.messages.list(
-        #             thread_id=thread.id
-        #         )
-
-        #         # Loop through messages and print content based on role
-        #         for msg in messages.data:
-        #             role = msg.role
-        #             content = msg.content[0].text.value
-        #             answer += f"{role.capitalize()}: {content}"
-        #         break
-        #     else:
-        #         answer += "Waiting for the Assistant to process..."
-        #         time.sleep(5)
-        # return answer
-
     @agent_tool
     @staticmethod
-    def data_analysis_tool(instruction: str) -> str:
+    def data_analysis_tool(
+        instruction: str,
+        additional_context: str | None = None,
+        files: list | None = None,
+    ) -> str:
         """
-        This tool takes in instructions, and runs code to follow the instructions.
+        This tool attempts to use code to achieve the user's instructions.
+        Avoid giving it code when possible, just give step by step instructions (or a general goal).
+        Can run analysis on files.
+        Additional context should include any other constraints or requests from the user, and as much other information that is relevant to the task as possible.
+
+        Format files as a list of dicts with the following format:
+        - file_name: str
+        - file_id: str
         """
         data_analysis = DataAnalyzer()
-        return asyncio.run(data_analysis.run_data_analysis(instruction))
+        available_files = (
+            [AvailableFile(**file) for file in files] if files else []
+        )
+        return asyncio.run(
+            data_analysis.run_data_analysis(
+                instruction, additional_context, available_files
+            )
+        )
