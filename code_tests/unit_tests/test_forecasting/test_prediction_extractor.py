@@ -425,6 +425,15 @@ def test_multiple_choice_extraction_success(
             """,
             ["Blue", "Green", "Yellow"],
         ),
+        (  # Test repeated option v3
+            """
+            Blue: 0.4
+            Yellow: 0.1
+            Green: 0.3
+            Yellow: 0.2
+            """,
+            ["Blue", "Green", "Yellow"],
+        ),
     ],
 )
 def test_multiple_choice_extraction_failure(

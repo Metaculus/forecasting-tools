@@ -75,6 +75,8 @@ class PredictionExtractor:
             underscored_options,
             [f"Option {option}" for option in options],
             [f"Option {cleaned_option}" for cleaned_option in cleaned_options],
+            [f'Option "{option}"' for option in options],
+            [f"Option '{option}'" for option in options],
             [
                 f"Option {underscored_option}"
                 for underscored_option in underscored_options
@@ -137,26 +139,6 @@ class PredictionExtractor:
         option_probabilities = []
         for expected_option in options:
             escaped = re.escape(cls._clean_text(expected_option))
-            # pattern = (
-            #     fr"""^\s*[^A-Za-z0-9]*           # leading bullets / quotes / spaces
-            #         {escaped}                    # the key phrase (case-insensitive)
-            #         \s*[^A-Za-z0-9]+             # at least one non-alnum delimiter (e.g. ':')
-            #         \s*                          # optional space
-            #         (-?                          #  ⎫ capture group 1 = number
-            #             \d[\d,]*                 #  |  digits with optional thousands commas
-            #             (?:\.\d+)?               #  |  optional decimal part
-            #         )                            #  ⎭
-            #     """
-            # )
-            # pattern = rf"""^\s*\W*                 # any leading non-word stuff
-            #     {escaped}               # the key phrase itself
-            #     (?![\w.,-])             # MUST NOT be followed by word, comma, hyphen
-            #     \s*\W*:\s*              # optional spaces + non-word chars ending with ':'
-            #     (-?                     #  ⎫  capture group 1 = the number
-            #     \d[\d,]*             #  |  digits with optional comma thousands
-            #     (?:\.\d+)?           #  |  optional decimal
-            #     )                       #  ⎭
-            #     """
             pattern = rf"""^\s*\W*                 # any leading non-word stuff
                 {escaped}               # the key phrase itself
                 (?![\w.,-])             # must NOT be followed by word/comma/period/hyphen
@@ -177,7 +159,8 @@ class PredictionExtractor:
 
             matching_lines: list[MatchingLine] = []
             for line in text.split("\n"):
-                match = compiled_pattern.search(cls._clean_text(line))
+                cleaned_line = cls._clean_text(line)
+                match = compiled_pattern.search(cleaned_line)
                 if match:
                     probability = float(match.group(1).replace(",", ""))
                     matching_lines.append(
@@ -186,38 +169,11 @@ class PredictionExtractor:
 
             if len(matching_lines) != 1:
                 raise ValueError(
-                    f"Expected exactly one match for pattern '{expected_option}', found {len(matching_lines)}. Lines included: {matching_lines}"
+                    f"Expected exactly one match for pattern '{expected_option}', found {len(matching_lines)}. Matching lines: {matching_lines}. Text: {text}"
                 )
             matching_line = matching_lines[0]
             option_probabilities.append(matching_line.probability)
 
-            # matching_lines = []
-            # for line in text.split("\n"):
-            #     pattern = rf".*(?:^|[^0-9.])(?:{re.escape(expected_option.lower())})(?:\s*|\s*['\"]?\s*)[^.,0-9]+(-?\d*\.\d+|-?\d+).*"
-            #     match = re.match(pattern, line.strip().lower())
-            #     if match:
-            #         matching_lines.append(line)
-
-            # if matching_lines:
-            #     last_matching_line = matching_lines[-1]
-            #     numbers_as_string = re.findall(
-            #         r"-?\d+(?:,\d{3})*(?:\.\d+)?", last_matching_line
-            #     )
-            #     numbers_as_float = [
-            #         float(num.replace(",", "")) for num in numbers_as_string
-            #     ]
-            #     if len(numbers_as_float) >= 1:
-            #         last_number = numbers_as_float[-1]
-            #         assert (
-            #             0 <= last_number <= 100
-            #         ), f"Probability {last_number} is not between 0 and 100 for option: {expected_option}"
-            #         option_probabilities.append(last_number)
-            #         probability_found = True
-
-            # if not probability_found:
-            #     raise ValueError(
-            #         f"No probability found for option: {expected_option}"
-            #     )
         return option_probabilities
 
     @classmethod
