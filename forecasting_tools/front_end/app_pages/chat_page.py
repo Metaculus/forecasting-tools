@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from datetime import datetime
 
 import streamlit as st
 from agents import Agent, RunItem, Runner, Tool, trace
@@ -61,6 +62,7 @@ class ChatSession(BaseModel, Jsonable):
     trace_id: str | None = None
     last_chat_cost: float | None = None
     last_chat_duration: float | None = None
+    time_stamp: datetime = datetime.now()
 
 
 class SessionFile(BaseModel):
@@ -80,7 +82,6 @@ class ChatPage(AppPage):
 
     @classmethod
     async def _async_main(cls) -> None:
-
         if "messages" not in st.session_state.keys():
             st.session_state.messages = [cls.DEFAULT_MESSAGE]
         cls.display_debug_mode()
@@ -95,106 +96,7 @@ class ChatPage(AppPage):
         st.sidebar.write("---")
         cls.display_messages(st.session_state.messages)
         prompt = cls.display_chat_bar()
-
-        if prompt:
-            st.session_state.messages.append(
-                {"role": "user", "content": prompt}
-            )
-            with st.chat_message("user"):
-                st.write(prompt)
-        if st.session_state.messages[-1]["role"] != "assistant":
-            with MonetaryCostManager(10) as cost_manager:
-                start_time = time.time()
-                await cls.generate_response(prompt, active_tools)
-                st.session_state.last_chat_cost = cost_manager.current_usage
-                end_time = time.time()
-                st.session_state.last_chat_duration = end_time - start_time
-            st.rerun()
-
-    @classmethod
-    def display_chat_bar(cls) -> str | None:
-        if chat_input := st.chat_input(accept_file=True):
-            prompt = chat_input.text
-
-            input_files = chat_input.files
-            if "chat_files" not in st.session_state.keys():
-                st.session_state.chat_files = []
-            session_files = st.session_state.chat_files
-
-            if input_files:
-                client = OpenAI()
-                for input_file in input_files:
-                    if input_file.name in [
-                        file.file_name for file in session_files
-                    ]:
-                        continue
-                    file = client.files.create(
-                        file=input_file, purpose="assistants"
-                    )
-                    session_files.append(
-                        SessionFile(file_id=file.id, file_name=input_file.name)
-                    )
-                    prompt += f"\n\n*[User uploaded file: {input_file.name}]*"
-
-            st.session_state.chat_files = session_files
-        else:
-            prompt = None
-        return prompt
-
-    @classmethod
-    def display_chat_files(cls) -> None:
-        if "chat_files" not in st.session_state.keys():
-            st.session_state.chat_files = []
-        session_files: list[SessionFile] = st.session_state.chat_files
-        with st.sidebar.expander("📁 Uploaded Files", expanded=True):
-            for i, file in enumerate(session_files):
-                st.write(f"File {i+1}: `{file.file_name}`")
-
-    @classmethod
-    def display_messages(cls, messages: list[dict]) -> None:
-        assistant_message_num = 0
-        st.sidebar.write("**Tool Calls and Outputs:**")
-        for message in messages:
-            output_emoji = "📝"
-            call_emoji = "📞"
-            if "type" in message and message["type"] == "function_call":
-                call_id = message["name"]
-                with st.sidebar.expander(f"{call_emoji} Call: {call_id}"):
-                    st.write(f"Function: {message['name']}")
-                    st.write(f"Arguments: {message['arguments']}")
-                    st.write(f"Call ID: {message['call_id']}")
-                    st.write(
-                        f"Assistant Message Number: {assistant_message_num}"
-                    )
-                    continue
-            if "type" in message and message["type"] == "function_call_output":
-                call_id = message["call_id"]
-                with st.sidebar.expander(f"{output_emoji} Output: {call_id}"):
-                    st.write(f"Call ID: {message['call_id']}")
-                    st.write(
-                        f"Assistant Message Number: {assistant_message_num}"
-                    )
-                    st.write(f"Output:\n\n{message['output']}")
-                    continue
-
-            try:
-                role = message["role"]
-            except KeyError:
-                if "type" in message and message["type"] == "reasoning":
-                    logger.warning(f"Found message with no role: {message}")
-                else:
-                    st.error(f"Unexpected message role. Message: {message}")
-                continue
-
-            with st.chat_message(role):
-                if role == "assistant":
-                    assistant_message_num += 1
-                content = message["content"]
-                if isinstance(content, list):
-                    text = content[0]["text"]
-                else:
-                    text = content
-                st.write(ReportDisplayer.clean_markdown(text))
+        await cls.process_prompt(prompt, active_tools)
 
     @classmethod
     def display_debug_mode(cls) -> None:
@@ -345,8 +247,6 @@ class ChatPage(AppPage):
             )
             if saved_sessions:
                 for session in saved_sessions:
-                    if "Archived" in session.name:
-                        continue
                     if st.button(session.name, key=session.name):
                         st.session_state.messages = session.messages
                         st.session_state.model_choice = session.model_choice
@@ -401,6 +301,113 @@ class ChatPage(AppPage):
                         f"Chat session '{chat_session.name}' saved. Rerunning app"
                     )
                     st.rerun()
+
+    @classmethod
+    def display_chat_files(cls) -> None:
+        if "chat_files" not in st.session_state.keys():
+            st.session_state.chat_files = []
+        session_files: list[SessionFile] = st.session_state.chat_files
+        with st.sidebar.expander("📁 Uploaded Files", expanded=True):
+            debug_mode = st.session_state.get("debug_mode", False)
+            for i, file in enumerate(session_files):
+                st.write(f"File {i+1}: `{file.file_name}`")
+                if debug_mode:
+                    st.write(f"File ID: `{file.file_id}`")
+
+    @classmethod
+    def display_messages(cls, messages: list[dict]) -> None:
+        assistant_message_num = 0
+        st.sidebar.write("**Tool Calls and Outputs:**")
+        for message in messages:
+            output_emoji = "📝"
+            call_emoji = "📞"
+            if "type" in message and message["type"] == "function_call":
+                call_id = message["name"]
+                with st.sidebar.expander(f"{call_emoji} Call: {call_id}"):
+                    st.write(f"Call ID: {message['call_id']}")
+                    st.write(
+                        f"Assistant Message Number: {assistant_message_num}"
+                    )
+                    st.write(f"Function: {message['name']}")
+                    st.write(f"Arguments: {message['arguments']}")
+                    continue
+            if "type" in message and message["type"] == "function_call_output":
+                call_id = message["call_id"]
+                with st.sidebar.expander(f"{output_emoji} Output: {call_id}"):
+                    st.write(f"Call ID: {message['call_id']}")
+                    st.write(
+                        f"Assistant Message Number: {assistant_message_num}"
+                    )
+                    st.write(f"Output:\n\n{message['output']}")
+                    continue
+
+            try:
+                role = message["role"]
+            except KeyError:
+                if "type" in message and message["type"] == "reasoning":
+                    logger.warning(f"Found message with no role: {message}")
+                else:
+                    st.error(f"Unexpected message role. Message: {message}")
+                continue
+
+            with st.chat_message(role):
+                if role == "assistant":
+                    assistant_message_num += 1
+                content = message["content"]
+                if isinstance(content, list):
+                    text = content[0]["text"]
+                else:
+                    text = content
+                st.write(ReportDisplayer.clean_markdown(text))
+
+    @classmethod
+    def display_chat_bar(cls) -> str | None:
+        if chat_input := st.chat_input(accept_file=True):
+            prompt = chat_input.text
+
+            input_files = chat_input.files
+            if "chat_files" not in st.session_state.keys():
+                st.session_state.chat_files = []
+            session_files = st.session_state.chat_files
+
+            if input_files:
+                client = OpenAI()
+                for input_file in input_files:
+                    if input_file.name in [
+                        file.file_name for file in session_files
+                    ]:
+                        continue
+                    file = client.files.create(
+                        file=input_file, purpose="assistants"
+                    )
+                    session_files.append(
+                        SessionFile(file_id=file.id, file_name=input_file.name)
+                    )
+                    prompt += f"\n\n*[User uploaded file: {input_file.name}]*"
+
+            st.session_state.chat_files = session_files
+        else:
+            prompt = None
+        return prompt
+
+    @classmethod
+    async def process_prompt(
+        cls, prompt: str | None, active_tools: list[Tool]
+    ) -> None:
+        if prompt:
+            st.session_state.messages.append(
+                {"role": "user", "content": prompt}
+            )
+            with st.chat_message("user"):
+                st.write(prompt)
+        if st.session_state.messages[-1]["role"] != "assistant":
+            with MonetaryCostManager(10) as cost_manager:
+                start_time = time.time()
+                await cls.generate_response(prompt, active_tools)
+                st.session_state.last_chat_cost = cost_manager.current_usage
+                end_time = time.time()
+                st.session_state.last_chat_duration = end_time - start_time
+            st.rerun()
 
     @classmethod
     async def generate_response(

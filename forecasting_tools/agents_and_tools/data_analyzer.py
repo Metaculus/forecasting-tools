@@ -30,6 +30,7 @@ class DataAnalyzer:
         additional_context: str | None = None,
         available_files: list[AvailableFile] | None = None,
     ) -> str:
+        # NOTE: See example usage here: https://github.com/openai/openai-agents-python/blob/main/examples/tools/code_interpreter.py
         if not available_files:
             available_files = []
         available_files_context = "\n".join(
@@ -38,43 +39,60 @@ class DataAnalyzer:
                 for file in available_files
             ]
         )
+
+        instructions = clean_indents(
+            f"""
+            You are a data analyst who uses code to solve problems.
+
+            You have been given the following instructions:
+            {instructions}
+
+            You have been given the following additional context:
+            {additional_context}
+
+            You have access to the following files:
+            {available_files_context}
+            """
+        )
+
+        coding_tool = CodingTool(
+            tool_config={
+                "type": "code_interpreter",
+                "container": {
+                    "type": "auto",
+                    "file_ids": [file.file_id for file in available_files],
+                },
+            }
+        )
+
         agent = AiAgent(
             name="Data Analyzer",
-            instructions=clean_indents(
-                f"""
-                You are a data analyst who uses code to solve problems.
-
-                You have been given the following instructions:
-                {instructions}
-
-                You have been given the following additional context:
-                {additional_context}
-
-                You have access to the following files:
-                {available_files_context}
-            """
-            ),
+            instructions=instructions,
             model=self.model,
             tools=[
                 perplexity_quick_search,
-                CodingTool(
-                    tool_config={
-                        "type": "code_interpreter",
-                        "container": {
-                            "type": "auto",
-                            "file_ids": [
-                                file.file_id for file in available_files
-                            ],
-                        },
-                    }
-                ),
+                coding_tool,
             ],
             handoffs=[],
         )
-        result = await AgentRunner.run(
+
+        result = AgentRunner.run_streamed(
             agent, "Please follow your instructions.", max_turns=10
         )
-        return result.final_output
+
+        final_answer = ""
+        async for event in result.stream_events():
+            if (
+                event.type == "run_item_stream_event"
+                and event.item.type == "tool_call_item"
+                and event.item.raw_item.type == "code_interpreter_call"
+            ):
+                final_answer += f"Code interpreter code:\n```python\n{event.item.raw_item.code}\n```\n"
+            # elif event.type == "run_item_stream_event":
+            #     final_answer += f"Other event: {event.item.type}"
+
+        final_answer += f"\n\nFinal output: {result.final_output}"
+        return final_answer
 
     @agent_tool
     @staticmethod
