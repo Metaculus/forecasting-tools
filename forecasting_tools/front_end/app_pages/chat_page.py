@@ -9,7 +9,7 @@ import streamlit as st
 from agents import Agent, RunItem, Runner, Tool, trace
 from openai import OpenAI
 from openai.types.responses import ResponseTextDeltaEvent
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from forecasting_tools.agents_and_tools.data_analyzer import DataAnalyzer
 from forecasting_tools.agents_and_tools.misc_tools import (
@@ -62,7 +62,7 @@ class ChatSession(BaseModel, Jsonable):
     trace_id: str | None = None
     last_chat_cost: float | None = None
     last_chat_duration: float | None = None
-    time_stamp: datetime = datetime.now()
+    time_stamp: datetime = Field(default_factory=datetime.now)
 
 
 class SessionFile(BaseModel):
