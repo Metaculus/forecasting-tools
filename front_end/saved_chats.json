@@ -565,5 +565,48 @@
         "last_chat_cost": 0.0,
         "last_chat_duration": 44.89548397064209,
         "time_stamp": "2025-06-08T02:27:36.423253"
+    },
+    {
+        "name": "\ud83d\udda5\ufe0f Computer Use Tool",
+        "messages": [
+            {
+                "role": "assistant",
+                "content": "How may I assist you today?"
+            },
+            {
+                "role": "user",
+                "content": "Please check what the the total users are from Bluesky and the general trend in daily likers (use https://bsky.jazco.dev/stats)"
+            },
+            {
+                "arguments": "{\"prompt\":\"go to https://bsky.jazco.dev/stats and tell me what the total users are and the general trend in daily likers\"}",
+                "call_id": "tool_0_computer_use_tool",
+                "name": "computer_use_tool",
+                "type": "function_call",
+                "id": "__fake_id__"
+            },
+            {
+                "call_id": "tool_0_computer_use_tool",
+                "output": "# Steps\n## Step 1\n**Name**: go_to_url\n\n\n## Step 2\n**Action**: {'type': 'screenshot'}\n**Output Text**: I'll analyze the statistics on the page and extract the required data for total users and the trend in daily likers.\n\n\n## Step 3\n**Action**: {'x': 679, 'y': 693, 'type': 'scroll', 'scroll_x': 0, 'scroll_y': 441}\n**Output Text**: The total number of users on the Bluesky platform, as displayed on the page, is 36,520,783. The graph depicting \"Daily Likers\" shows a consistent fluctuation over time, indicating a stable pattern with some variations, reflecting consistent engagement. I\u2019ll scroll down to view the complete data for daily likers.\n\n\n## Step 4\n**Action**: {'x': 681, 'y': 635, 'type': 'scroll', 'scroll_x': 0, 'scroll_y': 455}\n\n\n## Step 5\n**Action**: {'x': 723, 'y': 658, 'type': 'scroll', 'scroll_x': 0, 'scroll_y': 154}\n\n\n## Step 6\n**Action**: {'type': 'screenshot'}\n**Output Text**: I have gathered the data of the total users, which is recorded as 36,520,793, and observed the general trend of daily likers, showing stable engagement with regular fluctuations.\n\n\n## Step 7\n**Output Text**: The total number of users is 36,520,801. The graph for daily likers shows a consistent trend with minor variations, indicating stable engagement over time.\n\n\n---\n# Final Answer\nThe total number of users is 36,520,801. The graph for daily likers shows a consistent trend with minor variations, indicating stable engagement over time.",
+                "type": "function_call_output"
+            },
+            {
+                "id": "__fake_id__",
+                "content": [
+                    {
+                        "annotations": [],
+                        "text": "Based on the data from https://bsky.jazco.dev/stats, the total number of users on Bluesky is 36,520,801. The trend for daily likers shows a consistent pattern with minor variations, which suggests stable engagement over time.",
+                        "type": "output_text"
+                    }
+                ],
+                "role": "assistant",
+                "status": "completed",
+                "type": "message"
+            }
+        ],
+        "model_choice": "openrouter/google/gemini-2.5-pro-preview",
+        "trace_id": "trace_513022995b9e4e91b6729c8bc576d8db",
+        "last_chat_cost": 0.0,
+        "last_chat_duration": 107.65084505081177,
+        "time_stamp": "2025-06-10T18:31:01.083121"
     }
 ]

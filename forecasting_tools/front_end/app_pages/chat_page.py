@@ -7,11 +7,16 @@ from datetime import datetime
 
 import streamlit as st
 from agents import Agent, RunItem, Runner, Tool, trace
-from openai import OpenAI
 from openai.types.responses import ResponseTextDeltaEvent
 from pydantic import BaseModel, Field
 
+from forecasting_tools.agents_and_tools.computer_use import ComputerUse
 from forecasting_tools.agents_and_tools.data_analyzer import DataAnalyzer
+from forecasting_tools.agents_and_tools.data_set_crawler import DataCrawler
+from forecasting_tools.agents_and_tools.hosted_file import (
+    FileToUpload,
+    HostedFile,
+)
 from forecasting_tools.agents_and_tools.misc_tools import (
     create_tool_for_forecasting_bot,
     get_general_news_with_asknews,
@@ -65,11 +70,6 @@ class ChatSession(BaseModel, Jsonable):
     time_stamp: datetime = Field(default_factory=datetime.now)
 
 
-class SessionFile(BaseModel):
-    file_id: str
-    file_name: str
-
-
 class ChatPage(AppPage):
     PAGE_DISPLAY_NAME: str = "💬 Chatbot"
     URL_PATH: str = "/chat"
@@ -95,7 +95,7 @@ class ChatPage(AppPage):
         cls.display_chat_files()
         st.sidebar.write("---")
         cls.display_messages(st.session_state.messages)
-        prompt = cls.display_chat_bar()
+        prompt = cls.display_chat_bar_and_gather_files()
         await cls.process_prompt(prompt, active_tools)
 
     @classmethod
@@ -139,6 +139,8 @@ class ChatPage(AppPage):
             perplexity_quick_search,
             InfoHazardIdentifier.info_hazard_identifier_tool,
             DataAnalyzer.data_analysis_tool,
+            ComputerUse.computer_use_tool,
+            DataCrawler.data_set_crawler_tool,
         ]
 
     @classmethod
@@ -180,30 +182,33 @@ class ChatPage(AppPage):
 
         with st.sidebar.expander("ℹ️ Tool Explanations"):
             for tool in active_tools:
-                if isinstance(tool, AgentTool):
-                    property_description = ""
-                    for property_name, metadata in tool.params_json_schema[
-                        "properties"
-                    ].items():
-                        description = metadata.get(
-                            "description", "No description provided"
-                        )
-                        field_type = metadata.get("type", "No type provided")
-                        property_description += f"- {property_name}: {description} (type: {field_type})\n"
-                    st.write(
-                        clean_indents(
-                            f"""
-                            **{tool.name}**
-
-                            {clean_indents(tool.description)}
-
-                            {clean_indents(property_description)}
-
-                            ---
-
-                            """
-                        )
+                assert isinstance(
+                    tool, AgentTool
+                ), f"Tool {tool.name} is not an AgentTool"
+                property_description = ""
+                for property_name, metadata in tool.params_json_schema[
+                    "properties"
+                ].items():
+                    description = metadata.get(
+                        "description", "No description provided"
                     )
+                    field_type = metadata.get("type", "No type provided")
+                    property_description += f"- {property_name}: {description} (type: {field_type})\n"
+                st.write(
+                    clean_indents(
+                        f"""
+                        **{tool.name}**
+
+                        {clean_indents(tool.description)}
+
+                        Input Arguments:
+                        {clean_indents(property_description)}
+
+                        ---
+
+                        """
+                    )
+                )
         return active_tools
 
     @classmethod
@@ -306,7 +311,7 @@ class ChatPage(AppPage):
     def display_chat_files(cls) -> None:
         if "chat_files" not in st.session_state.keys():
             st.session_state.chat_files = []
-        session_files: list[SessionFile] = st.session_state.chat_files
+        session_files: list[HostedFile] = st.session_state.chat_files
         with st.sidebar.expander("📁 Uploaded Files", expanded=True):
             debug_mode = st.session_state.get("debug_mode", False)
             for i, file in enumerate(session_files):
@@ -361,7 +366,7 @@ class ChatPage(AppPage):
                 st.write(ReportDisplayer.clean_markdown(text))
 
     @classmethod
-    def display_chat_bar(cls) -> str | None:
+    def display_chat_bar_and_gather_files(cls) -> str | None:
         if chat_input := st.chat_input(accept_file=True):
             prompt = chat_input.text
 
@@ -371,19 +376,17 @@ class ChatPage(AppPage):
             session_files = st.session_state.chat_files
 
             if input_files:
-                client = OpenAI()
-                for input_file in input_files:
-                    if input_file.name in [
-                        file.file_name for file in session_files
-                    ]:
-                        continue
-                    file = client.files.create(
-                        file=input_file, purpose="assistants"
+                files_to_upload = []
+                for file in input_files:
+                    files_to_upload.append(
+                        FileToUpload(file_data=file, file_name=file.name)
                     )
-                    session_files.append(
-                        SessionFile(file_id=file.id, file_name=input_file.name)
+                new_files = HostedFile.upload_files_to_openai(files_to_upload)
+                session_files.extend(new_files)
+                for new_file in new_files:
+                    prompt += (
+                        f"\n\n*[User uploaded file: {new_file.file_name}]*"
                     )
-                    prompt += f"\n\n*[User uploaded file: {input_file.name}]*"
 
             st.session_state.chat_files = session_files
         else:
@@ -418,7 +421,7 @@ class ChatPage(AppPage):
         if not prompt_input:
             return
 
-        chat_files: list[SessionFile] = st.session_state.chat_files
+        chat_files: list[HostedFile] = st.session_state.chat_files
         file_instructions = "You have access to the following files:\n"
         for file in chat_files:
             file_instructions += (

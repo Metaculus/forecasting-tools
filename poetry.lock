@@ -1583,6 +1583,23 @@ torch = ["safetensors[torch]", "torch"]
 typing = ["types-PyYAML", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)"]
 
 [[package]]
+name = "hyperbrowser"
+version = "0.45.1"
+description = "Python SDK for hyperbrowser"
+optional = false
+python-versions = "<4.0,>=3.8"
+groups = ["main"]
+files = [
+    {file = "hyperbrowser-0.45.1-py3-none-any.whl", hash = "sha256:1b6876b3c1a2e0eeaa1c1c4f1f98b63bcb43dacef40dfc4f464d3ce475dcb037"},
+    {file = "hyperbrowser-0.45.1.tar.gz", hash = "sha256:ad33a12b1a13e2856a2e6768e092c7e238a933d7ce1df5fd972e0802c7ef92b6"},
+]
+
+[package.dependencies]
+httpx = ">=0.23.0,<1"
+jsonref = ">=1.1.0"
+pydantic = ">=2.0,<3"
+
+[[package]]
 name = "identify"
 version = "2.6.12"
 description = "File identification library for Python"
@@ -1949,6 +1966,18 @@ groups = ["dev"]
 files = [
     {file = "jsonpointer-3.0.0-py2.py3-none-any.whl", hash = "sha256:13e088adc14fca8b6aa8177c044e12701e6ad4b28ff10e65f2267a90109c9942"},
     {file = "jsonpointer-3.0.0.tar.gz", hash = "sha256:2b2d729f2091522d61c3b31f82e11870f60b68f43fbc705cb76bf4b832af59ef"},
+]
+
+[[package]]
+name = "jsonref"
+version = "1.1.0"
+description = "jsonref is a library for automatic dereferencing of JSON Reference objects for Python."
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "jsonref-1.1.0-py3-none-any.whl", hash = "sha256:590dc7773df6c21cbf948b5dac07a72a251db28b0238ceecce0a2abfa8ec30a9"},
+    {file = "jsonref-1.1.0.tar.gz", hash = "sha256:32fe8e1d85af0fdefbebce950af85590b22b60f9e95443176adbde4e1ecea552"},
 ]
 
 [[package]]
@@ -5926,4 +5955,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "053ae40e8d96e46f1dbc4fab722d00c87ea12662f8e50c4f3b64a0e1454872c8"
+content-hash = "76753d86af94a0f733f994ac1084d46b32c99570f8997fa60174193609200a73"
