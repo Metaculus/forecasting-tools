@@ -3,7 +3,7 @@ import re
 import string
 from dataclasses import dataclass
 
-from unidecode import unidecode
+from unidecode import unidecode_expect_ascii
 
 from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOption,
@@ -28,25 +28,37 @@ class PredictionExtractor:
             raise ValueError(
                 "While trying to extract last percentage value found that the text is None or an empty string"
             )
-        assert (
-            0 <= max_prediction <= 1
-        ), f"Max prediction {max_prediction} is not between 0 and 1"
-        assert (
-            0 <= min_prediction <= 1
-        ), f"Min prediction {min_prediction} is not between 0 and 1"
-        assert (
-            max_prediction >= min_prediction
-        ), f"Max prediction {max_prediction} is not greater than or equal to min prediction {min_prediction}"
-        matches = re.findall(r"(\d+)\s*%", text)
+        if not 0 <= max_prediction <= 1:
+            raise ValueError(
+                f"Max prediction {max_prediction} is not between 0 and 1"
+            )
+        if not 0 <= min_prediction <= 1:
+            raise ValueError(
+                f"Min prediction {min_prediction} is not between 0 and 1"
+            )
+        if max_prediction < min_prediction:
+            raise ValueError(
+                f"Max prediction {max_prediction} is not greater than or equal to min prediction {min_prediction}"
+            )
+        if not 0 <= min_prediction <= 1:
+            raise ValueError(
+                f"Min prediction {min_prediction} is not between 0 and 1"
+            )
+        if max_prediction < min_prediction:
+            raise ValueError(
+                f"Max prediction {max_prediction} is not greater than or equal to min prediction {min_prediction}"
+            )
+        matches = re.findall(r"(\d+(?:\.\d+)?)\s*%", text)
         if matches:
             # Return the last number found before a '%'
-            original_number = int(matches[-1]) / 100
+            original_number = float(matches[-1]) / 100
+            if not 0 <= original_number <= 1:
+                raise ValueError(
+                    f"Probability {original_number} is not between 0 and 1, so won't attempt to clamp the value"
+                )
             clamped_number = min(
                 max_prediction, max(min_prediction, original_number)
             )
-            assert (
-                min_prediction <= clamped_number <= max_prediction
-            ), f"Clamped number {clamped_number} is not between {min_prediction} and {max_prediction}"
             return float(clamped_number)
         else:
             raise ValueError(
@@ -168,8 +180,12 @@ class PredictionExtractor:
                     )
 
             if len(matching_lines) != 1:
+                if len(text) > 1000:
+                    display_text = f"{text[:200]} ... {text[-200:]}"
+                else:
+                    display_text = text
                 raise ValueError(
-                    f"Expected exactly one match for pattern '{expected_option}', found {len(matching_lines)}. Matching lines: {matching_lines}. Text: {text}"
+                    f"Expected exactly one match for pattern '{expected_option}', found {len(matching_lines)}. Matching lines: {matching_lines}. Text: \"{display_text}\""
                 )
             matching_line = matching_lines[0]
             option_probabilities.append(matching_line.probability)
@@ -178,7 +194,7 @@ class PredictionExtractor:
 
     @classmethod
     def _clean_text(cls, text: str) -> str:
-        return unidecode(text.strip().lower())
+        return unidecode_expect_ascii(text.strip().lower())
 
     @classmethod
     def _normalize_option_probabilities(

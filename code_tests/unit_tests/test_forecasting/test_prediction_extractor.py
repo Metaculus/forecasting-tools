@@ -852,18 +852,11 @@ def test_numeric_parsing_failure(gpt_response: str) -> None:
         ),
         (
             """
-            Research and reasoning
-            Probability: 110%
+            Text before
+            Probability: 35.4%
             """,
-            0.95,
+            0.354,
         ),
-        # ( TODO: Check for negative probabilities
-        #     """
-        #     Research and reasoning
-        #     Probability: -10%
-        #     """,
-        #     0.05,
-        # ),
     ],
 )
 def test_binary_parsing(
@@ -888,6 +881,21 @@ def test_binary_parsing(
         Text before
         Probability: 0.3
         """,
+        """
+        Text before
+        Probability: 100.1%
+        """,
+        """
+        Research and reasoning
+        Probability: 110%
+        """,
+        # ( TODO: Check for negative probabilities
+        #     """
+        #     Research and reasoning
+        #     Probability: -10%
+        #     """,
+        #     0.05,
+        # ),
     ],
 )
 def test_binary_parsing_failure(gpt_response: str) -> None:

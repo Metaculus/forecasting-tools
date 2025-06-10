@@ -505,7 +505,7 @@ def make_perfect_benchmark(
         raise ValueError(
             f"Found {len(reports_without_community_predictions)} reports without community predictions: {urls}"
         )
-    perfect_benchmark.forecast_reports = reports_of_perfect_benchmark
+    perfect_benchmark.forecast_reports = reports_of_perfect_benchmark  # type: ignore
     perfect_benchmark.explicit_name = PERFECT_PREDICTOR_NAME
     return perfect_benchmark
 
