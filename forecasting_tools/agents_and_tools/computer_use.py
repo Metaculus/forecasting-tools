@@ -48,6 +48,7 @@ class ComputerUse:
             - If the user asks you to download something in their instructions, you should download the file (do not stop halfway to ask if they are sure they want to)
             - Do not stop halfway to ask any questions. Go all the way to the end of the task, unless you find it is impossible (in which case say so and then stop).
             - If you are asked to download something, and you successfully click the download button, say that you successfully downloaded the file and describe the screen you were last on when you finished (and detailed descriptions of any graphs/tables/filters that were on the screen)
+            - Any files you download will be returned as urls and Hosted file IDs automatically (you don't need to do anything additional other than click the download button). If you are asked to return files in a specified format, just say that you will return these (i.e. you don't support other formats) and finish your task.
 
             User Request:
             {prompt}
@@ -105,6 +106,8 @@ class ComputerUse:
         4. etc.
 
         Include any relevant URLs in the prompt and try to give a detailed plan of what you want the agent to do.
+
+        Links and Hosted file IDs of downloaded data will be returned automatically with the answer (so don't ask for file paths)
         """
         computer_use = ComputerUse()
         response = asyncio.run(computer_use.answer_prompt(prompt))

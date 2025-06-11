@@ -24,9 +24,11 @@ class HazardRating(Enum):
 
 
 class InfoHazardIdentification(BaseModel):
+    original_question: str
     is_harmful: HazardRating
     self_fulfilling_or_defeating_for_individual: HazardRating
     self_fulfilling_or_defeating_for_society: HazardRating
+    alternative_questions: list[str]
     reasoning: str
 
     @property
@@ -38,6 +40,26 @@ class InfoHazardIdentification(BaseModel):
         ):
             return True
         return False
+
+    @property
+    def as_string(self) -> str:
+        alternative_questions = ""
+        for question in self.alternative_questions:
+            alternative_questions += f"- {question}\n"
+        return clean_indents(
+            f"""
+            ## Question: {self.original_question}
+            - **Is Harmful**: {self.is_harmful.value}
+            - **Self-fulfilling/defeating for individual**: {self.self_fulfilling_or_defeating_for_individual.value}
+            - **Self-fulfilling/defeating for society**: {self.self_fulfilling_or_defeating_for_society.value}
+
+            **Potential Alternative Questions**
+            {alternative_questions}
+
+            **Reasoning**
+            {self.reasoning}
+            """
+        )
 
 
 class InfoHazardIdentifier:
@@ -71,6 +93,8 @@ class InfoHazardIdentifier:
 
             The vast majority of the questions will fall into the No or Yes category. Save Strongly Yes for rare cases.
 
+            Finally you will provide an alternative way to ask the question that would not result in an info hazard.
+
             ## What is an info hazard?
             Information hazards are risks posed by the spread of factual information that could lead to harmful outcomes if they reach certain actors or audiences. These range from technical vulnerabilities that could compromise systems, to extreme cases such as information about how to build a bioweapon. Questions should also seek to avoid harmful self-fulfilling or self-negating effects, where the aggregate forecast could itself influence whether the event in question occurs. Information hazards and circular effects are often difficult to assess and can vary substantially in the level of risk posed.
 
@@ -90,10 +114,14 @@ class InfoHazardIdentifier:
                 - Ask "If the user (or his community) is told that the probability of event X is low, what will be the probability of event X?"
                 - Ask "If the user (or his community) is told that the probability of event X is high, what will be the probability of event X?"
                 - If there is a significant difference between the two answers, then there is a self-fulfilling information hazard on the individual level
-            5. Check if question has self-fulfilling/defeating information on the society level
+            4. Check if question has self-fulfilling/defeating information on the society level
                 - Ask "If everyone in the world is told that the probability of event X is low, what will be the probability of event X?"
                 - Ask "If everyone in the world is told that the probability of event X is high, what will be the probability of event X?"
                 - If there is a significant difference between the two answers, then there is a self-fulfilling information hazard on the society level
+            5. Come up with an alternative way to ask the question that would not result in an info hazard.
+                - Make sure its in a format that could be asked on Metaculus, Polymarket, etc (e.g. about a future event and resolves to "yes/no" a set of options or a number)
+                - Give multiple options
+                - Apply the same evaluation to your ideas to make sure that they are not info hazards. Don't give ideas if they are info hazards.
 
             Also remember that today is {datetime.now().strftime("%Y-%m-%d")}.
 
@@ -111,6 +139,22 @@ class InfoHazardIdentifier:
 
             Some of the self-fulfilling/defeating examples would be a "strongly yes" if the person, community, or society trusts AI predictions a lot. Strong lack of trust reduces the risk of self-fulfilling. Default to assuming people are trust the forecast as much as they would trust a random news report.
 
+            ### Reframing questions
+            *Example 1*
+            - Original: "Will there be a toilet paper shortage in the next month?"
+            - Reframed:
+                - "If people believe there will be a toilet paper shortage in the next month, will there be a toilet paper shortage in the next month?"
+                - "If people don't believe there will be a toilet paper shortage in the next month, will there be a toilet paper shortage in the next month?"
+                - "What will the average number of toilet paper shortages be per year over the next 3 years?"
+                - "By how much will the ratio of 'toilet paper rolls produced in US' to 'US citizens' change in the next month?"
+            - Notes: Target things that will defuse the self-fulfilling/defeating effect by helping people recognize or see through it.
+
+            *Example 2*
+            - Original: "How much time would it take to find and exploit a vulnerability in the latest version of OpenSSL?"
+            - Reframed:
+                - "How many OpenSSL vulnerabilities will be found in the next 3 years?"
+                - "What would the number of OpenSSL vulnerabilities be in the next 3 years given policy X, Y, and Z are taken" (fill in policy)
+
             ### Non Info Hazards
             - "Who will win sports game X?"
             - "Will the stock market crash in the next 10 years?"
@@ -121,11 +165,12 @@ class InfoHazardIdentifier:
             The provide a final answer in the following format:
 
             ANSWER:
+            Question being evaluated: [Question being evaluated here]
             Dangerous: [No/Kinda Yes/Yes/Strongly Yes]
             Self-fulfilling/defeating for individual/small community: [No/Kinda Yes/Yes/Strongly Yes]
             Self-fulfilling/defeating for society: [No/Kinda Yes/Yes/Strongly Yes]
-            Reasoning: [Your reasoning here]
-
+            Alternative way to ask the questions: [List of alternative ways to ask the question here]
+            Reasoning: [Your reasoning here (formatted as a bullet point for each major step)]
 
             # Your Task
             ## Question
@@ -153,7 +198,7 @@ class InfoHazardIdentifier:
         question_text: str,
         other_question_info: str | None = None,
         additional_context: str | None = None,
-    ) -> InfoHazardIdentification:
+    ) -> str:
         """
         Identify information hazards in a question and its context.
 
@@ -169,4 +214,4 @@ class InfoHazardIdentifier:
                 additional_context,
             )
         )
-        return result
+        return result.as_string

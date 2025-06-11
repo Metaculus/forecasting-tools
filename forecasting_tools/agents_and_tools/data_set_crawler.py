@@ -8,6 +8,7 @@ from forecasting_tools.agents_and_tools.data_analyzer import DataAnalyzer
 from forecasting_tools.agents_and_tools.misc_tools import perplexity_pro_search
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
+    AgentSdkLlm,
     AiAgent,
     agent_tool,
 )
@@ -23,7 +24,7 @@ class DataCrawlerResult(BaseModel):
 class DataCrawler:
 
     def __init__(
-        self, llm: str = "openrouter/gemini/gemini-2.5-pro-preview"
+        self, llm: str = "openrouter/google/gemini-2.5-pro-preview"
     ) -> None:
         self.llm = llm
 
@@ -34,10 +35,13 @@ class DataCrawler:
 
             Your task is to:
             1. Use general Perplexity research to find what datasets might be available
-                a. Search multiple times in parallel if needed.
+                a. Run multiple times in parallel if searches are not dependent on each other
                 b. Run up to 2 iterations of searches (using one iteration to inform the next)
             2. Use the computer use tool to find and download relevant datasets or analyze graphs/visuals that could help answer the question
             3. Use the data analyzer tool to analyze the downloaded datasets (if any), do math, and provide insights
+                a. Come up with multiple analysis methods (and if its super simple just run the analysis 3 times)
+                b. Run each approach in parallel
+                c. Share the different results of the methods (and raise a concern if they deviate significantly)
             4. Give a 3 paragraph report of your findings
                 a. What the dataset is, where you found it
                 b. Data analysis you did
@@ -61,7 +65,7 @@ class DataCrawler:
         agent = AiAgent(
             name="Data Set Crawler",
             instructions=instructions,
-            model=self.llm,
+            model=AgentSdkLlm(model=self.llm),
             tools=[
                 perplexity_pro_search,
                 ComputerUse.computer_use_tool,
