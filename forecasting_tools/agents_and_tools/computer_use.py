@@ -20,14 +20,15 @@ logger = logging.getLogger(__name__)
 class ComputerUseResult(BaseModel):
     hyperbrowser_task_data: CuaTaskData
     hosted_files: list[HostedFile]
-    live_url: str | None
     downloads_url: str | None
     final_answer: str
     hyperbrowser_session_id: str
+    session_id: str
+    recording_url: str | None
 
     @property
     def as_string(self) -> str:
-        text_log = "# Steps Taken"
+        text_log = "# Computer Use Agent Steps"
         for i, step in enumerate(self.hyperbrowser_task_data.steps):
             action_text = ""
             if step.output:
@@ -47,11 +48,15 @@ class ComputerUseResult(BaseModel):
                 {action_text}
                 """
             )
-        text_log += f"\n---\n# Final Answer\n{self.final_answer}"
+        text_log += f"\n\n# Final Answer\n{self.final_answer}"
         if self.downloads_url:
-            text_log += f"\n- **Downloads URL:** {self.downloads_url}"
+            text_log += f"\n- **Downloads URL:** [url]({self.downloads_url})"
         for file in self.hosted_files:
             text_log += f"\n- **Downloaded File:** Name: {file.file_name} | OpenAI File ID: {file.file_id}"
+        if self.session_id:
+            text_log += f"\n- **Session ID:** {self.session_id}"
+        if self.recording_url:
+            text_log += f"\n- **Recording URL:** [url]({self.recording_url})"
         return text_log
 
 
@@ -64,7 +69,7 @@ class ComputerUse:
 
     async def answer_prompt(self, prompt: str) -> ComputerUseResult:
         session = await self.hb_client.sessions.create(
-            CreateSessionParams(save_downloads=True)
+            CreateSessionParams(save_downloads=True, enable_web_recording=True)
         )
         session_id = session.id
         logger.info(f"Hyperbrowser Session ID: {session_id}")
@@ -74,14 +79,18 @@ class ComputerUse:
             You are a browser use agent helping with a user prompt. Please help the user with their request while keeping the following
 
             Rules:
-            - If the user asks you to download something in their instructions, you should download the file (do not stop halfway to ask if they are sure they want to)
-            - Do not stop halfway to ask any questions. Go all the way to the end of the task, unless you find it is impossible (in which case say so and then stop).
-            - If you are asked to download something, and you successfully click the download button, say that you successfully downloaded the file and describe the screen you were last on when you finished (and detailed descriptions of any graphs/tables/filters that were on the screen)
-            - Any files you download will be returned as urls and Hosted file IDs automatically (you don't need to do anything additional other than click the download button). If you are asked to return files in a specified format, just say that you will return these (i.e. you don't support other formats) and finish your task.
-            - If you get to the point where you are confused and waiting for a while. Just give up and describe what you did and where you ended.
-            - When in doubt, if you clicked the download button assume it worked, and finish (especially if the down arrow next to the profile button in the top bar of chrome is now blue)
-            - Never ask follow up questions (you won't get any answers). If you are stuck, just say you give up and why (rather than phrasing it as a question).
-            - If you can't download what is being looked for (and will give up), and there is a table/graph you can analyze instead, please try to answer the question with visual inspection. Please state that you are only doing a visual inspection.
+            - If Downloading:
+                - If the user asks you to download something in their instructions, you should download the file (do not stop halfway to ask if they are sure they want to)
+                - If you are asked to download something, and you successfully click the download button, say that you successfully downloaded the file and describe the screen you were last on when you finished (and detailed descriptions of any graphs/tables/filters that were on the screen)
+                - Any files you download will be returned as urls and Hosted file IDs automatically (you don't need to do anything additional other than click the download button). If you are asked to return files in a specified format, just say that you will return these (i.e. you don't support other formats) and finish your task.
+                - When in doubt, if you clicked the download button assume it worked
+                - If you ever see that the down arrow next to the profile button is blue in the top bar of chrome, this means you successfully downloaded a file.
+                - If you can't download what is being looked for (and will give up), and there is a table/graph you can analyze instead, please try to answer the question with visual inspection. Please state that you are only doing a visual inspection.
+            - If Stuck:
+                - Do not stop halfway to ask any questions. Go all the way to the end of the task, unless you find it is impossible (in which case say so and then stop).
+                - If you get to the point where you are confused and waiting for a while. Just give up and describe what you did and where you ended.
+                - Never ask follow up questions (you won't get any answers). If you are stuck, just say you give up and why (rather than phrasing it as a question).
+            - As much as possible verbalize what you are doing at each step you take.
 
             User Request:
             {prompt}
@@ -118,13 +127,20 @@ class ComputerUse:
         else:
             hosted_files = []
 
+        recording_data = await self.hb_client.sessions.get_recording_url(
+            session.id
+        )
+        recording_url = recording_data.recording_url
+        logger.info(f"Hyperbrowser Recording URL: {recording_url}")
+
         return ComputerUseResult(
             hyperbrowser_task_data=data,
             final_answer=final_result,
             hosted_files=hosted_files,
-            live_url=live_url,
             downloads_url=download_url,
             hyperbrowser_session_id=session_id,
+            session_id=session_id,
+            recording_url=recording_url,
         )
 
     @agent_tool

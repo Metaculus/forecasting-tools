@@ -26,8 +26,10 @@ class DataSetFinderResult(BaseModel):
     def as_string(self) -> str:
         steps_str = ""
         for step in self.steps:
-            steps_str += f"{step}\n"
-        return steps_str + "\n\n**Final Answer**\n" + self.final_answer
+            steps_str += f"{step}\n\n"
+        return (
+            steps_str + "\n\n**Final Answer**\n" + self.final_answer + "\n\n"
+        )
 
 
 class DatasetFinder:
@@ -50,7 +52,7 @@ class DatasetFinder:
                 a. Run up to 2 in parallel to try to find multiple datasets (in case one doesn't work out)
                 b. If it doesn't work in 2 tries, give up stop here, and explain why
             3. Use the data analyzer tool to analyze the downloaded datasets (if any), do math, and provide insights
-                a. Come up with multiple analysis methods (and if its super simple just run the analysis 3 times)
+                a. Come up with multiple analysis methods (ideally 3 and if its super simple just run the analysis 3 times)
                 b. Run each approach in parallel
                 c. Share the different results of the methods (and raise a concern if they deviate significantly)
             4. Give a 3 paragraph report of:
@@ -76,7 +78,7 @@ class DatasetFinder:
         )
 
         agent = AiAgent(
-            name="Data Set Crawler",
+            name="Dataset Finder",
             instructions=instructions,
             model=AgentSdkLlm(model=self.llm),
             tools=[
@@ -97,7 +99,7 @@ class DatasetFinder:
         async for event in result.stream_events():
             event_message = event_to_tool_message(event)
             if event_message:
-                steps.append(event_message)
+                steps.append(event_message + "\n\n---\n\n")
                 logger.info(event_message)
         final_answer = result.final_output
         return DataSetFinderResult(steps=steps, final_answer=final_answer)

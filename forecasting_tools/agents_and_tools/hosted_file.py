@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import zipfile
 from dataclasses import dataclass
 from io import BytesIO
@@ -41,9 +42,18 @@ class HostedFile(BaseModel):
 
     @classmethod
     def upload_zipped_files(cls, download_link: str) -> list[HostedFile]:
+        # TODO: Handle zip bombs
         # Download zip file directly to memory
         response = requests.get(download_link, stream=True)
         response.raise_for_status()
+
+        MAX_GB = 0.5
+        MAX_ZIP_SIZE = MAX_GB * 1024 * 1024 * 1024  # e.g. 0.5 GB
+        content_length = int(response.headers.get("Content-Length", 0))
+        if content_length > MAX_ZIP_SIZE:
+            raise ValueError(
+                f"Zip file too large: {download_link} is {content_length / 1024 / 1024 / 1024} GB. Max is {MAX_GB} GB."
+            )
 
         # Create BytesIO object from response content
         zip_content = BytesIO()
@@ -54,16 +64,20 @@ class HostedFile(BaseModel):
         # Process zip file from memory
         extracted_files: list[FileToUpload] = []
         with zipfile.ZipFile(zip_content, "r") as zip_ref:
-            for file_info in zip_ref.infolist():
-                if file_info.filename.endswith("/"):  # Skip directories
+            info_list = zip_ref.infolist()
+            if len(info_list) > 10:
+                raise ValueError("Too many files in zip")
+
+            for file_info in info_list:
+                full_filename = file_info.filename
+                if full_filename.endswith("/"):  # Skip directories
                     continue
 
                 # Extract file to memory
-                file_data = BytesIO(zip_ref.read(file_info.filename))
+                file_data = BytesIO(zip_ref.read(full_filename))
+                safe_filename = os.path.basename(full_filename)
                 extracted_files.append(
-                    FileToUpload(
-                        file_data=file_data, file_name=file_info.filename
-                    )
+                    FileToUpload(file_data=file_data, file_name=safe_filename)
                 )
 
         # Upload files to OpenAI

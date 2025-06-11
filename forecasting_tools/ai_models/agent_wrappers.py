@@ -53,11 +53,12 @@ def event_to_tool_message(event: StreamEvent) -> str | None:
             else:
                 text = "Error: unknown content type"
         elif item.type == "tool_call_item":
-            tool_name = getattr(item.raw_item, "name", "unknown_tool")
-            tool_args = getattr(item.raw_item, "arguments", {})
-            text = f"Tool call: {tool_name}({tool_args})"
             if item.raw_item.type == "code_interpreter_call":
-                text += f"\nCode interpreter code:\n```python\n{item.raw_item.code}\n```\n"
+                text = f"\nCode interpreter code:\n```python\n{item.raw_item.code}\n```\n"
+            else:
+                tool_name = getattr(item.raw_item, "name", "unknown_tool")
+                tool_args = getattr(item.raw_item, "arguments", {})
+                text = f"Tool call: {tool_name}({tool_args})"
         elif item.type == "tool_call_output_item":
             output = getattr(item, "output", str(item.raw_item))
             text = f"Tool output:\n\n{output}"

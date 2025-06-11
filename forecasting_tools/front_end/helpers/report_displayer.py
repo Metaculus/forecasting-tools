@@ -160,7 +160,7 @@ class ReportDisplayer:
                 st.write(
                     f"**Scheduled Resolution Time:** {question.scheduled_resolution_time}"
                 )
-            if question.id_of_post > 0:
+            if question.id_of_post and question.id_of_post > 0:
                 st.write(f"**Question ID:** {question.id_of_post}")
 
     @classmethod
@@ -176,13 +176,16 @@ class ReportDisplayer:
     @staticmethod
     def clean_markdown(text: str) -> str:
         def replace_dollar(match: re.Match) -> str:
-            if match.group(1):  # Already escaped
+            backslashes = match.group(1) or ""
+            if (
+                len(backslashes) % 2 == 1
+            ):  # Odd number of backslashes means escaped
                 return match.group(0)
-            else:  # Not escaped
-                return r"\$"
+            else:  # Even number of backslashes means not escaped
+                return backslashes + r"\$"
 
-        # Regex to match escaped $ or just $
-        pattern = r"(\\)?\$"
+        # Regex to match any number of backslashes followed by $
+        pattern = r"(\\*)\$"
         cleaned_text = re.sub(pattern, replace_dollar, text)
         return cleaned_text
 

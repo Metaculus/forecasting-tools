@@ -347,7 +347,11 @@ class ChatPage(AppPage):
                     st.write(
                         f"Assistant Message Number: {assistant_message_num}"
                     )
-                    st.write(f"Output:\n\n{message['output']}")
+                    st.write(
+                        ReportDisplayer.clean_markdown(
+                            f"Output:\n\n{message['output']}"
+                        )
+                    )
                     continue
 
             try:

@@ -83,7 +83,9 @@ class DataAnalyzer:
 
         final_answer = ""
         async for event in result.stream_events():
-            final_answer += event_to_tool_message(event)
+            event_message = event_to_tool_message(event)
+            if event_message:
+                final_answer += event_message + "\n\n"
         final_answer += f"\n\nFinal output: {result.final_output}"
         return final_answer
 
