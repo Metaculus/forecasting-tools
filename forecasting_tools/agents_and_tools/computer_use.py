@@ -63,11 +63,13 @@ class ComputerUseResult(BaseModel):
 class ComputerUse:
 
     def __init__(self) -> None:
-        self.hb_client = AsyncHyperbrowser(
-            api_key=os.getenv("HYPERBROWSER_API_KEY")
-        )
+        api_key = os.getenv("HYPERBROWSER_API_KEY")
+        if not api_key:
+            raise ValueError("HYPERBROWSER_API_KEY is not set")
+        self.hb_client = AsyncHyperbrowser(api_key=api_key)
 
     async def answer_prompt(self, prompt: str) -> ComputerUseResult:
+        logger.warning("Cost tracking not supported for ComputerUse")
         session = await self.hb_client.sessions.create(
             CreateSessionParams(save_downloads=True, enable_web_recording=True)
         )

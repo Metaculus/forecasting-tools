@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from pydantic import BaseModel
 
@@ -13,6 +14,8 @@ from forecasting_tools.ai_models.agent_wrappers import (
     event_to_tool_message,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+
+logger = logging.getLogger(__name__)
 
 
 class AvailableFile(BaseModel):
@@ -31,6 +34,7 @@ class DataAnalyzer:
         additional_context: str | None = None,
         available_files: list[AvailableFile] | None = None,
     ) -> str:
+        logger.warning("Cost tracking not supported for Data Analysis Agent")
         # NOTE: See example usage here: https://github.com/openai/openai-agents-python/blob/main/examples/tools/code_interpreter.py
         if not available_files:
             available_files = []
