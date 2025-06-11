@@ -39,7 +39,7 @@ CodingTool = (
 agent_tool = function_tool  # Alias for function_tool for later extension
 
 
-def event_to_tool_message(event: StreamEvent) -> str:
+def event_to_tool_message(event: StreamEvent) -> str | None:
     text = ""
     if event.type == "run_item_stream_event":
         item = event.item
@@ -70,4 +70,6 @@ def event_to_tool_message(event: StreamEvent) -> str:
             text = f"Reasoning: {str(item.raw_item)}"
     # elif event.type == "agent_updated_stream_event":
     #     text += f"Agent updated: {event.new_agent.name}\n\n"
+    if text == "":
+        return None
     return text

@@ -26,7 +26,7 @@ class DataSetFinderResult(BaseModel):
     def as_string(self) -> str:
         steps_str = ""
         for step in self.steps:
-            steps_str += f"- {step}\n"
+            steps_str += f"{step}\n"
         return steps_str + "\n\n**Final Answer**\n" + self.final_answer
 
 
@@ -48,14 +48,15 @@ class DatasetFinder:
                 b. Run up to 2 iterations of searches (using one iteration to inform the next)
             2. Use the computer use tool to find and download relevant datasets or analyze graphs/visuals that could help answer the question
                 a. Run up to 2 in parallel to try to find multiple datasets (in case one doesn't work out)
+                b. If it doesn't work in 2 tries, give up stop here, and explain why
             3. Use the data analyzer tool to analyze the downloaded datasets (if any), do math, and provide insights
                 a. Come up with multiple analysis methods (and if its super simple just run the analysis 3 times)
                 b. Run each approach in parallel
                 c. Share the different results of the methods (and raise a concern if they deviate significantly)
-            4. Give a 3 paragraph report of your findings
-                a. What the dataset is, where you found it
-                b. Data analysis you did
-                c. Any graphs/visuals you analyzed
+            4. Give a 3 paragraph report of:
+                a. What the dataset is, where you found it, its url
+                b. Findings from any data analysis you did
+                c. Findings from any graphs/visuals you analyzed
 
             Follow these guidelines:
             - Look for datasets on sites like Kaggle, data.gov, FRED, or other public data repositories
@@ -95,8 +96,9 @@ class DatasetFinder:
         steps = []
         async for event in result.stream_events():
             event_message = event_to_tool_message(event)
-            steps.append(event_message)
-            logger.info(event_message)
+            if event_message:
+                steps.append(event_message)
+                logger.info(event_message)
         final_answer = result.final_output
         return DataSetFinderResult(steps=steps, final_answer=final_answer)
 

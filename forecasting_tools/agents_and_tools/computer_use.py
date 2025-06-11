@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 
-from hyperbrowser import Hyperbrowser
+from hyperbrowser import AsyncHyperbrowser
 from hyperbrowser.models import (
     CreateSessionParams,
     CuaTaskData,
@@ -17,7 +17,7 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 logger = logging.getLogger(__name__)
 
 
-class ComputerUseResponse(BaseModel):
+class ComputerUseResult(BaseModel):
     hyperbrowser_task_data: CuaTaskData
     hosted_files: list[HostedFile]
     live_url: str | None
@@ -25,16 +25,45 @@ class ComputerUseResponse(BaseModel):
     final_answer: str
     hyperbrowser_session_id: str
 
+    @property
+    def as_string(self) -> str:
+        text_log = "# Steps Taken"
+        for i, step in enumerate(self.hyperbrowser_task_data.steps):
+            action_text = ""
+            if step.output:
+                for output in step.output:
+                    if "name" in output:
+                        action_text += f"**Name**: {output['name']}\n"
+                    if "action" in output:
+                        action_text += f"**Action**: {output['action']}\n"
+                    if "summary" in output:
+                        action_text += f"**Summary**: {output['summary']}\n"
+            if step.output_text:
+                action_text += f"**Output Text**: {step.output_text}\n"
+
+            text_log += clean_indents(
+                f"""
+                ## Step {i+1}
+                {action_text}
+                """
+            )
+        text_log += f"\n---\n# Final Answer\n{self.final_answer}"
+        if self.downloads_url:
+            text_log += f"\n- **Downloads URL:** {self.downloads_url}"
+        for file in self.hosted_files:
+            text_log += f"\n- **Downloaded File:** Name: {file.file_name} | OpenAI File ID: {file.file_id}"
+        return text_log
+
 
 class ComputerUse:
 
     def __init__(self) -> None:
-        self.hb_client = Hyperbrowser(
+        self.hb_client = AsyncHyperbrowser(
             api_key=os.getenv("HYPERBROWSER_API_KEY")
         )
 
-    async def answer_prompt(self, prompt: str) -> ComputerUseResponse:
-        session = self.hb_client.sessions.create(
+    async def answer_prompt(self, prompt: str) -> ComputerUseResult:
+        session = await self.hb_client.sessions.create(
             CreateSessionParams(save_downloads=True)
         )
         session_id = session.id
@@ -49,13 +78,17 @@ class ComputerUse:
             - Do not stop halfway to ask any questions. Go all the way to the end of the task, unless you find it is impossible (in which case say so and then stop).
             - If you are asked to download something, and you successfully click the download button, say that you successfully downloaded the file and describe the screen you were last on when you finished (and detailed descriptions of any graphs/tables/filters that were on the screen)
             - Any files you download will be returned as urls and Hosted file IDs automatically (you don't need to do anything additional other than click the download button). If you are asked to return files in a specified format, just say that you will return these (i.e. you don't support other formats) and finish your task.
+            - If you get to the point where you are confused and waiting for a while. Just give up and describe what you did and where you ended.
+            - When in doubt, if you clicked the download button assume it worked, and finish (especially if the down arrow next to the profile button in the top bar of chrome is now blue)
+            - Never ask follow up questions (you won't get any answers). If you are stuck, just say you give up and why (rather than phrasing it as a question).
+            - If you can't download what is being looked for (and will give up), and there is a table/graph you can analyze instead, please try to answer the question with visual inspection. Please state that you are only doing a visual inspection.
 
             User Request:
             {prompt}
             """
         )
 
-        resp = self.hb_client.agents.cua.start_and_wait(
+        resp = await self.hb_client.agents.cua.start_and_wait(
             StartCuaTaskParams(task=instructions, session_id=session_id)
         )
         live_url = resp.live_url
@@ -66,26 +99,26 @@ class ComputerUse:
         final_result = data.final_result
         if final_result is None:
             raise RuntimeError("No response from Hyperbrowser")
-        downloads_response = self.hb_client.sessions.get_downloads_url(
+        downloads_response = await self.hb_client.sessions.get_downloads_url(
             session.id
         )
         while downloads_response.status == "in_progress":
             logger.info("Waiting for downloads zip to be ready...")
             await asyncio.sleep(1)
-            downloads_response = self.hb_client.sessions.get_downloads_url(
-                session.id
+            downloads_response = (
+                await self.hb_client.sessions.get_downloads_url(session.id)
             )
 
         download_url = downloads_response.downloads_url
         logger.info(f"Hyperbrowser Downloads URL: {download_url}")
-        self.hb_client.sessions.stop(session.id)
+        await self.hb_client.sessions.stop(session.id)
 
         if download_url:
             hosted_files = HostedFile.upload_zipped_files(download_url)
         else:
             hosted_files = []
 
-        return ComputerUseResponse(
+        return ComputerUseResult(
             hyperbrowser_task_data=data,
             final_answer=final_result,
             hosted_files=hosted_files,
@@ -105,36 +138,8 @@ class ComputerUse:
         3. See what is on a specific page
         4. etc.
 
-        Include any relevant URLs in the prompt and try to give a detailed plan of what you want the agent to do.
-
-        Links and Hosted file IDs of downloaded data will be returned automatically with the answer (so don't ask for file paths)
+        Include any relevant URLs in the prompt and try to give a detailed plan of what you want the agent to do. Links and Hosted file IDs of downloaded data will be returned automatically with the answer (so don't ask for file paths). This tool can take 10+ minutes to run.
         """
         computer_use = ComputerUse()
-        response = asyncio.run(computer_use.answer_prompt(prompt))
-
-        text_log = "# Steps Taken"
-        for i, step in enumerate(response.hyperbrowser_task_data.steps):
-            action_text = ""
-            if step.output:
-                for output in step.output:
-                    if "name" in output:
-                        action_text += f"**Name**: {output['name']}\n"
-                    if "action" in output:
-                        action_text += f"**Action**: {output['action']}\n"
-                    if "summary" in output:
-                        action_text += f"**Summary**: {output['summary']}\n"
-            if step.output_text:
-                action_text += f"**Output Text**: {step.output_text}\n"
-
-            text_log += clean_indents(
-                f"""
-                ## Step {i+1}
-                {action_text}
-                """
-            )
-        text_log += f"\n---\n# Final Answer\n{response.final_answer}"
-        if response.downloads_url:
-            text_log += f"\n- **Downloads URL:** {response.downloads_url}"
-        for file in response.hosted_files:
-            text_log += f"\n- **Downloaded File:** Name: {file.file_name} | OpenAI File ID: {file.file_id}"
-        return text_log
+        result = asyncio.run(computer_use.answer_prompt(prompt))
+        return result.as_string

@@ -108,7 +108,7 @@ class ChatPage(AppPage):
             os.getenv("LOCAL_STREAMLIT_MODE", "false").lower() == "true"
         )
         if local_streamlit_mode:
-            if st.sidebar.checkbox("Debug Mode", value=True):
+            if st.sidebar.checkbox("Debug Mode", value=False):
                 st.session_state["debug_mode"] = True
             else:
                 st.session_state["debug_mode"] = False

@@ -100,9 +100,7 @@ class DataAnalyzer:
         Can run analysis on files.
         Additional context should include any other constraints or requests from the user, and as much other information that is relevant to the task as possible.
 
-        Format files as a list of dicts with the following format:
-        - file_name: str
-        - file_id: str
+        Format files as a list of dicts with the following format: {"file_name": "string", "file_id": "string"}
         """
         data_analysis = DataAnalyzer()
         available_files = (
