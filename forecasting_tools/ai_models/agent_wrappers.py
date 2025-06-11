@@ -1,5 +1,4 @@
 import asyncio
-from typing import Callable, overload
 
 import nest_asyncio
 from agents import (
@@ -10,7 +9,7 @@ from agents import (
     function_tool,
 )
 from agents.extensions.models.litellm_model import LitellmModel
-from agents.tool import ToolFunction
+from agents.stream_events import StreamEvent
 
 from forecasting_tools.ai_models.model_tracker import ModelTracker
 
@@ -34,28 +33,41 @@ class AgentSdkLlm(LitellmModel):
 AgentRunner = Runner  # Alias for Runner for later extension
 AgentTool = FunctionTool  # Alias for FunctionTool for later extension
 AiAgent = Agent  # Alias for Agent for later extension
-CodingTool = CodeInterpreterTool
+CodingTool = (
+    CodeInterpreterTool  # Alias for CodeInterpreterTool for later extension
+)
+agent_tool = function_tool  # Alias for function_tool for later extension
 
 
-@overload
-def agent_tool(func: ToolFunction[...], **kwargs) -> FunctionTool:
-    """Overload for usage as @function_tool (no parentheses)."""
-    ...
-
-
-@overload
-def agent_tool(**kwargs) -> Callable[[ToolFunction[...]], FunctionTool]:
-    """Overload for usage as @function_tool(...)."""
-    ...
-
-
-def agent_tool(
-    func: ToolFunction[...] | None = None, **kwargs
-) -> AgentTool | Callable[[ToolFunction[...]], AgentTool]:
-    if func is None:
-
-        def decorator(f):
-            return function_tool(f, **kwargs)
-
-        return decorator
-    return function_tool(func, **kwargs)
+def event_to_tool_message(event: StreamEvent) -> str:
+    text = ""
+    if event.type == "run_item_stream_event":
+        item = event.item
+        if item.type == "message_output_item":
+            content = item.raw_item.content[0]
+            if content.type == "output_text":
+                # text = content.text
+                text = ""  # the text is already streamed separate from this function
+            elif content.type == "output_refusal":
+                text = content.refusal
+            else:
+                text = "Error: unknown content type"
+        elif item.type == "tool_call_item":
+            tool_name = getattr(item.raw_item, "name", "unknown_tool")
+            tool_args = getattr(item.raw_item, "arguments", {})
+            text = f"Tool call: {tool_name}({tool_args})"
+            if item.raw_item.type == "code_interpreter_call":
+                text += f"\nCode interpreter code:\n```python\n{item.raw_item.code}\n```\n"
+        elif item.type == "tool_call_output_item":
+            output = getattr(item, "output", str(item.raw_item))
+            text = f"Tool output:\n\n{output}"
+        elif item.type == "handoff_call_item":
+            handoff_info = getattr(item.raw_item, "name", "handoff")
+            text = f"Handoff call: {handoff_info}"
+        elif item.type == "handoff_output_item":
+            text = f"Handoff output: {str(item.raw_item)}"
+        elif item.type == "reasoning_item":
+            text = f"Reasoning: {str(item.raw_item)}"
+    # elif event.type == "agent_updated_stream_event":
+    #     text += f"Agent updated: {event.new_agent.name}\n\n"
+    return text

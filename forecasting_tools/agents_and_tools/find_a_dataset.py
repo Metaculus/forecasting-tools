@@ -11,24 +11,33 @@ from forecasting_tools.ai_models.agent_wrappers import (
     AgentSdkLlm,
     AiAgent,
     agent_tool,
+    event_to_tool_message,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 
 logger = logging.getLogger(__name__)
 
 
-class DataCrawlerResult(BaseModel):
-    answer: str
+class DataSetFinderResult(BaseModel):
+    steps: list[str]
+    final_answer: str
+
+    @property
+    def as_string(self) -> str:
+        steps_str = ""
+        for step in self.steps:
+            steps_str += f"- {step}\n"
+        return steps_str + "\n\n**Final Answer**\n" + self.final_answer
 
 
-class DataCrawler:
+class DatasetFinder:
 
     def __init__(
         self, llm: str = "openrouter/google/gemini-2.5-pro-preview"
     ) -> None:
         self.llm = llm
 
-    async def search_for_data_set(self, query: str) -> DataCrawlerResult:
+    async def search_for_data_set(self, query: str) -> DataSetFinderResult:
         instructions = clean_indents(
             f"""
             You are a data researcher helping to find and analyze datasets to answer questions.
@@ -38,6 +47,7 @@ class DataCrawler:
                 a. Run multiple times in parallel if searches are not dependent on each other
                 b. Run up to 2 iterations of searches (using one iteration to inform the next)
             2. Use the computer use tool to find and download relevant datasets or analyze graphs/visuals that could help answer the question
+                a. Run up to 2 in parallel to try to find multiple datasets (in case one doesn't work out)
             3. Use the data analyzer tool to analyze the downloaded datasets (if any), do math, and provide insights
                 a. Come up with multiple analysis methods (and if its super simple just run the analysis 3 times)
                 b. Run each approach in parallel
@@ -46,9 +56,6 @@ class DataCrawler:
                 a. What the dataset is, where you found it
                 b. Data analysis you did
                 c. Any graphs/visuals you analyzed
-
-            The question you need to help answer is:
-            {query}
 
             Follow these guidelines:
             - Look for datasets on sites like Kaggle, data.gov, FRED, or other public data repositories
@@ -59,6 +66,11 @@ class DataCrawler:
             - If you are trying to find base rates or historical trends consider:
                 - Whether growth rate of a graph is more useful than actual values
                 - Try to give quantiles whenever possible (10%, 25%, 50%, 75%, 90%) (e.g. The graph is above value X 10% of the time, value Y 25% of the time, etc.)
+            - Consider exploring relationships between variables
+            - Be generally proactive in trying different analyses that would be useful for the user.
+
+            The question you need to help answer is:
+            {query}
             """
         )
 
@@ -80,19 +92,17 @@ class DataCrawler:
             max_turns=10,
         )
 
-        final_answer = ""
+        steps = []
         async for event in result.stream_events():
-            if event.type == "run_item_stream_event":
-                event_message = f"{event.item.type}: {event.item.raw_item}\n"
-                final_answer += event_message
-                logger.info(event_message)
-
-        final_answer += f"\n\nFinal output: {result.final_output}"
-        return DataCrawlerResult(answer=final_answer)
+            event_message = event_to_tool_message(event)
+            steps.append(event_message)
+            logger.info(event_message)
+        final_answer = result.final_output
+        return DataSetFinderResult(steps=steps, final_answer=final_answer)
 
     @agent_tool
     @staticmethod
-    def data_set_crawler_tool(query: str) -> str:
+    def find_a_dataset_tool(query: str) -> str:
         """
         This tool helps find and analyze datasets relevant to a question.
         It will:
@@ -105,6 +115,6 @@ class DataCrawler:
         - Questions about relationships between variables
         - Questions that can be answered with numerical data or graphs/visuals
         """
-        data_crawler = DataCrawler()
+        data_crawler = DatasetFinder()
         result = asyncio.run(data_crawler.search_for_data_set(query))
-        return result.answer
+        return result.as_string

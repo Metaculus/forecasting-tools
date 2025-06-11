@@ -6,13 +6,13 @@ import time
 from datetime import datetime
 
 import streamlit as st
-from agents import Agent, RunItem, Runner, Tool, trace
+from agents import Agent, Runner, Tool, trace
 from openai.types.responses import ResponseTextDeltaEvent
 from pydantic import BaseModel, Field
 
 from forecasting_tools.agents_and_tools.computer_use import ComputerUse
 from forecasting_tools.agents_and_tools.data_analyzer import DataAnalyzer
-from forecasting_tools.agents_and_tools.data_set_crawler import DataCrawler
+from forecasting_tools.agents_and_tools.find_a_dataset import DatasetFinder
 from forecasting_tools.agents_and_tools.hosted_file import (
     FileToUpload,
     HostedFile,
@@ -38,7 +38,11 @@ from forecasting_tools.agents_and_tools.question_generators.question_operational
 from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator,
 )
-from forecasting_tools.ai_models.agent_wrappers import AgentSdkLlm, AgentTool
+from forecasting_tools.ai_models.agent_wrappers import (
+    AgentSdkLlm,
+    AgentTool,
+    event_to_tool_message,
+)
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -140,7 +144,7 @@ class ChatPage(AppPage):
             InfoHazardIdentifier.info_hazard_identifier_tool,
             DataAnalyzer.data_analysis_tool,
             ComputerUse.computer_use_tool,
-            DataCrawler.data_set_crawler_tool,
+            DatasetFinder.find_a_dataset_tool,
         ]
 
     @classmethod
@@ -462,18 +466,13 @@ class ChatPage(AppPage):
                 placeholder = st.empty()
             with st.spinner("Thinking..."):
                 async for event in result.stream_events():
-                    new_reasoning = ""
                     if event.type == "raw_response_event" and isinstance(
                         event.data, ResponseTextDeltaEvent
                     ):
                         streamed_text += event.data.delta
-                    elif event.type == "run_item_stream_event":
-                        new_reasoning = (
-                            f"{cls._grab_text_of_item(event.item)}\n\n"
-                        )
-                    # elif event.type == "agent_updated_stream_event":
-                    #     reasoning_text += f"Agent updated: {event.new_agent.name}\n\n"
                     placeholder.write(streamed_text)
+
+                    new_reasoning = event_to_tool_message(event)
                     if new_reasoning:
                         st.sidebar.write(new_reasoning)
 
@@ -497,34 +496,6 @@ class ChatPage(AppPage):
                 last_message["content"][0][
                     "text"
                 ] += f"\n\n---\n\nNOTICE: There is a bug in gemini tool calling in OpenAI agents SDK, here is the content. Consider using openrouter/anthropic/claude-sonnet-4:\n\n {output}."
-
-    @classmethod
-    def _grab_text_of_item(cls, item: RunItem) -> str:
-        text = ""
-        if item.type == "message_output_item":
-            content = item.raw_item.content[0]
-            if content.type == "output_text":
-                # text = content.text
-                text = ""  # the text is already streamed
-            elif content.type == "output_refusal":
-                text = content.refusal
-            else:
-                text = "Error: unknown content type"
-        elif item.type == "tool_call_item":
-            tool_name = getattr(item.raw_item, "name", "unknown_tool")
-            tool_args = getattr(item.raw_item, "arguments", {})
-            text = f"Tool call: {tool_name}({tool_args})"
-        elif item.type == "tool_call_output_item":
-            output = getattr(item, "output", str(item.raw_item))
-            text = f"Tool output:\n\n{output}"
-        elif item.type == "handoff_call_item":
-            handoff_info = getattr(item.raw_item, "name", "handoff")
-            text = f"Handoff call: {handoff_info}"
-        elif item.type == "handoff_output_item":
-            text = f"Handoff output: {str(item.raw_item)}"
-        elif item.type == "reasoning_item":
-            text = f"Reasoning: {str(item.raw_item)}"
-        return text
 
     @classmethod
     def clear_chat_history(cls) -> None:

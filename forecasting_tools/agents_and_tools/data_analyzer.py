@@ -10,6 +10,7 @@ from forecasting_tools.ai_models.agent_wrappers import (
     AiAgent,
     CodingTool,
     agent_tool,
+    event_to_tool_message,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 
@@ -82,15 +83,7 @@ class DataAnalyzer:
 
         final_answer = ""
         async for event in result.stream_events():
-            if (
-                event.type == "run_item_stream_event"
-                and event.item.type == "tool_call_item"
-                and event.item.raw_item.type == "code_interpreter_call"
-            ):
-                final_answer += f"Code interpreter code:\n```python\n{event.item.raw_item.code}\n```\n"
-            # elif event.type == "run_item_stream_event":
-            #     final_answer += f"Other event: {event.item.type}"
-
+            final_answer += event_to_tool_message(event)
         final_answer += f"\n\nFinal output: {result.final_output}"
         return final_answer
 
