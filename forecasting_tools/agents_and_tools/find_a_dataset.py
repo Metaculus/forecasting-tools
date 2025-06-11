@@ -18,7 +18,7 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 logger = logging.getLogger(__name__)
 
 
-class DataSetFinderResult(BaseModel):
+class DatasetFinderResult(BaseModel):
     steps: list[str]
     final_answer: str
 
@@ -39,7 +39,9 @@ class DatasetFinder:
     ) -> None:
         self.llm = llm
 
-    async def search_for_data_set(self, query: str) -> DataSetFinderResult:
+    async def find_and_analyze_data_set(
+        self, query: str
+    ) -> DatasetFinderResult:
         instructions = clean_indents(
             f"""
             You are a data researcher helping to find and analyze datasets to answer questions.
@@ -102,7 +104,7 @@ class DatasetFinder:
                 steps.append(event_message + "\n\n---\n\n")
                 logger.info(event_message)
         final_answer = result.final_output
-        return DataSetFinderResult(steps=steps, final_answer=final_answer)
+        return DatasetFinderResult(steps=steps, final_answer=final_answer)
 
     @agent_tool
     @staticmethod
@@ -120,5 +122,5 @@ class DatasetFinder:
         - Questions that can be answered with numerical data or graphs/visuals
         """
         data_crawler = DatasetFinder()
-        result = asyncio.run(data_crawler.search_for_data_set(query))
+        result = asyncio.run(data_crawler.find_and_analyze_data_set(query))
         return result.as_string

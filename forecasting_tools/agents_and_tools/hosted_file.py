@@ -55,9 +55,15 @@ class HostedFile(BaseModel):
                 f"Zip file too large: {download_link} is {content_length / 1024 / 1024 / 1024} GB. Max is {MAX_GB} GB."
             )
 
-        # Create BytesIO object from response content
+        # Create BytesIO object from response content with size limit
         zip_content = BytesIO()
+        downloaded_size = 0
         for chunk in response.iter_content(chunk_size=8192):
+            downloaded_size += len(chunk)
+            if downloaded_size > MAX_ZIP_SIZE:
+                raise ValueError(
+                    f"Download exceeded maximum size of {MAX_GB} GB"
+                )
             zip_content.write(chunk)
         zip_content.seek(0)
 
@@ -70,12 +76,17 @@ class HostedFile(BaseModel):
 
             for file_info in info_list:
                 full_filename = file_info.filename
-                if full_filename.endswith("/"):  # Skip directories
+                if file_info.is_dir():  # More reliable directory check
                     continue
 
                 # Extract file to memory
                 file_data = BytesIO(zip_ref.read(full_filename))
-                safe_filename = os.path.basename(full_filename)
+                safe_filename = os.path.basename(full_filename).replace(
+                    "..", ""
+                )
+                safe_filename = "".join(
+                    c for c in safe_filename if c.isalnum() or c in "._- "
+                )
                 extracted_files.append(
                     FileToUpload(file_data=file_data, file_name=safe_filename)
                 )

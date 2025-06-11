@@ -151,7 +151,7 @@ class ComputerUse:
         """
         This tool has access to a browser and is specialized for hard to navigate internet tasks.
         Don't use this tool for simple searches, but instead to do things like:
-        1. Naviagate to a site and download a file
+        1. Navigate to a site and download a file
         2. Examine things on sites that need to be viewed visually
         3. See what is on a specific page
         4. etc.
