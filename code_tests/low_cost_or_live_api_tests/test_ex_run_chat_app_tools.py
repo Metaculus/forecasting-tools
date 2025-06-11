@@ -1,5 +1,6 @@
 import pytest
 
+from forecasting_tools.agents_and_tools.find_a_dataset import DatasetFinder
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
     AgentSdkLlm,
@@ -34,8 +35,11 @@ async def test_chat_app_function_tools(
         Here is what to do for some specific tools:
         - For metaculus question tools, use the question ID 37328 and tournament slug "metaculus-cup"
         - For data analyzer tool, use the file ID "file-KCPeaFiP8Szp7PnhXVPFH5" and file name "bot_forecasts_q1.csv" and ask for number of binary questions
+        - For computer use tool, ask it to download a csv from https://fred.stlouisfed.org/series/GDP and make sure it returns to you a download link and a OpenAI File ID.
         """
     )
+    if function_tool == DatasetFinder.find_a_dataset_tool:
+        pytest.skip("DatasetFinder is not supported in this test")
     llm = AgentSdkLlm(model="openrouter/openai/gpt-4.1")
     agent = AiAgent(
         name="Test Agent",
