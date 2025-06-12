@@ -168,18 +168,6 @@ class GeneralLlmInstancesToTest:
                 GeneralLlm(model="exa/exa"),
                 self._get_cheap_user_message(),
             ),
-            ModelTest(  # Test longer query
-                GeneralLlm(model="exa/exa-pro"),
-                """
-                What are the key factors that led to the rise and fall of the Roman Empire?
-                Please analyze the political, economic, social, and military aspects that
-                contributed to its expansion and eventual decline.
-                Consider the role of leadership, technological innovations,
-                cultural integration, and external pressures.
-                How did the empire's vast size and diverse population impact
-                its governance and stability?
-                """,
-            ),
         ]
 
     def all_tests_with_names(self) -> list[tuple[str, ModelTest]]:

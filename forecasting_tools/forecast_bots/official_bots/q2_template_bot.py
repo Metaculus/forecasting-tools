@@ -79,7 +79,7 @@ class Q2TemplateBot2025(ForecastBot):
                 Question:
                 {question}
                 """
-            )
+            )  # NOTE: The full question (not just question title) ended up being passed into the prompt in Q2 after a refactor at the beginning of the quarter.
 
             if isinstance(researcher, GeneralLlm):
                 research = await researcher.invoke(prompt)

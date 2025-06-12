@@ -4,6 +4,8 @@ import pytest
 
 from forecasting_tools.util.stats import (
     ConfidenceIntervalCalculator,
+    MeanHypothesisCalculator,
+    ObservationStats,
     ProportionStatCalculator,
 )
 
@@ -183,10 +185,8 @@ class TestConfidenceInterval:
         std = 50
         confidence = 0.95
 
-        confidence_interval = (
-            ConfidenceIntervalCalculator.confidence_interval_from_mean_and_std(
-                mean, std, num_observations, confidence
-            )
+        confidence_interval = ConfidenceIntervalCalculator._confidence_interval_from_mean_and_std(
+            mean, std, num_observations, confidence
         )
 
         assert confidence_interval.mean == mean
@@ -201,10 +201,8 @@ class TestConfidenceInterval:
         std = 7
         confidence = 0.95
 
-        confidence_interval = (
-            ConfidenceIntervalCalculator.confidence_interval_from_mean_and_std(
-                mean, std, num_observations, confidence
-            )
+        confidence_interval = ConfidenceIntervalCalculator._confidence_interval_from_mean_and_std(
+            mean, std, num_observations, confidence
         )
 
         assert confidence_interval.margin_of_error == pytest.approx(1.372, 0.1)
@@ -401,3 +399,51 @@ class TestConfidenceInterval:
             ConfidenceIntervalCalculator.confidence_interval_from_observations(
                 data, confidence
             )
+
+
+class TestMeanStatCalculator:
+
+    def test_mean_is_greater_than_hypothesis_mean(self) -> None:
+        # https://ecampusontario.pressbooks.pub/introstats/chapter/8-7-hypothesis-tests-for-a-population-mean-with-unknown-population-standard-deviation/
+        observations = [
+            65.0,
+            67.0,
+            66.0,
+            68.0,
+            72.0,
+            65.0,
+            70.0,
+            63.0,
+            63.0,
+            71.0,
+        ]
+        hypothesis_mean = 65.0
+        confidence = 0.99
+
+        hypothesis_test = MeanHypothesisCalculator.test_if_mean_is_greater_than_hypothesis_mean(
+            observations, hypothesis_mean, confidence
+        )
+
+        assert hypothesis_test.p_value == pytest.approx(0.0396, 0.01)
+        assert hypothesis_test.hypothesis_rejected == False
+
+    def test_mean_is_equal_to_hypothesis_mean(self) -> None:
+        # https://ecampusontario.pressbooks.pub/introstats/chapter/8-7-hypothesis-tests-for-a-population-mean-with-unknown-population-standard-deviation/
+        hypothesis_mean = 3.78
+        count = 100
+        average = 3.62
+        standard_deviation = 0.7
+        confidence = 0.95
+
+        observation_stats = ObservationStats(
+            average=average,
+            standard_deviation=standard_deviation,
+            count=count,
+        )
+
+        hypothesis_test = MeanHypothesisCalculator._test_if_mean_is_equal_to_than_hypothesis_mean_w_observation_stats(
+            observation_stats, hypothesis_mean, confidence
+        )
+
+        assert hypothesis_test.p_value == pytest.approx(0.0244, 0.01)
+        assert hypothesis_test.hypothesis_rejected == True

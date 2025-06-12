@@ -304,6 +304,17 @@ class GeneralLlm(
             "exa/"
         ), f"model {self.model} is not an exa model but is being called like one"
 
+        if len(str(prompt)) > 10_000:
+            logger.warning(
+                "Shortening prompt since exa models have a 10k token limit"
+            )
+            prompt = str(prompt)[:9_000]
+            # raise ValueError(
+            #     f"Prompt is too long. Exa models have a 10k token limit. "
+            #     f"Prompt length: {len(str(prompt))}. "
+            #     f"Prompt:\n{str(prompt)[:1000]}...{str(prompt)[-1000:]}"
+            # )
+
         api_key = self.litellm_kwargs.get("api_key")
         timeout = self.litellm_kwargs.get("timeout")
         temperature = self.litellm_kwargs.get("temperature")

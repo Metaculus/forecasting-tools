@@ -91,3 +91,21 @@ def test_citations_are_populated() -> None:
     assert (
         "http:" not in response and "www." not in response
     ), "Citations are populated"
+
+
+async def test_exa_errors_with_prompt_too_long() -> None:
+    model = GeneralLlm(model="exa/exa-pro")
+    prompt = """
+        What are the key factors that led to the rise and fall of the Roman Empire? Please analyze the political, economic, social, and military aspects thatcontributed to its expansion and eventual decline.Consider the role of leadership, technological innovations,cultural integration, and external pressures.How did the empire's vast size and diverse population impact its governance and stability?
+        What are the key factors that led to the rise and fall of the Roman Empire? Please analyze the political, economic, social, and military aspects thatcontributed to its expansion and eventual decline.Consider the role of leadership, technological innovations,cultural integration, and external pressures.How did the empire's vast size and diverse population impact its governance and stability?
+        What are the key factors that led to the rise and fall of the Roman Empire? Please analyze the political, economic, social, and military aspects thatcontributed to its expansion and eventual decline.Consider the role of leadership, technological innovations,cultural integration, and external pressures.How did the empire's vast size and diverse population impact its governance and stability?
+        What are the key factors that led to the rise and fall of the Roman Empire? Please analyze the political, economic, social, and military aspects thatcontributed to its expansion and eventual decline.Consider the role of leadership, technological innovations,cultural integration, and external pressures.How did the empire's vast size and diverse population impact its governance and stability?
+        What are the key factors that led to the rise and fall of the Roman Empire? Please analyze the political, economic, social, and military aspects thatcontributed to its expansion and eventual decline.Consider the role of leadership, technological innovations,cultural integration, and external pressures.How did the empire's vast size and diverse population impact its governance and stability?
+        What are the key factors that led to the rise and fall of the Roman Empire? Please analyze the political, economic, social, and military aspects thatcontributed to its expansion and eventual decline.Consider the role of leadership, technological innovations,cultural integration, and external pressures.How did the empire's vast size and diverse population impact its governance and stability?
+        What are the key factors that led to the rise and fall of the Roman Empire? Please analyze the political, economic, social, and military aspects thatcontributed to its expansion and eventual decline.Consider the role of leadership, technological innovations,cultural integration, and external pressures.How did the empire's vast size and diverse population impact its governance and stability?
+        """
+    assert (
+        len(prompt) > 10_000
+    ), "The prompt must be longer than 10k tokens to error"
+    with pytest.raises(Exception):
+        await model.invoke(prompt)
