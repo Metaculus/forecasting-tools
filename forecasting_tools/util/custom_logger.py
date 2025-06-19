@@ -38,19 +38,19 @@ class CustomLogger:
     DEFAULT_MESSAGE_FORMAT = (
         "%(asctime)s - %(levelname)s - %(name)s - %(funcName)s  - %(message)s"
     )
-    LATEST_DEBUG_LOG_FILE_PATH = file_manipulation.get_absolute_path(
+    LATEST_DEBUG_LOG_FILE_PATH = file_manipulation.normalize_package_path(
         "logs/latest_debug.log"
     )
-    ERROR_LOG_FILE_PATH = file_manipulation.get_absolute_path(
+    ERROR_LOG_FILE_PATH = file_manipulation.normalize_package_path(
         "logs/warnings/warnings.log"
     )
-    DEBUG_LOG_FILE_PATH = file_manipulation.get_absolute_path(
+    DEBUG_LOG_FILE_PATH = file_manipulation.normalize_package_path(
         "logs/debug/debug.log"
     )
-    INFO_LOG_FILE_PATH = file_manipulation.get_absolute_path(
+    INFO_LOG_FILE_PATH = file_manipulation.normalize_package_path(
         "logs/info/info.log"
     )
-    LATEST_INFO_LOG_FILE_PATH = file_manipulation.get_absolute_path(
+    LATEST_INFO_LOG_FILE_PATH = file_manipulation.normalize_package_path(
         "logs/latest_info.log"
     )
     __message_to_append_to_file = "Message to be set..."

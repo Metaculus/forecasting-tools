@@ -155,7 +155,7 @@ def profile_coroutine_list(coroutine_list: list[Coroutine]) -> pstats.Stats:
     logger.info(f"Finished profiling {len(coroutine_list)} coroutines")
 
     # Create a statistics object
-    log_path = file_manipulation.get_absolute_path(
+    log_path = file_manipulation.normalize_package_path(
         f"logs/misc/profile_stats_{coroutine_name}_{time.time()}.txt"
     )
     with open(log_path, "w") as file:

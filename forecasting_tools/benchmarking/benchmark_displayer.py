@@ -592,7 +592,7 @@ def run_benchmark_streamlit_page(
     elif isinstance(input, str):
         project_directory = input
     else:
-        project_directory = file_manipulation.get_absolute_path("")
+        project_directory = file_manipulation.normalize_package_path("")
 
     st.write("Select JSON files containing BenchmarkForBot objects.")
 
