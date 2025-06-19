@@ -15,32 +15,29 @@ def get_absolute_path(path_in_package: str) -> str:
     If there is no parameter given, it will just give the absolute path of the package
     @param path_in_package: The path of the file in the package starting just after the package name (e.g. "data/claims.csv")
     """
+    return path_in_package
     # If it's already an absolute path, return it as is
-    if os.path.isabs(path_in_package):
-        return path_in_package
+    # if os.path.isabs(path_in_package):
+    #     return path_in_package
 
-    path_in_package = (
-        os.path.normpath(path_in_package.strip("/"))
-        if path_in_package != ""
-        else ""
-    )
+    # path_in_package = (
+    #     os.path.normpath(path_in_package.strip("/"))
+    #     if path_in_package != ""
+    #     else ""
+    # )
 
-    package_name = _get_package_name()
-    package_path = _get_absolute_path_of_directory(package_name)
+    # package_name = _get_package_name()
+    # package_path = _get_absolute_path_of_directory(package_name)
 
-    if path_in_package.startswith(package_name):
-        updated_path_in_package = path_in_package.removeprefix(
-            package_name
-        ).strip("/")
-        absolute_path = os.path.join(package_path, updated_path_in_package)
-    else:
-        one_level_up_path = os.path.dirname(package_path)
-        assert os.path.exists(
-            os.path.join(one_level_up_path, "pyproject.toml")
-        ), "pyproject.toml not found in parent directory"
-        absolute_path = os.path.join(one_level_up_path, path_in_package)
-
-    return absolute_path.rstrip("/")
+    # if path_in_package.startswith(package_name):
+    #     updated_path_in_package = path_in_package.removeprefix(
+    #         package_name
+    #     ).strip("/")
+    #     absolute_path = os.path.join(package_path, updated_path_in_package)
+    # else:
+    #     one_level_up_path = os.path.dirname(package_path)
+    #     absolute_path = os.path.join(one_level_up_path, path_in_package)
+    # return absolute_path.rstrip("/")
 
 
 def _get_package_name() -> str:
