@@ -5,7 +5,7 @@ import os
 import urllib.request
 
 from forecasting_tools import (
-    ForecastReport,
+    DataOrganizer,
     MetaculusApi,
     MetaculusQuestion,
     TemplateBot,
@@ -50,7 +50,7 @@ def test_example_questions_forecasted_saved_and_loaded() -> None:
     file = files[0]
     file_name = os.path.basename(file)
 
-    loaded_forecast_reports = ForecastReport.load_json_from_file_path(
+    loaded_forecast_reports = DataOrganizer.load_reports_from_file_path(
         os.path.join(folder_to_save_reports_to, file_name)
     )
     assert (
