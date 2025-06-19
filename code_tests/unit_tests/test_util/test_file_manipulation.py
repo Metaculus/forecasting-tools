@@ -151,3 +151,28 @@ def test_add_to_jsonl_file_and_load_json_and_jsonl() -> None:
             file_manipulation.add_to_jsonl_file(temp_jsonl_path, [test_data4])
             loaded_jsonl = file_manipulation.load_jsonl_file(temp_jsonl_path)
             assert loaded_jsonl == test_list
+
+
+def test_file_creation_at_top_and_lower_levels() -> None:
+    test_json = {"a": 1, "b": 2}
+    test_json_file_path = "test_file.json"
+
+    try:
+        file_manipulation.write_json_file(test_json_file_path, [test_json])
+        loaded_json = file_manipulation.load_json_file(test_json_file_path)
+        assert loaded_json == [test_json]
+    finally:
+        os.remove(test_json_file_path)
+
+    test_nested_json_file_path = "temp/test_nested_file.json"
+
+    try:
+        file_manipulation.write_json_file(
+            test_nested_json_file_path, [test_json]
+        )
+        loaded_json = file_manipulation.load_json_file(
+            test_nested_json_file_path
+        )
+        assert loaded_json == [test_json]
+    finally:
+        os.remove(test_nested_json_file_path)

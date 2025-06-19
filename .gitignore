@@ -7,6 +7,8 @@ temp
 sandbox.py
 sandbox.ipynb
 benchmarks/
+test_file.csv
+test_file.json
 
 .DS_Store
 

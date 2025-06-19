@@ -24,15 +24,15 @@ Here are the tools most likely to be useful to you:
 - 🤖 **In-House Metaculus Bots**: You can see all the bots that Metaculus is running on their site in `run_bots.py`
 
 Here are some other features of the project (not all are documented yet):
-- **Prompt Optimizer:** for letting AI iterate through 100+ forecasting bot prompts
-- **Question Decomposer/Operationalizer:** To turn a question or topic into relevant forecastable sub-questions
 - **Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and GPT. It is more configurable than Perplexity AI, allowing you to use any AI model, instruct the AI to decide on filters, get citations linking to exact paragraphs, etc.
 - **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
 - **Base Rate Researcher:** for calculating event probabilities (still experimental)
 - **Niche List Researcher:** for analyzing very specific lists of past events or items (still experimental)
 - **Fermi Estimator:** for breaking down numerical estimates (still experimental)
 - **Monetary Cost Manager:** for tracking AI and API expenses
-- **Other experimental tools:** See the demo site for other AI forecasting tools that this project supports (not all are documented)
+- **Prompt Optimizer:** for letting AI iterate through 100+ forecasting bot prompts
+- **Question Decomposer/Operationalizer:** To turn a question or topic into relevant forecastable sub-questions
+- **Other experimental tools:** See the demo site for other AI forecasting tools that this project supports (not all are documented). Also see the `scripts` folder for other common workflows and entry points into the code.
 
 All the examples below are in a Jupyter Notebook called `README.ipynb` which you can run locally to test the package (make sure to run the first cell though).
 
@@ -122,7 +122,7 @@ for report in reports:
 
 # You can also save and load questions and reports
 file_path = "temp/reports.json"
-DataOrganizer.save_reports_to_file_path(reports, file_path)
+DataOrganizer.save_reports_to_file_path(reports, file_path) # This will overwrite the file if it already exists
 loaded_reports = DataOrganizer.load_reports_from_file_path(file_path)
 ```
 
@@ -298,6 +298,8 @@ benchmarker = Benchmarker(
     forecast_bots=bots,
     number_of_questions_to_use=2,  # Recommended 100+ for meaningful results
     file_path_to_save_reports="benchmarks/",
+        # It will create a file name for you if given a folder.
+        # If a file name is given, and the file already exists, it will overwrite it.
     concurrent_question_batch_size=5,
 )
 benchmarks: list[BenchmarkForBot] = await benchmarker.run_benchmark()
@@ -364,7 +366,7 @@ benchmarks: list[BenchmarkForBot] = BenchmarkForBot.load_json_from_file_path(fil
 
 # Save
 new_benchmarks: list[BenchmarkForBot] = benchmarks
-BenchmarkForBot.save_object_list_to_file_path(new_benchmarks, file_path)
+BenchmarkForBot.save_object_list_to_file_path(new_benchmarks, file_path) # Will overwrite the file if it already exists
 
 # To/From Json String
 single_benchmark = benchmarks[0]
@@ -418,7 +420,7 @@ print(f"Num filtered questions: {len(questions)}")
 
 # Load and save questions/reports
 file_path = "temp/questions.json"
-DataOrganizer.save_questions_to_file_path(questions, file_path)
+DataOrganizer.save_questions_to_file_path(questions, file_path) # Will overwrite the file if it already exists
 questions = DataOrganizer.load_questions_from_file_path(file_path)
 
 # Get benchmark questions
@@ -845,12 +847,6 @@ There are many ways to manager Docker containers, but generally if you download 
 ### Alternatives to Docker
 If you choose not to run Docker, you can use poetry to set up a local virtual environment. If you are on Ubuntu, you should be able to just read through and then run `.devcontainer/postinstall.sh`. If you aren't on Ubuntu, check out the links in the postinstall file for where install instructions for dependencies were originally found. You may also want to take a look at VSCode extensions that would be installed (see the list in the `.devcontainer/devcontainer.json` file) so that some VSCode workplace settings work out of the box (e.g. automatic Black Formatting).
 
-## Private/Custom Code
-Given you have forked, if you have a custom bot you don't want committed to the repository when you add code to the package, its probably best to create a branch locally that holds your custom branch in order to leave the main branch open to pull updates or push changes you want to add. If you add all your custom files in a new folder (e.g. custom) then you shouldn't have merge conflicts, and can more easily remove the folder when ready to pull or push.
-
-If you want to add your bot to the package, feel free to add your bot under `forecasting/forecast_bots/community` and other helper classes under folders that make sense.
-
-You should be able to change up `run_bot.py` and merge, and a github action will make sure it doesn't overwrite the main repo's run_bot.py (though not a hard fix if not).
 
 ## Running the Front End
 You can run any front end folder in the front_end directory by executing `streamlit run front_end/Home.py`. This will start a development server for you that you can run.

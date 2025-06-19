@@ -89,7 +89,7 @@ def create_or_overwrite_file(file_path_in_package: str, text: str) -> None:
     This function writes text to a file, and creates the file if it does not exist
     """
     full_file_path = normalize_package_path(file_path_in_package)
-    os.makedirs(os.path.dirname(full_file_path), exist_ok=True)
+    _create_directory_if_needed(full_file_path)
     with open(full_file_path, "w") as file:
         file.write(text)
 
@@ -100,9 +100,14 @@ def create_or_append_to_file(file_path_in_package: str, text: str) -> None:
     This function appends text to a file, and creates the file if it does not exist
     """
     full_file_path = normalize_package_path(file_path_in_package)
-    os.makedirs(os.path.dirname(full_file_path), exist_ok=True)
+    _create_directory_if_needed(full_file_path)
     with open(full_file_path, "a") as file:
         file.write(text)
+
+
+def _create_directory_if_needed(file_path: str) -> None:
+    if "/" in file_path:
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
 
 @skip_if_file_writing_not_allowed
@@ -114,7 +119,7 @@ def log_to_file(
     """
     new_text = f"{type} - {dat.datetime.now()} - {text}"
     full_file_path = normalize_package_path(file_path_in_package)
-    os.makedirs(os.path.dirname(full_file_path), exist_ok=True)
+    _create_directory_if_needed(full_file_path)
     with open(full_file_path, "a+") as file:
         file.write(new_text + "\n")
 
@@ -124,7 +129,7 @@ def write_image_file(
     file_path_in_package: str, image: Image.Image, format: str | None = None
 ) -> None:
     full_file_path = normalize_package_path(file_path_in_package)
-    os.makedirs(os.path.dirname(full_file_path), exist_ok=True)
+    _create_directory_if_needed(full_file_path)
     image.save(full_file_path, format=format)
 
 
@@ -141,7 +146,7 @@ def write_csv_file(
     Validates that all dictionaries have the same keys.
     """
     full_file_path = normalize_package_path(file_path_in_package)
-    os.makedirs(os.path.dirname(full_file_path), exist_ok=True)
+    _create_directory_if_needed(full_file_path)
 
     if not data:
         create_or_overwrite_file(file_path_in_package, "")
