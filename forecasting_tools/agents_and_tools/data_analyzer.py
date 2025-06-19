@@ -49,13 +49,13 @@ class DataAnalyzer:
             f"""
             You are a data analyst who uses code to solve problems.
 
-            You have been given the following instructions:
+            **You have been given the following instructions:**
             {instructions}
 
-            You have been given the following additional context:
+            **You have been given the following additional context:**
             {additional_context}
 
-            You have access to the following files:
+            **You have access to the following files:**
             {available_files_context}
             """
         )

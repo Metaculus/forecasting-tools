@@ -46,7 +46,9 @@ class MetaculusApi:
     Q3_2024_QUARTERLY_CUP = 3366
     Q4_2024_QUARTERLY_CUP = 3672
     Q1_2025_QUARTERLY_CUP = 32630
-    CURRENT_QUARTERLY_CUP_ID = "metaculus-cup"
+    CURRENT_QUARTERLY_CUP_ID = (
+        "metaculus-cup"  # Consider this parameter deprecated
+    )
     METACULUS_CUP_2025_1_ID = 32726
     CURRENT_METACULUS_CUP_ID = "metaculus-cup"
     CURRENT_AI_COMPETITION_ID = AI_COMPETITION_ID_Q2

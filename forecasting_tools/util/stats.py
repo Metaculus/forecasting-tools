@@ -102,23 +102,27 @@ class ConfidenceIntervalCalculator:
         - Either the sample is from a normally distributed population or n >30
         - Observations are independent
         """
-        assert 0 < confidence < 1, "Confidence level must be between 0 and 1"
-        assert len(observations) > 0, "Observation list must be non-empty"
+        assert 0 <= confidence <= 1, "Confidence must be between 0 and 1"
+        assert len(observations) > 0, "Observations must be non-empty"
         assert (
             len(observations) > 3
         ), "Must have at least 3 observations to check for normality"
 
-        test_normality_assumption(len(observations), observations)
+        sample_size = len(observations)
+        if sample_size < 2:
+            raise ValueError("Not enough data for T-based confidence interval")
+
+        test_normality_assumption(sample_size, observations)
+
         sample_mean = np.mean(observations)
         sample_std = np.std(observations, ddof=1)
-        sample_size = len(observations)
 
-        return cls._confidence_interval_from_mean_and_std(
+        return cls.confidence_interval_from_mean_and_std(
             float(sample_mean), float(sample_std), sample_size, confidence
         )
 
     @classmethod
-    def _confidence_interval_from_mean_and_std(
+    def confidence_interval_from_mean_and_std(
         cls,
         sample_mean: float,
         sample_std: float,
@@ -130,7 +134,6 @@ class ConfidenceIntervalCalculator:
         critical_value = t.ppf(1 - alpha / 2, sample_size - 1)
         margin_of_error = critical_value * standard_error
 
-        test_normality_assumption(sample_size)
         return ConfidenceInterval(
             mean=float(sample_mean),
             margin_of_error=margin_of_error,
@@ -245,7 +248,7 @@ class MeanHypothesisCalculator:
         if hypothesis_rejected:
             written_conclusion = f"We reject the null hypothesis (the population mean is less than or equal to {hypothesis_mean}) with {confidence*100:.2f}% confidence since at the {alpha*100:.2f}% level of significance, the sample data do, in fact, give enough evidence to conclude that the population mean is greater than {hypothesis_mean}. If the null hypothesis is true, then there is a {p_value*100:.2f}% probability that the sample (observed) mean would be observed at {average} or more. Since the mean value observed in the sample was {average} we can reject the null hypothesis. This also means there is sufficient evidence to support the alternative hypothesis that the population mean is greater than {hypothesis_mean}. The sample consisted of {count} observations."
         else:
-            written_conclusion = f"We fail to reject the null hypothesis (the population mean is less than or equal to {hypothesis_mean}) since at the {alpha*100:.2f}% level of significance, the sample data do not give enough evidence to conclude that the population mean is greater than {hypothesis_mean}. If the null hypothesis is true, then there is a {p_value*100:.2f}% probability that the sample (observed) mean would be observed at {average} or more. Thus there is not enough evidence to suggest that the population mean is greater than {hypothesis_mean} (i.e. we would need to run a separate test to say it is less than {hypothesis_mean}). The sample consisted of {count} observations."
+            written_conclusion = f"We fail to reject the null hypothesis (the population mean is less than or equal to {hypothesis_mean}) since at the {alpha*100:.2f}% level of significance, the sample data do not give enough evidence to conclude that the population mean is greater than {hypothesis_mean}. If the null hypothesis is true, then there is a {p_value*100:.2f}% probability that the sample (observed) mean would be observed at {average} or more. Thus there is not enough evidence to suggest that the population mean is greater than {hypothesis_mean}. The sample consisted of {count} observations."
         return HypothesisTest(
             p_value=p_value,
             hypothesis_rejected=hypothesis_rejected,

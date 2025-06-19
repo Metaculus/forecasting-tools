@@ -74,7 +74,7 @@ class DatasetFinder:
             - Consider exploring relationships between variables
             - Be generally proactive in trying different analyses that would be useful for the user.
 
-            The question you need to help answer is:
+            The question you need to help answer is below:
             {query}
             """
         )

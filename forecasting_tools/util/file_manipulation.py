@@ -48,6 +48,8 @@ def _get_package_name() -> str:
     while current_path != current_path.parent:
         current_path = current_path.parent
         parent_path = current_path.parent
+        if current_path.name == "forecasting_tools":
+            return current_path.name
         if (parent_path / "pyproject.toml").exists() or (
             parent_path / "setup.py"
         ).exists():
