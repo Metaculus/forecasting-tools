@@ -4,10 +4,15 @@ import json
 import os
 import urllib.request
 
-from forecasting_tools import MetaculusApi, MetaculusQuestion, TemplateBot
+from forecasting_tools import (
+    ForecastReport,
+    MetaculusApi,
+    MetaculusQuestion,
+    TemplateBot,
+)
 
 
-def test_example_questions_forecasted() -> None:
+def test_example_questions_forecasted_saved_and_loaded() -> None:
     folder_to_save_reports_to = "logs/reports/"
     template_bot = TemplateBot(
         research_reports_per_question=1,
@@ -40,7 +45,23 @@ def test_example_questions_forecasted() -> None:
         assert forecast_report.prediction
 
     assert os.path.exists(folder_to_save_reports_to)
-    assert os.listdir(folder_to_save_reports_to)
+    files = os.listdir(folder_to_save_reports_to)
+    assert len(files) == 1, f"Expected 1 file, got {files}"
+    file = files[0]
+    file_name = os.path.basename(file)
+
+    loaded_forecast_reports = ForecastReport.load_json_from_file_path(
+        os.path.join(folder_to_save_reports_to, file_name)
+    )
+    assert (
+        len(loaded_forecast_reports) > 0
+    ), f"Expected at least 1 forecast report, got {loaded_forecast_reports}"
+
+    for loaded_forecast_report in loaded_forecast_reports:
+        assert loaded_forecast_report.question.id_of_question in [
+            forecast_report.question.id_of_question
+            for forecast_report in forecast_reports
+        ], f"Loaded forecast report {loaded_forecast_report.question.id_of_question} is not in the list of forecasted questions ({[forecast_report.question.id_of_question for forecast_report in forecast_reports]})"
 
 
 def test_forecasting_tools_is_latest_version() -> None:

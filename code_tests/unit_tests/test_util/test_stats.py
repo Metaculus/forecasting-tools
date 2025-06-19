@@ -185,8 +185,10 @@ class TestConfidenceInterval:
         std = 50
         confidence = 0.95
 
-        confidence_interval = ConfidenceIntervalCalculator._confidence_interval_from_mean_and_std(
-            mean, std, num_observations, confidence
+        confidence_interval = (
+            ConfidenceIntervalCalculator.confidence_interval_from_mean_and_std(
+                mean, std, num_observations, confidence
+            )
         )
 
         assert confidence_interval.mean == mean
@@ -201,8 +203,10 @@ class TestConfidenceInterval:
         std = 7
         confidence = 0.95
 
-        confidence_interval = ConfidenceIntervalCalculator._confidence_interval_from_mean_and_std(
-            mean, std, num_observations, confidence
+        confidence_interval = (
+            ConfidenceIntervalCalculator.confidence_interval_from_mean_and_std(
+                mean, std, num_observations, confidence
+            )
         )
 
         assert confidence_interval.margin_of_error == pytest.approx(1.372, 0.1)
