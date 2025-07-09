@@ -326,18 +326,18 @@ class GeneralLlm(
         temperature = self.litellm_kwargs.get("temperature")
         extra_headers = self.litellm_kwargs.get("extra_headers")
 
-        client = AsyncOpenAI(
+        async with AsyncOpenAI(
             base_url="https://api.exa.ai",
             api_key=api_key,
-        )
+        ) as client:
 
-        completion = await client.chat.completions.create(
-            model=self._litellm_model,
-            messages=self.model_input_to_message(prompt),  # type: ignore
-            temperature=temperature,
-            timeout=timeout,
-            extra_headers=extra_headers,
-        )
+            completion = await client.chat.completions.create(
+                model=self._litellm_model,
+                messages=self.model_input_to_message(prompt),  # type: ignore
+                temperature=temperature,
+                timeout=timeout,
+                extra_headers=extra_headers,
+            )
 
         response_text = completion.choices[0].message.content
         if response_text is None:

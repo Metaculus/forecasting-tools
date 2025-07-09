@@ -25,6 +25,18 @@ class ToolName(str, Enum):
     PERPLEXITY_PRO_SEARCH = "perplexity_pro_search"
     MOCK_TOOL = "mock_tool"
 
+    @staticmethod
+    def name_to_tool_map() -> dict[ToolName, AgentTool]:
+        return {
+            ToolName.ASKNEWS: query_asknews,
+            ToolName.PERPLEXITY_LOW_COST: perplexity_quick_search_low_context,
+            ToolName.PERPLEXITY_PRO_SEARCH: perplexity_pro_search,
+            ToolName.MOCK_TOOL: mock_tool,
+        }
+
+    def get_agent_tool(self) -> AgentTool:
+        return self.name_to_tool_map()[self]
+
 
 @agent_tool
 def mock_tool(query: str) -> str:
@@ -39,17 +51,8 @@ class ResearchTool(BaseModel):
     max_calls: int | None
 
     @property
-    def name_to_tool_map(self) -> dict[ToolName, AgentTool]:
-        return {
-            ToolName.ASKNEWS: query_asknews,
-            ToolName.PERPLEXITY_LOW_COST: perplexity_quick_search_low_context,
-            ToolName.PERPLEXITY_PRO_SEARCH: perplexity_pro_search,
-            ToolName.MOCK_TOOL: mock_tool,
-        }
-
-    @property
     def tool(self) -> AgentTool:
-        return self.name_to_tool_map[self.tool_name]
+        return self.tool_name.get_agent_tool()
 
 
 @dataclass

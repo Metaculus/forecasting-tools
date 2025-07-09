@@ -25,17 +25,17 @@ async def run_optimizer() -> None:
     research_tools = [
         ResearchTool(
             tool_name=ToolName.PERPLEXITY_LOW_COST,
-            max_calls=3,
+            max_calls=1,
         ),
-        # ResearchTool(
-        #     tool_name=ToolName.ASKNEWS,
-        #     max_calls=1,
-        # ),
+        ResearchTool(
+            tool_name=ToolName.ASKNEWS,
+            max_calls=1,
+        ),
     ]
     ideation_llm = "openrouter/google/gemini-2.5-pro"
-    research_coordination_llm = "openrouter/openai/gpt-4.1-mini"
+    research_coordination_llm = "openrouter/openai/gpt-4.1-nano"
     reasoning_llm = GeneralLlm(
-        model="openrouter/openai/gpt-4.1-mini", temperature=0.3
+        model="openrouter/openai/gpt-4.1-nano", temperature=0.3
     )
     folder_to_save_benchmarks = "logs/forecasts/benchmarks/"
     num_iterations_per_run = 2

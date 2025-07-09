@@ -19,6 +19,7 @@ from forecasting_tools.auto_optimizers.question_plus_research import (
     ResearchItem,
     ResearchType,
 )
+from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 
 fake_question_1 = ForecastingTestManager.get_fake_binary_question(
     question_text="Q1"
@@ -271,3 +272,27 @@ def test_split_and_combine_prompts_generate_equivalent_strings() -> None:
     )
     assert new_research_prompt == research_prompt
     assert new_reasoning_prompt == reasoning_prompt
+
+
+def test_get_benchmark_config_dict() -> None:
+    customizable_bot = CustomizableBot(
+        reasoning_prompt=f"Test prompt with {CustomizableBot.REQUIRED_REASONING_PROMPT_VARIABLES}",
+        research_prompt=f"Research prompt with {CustomizableBot.REQUIRED_RESEARCH_PROMPT_VARIABLES}",
+        research_tools=[mock_research_tool],
+        cached_research=[],
+        cached_research_type=None,
+        llms={"default": mock_llm, "researcher": "gpt-4o-mini"},
+        originating_idea=PromptIdea(
+            short_name="Test idea",
+            full_text="Test idea process",
+        ),
+    )
+    config = customizable_bot.get_config()
+    assert config is not None
+
+    benchmark = BenchmarkForBot.initialize_benchmark_for_bot(
+        customizable_bot,
+        10,
+    )
+    benchmark_config = benchmark.forecast_bot_config
+    assert benchmark_config is not None

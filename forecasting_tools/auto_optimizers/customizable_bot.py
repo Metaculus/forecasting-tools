@@ -174,7 +174,9 @@ class CustomizableBot(ForecastBot):
         cached_research_type: ResearchType | None,
         originating_idea: PromptIdea | None,
         parameters_to_exclude_from_config_dict: list[str] | None = [
-            "research_snapshots"
+            "research_snapshots",
+            "cached_research",
+            "cached_research_type",
         ],
         *args,
         **kwargs,
