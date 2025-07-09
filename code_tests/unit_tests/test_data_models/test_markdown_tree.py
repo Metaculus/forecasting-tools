@@ -394,6 +394,47 @@ Another main content"""
         second_main = result[1]
         assert second_main.title == "Another Main"
 
+    def test_heading_level_skipped_if_no_level_1_header(self) -> None:
+        markdown = clean_indents(
+            """
+            ## Section 1
+            Content 1
+            #### Subsection 1
+            Sub content 1
+            # Section 2
+            Content 2
+            ### Subsection 2 with another hashtag #1
+            Sub content 2
+            """
+        )
+
+        result = MarkdownTree.turn_markdown_into_report_sections(markdown)
+
+        assert len(result) == 2
+        section_1 = result[0]
+        assert section_1.title == "Section 1"
+        assert section_1.level == 2
+        assert section_1.section_content == "## Section 1\nContent 1"
+        assert len(section_1.sub_sections) == 1
+        subsection_1 = section_1.sub_sections[0]
+        assert subsection_1.title == "Subsection 1"
+        assert subsection_1.level == 4
+        assert (
+            subsection_1.section_content == "#### Subsection 1\nSub content 1"
+        )
+        section_2 = result[1]
+        assert section_2.title == "Section 2"
+        assert section_2.level == 1
+        assert section_2.section_content == "# Section 2\nContent 2"
+        assert len(section_2.sub_sections) == 1
+        subsection_2 = section_2.sub_sections[0]
+        assert subsection_2.title == "Subsection 2 with another hashtag #1"
+        assert subsection_2.level == 3
+        assert (
+            subsection_2.section_content
+            == "### Subsection 2 with another hashtag #1\nSub content 2"
+        )
+
 
 class TestReportSectionsToMarkdown:
 

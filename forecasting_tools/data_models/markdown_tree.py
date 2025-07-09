@@ -89,7 +89,7 @@ class MarkdownTree(BaseModel):
         flattened_running_section_stack: list[MarkdownTree] = []
 
         for line in lines:
-            line_is_header = re.match(r"^#{1,6} ", line)
+            line_is_header = re.match(r"^#{1,8} ", line)
             at_top_level = not flattened_running_section_stack
             should_create_new_header_section = line_is_header
             within_normal_section_at_non_header_line = (
@@ -146,7 +146,7 @@ class MarkdownTree(BaseModel):
     @staticmethod
     def __create_new_section_using_header_line(line: str) -> MarkdownTree:
         assert line.startswith("#")
-        heading_level = line.count("#")
+        heading_level = len(line) - len(line.lstrip("#"))
         title = line.strip("# ").strip()
         section = MarkdownTree(
             level=heading_level,

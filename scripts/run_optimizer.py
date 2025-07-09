@@ -7,7 +7,7 @@ from forecasting_tools.auto_optimizers.prompt_data_models import (
     ResearchTool,
     ToolName,
 )
-from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.util.custom_logger import CustomLogger
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ async def run_optimizer() -> None:
     metaculus_question_path = (
         "logs/forecasts/benchmarks/questions_v2.0.train__50qs.json"
     )
-    questions = MetaculusQuestion.load_json_from_file_path(
+    questions = DataOrganizer.load_questions_from_file_path(
         metaculus_question_path
     )
     questions_batch_size = 25
