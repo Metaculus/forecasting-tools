@@ -121,7 +121,11 @@ class PromptOptimizer:
             return await self._create_optimized_prompt()
 
     async def _create_optimized_prompt(self) -> OptimizationRun:
-        with general_trace_or_span("Initial Population Generation"):
+        iteration_num = 0
+        with general_trace_or_span(
+            "Initial Population Generation (Iteration 1)"
+        ):
+            iteration_num += 1
             logger.info(
                 f"Generating initial prompt population of size {self.initial_prompt_population_size}"
             )
@@ -150,7 +154,8 @@ class PromptOptimizer:
             )
             survivors = await self._kill_the_weak(all_evaluated_prompts)
 
-        for iteration_num in range(self.iterations):
+        while iteration_num < self.iterations:
+            iteration_num += 1
             with general_trace_or_span(
                 f"Prompt Optimizer Iteration {iteration_num + 1}",
                 data={"survivors": [s.model_dump() for s in survivors]},

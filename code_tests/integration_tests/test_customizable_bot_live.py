@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from code_tests.unit_tests.forecasting_test_manager import (
@@ -12,20 +14,19 @@ from forecasting_tools.auto_optimizers.prompt_data_models import (
     ResearchTool,
     ToolName,
 )
-from forecasting_tools.auto_optimizers.question_plus_research import (
-    ResearchType,
-)
+
+logger = logging.getLogger(__name__)
 
 
-async def test_customizable_bot_runs() -> None:
+async def test_customizable_bot_runs_control_bot() -> None:
     bot = CustomizableBot(
         reasoning_prompt=ControlPrompt.get_reasoning_prompt(),
-        research_prompt=ControlPrompt.get_research_prompt(),
+        research_prompt=ControlPrompt.get_research_prompt(),  # This prompt is probably be a preset research strategy
         research_tools=[
             ResearchTool(tool_name=ToolName.PERPLEXITY_LOW_COST, max_calls=2)
         ],
         cached_research=[],
-        research_type=ResearchType.ASK_NEWS_SUMMARIES,
+        cached_research_type=None,
         llms={"default": "gpt-4.1-mini", "researcher": "gpt-4.1-mini"},
         originating_idea=PromptIdea(
             short_name="Test idea",
@@ -52,7 +53,7 @@ async def test_customizable_bot_respects_max_tool_calls_limit() -> None:
             ResearchTool(tool_name=ToolName.MOCK_TOOL, max_calls=2)
         ],
         cached_research=[],
-        research_type=ResearchType.ASK_NEWS_SUMMARIES,
+        cached_research_type=None,
         llms={"default": "gpt-4.1-mini", "researcher": "gpt-4.1-mini"},
         originating_idea=PromptIdea(
             short_name="Test idea",
@@ -68,4 +69,5 @@ async def test_customizable_bot_respects_max_tool_calls_limit() -> None:
 
     bot.research_prompt = "Research the internet for {question_text}. If a tool fails, don't retry it"
     research = await bot.run_research(fake_question_1)
+    logger.info(f"Research result: {research}")
     assert research is not None

@@ -27,7 +27,7 @@ async def grab_questions(include_research: bool) -> None:
         num_forecasters_gte=15,
         error_if_question_target_missed=False,
     )
-    file_name = f"logs/forecasts/questions_v2.0_{len(chosen_questions)}qs__>15f__<1.5yr_open__no_research__{datetime.now().strftime('%Y-%m-%d')}.json"
+    file_name = f"logs/forecasts/benchmarks/questions_v2.0_{len(chosen_questions)}qs__>15f__<1.5yr_open__no_research__{datetime.now().strftime('%Y-%m-%d')}.json"
     batch_size = 20
 
     # --- Validate the questions ---
@@ -67,10 +67,10 @@ async def grab_questions(include_research: bool) -> None:
 
 
 def split_into_train_and_test() -> None:
-    input_file_name = "logs/forecasts/questions_v2.0_330qs__>15f__<1.5yr_open__no_research__2025-07-08.json"
-    output_file_name = "logs/forecasts/questions_v2.0"
-    train_size = 100
-    test_size = 230
+    input_file_name = "logs/forecasts/benchmarks/questions_v2.0_330qs__>15f__<1.5yr_open__no_research__2025-07-08.json"
+    output_file_name = "logs/forecasts/benchmarks/questions_v2.0"
+    train_size = 50
+    test_size = 280
 
     questions = DataOrganizer.load_questions_from_file_path(input_file_name)
     random.shuffle(questions)
@@ -86,7 +86,7 @@ def split_into_train_and_test() -> None:
 
 
 def visualize_and_randomly_sample_questions() -> None:
-    input_file_name = "logs/forecasts/questions_v2.0_330qs__>15f__<1.5yr_open__no_research__2025-07-08.json"
+    input_file_name = "logs/forecasts/benchmarks/questions_v2.0_330qs__>15f__<1.5yr_open__no_research__2025-07-08.json"
     sample_size = 330
 
     questions = DataOrganizer.load_questions_from_file_path(input_file_name)
@@ -100,9 +100,9 @@ def visualize_and_randomly_sample_questions() -> None:
 if __name__ == "__main__":
     CustomLogger.setup_logging()
 
-    visualize_and_randomly_sample_questions()
+    # visualize_and_randomly_sample_questions()
 
-    # split_into_train_and_test()
+    split_into_train_and_test()
 
     # chosen_mode = input("Include research? (y/n): ")
     # if chosen_mode == "y":

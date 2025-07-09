@@ -70,7 +70,7 @@ def customizable_bot(
         research_prompt=f"Research prompt with {CustomizableBot.REQUIRED_RESEARCH_PROMPT_VARIABLES}",
         research_tools=[mock_research_tool],
         cached_research=research_snapshots,
-        research_type=ResearchType.ASK_NEWS_SUMMARIES,
+        cached_research_type=ResearchType.ASK_NEWS_SUMMARIES,
         llms={"default": mock_llm, "researcher": "gpt-4o-mini"},
         originating_idea=PromptIdea(
             short_name="Test idea",
@@ -135,7 +135,7 @@ async def test_customizable_bot_run_research_duplicate_questions_in_snapshots(
             research_prompt="Research prompt",
             research_tools=[],
             cached_research=snapshots,
-            research_type=ResearchType.ASK_NEWS_SUMMARIES,
+            cached_research_type=ResearchType.ASK_NEWS_SUMMARIES,
             llms={"default": mock_llm},
             originating_idea=PromptIdea(
                 short_name="Test idea",
@@ -154,7 +154,7 @@ async def test_customizable_bot_raises_error_when_no_researcher_llm_configured(
             research_prompt="Research prompt",
             research_tools=[mock_research_tool],
             cached_research=research_snapshots,
-            research_type=ResearchType.ASK_NEWS_SUMMARIES,
+            cached_research_type=ResearchType.ASK_NEWS_SUMMARIES,
             llms={"default": mock_llm},
             originating_idea=PromptIdea(
                 short_name="Test idea",

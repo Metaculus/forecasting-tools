@@ -15,28 +15,30 @@ logger = logging.getLogger(__name__)
 
 async def run_optimizer() -> None:
     # ----- Settings for the optimizer -----
-    metaculus_question_path = "questions.json"
+    metaculus_question_path = (
+        "logs/forecasts/benchmarks/questions_v2.0.train__50qs.json"
+    )
     questions = MetaculusQuestion.load_json_from_file_path(
         metaculus_question_path
     )
+    questions_batch_size = 25
     research_tools = [
         ResearchTool(
             tool_name=ToolName.PERPLEXITY_LOW_COST,
-            max_calls=1,
+            max_calls=3,
         ),
-        ResearchTool(
-            tool_name=ToolName.ASKNEWS,
-            max_calls=1,
-        ),
+        # ResearchTool(
+        #     tool_name=ToolName.ASKNEWS,
+        #     max_calls=1,
+        # ),
     ]
-    ideation_llm = "openrouter/google/gemini-2.5-pro-preview"
+    ideation_llm = "openrouter/google/gemini-2.5-pro"
     research_coordination_llm = "openrouter/openai/gpt-4.1-mini"
     reasoning_llm = GeneralLlm(
         model="openrouter/openai/gpt-4.1-mini", temperature=0.3
     )
     folder_to_save_benchmarks = "logs/forecasts/benchmarks/"
-    questions_batch_size = 112
-    num_iterations_per_run = 3
+    num_iterations_per_run = 2
     remove_background_info = True
     initial_prompt_population_size = 20
     survivors_per_iteration = 5
