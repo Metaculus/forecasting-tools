@@ -18,7 +18,7 @@
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true,
   },
-  "isort.args":["--profile", "black","--line-length", "79"],
+  "isort.args":["--profile", "black","--line-length", "88"],
   "jupyter.debugJustMyCode": true,
   "debugpy.debugJustMyCode": true,
   "cursorpyright.analysis.typeCheckingMode": "basic",

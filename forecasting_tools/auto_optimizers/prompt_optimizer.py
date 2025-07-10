@@ -6,9 +6,7 @@ from typing import Any, Callable, Coroutine
 
 from pydantic import BaseModel, Field
 
-from forecasting_tools.agents_and_tools.minor_tools import (
-    perplexity_pro_search,
-)
+from forecasting_tools.agents_and_tools.minor_tools import perplexity_pro_search
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
     AgentSdkLlm,
@@ -82,9 +80,7 @@ class PromptOptimizer:
         prompts_to_scores_func: Callable[
             [list[ImplementedPrompt]], Coroutine[Any, Any, list[PromptScore]]
         ],
-        format_scores_func: (
-            Callable[[ScoredPrompt], Coroutine[Any, Any, str]] | None
-        ),
+        format_scores_func: Callable[[ScoredPrompt], Coroutine[Any, Any, str]] | None,
         validate_prompt_func: (
             Callable[[ImplementedPrompt], Coroutine[Any, Any, None]] | None
         ),
@@ -122,9 +118,7 @@ class PromptOptimizer:
 
     async def _create_optimized_prompt(self) -> OptimizationRun:
         iteration_num = 0
-        with general_trace_or_span(
-            "Initial Population Generation (Iteration 1)"
-        ):
+        with general_trace_or_span("Initial Population Generation (Iteration 1)"):
             iteration_num += 1
             logger.info(
                 f"Generating initial prompt population of size {self.initial_prompt_population_size}"
@@ -166,9 +160,7 @@ class PromptOptimizer:
 
                 offspring_prompts = await self._generate_new_prompts(survivors)
 
-                evaluated_prompts = await self._evaluate_new_members(
-                    offspring_prompts
-                )
+                evaluated_prompts = await self._evaluate_new_members(offspring_prompts)
                 all_evaluated_prompts.extend(evaluated_prompts)
                 updated_population = survivors + evaluated_prompts
 
@@ -188,7 +180,7 @@ class PromptOptimizer:
         logger.debug(f"Current survivors: {current_population}")
         best_survivor = current_population[0]
         logger.info(
-            f"Best survivor: {best_survivor.prompt.idea.short_name} with score {best_survivor.score.value:.4f}. Prompt:\n {best_survivor.prompt.text}"
+            f"Best survivor: {best_survivor.prompt.idea.short_name} with score {best_survivor.score.value:.4f}"
         )
         return current_population[: self.survivors_per_iteration]
 
@@ -217,9 +209,7 @@ class PromptOptimizer:
         self, prompts: list[ImplementedPrompt]
     ) -> list[ScoredPrompt]:
         scores = await self.prompt_to_scores_func(prompts)
-        return [
-            ScoredPrompt(prompt=p, score=s) for p, s in zip(prompts, scores)
-        ]
+        return [ScoredPrompt(prompt=p, score=s) for p, s in zip(prompts, scores)]
 
     @retry_async_function(tries=3)
     async def _mutate_prompt(
@@ -302,9 +292,7 @@ class PromptOptimizer:
             f"Ensure each mutation aligns with the requested degree of variation."
         )
         output = await AgentRunner.run(agent_mutate_ideas, mutation_agent_task)
-        mutated_ideas = await structure_output(
-            output.final_output, list[PromptIdea]
-        )
+        mutated_ideas = await structure_output(output.final_output, list[PromptIdea])
         logger.info(
             f"Successfully structured {len(mutated_ideas)} mutation ideas for prompt '{prompt.idea.short_name}'. Requested {num_mutations_to_generate}."
         )
@@ -388,9 +376,7 @@ class PromptOptimizer:
                 (up to {num_to_breed} ideas)
                 """
             ),
-            tools=[
-                perplexity_pro_search
-            ],  # Allow research for inspiration if needed
+            tools=[perplexity_pro_search],  # Allow research for inspiration if needed
         )
 
         breeding_agent_task = (
@@ -399,9 +385,7 @@ class PromptOptimizer:
         )
         output = await AgentRunner.run(agent_breed_ideas, breeding_agent_task)
 
-        bred_ideas = await structure_output(
-            output.final_output, list[PromptIdea]
-        )
+        bred_ideas = await structure_output(output.final_output, list[PromptIdea])
 
         if len(bred_ideas) != num_to_breed:
             raise ValueError(
@@ -422,22 +406,27 @@ class PromptOptimizer:
         originating_ideas: list[list[PromptIdea]],
     ) -> list[ImplementedPrompt]:
         if len(prompt_ideas) != len(originating_ideas):
-            raise ValueError(
+            logger.warning(
                 f"Number of prompt ideas ({len(prompt_ideas)}) does not match number of originating ideas ({len(originating_ideas)}). Cannot map these together."
             )
+            originating_ideas = [
+                [
+                    PromptIdea(
+                        short_name="Error",
+                        full_text="Failed to match idea to originating ideas",
+                    )
+                ]
+                for _ in range(len(prompt_ideas))
+            ]
         tasks = [
             self._implement_prompt_idea(idea, originating_ideas)
             for idea, originating_ideas in zip(prompt_ideas, originating_ideas)
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         implemented_prompts = [
-            result
-            for result in results
-            if not isinstance(result, BaseException)
+            result for result in results if not isinstance(result, BaseException)
         ]
-        errors = [
-            result for result in results if isinstance(result, BaseException)
-        ]
+        errors = [result for result in results if isinstance(result, BaseException)]
         for error in errors:
             logger.error(f"Error implementing prompt idea: {error}")
 
