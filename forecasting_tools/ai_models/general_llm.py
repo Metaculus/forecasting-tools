@@ -15,20 +15,14 @@ from litellm.types.utils import Choices, Usage
 from litellm.utils import token_counter
 from openai import AsyncOpenAI
 
-from forecasting_tools.ai_models.agent_wrappers import generation_span
+from forecasting_tools.ai_models.agent_wrappers import track_generation
 from forecasting_tools.ai_models.ai_utils.openai_utils import (
     OpenAiUtils,
     VisionMessageData,
 )
-from forecasting_tools.ai_models.ai_utils.response_types import (
-    TextTokenCostResponse,
-)
-from forecasting_tools.ai_models.model_interfaces.outputs_text import (
-    OutputsText,
-)
-from forecasting_tools.ai_models.model_interfaces.retryable_model import (
-    RetryableModel,
-)
+from forecasting_tools.ai_models.ai_utils.response_types import TextTokenCostResponse
+from forecasting_tools.ai_models.model_interfaces.outputs_text import OutputsText
+from forecasting_tools.ai_models.model_interfaces.retryable_model import RetryableModel
 from forecasting_tools.ai_models.model_interfaces.tokens_incur_cost import (
     TokensIncurCost,
 )
@@ -200,12 +194,8 @@ class GeneralLlm(
         elif self._use_exa and self.litellm_kwargs.get("api_key") is None:
             self.litellm_kwargs["api_key"] = os.getenv("EXA_API_KEY")
 
-        valid_acompletion_params = set(
-            inspect.signature(acompletion).parameters.keys()
-        )
-        invalid_params = (
-            set(self.litellm_kwargs.keys()) - valid_acompletion_params
-        )
+        valid_acompletion_params = set(inspect.signature(acompletion).parameters.keys())
+        invalid_params = set(self.litellm_kwargs.keys()) - valid_acompletion_params
         if invalid_params and not pass_through_unknown_kwargs:
             raise ValueError(
                 f"The following parameters are not valid for litellm's acompletion: {invalid_params}"
@@ -215,9 +205,7 @@ class GeneralLlm(
 
     async def invoke(self, prompt: ModelInputType) -> str:
         response: TextTokenCostResponse = (
-            await self._invoke_with_request_cost_time_and_token_limits_and_retry(
-                prompt
-            )
+            await self._invoke_with_request_cost_time_and_token_limits_and_retry(prompt)
         )
         data = response.data
         return data
@@ -236,7 +224,7 @@ class GeneralLlm(
     async def _mockable_direct_call_to_model(
         self, prompt: ModelInputType
     ) -> TextTokenCostResponse:
-        with generation_span(
+        with track_generation(
             input=self.model_input_to_message(prompt),
             model=self.model,
         ) as span:
@@ -304,9 +292,7 @@ class GeneralLlm(
             span.span_data.model_config = self.litellm_kwargs
             return response
 
-    async def _call_exa_model(
-        self, prompt: ModelInputType
-    ) -> TextTokenCostResponse:
+    async def _call_exa_model(self, prompt: ModelInputType) -> TextTokenCostResponse:
         # TODO: Move this back to ussing the exa or OpenAI sdk.
         # I thought that a direct call might reveal the costDollars field but it didn't
         assert self._litellm_model is not None, "litellm model is not set"
@@ -388,14 +374,14 @@ class GeneralLlm(
                 messages = [user_message]
         elif isinstance(user_input, VisionMessageData):
             if system_prompt is not None:
-                messages = (
-                    OpenAiUtils.create_system_and_image_message_from_prompt(
-                        user_input, system_prompt
-                    )
+                messages = OpenAiUtils.create_system_and_image_message_from_prompt(
+                    user_input, system_prompt
                 )  # type: ignore
             else:
-                messages = OpenAiUtils.put_single_image_message_in_list_using_gpt_vision_input(
-                    user_input
+                messages = (
+                    OpenAiUtils.put_single_image_message_in_list_using_gpt_vision_input(
+                        user_input
+                    )
                 )  # type: ignore
         else:
             raise TypeError("Unexpected model input type")
@@ -475,12 +461,8 @@ class GeneralLlm(
                 f"Model {self._litellm_model} is not supported by litellm's model_cost dictionary"
             )
 
-        input_cost_per_1k = (
-            model_cost_data.get("input_cost_per_token", 0) * 1000
-        )
-        output_cost_per_1k = (
-            model_cost_data.get("output_cost_per_token", 0) * 1000
-        )
+        input_cost_per_1k = model_cost_data.get("input_cost_per_token", 0) * 1000
+        output_cost_per_1k = model_cost_data.get("output_cost_per_token", 0) * 1000
 
         prompt_cost = (prompt_tkns / 1000) * input_cost_per_1k
         completion_cost = (completion_tkns / 1000) * output_cost_per_1k
@@ -554,3 +536,8 @@ class GeneralLlm(
             reasoning_effort="high",
         )
         return search_model
+
+
+if __name__ == "__main__":
+    llm = GeneralLlm(model="openai/gpt-4o-mini", temperature=None)
+    print(asyncio.run(llm.invoke("What is the capital of France?")))

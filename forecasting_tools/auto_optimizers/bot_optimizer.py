@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.auto_optimizers.bot_evaluator import BotEvaluator
-from forecasting_tools.auto_optimizers.control_group_prompt import ControlPrompt
+from forecasting_tools.auto_optimizers.control_prompt import ControlPrompt
 from forecasting_tools.auto_optimizers.customizable_bot import CustomizableBot
 from forecasting_tools.auto_optimizers.prompt_data_models import BotConfig, ResearchTool
 from forecasting_tools.auto_optimizers.prompt_optimizer import (
@@ -185,7 +185,7 @@ class BotOptimizer:
                     "reasoning": "The prompt contains the instruction 'Never share Metaculus predictions in the final research report.'"
                 }}
 
-                A prompt that contains not mention of Metaculus predictions would return:
+                A prompt that contains no mention of Metaculus predictions would return:
                 {{
                     "requires_no_metaculus_mention": False,
                     "reasoning": "The prompt does not contain any instructions to not share Metaculus predictions in the final research report."

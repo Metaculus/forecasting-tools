@@ -3,9 +3,7 @@ from forecasting_tools.agents_and_tools.question_generators.simple_question impo
 )
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.data_organizer import ReportTypes
-from forecasting_tools.data_models.multiple_choice_report import (
-    MultipleChoiceReport,
-)
+from forecasting_tools.data_models.multiple_choice_report import MultipleChoiceReport
 from forecasting_tools.data_models.numeric_report import NumericReport
 
 

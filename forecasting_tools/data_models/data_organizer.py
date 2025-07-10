@@ -29,9 +29,7 @@ class TypeMapping(BaseModel):
 
 
 PredictionTypes = NumericDistribution | PredictedOptionList | float
-QuestionTypes = (
-    NumericQuestion | DateQuestion | MultipleChoiceQuestion | BinaryQuestion
-)
+QuestionTypes = NumericQuestion | DateQuestion | MultipleChoiceQuestion | BinaryQuestion
 ReportTypes = NumericReport | MultipleChoiceReport | BinaryReport
 
 
@@ -77,9 +75,7 @@ class DataOrganizer:
         for mapping in cls.__TYPE_MAPPING:
             if mapping.question_type == question_type:
                 if mapping.report_type is None:
-                    raise ValueError(
-                        f"No report type found for type {question_type}"
-                    )
+                    raise ValueError(f"No report type found for type {question_type}")
                 return mapping.report_type
         raise ValueError(f"No report type found for type {question_type}")
 
@@ -106,18 +102,14 @@ class DataOrganizer:
         return [mapping.question_type for mapping in cls.__TYPE_MAPPING]
 
     @classmethod
-    def load_reports_from_file_path(
-        cls, file_path: str
-    ) -> list[ForecastReport]:
+    def load_reports_from_file_path(cls, file_path: str) -> list[ForecastReport]:
         jsons = file_manipulation.load_json_file(file_path)
         reports = cls._load_objects_from_json(jsons, cls.get_all_report_types())  # type: ignore
         reports = typeguard.check_type(reports, list[ForecastReport])
         return reports
 
     @classmethod
-    def load_questions_from_file_path(
-        cls, file_path: str
-    ) -> list[MetaculusQuestion]:
+    def load_questions_from_file_path(cls, file_path: str) -> list[MetaculusQuestion]:
         jsons = file_manipulation.load_json_file(file_path)
         questions = cls._load_objects_from_json(jsons, cls.get_all_question_types())  # type: ignore
         questions = typeguard.check_type(questions, list[MetaculusQuestion])

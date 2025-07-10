@@ -10,6 +10,7 @@ import typeguard
 
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.data_organizer import ReportTypes
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
 from forecasting_tools.util import file_manipulation
@@ -508,6 +509,36 @@ def display_errors_of_benchmarks(benchmarks: list[BenchmarkForBot]) -> None:
                 st.write(f"- **Error:** {error}")
 
 
+def display_metaculus_research_reports(benchmarks: list[BenchmarkForBot]) -> None:
+    metaculus_reports: list[tuple[str, ReportTypes]] = []
+
+    for benchmark in benchmarks:
+        for report in benchmark.forecast_reports:
+            try:
+                research_content = report.research.lower()
+                if "metaculus" in research_content:
+                    metaculus_reports.append((benchmark.name, report))
+            except Exception as e:
+                logger.warning(f"Error accessing research content for report: {e}")
+
+    if not metaculus_reports:
+        return
+
+    with st.expander("Reports with Metaculus in Research", expanded=False):
+        st.write(
+            f"Found {len(metaculus_reports)} reports containing 'Metaculus' in their research section:"
+        )
+        for benchmark_name, report in metaculus_reports:
+            st.write(f"# {benchmark_name}")
+            question_text = (
+                f"[{report.question.question_text}]({report.question.page_url})"
+            )
+            st.write(f"**Question:** {question_text}")
+            st.write("**Research Excerpt:**")
+            st.write(report.research.strip("#"))
+            st.write("---")
+
+
 def display_main_page(benchmarks: list[BenchmarkForBot]) -> None:
     st.markdown("# Benchmark Score Comparisons")
     display_overview_stats(benchmarks)
@@ -597,6 +628,7 @@ def run_benchmark_streamlit_page(
             )
 
             display_errors_of_benchmarks(all_benchmarks)
+            display_metaculus_research_reports(all_benchmarks)
 
             if selected_benchmarks:
                 filtered_benchmarks = [

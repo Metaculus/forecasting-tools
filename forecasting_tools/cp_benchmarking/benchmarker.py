@@ -55,10 +55,7 @@ class Benchmarker:
         concurrent_question_batch_size: int = 10,
         additional_code_to_snapshot: list[type] | None = None,
     ) -> None:
-        if (
-            number_of_questions_to_use is not None
-            and questions_to_use is not None
-        ):
+        if number_of_questions_to_use is not None and questions_to_use is not None:
             raise ValueError(
                 "Either number_of_questions_to_use or questions_to_use must be provided, not both"
             )
@@ -122,9 +119,7 @@ class Benchmarker:
                 logger.warning(
                     "KeyboardInterrupt detected, saving current benchmark progress."
                 )
-                self._append_benchmarks_to_jsonl_if_configured(
-                    [batch.benchmark]
-                )
+                self._append_benchmarks_to_jsonl_if_configured([batch.benchmark])
                 raise
         return benchmarks
 
@@ -134,30 +129,22 @@ class Benchmarker:
         questions = batch.questions
         with MonetaryCostManager() as cost_manager:
             start_time = time.time()
-            reports = await bot.forecast_questions(
-                questions, return_exceptions=True
-            )
+            reports = await bot.forecast_questions(questions, return_exceptions=True)
             bot.log_report_summary(reports, raise_errors=False)
             valid_reports = [
-                report
-                for report in reports
-                if not isinstance(report, BaseException)
+                report for report in reports if not isinstance(report, BaseException)
             ]
             valid_reports = typeguard.check_type(
                 valid_reports,
                 list[ReportTypes],
             )
             failed_reports: list[BaseException] = [
-                report
-                for report in reports
-                if isinstance(report, BaseException)
+                report for report in reports if isinstance(report, BaseException)
             ]
             benchmark.failed_report_errors.extend(
                 [str(report) for report in failed_reports]
             )
-            new_report_sequence = (
-                list(benchmark.forecast_reports) + valid_reports
-            )
+            new_report_sequence = list(benchmark.forecast_reports) + valid_reports
             benchmark.forecast_reports = new_report_sequence
             end_time = time.time()
 
@@ -178,8 +165,7 @@ class Benchmarker:
     ) -> list[QuestionBatch]:
         batches: list[QuestionBatch] = []
         question_batches = [
-            questions[i : i + batch_size]
-            for i in range(0, len(questions), batch_size)
+            questions[i : i + batch_size] for i in range(0, len(questions), batch_size)
         ]
         for bot, benchmark in zip(bots, benchmarks):
             for i, question_batch in enumerate(question_batches):

@@ -13,15 +13,10 @@ from forecasting_tools.agents_and_tools.question_generators.generated_question i
 from forecasting_tools.agents_and_tools.question_generators.simple_question import (
     SimpleQuestion,
 )
-from forecasting_tools.agents_and_tools.research.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
-from forecasting_tools.data_models.data_organizer import (
-    DataOrganizer,
-    ReportTypes,
-)
+from forecasting_tools.data_models.data_organizer import DataOrganizer, ReportTypes
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025,
@@ -89,9 +84,7 @@ class QuestionGenerator:
         resolve_after_date: datetime = datetime.now(),
     ) -> list[GeneratedQuestion]:
         if resolve_before_date <= resolve_after_date:
-            raise ValueError(
-                "resolve_before_date must be after resolve_after_date"
-            )
+            raise ValueError("resolve_before_date must be after resolve_after_date")
         if number_of_questions < 1:
             raise ValueError("number_of_questions must be positive")
 
@@ -105,17 +98,15 @@ class QuestionGenerator:
         questions_needed = number_of_questions
 
         while iteration < self.max_iterations and questions_needed > 0:
-            logger.info(
-                f"Starting iteration {iteration + 1} of question generation"
-            )
+            logger.info(f"Starting iteration {iteration + 1} of question generation")
             new_questions = await self._generate_draft_questions(
                 number_of_questions,
                 topic,
                 resolve_before_date,
                 resolve_after_date,
             )
-            new_questions_with_forecasts = (
-                await self._add_forecast_to_questions(new_questions)
+            new_questions_with_forecasts = await self._add_forecast_to_questions(
+                new_questions
             )
             final_questions.extend(new_questions_with_forecasts)
             logger.debug(
@@ -133,9 +124,7 @@ class QuestionGenerator:
                 ]
             )
             questions_needed = (
-                number_of_questions
-                - len(final_questions)
-                + number_bad_questions
+                number_of_questions - len(final_questions) + number_bad_questions
             )
             logger.info(
                 f"At iteration {iteration + 1}, there are {number_bad_questions} bad questions (not within date range or not uncertain) out of {len(final_questions)} questions generated and {questions_needed} questions left to generate"
@@ -273,20 +262,16 @@ class QuestionGenerator:
         extended_questions = []
 
         # Convert simple questions to MetaculusQuestion format
-        metaculus_questions = (
-            SimpleQuestion.simple_questions_to_metaculus_questions(questions)
+        metaculus_questions = SimpleQuestion.simple_questions_to_metaculus_questions(
+            questions
         )
 
-        for simple_question, metaculus_question in zip(
-            questions, metaculus_questions
-        ):
+        for simple_question, metaculus_question in zip(questions, metaculus_questions):
             try:
                 forecast_report = await self.forecaster.forecast_question(
                     metaculus_question
                 )
-                forecast_report = typeguard.check_type(
-                    forecast_report, ReportTypes
-                )
+                forecast_report = typeguard.check_type(forecast_report, ReportTypes)
                 error_message = None
             except Exception as e:
                 logger.warning(

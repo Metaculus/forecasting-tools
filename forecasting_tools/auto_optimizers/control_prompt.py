@@ -64,15 +64,10 @@ The last thing you write is your final answer as: "Probability: ZZ%", 0-100
 
 
 _CONTROL_AGENT_RESEARCH_PROMPT: str = """
-You are an assistant to a superforecaster.
-The superforecaster will give you a question they intend to forecast on.
-To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-You do not produce forecasts yourself.
+Please make only 1 search using the question text as a query using the tool you have avaialge (always default to AskNews if available).
+Completely restate what the search tool tells you in full without any additional commentary.
+Don't use any other tools other than the 1 search with the question text as the query.
 
 Question:
 {question_text}
-
-Please make only 1 search using the question text as a query (with Perplexity if available).
-Completely restate what the search tool tells you in full without any additional commentary.
-Don't use any other tools other than the 1 search with the question text as the query.
 """

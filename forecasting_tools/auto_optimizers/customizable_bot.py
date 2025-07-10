@@ -22,9 +22,7 @@ from forecasting_tools.auto_optimizers.question_plus_research import (
     ResearchType,
 )
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
-from forecasting_tools.data_models.multiple_choice_report import (
-    PredictedOptionList,
-)
+from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
@@ -210,9 +208,7 @@ class CustomizableBot(ForecastBot):
             "researcher": None,
         }
 
-    def _create_tracked_tools(
-        self, usage_tracker: ToolUsageTracker
-    ) -> list[AgentTool]:
+    def _create_tracked_tools(self, usage_tracker: ToolUsageTracker) -> list[AgentTool]:
         tracked_tools = []
 
         for research_tool in self.research_tools:
@@ -264,17 +260,13 @@ class CustomizableBot(ForecastBot):
             )
         if len(matching_snapshots) == 1:
             assert self.research_type is not None
-            return matching_snapshots[0].get_research_for_type(
-                self.research_type
-            )
+            return matching_snapshots[0].get_research_for_type(self.research_type)
         else:
             raise ValueError(
                 f"No cached research found for question {question.page_url}"
             )
 
-    async def _run_research_with_tools(
-        self, question: MetaculusQuestion
-    ) -> str:
+    async def _run_research_with_tools(self, question: MetaculusQuestion) -> str:
         research_llm = self.get_llm("researcher")
         if not isinstance(research_llm, str):
             raise ValueError("Research LLM must be a string model name")
@@ -301,6 +293,7 @@ class CustomizableBot(ForecastBot):
         result = await AgentRunner.run(
             agent,
             f"Please research the following question: {question.question_text}",
+            max_turns=25,
         )
         final_output = result.final_output
         if not isinstance(final_output, str):
@@ -330,16 +323,12 @@ class CustomizableBot(ForecastBot):
         )
         prediction = binary_prediction.prediction_in_decimal
 
-        logger.info(
-            f"Forecasted URL {question.page_url} with prediction: {prediction}"
-        )
+        logger.info(f"Forecasted URL {question.page_url} with prediction: {prediction}")
         if prediction >= 1:
             prediction = 0.999
         if prediction <= 0:
             prediction = 0.001
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -367,9 +356,7 @@ class CustomizableBot(ForecastBot):
                     f"There is a template variable in the question itself: {variable}. Combined text: {combined_question_info}"
                 )
 
-        formatted_prompt = prompt.replace(
-            "{question_text}", question.question_text
-        )
+        formatted_prompt = prompt.replace("{question_text}", question.question_text)
         formatted_prompt = formatted_prompt.replace(
             "{background_info}", question.background_info or "None"
         )
@@ -410,12 +397,12 @@ class CustomizableBot(ForecastBot):
     def combine_research_reasoning_prompt(
         cls, research_prompt: str, reasoning_prompt: str
     ) -> str:
-        return f"{research_prompt}{cls.RESEARCH_REASONING_SPLIT_STRING}{reasoning_prompt}"
+        return (
+            f"{research_prompt}{cls.RESEARCH_REASONING_SPLIT_STRING}{reasoning_prompt}"
+        )
 
     @classmethod
-    def validate_combined_research_reasoning_prompt(
-        cls, combined_prompt: str
-    ) -> None:
+    def validate_combined_research_reasoning_prompt(cls, combined_prompt: str) -> None:
 
         research_prompt, reasoning_prompt = (
             cls.split_combined_research_reasoning_prompt(combined_prompt)
@@ -425,10 +412,7 @@ class CustomizableBot(ForecastBot):
 
     @classmethod
     def validate_research_prompt(cls, research_prompt: str) -> None:
-        if (
-            PresetResearchStrategy.find_matching_strategy(research_prompt)
-            is not None
-        ):
+        if PresetResearchStrategy.find_matching_strategy(research_prompt) is not None:
             return
 
         cls._validate_template_variables(
@@ -482,9 +466,7 @@ class CustomizableBot(ForecastBot):
                     f"Prompt contains duplicate template variable '{specific_variable}' (found {variable_counts[specific_variable]} times). Prompt: {prompt}"
                 )
         else:
-            duplicates = [
-                var for var, count in variable_counts.items() if count > 1
-            ]
+            duplicates = [var for var, count in variable_counts.items() if count > 1]
             if duplicates:
                 raise ValueError(
                     f"Prompt contains duplicate template variables: {duplicates}. Prompt: {prompt}"
@@ -495,17 +477,10 @@ class CustomizableBot(ForecastBot):
     ) -> None:
         if cached_research:
             unique_questions = list(
-                set(
-                    [
-                        snapshot.question.question_text
-                        for snapshot in cached_research
-                    ]
-                )
+                set([snapshot.question.question_text for snapshot in cached_research])
             )
             if len(unique_questions) != len(cached_research):
-                raise ValueError(
-                    "Research snapshots must have unique questions"
-                )
+                raise ValueError("Research snapshots must have unique questions")
             if self.research_type is None:
                 raise ValueError(
                     "Research type must be provided if cached research is provided"

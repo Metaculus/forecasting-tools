@@ -4,14 +4,9 @@ from dataclasses import dataclass
 import typeguard
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
-from forecasting_tools.auto_optimizers.control_group_prompt import (
-    ControlPrompt,
-)
+from forecasting_tools.auto_optimizers.control_prompt import ControlPrompt
 from forecasting_tools.auto_optimizers.customizable_bot import CustomizableBot
-from forecasting_tools.auto_optimizers.prompt_data_models import (
-    BotConfig,
-    PromptIdea,
-)
+from forecasting_tools.auto_optimizers.prompt_data_models import BotConfig, PromptIdea
 from forecasting_tools.auto_optimizers.question_plus_research import (
     QuestionPlusResearch,
     ResearchType,
@@ -43,9 +38,7 @@ class BotEvaluation:
     @property
     def best_bot(self) -> EvaluatedBot:
         if not self.evaluated_bots:
-            raise ValueError(
-                "No evaluated bots available to determine the best bot"
-            )
+            raise ValueError("No evaluated bots available to determine the best bot")
         sorted_evaluated_bots = sorted(
             self.evaluated_bots, key=lambda x: x.score, reverse=True
         )
@@ -76,12 +69,8 @@ class BotEvaluator:
             self.research_snapshots = input_questions
 
         self.research_type = research_type
-        self.concurrent_evaluation_batch_size = (
-            concurrent_evaluation_batch_size
-        )
-        self.file_or_folder_to_save_benchmarks = (
-            file_or_folder_to_save_benchmarks
-        )
+        self.concurrent_evaluation_batch_size = concurrent_evaluation_batch_size
+        self.file_or_folder_to_save_benchmarks = file_or_folder_to_save_benchmarks
 
     async def evaluate_bot_configs(
         self, configurations: list[BotConfig]
@@ -95,36 +84,28 @@ class BotEvaluator:
             file_path_to_save_reports=self.file_or_folder_to_save_benchmarks,
         )
         benchmarks = await benchmarker.run_benchmark()
-        if all(
-            len(benchmark.forecast_reports) == 0 for benchmark in benchmarks
-        ):
+        if all(len(benchmark.forecast_reports) == 0 for benchmark in benchmarks):
             raise ValueError("All benchmarks have no forecast reports")
         evaluated_bots: list[EvaluatedBot] = []
         for config, benchmark in zip(configurations, benchmarks):
             benchmark.forecast_bot_class_name = (
                 config.originating_idea.short_name.replace(" ", "_")
             )
-            evaluated_bots.append(
-                EvaluatedBot(bot_config=config, benchmark=benchmark)
-            )
+            evaluated_bots.append(EvaluatedBot(bot_config=config, benchmark=benchmark))
             if len(benchmark.forecast_reports) == 0:
                 logger.warning(
                     f"No forecast reports found for bot {config.originating_idea.short_name}"
                 )
         return BotEvaluation(evaluated_bots=evaluated_bots)
 
-    def _configs_to_bots(
-        self, configs: list[BotConfig]
-    ) -> list[CustomizableBot]:
+    def _configs_to_bots(self, configs: list[BotConfig]) -> list[CustomizableBot]:
         bots = []
         for config in configs:
             if config.research_reports_per_question != 1:
                 raise NotImplementedError(
                     "Currently only supports one research report per question"
                 )
-            custom_class_name = config.originating_idea.short_name.replace(
-                " ", "_"
-            )
+            custom_class_name = config.originating_idea.short_name.replace(" ", "_")
             CustomBotClass = type(custom_class_name, (CustomizableBot,), {})
             bot = CustomBotClass(
                 originating_idea=config.originating_idea,
@@ -160,9 +141,7 @@ class BotEvaluator:
         best_benchmarks = self._get_best_benchmark_prompts(
             benchmark_files, top_n_prompts, include_worst_prompt
         )
-        research_tools_of_best_benchmark = best_benchmarks[
-            0
-        ].research_tools_used
+        research_tools_of_best_benchmark = best_benchmarks[0].research_tools_used
 
         logger.info(
             f"Evaluating {len(best_benchmarks)} prompts with {forecast_llm.model}. Prompts are the best scoring from files {benchmark_files}"
@@ -223,9 +202,7 @@ class BotEvaluator:
         all_benchmarks = []
         for file_path in file_paths:
             benchmarks = BenchmarkForBot.load_json_from_file_path(file_path)
-            logger.info(
-                f"Loaded {len(benchmarks)} benchmarks from {file_path}"
-            )
+            logger.info(f"Loaded {len(benchmarks)} benchmarks from {file_path}")
             for benchmark in benchmarks:
                 if len(benchmark.forecast_reports) > 0:
                     all_benchmarks.append(benchmark)

@@ -2,12 +2,8 @@ import logging
 
 import pytest
 
-from code_tests.unit_tests.forecasting_test_manager import (
-    ForecastingTestManager,
-)
-from forecasting_tools.auto_optimizers.control_group_prompt import (
-    ControlPrompt,
-)
+from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
+from forecasting_tools.auto_optimizers.control_prompt import ControlPrompt
 from forecasting_tools.auto_optimizers.customizable_bot import CustomizableBot
 from forecasting_tools.auto_optimizers.prompt_data_models import (
     PromptIdea,
@@ -49,9 +45,7 @@ async def test_customizable_bot_respects_max_tool_calls_limit() -> None:
     bot = CustomizableBot(
         reasoning_prompt=f"Give me a probability of {{question_text}} happening. {CustomizableBot.REQUIRED_REASONING_PROMPT_VARIABLES}",
         research_prompt="Research the internet for {question_text}. If a tool fails, try it at least 2 more times.",
-        research_tools=[
-            ResearchTool(tool_name=ToolName.MOCK_TOOL, max_calls=2)
-        ],
+        research_tools=[ResearchTool(tool_name=ToolName.MOCK_TOOL, max_calls=2)],
         cached_research=[],
         cached_research_type=None,
         llms={"default": "gpt-4.1-mini", "researcher": "gpt-4.1-mini"},
@@ -67,7 +61,9 @@ async def test_customizable_bot_respects_max_tool_calls_limit() -> None:
         )
         await bot.run_research(fake_question_1)
 
-    bot.research_prompt = "Research the internet for {question_text}. If a tool fails, don't retry it"
+    bot.research_prompt = (
+        "Research the internet for {question_text}. If a tool fails, don't retry it"
+    )
     research = await bot.run_research(fake_question_1)
     logger.info(f"Research result: {research}")
     assert research is not None

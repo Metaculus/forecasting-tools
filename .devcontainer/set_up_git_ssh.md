@@ -1,6 +1,16 @@
-To set up an SSH key with GitHub, follow these steps:
+The Cursor version of devcontiners doesn't set up git automatically. To set up an SSH key with GitHub, follow these steps:
 
----
+
+### **0. Set up git config**
+Run
+
+```
+  git config --global user.email "you@example.com"
+  git config --global user.name "Your Name"
+```
+
+This may be all the is needed. If ssh isn't set up automatically by dev container, then do the below
+
 
 ### **1. Check for existing SSH keys**
 
@@ -19,13 +29,13 @@ Look for files named `id_rsa`, `id_ecdsa`, `id_ed25519` or similar (and their `.
 If you don’t already have an SSH key or want a new one:
 
 ```bash
-ssh-keygen -t ed25519 -C "your_email@example.com"
+ssh-keygen -t ed25519
 ```
 
 > If you're using an older system that doesn't support `ed25519`, use `rsa` instead:
 >
 > ```bash
-> ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+> ssh-keygen -t rsa -b 4096
 > ```
 
 * When prompted:
@@ -87,12 +97,3 @@ Hi username! You've successfully authenticated, but GitHub does not provide shel
 ---
 
 Let me know if you hit any errors or want to configure it for a specific project or multiple GitHub accounts.
-
-### **6. Set up git config**
-Run
-
-```
-  git config --global --add safe.directory /workspaces/forecasting-tools
-  git config --global user.email "you@example.com"
-  git config --global user.name "Your Name"
-```
