@@ -93,6 +93,7 @@ class BotOptimizer:
             - Reasoning formats and length (consider all varieties)
             - Reasoning strategies (i.e. which steps in which order, with what criteria for what steps)
             - Whether to cite sources/links in the research report or not
+            - Whether to keep it simple or try something more complex
             """
         )
         template_variables_explanation = clean_indents(
@@ -123,12 +124,30 @@ class BotOptimizer:
             prompts_to_evaluate: list[ImplementedPrompt],
         ) -> list[PromptScore]:
             configs = []
+            seed_prompt_found = False
             for prompt in prompts_to_evaluate:
                 research_prompt, reasoning_prompt = (
                     CustomizableBot.split_combined_research_reasoning_prompt(
                         prompt.text
                     )
                 )
+                if (
+                    research_prompt.strip()
+                    == ControlPrompt.get_seed_research_prompt().strip()
+                ):
+                    if not seed_prompt_found:
+                        seed_prompt_found = True
+                        logger.info(
+                            "Found seed prompt and replacing it with control prompt"
+                        )
+                    else:
+                        raise RuntimeError("Found multiple seed prompts")
+
+                    research_prompt = ControlPrompt.get_control_research_prompt()
+                    prompt.text = CustomizableBot.combine_research_reasoning_prompt(
+                        research_prompt, reasoning_prompt
+                    )  # This is bad practice, but I'm tired, and just need it to work lol. Fix this later.
+
                 configs.append(
                     BotConfig(
                         reasoning_prompt_template=reasoning_prompt,
@@ -160,7 +179,7 @@ class BotOptimizer:
                 )
                 assert (
                     benchmark.bot_prompt == prompt.text
-                ), f"Prompt {prompt.text} does not match prompt in benchmark {benchmark.bot_prompt}"
+                ), f"Prompt does not match prompt in benchmark.\nPrompt: {prompt.text}\n\n\n\nBenchmark Prompt: {benchmark.bot_prompt}"
             return prompt_scores
 
         async def validate_prompt(prompt: ImplementedPrompt) -> None:
@@ -226,7 +245,7 @@ class BotOptimizer:
                 )
 
         optimizer = PromptOptimizer(
-            initial_prompt=ControlPrompt.get_combined_prompt(),
+            initial_prompt=ControlPrompt.get_seed_combined_prompt(),
             iterations=num_iterations_per_run,
             ideation_llm_name=ideation_llm_name,
             prompts_to_scores_func=evaluate_combined_research_and_reasoning_prompts,

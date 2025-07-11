@@ -1,20 +1,47 @@
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.auto_optimizers.customizable_bot import CustomizableBot
+from forecasting_tools.auto_optimizers.customizable_bot import (
+    CustomizableBot,
+    PresetResearchStrategy,
+)
 
 
 class ControlPrompt:
+    """
+    Reasoning prompt is used for reasoning
+
+    The research strategy is a string that can be matched to a default research strategy
+
+    The combined prompt is the full prompt that is used for the bot
+
+    The seed prompts is what should be given as initial examples for prompt optimization
+    (e.g. we don't want the LLM to think that a simple string is a good prompt)
+    """
+
     @classmethod
     def get_reasoning_prompt(cls) -> str:
         return _CONTROL_REASONING_PROMPT
 
     @classmethod
-    def get_research_prompt(cls) -> str:
-        return _CONTROL_AGENT_RESEARCH_PROMPT
+    def get_control_research_prompt(cls) -> str:
+        return _CONTROL_RESEARCH_PROMPT
 
     @classmethod
-    def get_combined_prompt(cls) -> str:
+    def get_control_combined_prompt(cls) -> str:
         return clean_indents(
-            f"""{_CONTROL_AGENT_RESEARCH_PROMPT}
+            f"""{_CONTROL_RESEARCH_PROMPT}
+            {CustomizableBot.RESEARCH_REASONING_SPLIT_STRING}
+            {_CONTROL_REASONING_PROMPT}
+            """
+        )
+
+    @classmethod
+    def get_seed_research_prompt(cls) -> str:
+        return _SEED_RESEARCH_PROMPT
+
+    @classmethod
+    def get_seed_combined_prompt(cls) -> str:
+        return clean_indents(
+            f"""{_SEED_RESEARCH_PROMPT}
             {CustomizableBot.RESEARCH_REASONING_SPLIT_STRING}
             {_CONTROL_REASONING_PROMPT}
             """
@@ -25,9 +52,8 @@ class ControlPrompt:
         return _VERSION
 
 
-_VERSION = "2025Q2+tools"
-_CONTROL_REASONING_PROMPT = """
-You are a professional forecaster interviewing for a job.
+_VERSION = "2025Q2"
+_CONTROL_REASONING_PROMPT = """You are a professional forecaster interviewing for a job.
 
 Your interview question is:
 {question_text}
@@ -58,13 +84,16 @@ You write your rationale remembering that good forecasters put extra weight on t
 The last thing you write is your final answer as: "Probability: ZZ%", 0-100
 """
 
+_CONTROL_RESEARCH_PROMPT: str = (
+    PresetResearchStrategy.SEARCH_ASKNEWS_WITH_QUESTION_TEXT.value
+)
 
-_CONTROL_AGENT_RESEARCH_PROMPT: str = """
-Please make only 1 search using the tools you have available (always default to AskNews if available).
+
+_SEED_RESEARCH_PROMPT: str = """Please make only 1 search using the tools you have available (always default to AskNews if available).
 
 Use the query: {question_text}
 
 Completely restate what the search tool tells you in full without any additional commentary.
 Don't use any other tools other than the 1 search with the question text as the query.
-If you get any content about Metaculus community predictions, please remove it and replace those sentences/paragraphs with [[METACULUS_INFO_REMOVED]].
+Don't use Metaculus community prediction as a source. Metaculus is disallowed.
 """

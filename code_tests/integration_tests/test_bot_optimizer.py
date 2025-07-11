@@ -6,7 +6,13 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 from forecasting_tools.auto_optimizers.bot_optimizer import BotOptimizer
-from forecasting_tools.auto_optimizers.prompt_data_models import ResearchTool, ToolName
+from forecasting_tools.auto_optimizers.control_prompt import ControlPrompt
+from forecasting_tools.auto_optimizers.prompt_data_models import (
+    ResearchTool,
+    ScoredPrompt,
+    ToolName,
+)
+from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +30,7 @@ async def test_bot_optimizer() -> None:
 
         optimized_result = (
             await BotOptimizer.optimize_a_combined_research_and_reasoning_prompt(
-                evaluation_questions=[question, question],
+                evaluation_questions=[question],
                 research_tools_bot_can_use=[
                     ResearchTool(tool_name=ToolName.MOCK_TOOL, max_calls=1)
                 ],
@@ -50,3 +56,22 @@ async def test_bot_optimizer() -> None:
         + (breeded_prompts_per_iteration)
     ) * (iterations_per_run - 1)
     assert len(optimized_result.scored_prompts) == total_number_of_prompts
+
+    control_prompt: ScoredPrompt | None = None
+    for scored_prompt in optimized_result.scored_prompts:
+        if (
+            scored_prompt.score.metadata["benchmark"].forecast_bot_class_name
+            == "Initial_Seed"
+        ):
+            control_prompt = scored_prompt
+            break
+    assert control_prompt is not None
+    assert (
+        control_prompt.prompt.text
+        == ControlPrompt.get_control_combined_prompt().strip()
+    )
+    control_benchmark: BenchmarkForBot = control_prompt.score.metadata["benchmark"]
+    assert (
+        control_benchmark.bot_prompt
+        == ControlPrompt.get_control_combined_prompt().strip()
+    )

@@ -150,7 +150,7 @@ class BotEvaluator:
         if include_control_group_prompt:
             control_group_config = BotConfig(
                 reasoning_prompt_template=ControlPrompt.get_reasoning_prompt(),
-                research_prompt_template=ControlPrompt.get_research_prompt(),
+                research_prompt_template=ControlPrompt.get_control_research_prompt(),
                 research_tools=research_tools_of_best_benchmark,
                 reasoning_llm=forecast_llm,
                 research_llm=research_llm_name,

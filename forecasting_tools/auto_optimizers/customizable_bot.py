@@ -43,16 +43,14 @@ class BinaryPrediction(BaseModel):
     @field_validator("prediction_in_decimal")
     @classmethod
     def validate_prediction_range(cls, value: float) -> float:
-        if value == 0:
+        if 0.001 <= value <= 0.999:
+            return value
+        elif 0 <= value < 0.001:
             return 0.001
-        if value == 1:
+        elif 0.999 < value <= 1:
             return 0.999
-
-        if value < 0.001:
-            raise ValueError("Prediction must be at least 0.001")
-        if value > 0.999:
-            raise ValueError("Prediction must be at most 0.999")
-        return value
+        else:
+            raise ValueError("Prediction must be between 0 and 1")
 
 
 class ToolUsageTracker:
@@ -84,6 +82,7 @@ class PresetResearchStrategy(Enum):
     SEARCH_ASKNEWS_WITH_QUESTION_TEXT = "SEARCH_ASKNEWS_WITH_QUESTION_TEXT"
 
     async def run_research(self, question: MetaculusQuestion) -> str:
+        logger.debug(f"Running research strategy: {self}")
         if self == PresetResearchStrategy.SEARCH_ASKNEWS_WITH_QUESTION_TEXT:
             return await AskNewsSearcher().get_formatted_news_async(
                 question.question_text
@@ -98,7 +97,7 @@ class PresetResearchStrategy(Enum):
         matching_strategy = [
             strategy
             for strategy in PresetResearchStrategy
-            if strategy.value == research_strategy_id
+            if strategy.value == research_strategy_id.strip()
         ]
         if len(matching_strategy) > 1:
             raise ValueError(
@@ -107,17 +106,6 @@ class PresetResearchStrategy(Enum):
         if len(matching_strategy) == 0:
             return None
         return matching_strategy[0]
-
-    @classmethod
-    async def run_matching_strategy(
-        cls, question: MetaculusQuestion, research_strategy_id: str
-    ) -> str:
-        matching_strategy = cls.find_matching_strategy(research_strategy_id)
-        if matching_strategy is None:
-            raise ValueError(
-                f"No matching research strategy found: {research_strategy_id}"
-            )
-        return await matching_strategy.run_research(question)
 
 
 class CustomizableBot(ForecastBot):
@@ -241,12 +229,11 @@ class CustomizableBot(ForecastBot):
         except ValueError:
             pass
 
-        try:
-            return await PresetResearchStrategy.run_matching_strategy(
-                question, self.research_prompt
-            )
-        except ValueError:
-            pass
+        matching_strategy = PresetResearchStrategy.find_matching_strategy(
+            self.research_prompt
+        )
+        if matching_strategy is not None:
+            return await matching_strategy.run_research(question)
 
         research = await self._run_research_with_tools(question)
         self._handle_if_metaculus_cp_was_used(research)

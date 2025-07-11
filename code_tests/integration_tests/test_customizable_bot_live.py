@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 async def test_customizable_bot_runs_control_bot() -> None:
     bot = CustomizableBot(
         reasoning_prompt=ControlPrompt.get_reasoning_prompt(),
-        research_prompt=ControlPrompt.get_research_prompt(),  # This prompt is probably be a preset research strategy
+        research_prompt=ControlPrompt.get_control_research_prompt(),  # This prompt is probably be a preset research strategy
         research_tools=[
             ResearchTool(tool_name=ToolName.PERPLEXITY_LOW_COST, max_calls=2)
         ],
@@ -35,6 +35,12 @@ async def test_customizable_bot_runs_control_bot() -> None:
     research_result = await bot.run_research(fake_question_1)
     assert research_result is not None
     assert "Hungary" in research_result
+    assert (
+        "Here are the relevant news articles" in research_result
+    ), "The catch phrase that starts AskNews research is not present"
+    assert (
+        "Original language" in research_result
+    ), "The original language of the articles is not present which it should be if the AskNews formatted news is used"
 
     forecast_result = await bot.forecast_question(fake_question_1)
     assert forecast_result is not None

@@ -13,9 +13,7 @@ from forecasting_tools.auto_optimizers.customizable_bot import CustomizableBot
 from forecasting_tools.auto_optimizers.prompt_data_models import ResearchTool
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.data_models.multiple_choice_report import (
-    MultipleChoiceReport,
-)
+from forecasting_tools.data_models.multiple_choice_report import MultipleChoiceReport
 from forecasting_tools.data_models.numeric_report import NumericReport
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.util.jsonable import Jsonable
@@ -53,9 +51,7 @@ class BenchmarkForBot(BaseModel, Jsonable):
             self.forecast_reports,
             list[ForecastReport],
         )
-        return ForecastReport.calculate_average_expected_baseline_score(
-            reports
-        )
+        return ForecastReport.calculate_average_expected_baseline_score(reports)
 
     def get_top_n_forecast_reports(self, n: int) -> list[ForecastReport]:
         reports = self._get_sorted_forecast_reports()
@@ -75,9 +71,7 @@ class BenchmarkForBot(BaseModel, Jsonable):
         )
         for report in reports:
             if report.expected_baseline_score is None:
-                raise ValueError(
-                    "No expected baseline score in forecast report"
-                )
+                raise ValueError("No expected baseline score in forecast report")
         reports.sort(key=lambda x: x.expected_baseline_score, reverse=True)  # type: ignore
         assert reports[0].expected_baseline_score >= reports[-1].expected_baseline_score, "Expected baseline scores are not sorted"  # type: ignore
         return reports
@@ -96,12 +90,8 @@ class BenchmarkForBot(BaseModel, Jsonable):
             class_name = "n/a"
 
         try:
-            research_reports = self.forecast_bot_config[
-                "research_reports_per_question"
-            ]
-            predictions = self.forecast_bot_config[
-                "predictions_per_research_report"
-            ]
+            research_reports = self.forecast_bot_config["research_reports_per_question"]
+            predictions = self.forecast_bot_config["predictions_per_research_report"]
             num_runs_name = f"{research_reports} x {predictions}"
         except Exception:
             num_runs_name = ""
@@ -142,15 +132,21 @@ class BenchmarkForBot(BaseModel, Jsonable):
         try:
             return self.forecast_bot_config["prompt"]
         except Exception:
+            logger.debug(
+                f"No 'prompt' key found in forecast bot config for {self.forecast_bot_class_name}"
+            )
             pass
 
         try:
-            reasoning_prompt = self.forecast_bot_config["reasoning_prompt"]
             research_prompt = self.forecast_bot_config["research_prompt"]
+            reasoning_prompt = self.forecast_bot_config["reasoning_prompt"]
             return CustomizableBot.combine_research_reasoning_prompt(
                 research_prompt, reasoning_prompt
             )
         except Exception:
+            logger.debug(
+                f"No 'research_prompt' or 'reasoning_prompt' key found in forecast bot config for {self.forecast_bot_class_name}"
+            )
             pass
 
         raise ValueError(
@@ -162,9 +158,7 @@ class BenchmarkForBot(BaseModel, Jsonable):
         try:
             research_tools = self.forecast_bot_config["research_tools"]
             research_tools = [ResearchTool(**tool) for tool in research_tools]
-            research_tools = typeguard.check_type(
-                research_tools, list[ResearchTool]
-            )
+            research_tools = typeguard.check_type(research_tools, list[ResearchTool])
             return research_tools
         except Exception:
             raise ValueError(
@@ -184,9 +178,7 @@ class BenchmarkForBot(BaseModel, Jsonable):
                 for item in additional_code:
                     source_code += f"\n\n#------------{item.__name__}-------------\n\n{inspect.getsource(item)}"
         except Exception:
-            logger.warning(
-                f"Could not get source code for {bot.__class__.__name__}"
-            )
+            logger.warning(f"Could not get source code for {bot.__class__.__name__}")
             source_code = None
         benchmark = BenchmarkForBot(
             forecast_bot_class_name=bot.__class__.__name__,
@@ -204,9 +196,7 @@ class BenchmarkForBot(BaseModel, Jsonable):
     def _get_git_commit_hash(cls) -> str:
         try:
             return (
-                subprocess.check_output(
-                    ["git", "rev-parse", "--short", "HEAD"]
-                )
+                subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
                 .decode("ascii")
                 .strip()
             )
