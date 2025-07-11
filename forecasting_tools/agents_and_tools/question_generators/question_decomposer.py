@@ -7,7 +7,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from forecasting_tools.agents_and_tools.minor_tools import (
-    perplexity_quick_search,
+    perplexity_quick_search_high_context,
     query_asknews,
 )
 from forecasting_tools.ai_models.agent_wrappers import (
@@ -39,8 +39,7 @@ class DecompositionResult(BaseModel):
     @property
     def questions(self) -> list[str]:
         return [
-            question.question_or_idea_text
-            for question in self.decomposed_questions
+            question.question_or_idea_text for question in self.decomposed_questions
         ]
 
 
@@ -156,7 +155,7 @@ class QuestionDecomposer:
             name="Question Decomposer",
             instructions=instructions,
             model=llm,
-            tools=[perplexity_quick_search, query_asknews],
+            tools=[perplexity_quick_search_high_context, query_asknews],
             handoffs=[],
         )
         result = await AgentRunner.run(agent, prompt, max_turns=30)
@@ -226,9 +225,7 @@ class QuestionDecomposer:
             """
         )
         response = await llm.invoke(prompt)
-        structured_output = await structure_output(
-            response, DecompositionResult
-        )
+        structured_output = await structure_output(response, DecompositionResult)
         return structured_output
 
     @agent_tool

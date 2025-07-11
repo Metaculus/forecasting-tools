@@ -212,85 +212,85 @@ class GeneralLlm(
 
     @RetryableModel._retry_according_to_model_allowed_tries
     async def _invoke_with_request_cost_time_and_token_limits_and_retry(
-        self, *args, **kwargs
+        self, prompt: ModelInputType
     ) -> Any:
-        logger.debug(f"Invoking model with args: {args} and kwargs: {kwargs}")
-        direct_call_response = await self._mockable_direct_call_to_model(
-            *args, **kwargs
-        )
+        logger.debug(f"Invoking model with prompt: {prompt}")
+
+        with track_generation(
+            input=self.model_input_to_message(prompt),
+            model=self.model,
+        ) as span:
+            direct_call_response = await self._mockable_direct_call_to_model(prompt)
+            answer = direct_call_response.data
+            span.span_data.output = [{"role": "assistant", "content": answer}]
+            # span.span_data.usage = usage.model_dump()
+            span.span_data.model = self.model
+            span.span_data.model_config = self.litellm_kwargs
+
         logger.debug(f"Model responded with: {direct_call_response}")
         return direct_call_response
 
     async def _mockable_direct_call_to_model(
         self, prompt: ModelInputType
     ) -> TextTokenCostResponse:
-        with track_generation(
-            input=self.model_input_to_message(prompt),
+        self._everything_special_to_call_before_direct_call()
+        assert self._litellm_model is not None
+
+        if self._use_exa:
+            return await self._call_exa_model(prompt)
+
+        litellm.drop_params = True
+
+        response = await acompletion(
+            messages=self.model_input_to_message(prompt),
+            **self.litellm_kwargs,
+        )
+        assert isinstance(response, ModelResponse)
+        choices = response.choices
+        choices = typeguard.check_type(choices, list[Choices])
+        answer = choices[0].message.content
+        assert isinstance(
+            answer, str
+        ), f"Answer is not a string and is of type: {type(answer)}. Answer: {answer}"
+        usage = response.usage  # type: ignore
+        assert isinstance(usage, Usage)
+        prompt_tokens = usage.prompt_tokens
+        completion_tokens = usage.completion_tokens
+        total_tokens = usage.total_tokens
+
+        if answer == "":
+            logger.warning(
+                f"Model {self.model} returned an empty string as an answer. Raising exception (though this will probably result in a retry)"
+            )
+            raise RuntimeError(
+                f"LLM answer is an empty string. The model was {self.model} and the prompt was: {prompt}"
+            )
+
+        cost = LitellmCostTracker.calculate_cost(response._hidden_params)
+
+        if (
+            response.model_extra
+            and "citations" in response.model_extra
+            and self.populate_citations
+        ):
+            citations = response.model_extra.get("citations")
+            citations = typeguard.check_type(citations, list[str])
+            answer = fill_in_citations(citations, answer, use_citation_brackets=False)
+
+        await asyncio.sleep(
+            0.00001
+        )  # For whatever reason, you need to await a coroutine to get the litellm cost call back to work
+
+        response = TextTokenCostResponse(
+            data=answer,
+            prompt_tokens_used=prompt_tokens,
+            completion_tokens_used=completion_tokens,
+            total_tokens_used=total_tokens,
             model=self.model,
-        ) as span:
-            self._everything_special_to_call_before_direct_call()
-            assert self._litellm_model is not None
+            cost=cost,
+        )
 
-            if self._use_exa:
-                return await self._call_exa_model(prompt)
-
-            litellm.drop_params = True
-
-            response = await acompletion(
-                messages=self.model_input_to_message(prompt),
-                **self.litellm_kwargs,
-            )
-            assert isinstance(response, ModelResponse)
-            choices = response.choices
-            choices = typeguard.check_type(choices, list[Choices])
-            answer = choices[0].message.content
-            assert isinstance(
-                answer, str
-            ), f"Answer is not a string and is of type: {type(answer)}. Answer: {answer}"
-            usage = response.usage  # type: ignore
-            assert isinstance(usage, Usage)
-            prompt_tokens = usage.prompt_tokens
-            completion_tokens = usage.completion_tokens
-            total_tokens = usage.total_tokens
-
-            if answer == "":
-                logger.warning(
-                    f"Model {self.model} returned an empty string as an answer. Raising exception (though this will probably result in a retry)"
-                )
-                raise RuntimeError(
-                    f"LLM answer is an empty string. The model was {self.model} and the prompt was: {prompt}"
-                )
-
-            cost = LitellmCostTracker.calculate_cost(response._hidden_params)
-
-            if (
-                response.model_extra
-                and "citations" in response.model_extra
-                and self.populate_citations
-            ):
-                citations = response.model_extra.get("citations")
-                citations = typeguard.check_type(citations, list[str])
-                answer = fill_in_citations(
-                    citations, answer, use_citation_brackets=False
-                )
-
-            await asyncio.sleep(
-                0.00001
-            )  # For whatever reason, you need to await a coroutine to get the litellm cost call back to work
-
-            response = TextTokenCostResponse(
-                data=answer,
-                prompt_tokens_used=prompt_tokens,
-                completion_tokens_used=completion_tokens,
-                total_tokens_used=total_tokens,
-                model=self.model,
-                cost=cost,
-            )
-            span.span_data.output = [{"role": "assistant", "content": answer}]
-            span.span_data.usage = usage.model_dump()
-            span.span_data.model = self.model
-            span.span_data.model_config = self.litellm_kwargs
-            return response
+        return response
 
     async def _call_exa_model(self, prompt: ModelInputType) -> TextTokenCostResponse:
         # TODO: Move this back to ussing the exa or OpenAI sdk.

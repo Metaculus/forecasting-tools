@@ -4,7 +4,7 @@ import logging
 from pydantic import BaseModel
 
 from forecasting_tools.agents_and_tools.minor_tools import (
-    perplexity_quick_search,
+    perplexity_quick_search_high_context,
 )
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
@@ -75,7 +75,7 @@ class DataAnalyzer:
             instructions=instructions,
             model=self.model,
             tools=[
-                perplexity_quick_search,
+                perplexity_quick_search_high_context,
                 coding_tool,
             ],
             handoffs=[],
@@ -109,9 +109,7 @@ class DataAnalyzer:
         Format files as a list of dicts with the following format: {"file_name": "string", "file_id": "string"}
         """
         data_analysis = DataAnalyzer()
-        available_files = (
-            [AvailableFile(**file) for file in files] if files else []
-        )
+        available_files = [AvailableFile(**file) for file in files] if files else []
         return asyncio.run(
             data_analysis.run_data_analysis(
                 instruction, additional_context, available_files

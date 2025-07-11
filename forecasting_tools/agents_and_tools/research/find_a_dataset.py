@@ -4,12 +4,10 @@ import logging
 from pydantic import BaseModel
 
 from forecasting_tools.agents_and_tools.minor_tools import (
-    perplexity_pro_search,
+    perplexity_reasoning_pro_search,
 )
 from forecasting_tools.agents_and_tools.other.data_analyzer import DataAnalyzer
-from forecasting_tools.agents_and_tools.research.computer_use import (
-    ComputerUse,
-)
+from forecasting_tools.agents_and_tools.research.computer_use import ComputerUse
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
     AgentSdkLlm,
@@ -31,21 +29,15 @@ class DatasetFinderResult(BaseModel):
         steps_str = ""
         for step in self.steps:
             steps_str += f"{step}\n\n"
-        return (
-            steps_str + "\n\n**Final Answer**\n" + self.final_answer + "\n\n"
-        )
+        return steps_str + "\n\n**Final Answer**\n" + self.final_answer + "\n\n"
 
 
 class DatasetFinder:
 
-    def __init__(
-        self, llm: str = "openrouter/google/gemini-2.5-pro-preview"
-    ) -> None:
+    def __init__(self, llm: str = "openrouter/google/gemini-2.5-pro-preview") -> None:
         self.llm = llm
 
-    async def find_and_analyze_data_set(
-        self, query: str
-    ) -> DatasetFinderResult:
+    async def find_and_analyze_data_set(self, query: str) -> DatasetFinderResult:
         instructions = clean_indents(
             f"""
             You are a data researcher helping to find and analyze datasets to answer questions.
@@ -88,7 +80,7 @@ class DatasetFinder:
             instructions=instructions,
             model=AgentSdkLlm(model=self.llm),
             tools=[
-                perplexity_pro_search,
+                perplexity_reasoning_pro_search,
                 ComputerUse.computer_use_tool,
                 DataAnalyzer.data_analysis_tool,
             ],

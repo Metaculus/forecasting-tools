@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 async def grab_questions(include_research: bool) -> None:
     # --- Parameters ---
     target_questions_to_use = 500
+    target_training_size = 50
     chosen_questions = MetaculusApi.get_benchmark_questions(
         target_questions_to_use,
         max_days_since_opening=365 + 180,
@@ -27,88 +28,77 @@ async def grab_questions(include_research: bool) -> None:
         num_forecasters_gte=15,
         error_if_question_target_missed=False,
     )
-    file_name = f"logs/forecasts/benchmarks/questions_v2.0_{len(chosen_questions)}qs__>15f__<1.5yr_open__no_research__{datetime.now().strftime('%Y-%m-%d')}.json"
+    file_name = f"logs/forecasts/benchmarks/questions_v3.0_{len(chosen_questions)}qs__>15f__<1.5yr_open__{datetime.now().strftime('%Y-%m-%d')}.json"
     batch_size = 20
+    train_test_base_file_name = "logs/forecasts/benchmarks/questions_v3.0"
 
     # --- Validate the questions ---
     logger.info(f"Retrieved {len(chosen_questions)} questions")
     for question in chosen_questions:
         assert question.community_prediction_at_access_time is not None
 
-    # --- If no research snapshots, return ---
+    # --- Execute the research snapshotting if needed ---
     if not include_research:
         chosen_questions = typeguard.check_type(
             chosen_questions, list[MetaculusQuestion]
         )
         DataOrganizer.save_questions_to_file_path(chosen_questions, file_name)
-        return
+    else:
+        snapshots: list[QuestionPlusResearch] = []
 
-    # --- Execute the research snapshotting ---
-    snapshots = []
-
-    num_batches = math.ceil(len(chosen_questions) / batch_size)
-    for batch_index in range(num_batches):
-        batch_questions = chosen_questions[
-            batch_index * batch_size : (batch_index + 1) * batch_size
-        ]
-        batch_snapshots = await asyncio.gather(
-            *[
-                QuestionPlusResearch.create_snapshot_of_question(question)
-                for question in batch_questions
+        num_batches = math.ceil(len(chosen_questions) / batch_size)
+        for batch_index in range(num_batches):
+            batch_questions = chosen_questions[
+                batch_index * batch_size : (batch_index + 1) * batch_size
             ]
-        )
-        snapshots.extend(batch_snapshots)
-        random.shuffle(snapshots)
-        QuestionPlusResearch.save_object_list_to_file_path(
-            snapshots, file_name
-        )
-        logger.info(f"Saved {len(snapshots)} snapshots to {file_name}")
-    QuestionPlusResearch.save_object_list_to_file_path(snapshots, file_name)
+            batch_snapshots = await asyncio.gather(
+                *[
+                    QuestionPlusResearch.create_snapshot_of_question(question)
+                    for question in batch_questions
+                ]
+            )
+            snapshots.extend(batch_snapshots)
+            random.shuffle(snapshots)
+            QuestionPlusResearch.save_object_list_to_file_path(snapshots, file_name)
+            logger.info(f"Saved {len(snapshots)} snapshots to {file_name}")
+        QuestionPlusResearch.save_object_list_to_file_path(snapshots, file_name)
 
-
-def split_into_train_and_test() -> None:
-    input_file_name = "logs/forecasts/benchmarks/questions_v2.0_330qs__>15f__<1.5yr_open__no_research__2025-07-08.json"
-    output_file_name = "logs/forecasts/benchmarks/questions_v2.0"
-    train_size = 50
-    test_size = 280
-
-    questions = DataOrganizer.load_questions_from_file_path(input_file_name)
-    random.shuffle(questions)
-    train_questions = questions[:train_size]
-    test_questions = questions[train_size:]
-    assert len(questions) == train_size + test_size
-    DataOrganizer.save_questions_to_file_path(
-        train_questions, f"{output_file_name}.train__{train_size}qs.json"
-    )
-    DataOrganizer.save_questions_to_file_path(
-        test_questions, f"{output_file_name}.test__{test_size}qs.json"
+    # --- Split into train and test ---
+    if not include_research:
+        train_test_questions = chosen_questions
+    else:
+        train_test_questions = [snapshot.question for snapshot in snapshots]
+    train_test_questions = typeguard.check_type(
+        train_test_questions, list[MetaculusQuestion]
     )
 
+    test_size = len(train_test_questions) - target_training_size
+    random.shuffle(train_test_questions)
+    train_questions = train_test_questions[:target_training_size]
+    test_questions = train_test_questions[target_training_size:]
+    assert len(train_test_questions) == target_training_size + test_size
+    DataOrganizer.save_questions_to_file_path(
+        train_questions,
+        f"{train_test_base_file_name}.train__{target_training_size}qs.json",
+    )
+    DataOrganizer.save_questions_to_file_path(
+        test_questions, f"{train_test_base_file_name}.test__{test_size}qs.json"
+    )
 
-def visualize_and_randomly_sample_questions() -> None:
-    input_file_name = "logs/forecasts/benchmarks/questions_v2.0_330qs__>15f__<1.5yr_open__no_research__2025-07-08.json"
-    sample_size = 330
-
-    questions = DataOrganizer.load_questions_from_file_path(input_file_name)
-    random.shuffle(questions)
-    for question in questions[:sample_size]:
-        logger.info(
-            f"URL: {question.page_url} - Question: {question.question_text}"
-        )
+    # --- Visualize and randomly sample questions ---
+    random.shuffle(train_test_questions)
+    for question in train_test_questions:
+        logger.info(f"URL: {question.page_url} - Question: {question.question_text}")
 
 
 if __name__ == "__main__":
     CustomLogger.setup_logging()
 
-    # visualize_and_randomly_sample_questions()
-
-    split_into_train_and_test()
-
-    # chosen_mode = input("Include research? (y/n): ")
-    # if chosen_mode == "y":
-    #     include_research = True
-    # elif chosen_mode == "n":
-    #     include_research = False
-    # else:
-    #     raise ValueError("Invalid mode")
-    # asyncio.run(grab_questions(include_research))
+    chosen_mode = input("Include research? (y/n): ")
+    if chosen_mode == "y":
+        include_research = True
+    elif chosen_mode == "n":
+        include_research = False
+    else:
+        raise ValueError("Invalid mode")
+    asyncio.run(grab_questions(include_research))

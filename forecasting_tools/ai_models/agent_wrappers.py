@@ -57,24 +57,30 @@ class NoOpContextManager:
         return "no-op-trace-id"
 
 
-def general_trace_or_span(
-    name: str, data: dict[str, Any] | None = None, **kwargs
-) -> Span[CustomSpanData] | Trace:
-    # return NoOpContextManager()
-    # Disabled till I'm able to debug this more
+def _current_trace_exists() -> bool:
     try:
         current_trace = GLOBAL_TRACE_PROVIDER.get_current_trace()
     except Exception as e:
         logger.warning(f"Error getting current trace: {e}")
         current_trace = None
-    if current_trace:
+    return current_trace is not None
+
+
+def general_trace_or_span(
+    name: str, data: dict[str, Any] | None = None, **kwargs
+) -> Span[CustomSpanData] | Trace:
+    if _current_trace_exists():
         return custom_span(name, data, **kwargs)
     else:
         return trace(workflow_name=name, metadata=data, **kwargs)
 
 
 def track_generation(*args, **kwargs) -> Span[GenerationSpanData]:
-    return generation_span(*args, **kwargs)
+    if _current_trace_exists():
+        return generation_span(*args, **kwargs)
+    else:
+        with trace("One off Generation"):
+            return generation_span(*args, **kwargs)
 
 
 AgentRunner = Runner  # Alias for Runner for later extension

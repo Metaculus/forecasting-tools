@@ -13,27 +13,35 @@ logger = logging.getLogger(__name__)
 async def run_optimizer() -> None:
     # ----- Settings for the optimizer -----
     metaculus_question_path = (
-        "logs/forecasts/benchmarks/questions_v2.0.train__50qs.json"
+        "logs/forecasts/benchmarks/questions_v3.0.train__50qs.json"
     )
     questions = DataOrganizer.load_questions_from_file_path(metaculus_question_path)
     questions_batch_size = 25
     research_tools = [
         ResearchTool(
             tool_name=ToolName.PERPLEXITY_LOW_COST,
-            max_calls=10,
+            max_calls=7,
         ),
         ResearchTool(
             tool_name=ToolName.ASKNEWS,
             max_calls=2,
+        ),
+        ResearchTool(
+            tool_name=ToolName.DATA_ANALYZER,
+            max_calls=1,
+        ),
+        ResearchTool(
+            tool_name=ToolName.PERPLEXITY_REASONING_PRO_SEARCH,
+            max_calls=1,
         ),
     ]
     ideation_llm = "openrouter/google/gemini-2.5-pro"
     research_coordination_llm = "openai/o3"
     reasoning_llm = GeneralLlm(model="openai/o3", temperature=None)
     folder_to_save_benchmarks = "logs/forecasts/benchmarks/"
-    num_iterations_per_run = 1
+    num_iterations_per_run = 3
     remove_background_info = True
-    initial_prompt_population_size = 4
+    initial_prompt_population_size = 20
     survivors_per_iteration = 5
     mutated_prompts_per_survivor = 3
     breeded_prompts_per_iteration = 5

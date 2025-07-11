@@ -6,7 +6,9 @@ from typing import Any, Callable, Coroutine
 
 from pydantic import BaseModel, Field
 
-from forecasting_tools.agents_and_tools.minor_tools import perplexity_pro_search
+from forecasting_tools.agents_and_tools.minor_tools import (
+    perplexity_reasoning_pro_search,
+)
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
     AgentSdkLlm,
@@ -49,10 +51,10 @@ class OptimizationRun(BaseModel):
 
 
 class PromptOptimizer:
-    """A genetic algorithm-inspired prompt optimizer that evolves prompts through mutation and selection.
+    """A genetic algorithm-inspired prompt optimizer that evolves prompts through mutation, breeding, and selection.
 
     Args:
-        initial_prompts: List of starting prompt strings to optimize from
+        initial_prompt: Starting prompt string to optimize from
         iterations: Number of optimization iterations to run
         ideation_llm_name: Name of the LLM model to use for generating prompt variations
         prompts_to_scores_func: async function that takes a list of prompts and returns a list of scores
@@ -246,18 +248,17 @@ class PromptOptimizer:
                 {self.prompt_requirements_explanation}
 
                 # Instructions
-                1. Please analyze the scores from the previous prompt and identify what went wrong.
+                1. Please analyze the scores from the previous prompt and identify what went wrong. You can run 2-5 searches to run this analysis.
                 2. Run 3-10 searches on the web to find inspiration for novel prompt structures, techniques, and ideas that will solve the goal.
                 3. Generate {num_mutations_to_generate} new, distinct PROMPT IDEAS based on the original.
 
                 Please generate exactly {num_mutations_to_generate} new, distinct PROMPT IDEAS based on the original.
-                Each mutation idea must be a concept for a new, complete prompt. The implemented prompt will:
+                Each mutation idea must be a concept for a new, complete prompt.
 
                 For each idea please sequentially follow these policies to determine how much you try to mutate the original prompt:
-                1st idea: "slight modification, like changing wording, adding/removing a sentences or a small paragraph, reording steps, adding emphasis, etc",
-                2nd idea: "significant variation, which should take a generally different approach and be a general rewrite while staying in general theme of the original",
-                3rd idea: "highly diverse mutation/experiment that explores a substantially different structure or set of principles, focus on a completely different idea than in the original. Search until you find something novel.",
-                nth idea: ... continue alternating between significant variation and highly diverse (not slight)...
+                1st idea: "significant variation, which should take a generally different approach and be a general rewrite while staying in general theme of the original",
+                2nd idea: "highly diverse mutation/experiment that explores a substantially different structure or set of principles, focus on a completely different idea than in the original. Search until you find something novel.",
+                nth idea: ... continue alternating between significant variation and highly diverse...
 
                 # Original Prompt Idea Details
                 Name: {prompt.idea.short_name}
@@ -268,23 +269,28 @@ class PromptOptimizer:
                 {prompt.text}
                 ```
 
-                # Scores from Original Prompt:
+                {"# Scores from Original Prompt:" if scores_str else ""}
                 {scores_str}
 
                 # Ideation Considerations
                 {self.mutation_considerations}
 
                 # Format
+                Below is the format you should use for your output. Fill in each part with your own words (e.g. don't literally say "Mutated Idea Title 1" in your output)
+
+                ```
                 **Mutated Idea Title 1**
-                New idea for prompt mutation 1, specifying in detail how to implement the prompt reflecting the target variation. The implementor will not be shown the original prompt.
+                New idea for prompt mutation 1, specifying in detail how to implement the prompt reflecting the target variation. The implementor will not be shown the original prompt, just this idea.
 
                 **Mutated Idea Title 2**
-                New idea for prompt mutation 2, specifying in detail how to implement the prompt reflecting the target variation. The implementor will not be shown the original prompt.
+                New idea for prompt mutation 2, specifying in detail how to implement the prompt reflecting the target variation. The implementor will not be shown the original prompt, just this idea.
                 ...
                 (up to {num_mutations_to_generate} ideas)
+                ```
+
                 """
             ),
-            tools=[perplexity_pro_search],
+            tools=[perplexity_reasoning_pro_search],
         )
 
         mutation_agent_task = (
@@ -367,16 +373,22 @@ class PromptOptimizer:
                 {parent_details_str}
 
                 # Format
+                Below is the format you should use for your output. Fill in each part with your own words (e.g. don't literally say "Mutated Idea Title 1" in your output)
+
+                ```
                 **Bred Idea Title 1**
-                New idea for bred prompt 1, explaining how it combines elements from parents in detail.
+                New idea for bred prompt 1, explaining how it combines elements from parents in detail. The implementor will not be shown the original prompts, just this idea.
 
                 **Bred Idea Title 2**
-                New idea for bred prompt 2, explaining how it combines elements from parents in detail.
+                New idea for bred prompt 2, explaining how it combines elements from parents in detail. The implementor will not be shown the original prompts, just this idea.
                 ...
                 (up to {num_to_breed} ideas)
+                ```
                 """
             ),
-            tools=[perplexity_pro_search],  # Allow research for inspiration if needed
+            tools=[
+                perplexity_reasoning_pro_search
+            ],  # Allow research for inspiration if needed
         )
 
         breeding_agent_task = (

@@ -13,8 +13,8 @@ from forecasting_tools.agents_and_tools.minor_tools import (
     create_tool_for_forecasting_bot,
     grab_open_questions_from_tournament,
     grab_question_details_from_metaculus,
-    perplexity_pro_search,
-    perplexity_quick_search,
+    perplexity_quick_search_high_context,
+    perplexity_reasoning_pro_search,
     query_asknews,
     smart_searcher_search,
 )
@@ -35,12 +35,8 @@ from forecasting_tools.agents_and_tools.question_generators.question_operational
 from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator,
 )
-from forecasting_tools.agents_and_tools.research.computer_use import (
-    ComputerUse,
-)
-from forecasting_tools.agents_and_tools.research.find_a_dataset import (
-    DatasetFinder,
-)
+from forecasting_tools.agents_and_tools.research.computer_use import ComputerUse
+from forecasting_tools.agents_and_tools.research.find_a_dataset import DatasetFinder
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
     AgentSdkLlm,
@@ -53,13 +49,9 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.forecast_bots.bot_lists import (
-    get_all_important_bot_classes,
-)
+from forecasting_tools.forecast_bots.bot_lists import get_all_important_bot_classes
 from forecasting_tools.front_end.helpers.app_page import AppPage
-from forecasting_tools.front_end.helpers.report_displayer import (
-    ReportDisplayer,
-)
+from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
 from forecasting_tools.helpers.forecast_database_manager import (
     ForecastDatabaseManager,
     ForecastRunType,
@@ -108,9 +100,7 @@ class ChatPage(AppPage):
         if "messages" not in st.session_state.keys():
             st.session_state.messages = [cls.DEFAULT_MESSAGE]
         cls.display_debug_mode()
-        st.sidebar.button(
-            "Clear Chat History", on_click=cls.clear_chat_history
-        )
+        st.sidebar.button("Clear Chat History", on_click=cls.clear_chat_history)
         cls.display_model_selector()
         active_tools = cls.display_tools()
         cls.display_chat_metadata()
@@ -150,13 +140,13 @@ class ChatPage(AppPage):
             TopicGenerator.find_random_headlines_tool,
             QuestionDecomposer.decompose_into_questions_tool,
             QuestionOperationalizer.question_operationalizer_tool,
-            perplexity_pro_search,
+            perplexity_reasoning_pro_search,
             query_asknews,
             smart_searcher_search,
             grab_question_details_from_metaculus,
             grab_open_questions_from_tournament,
             TopicGenerator.get_headlines_on_random_company_tool,
-            perplexity_quick_search,
+            perplexity_quick_search_high_context,
             InfoHazardIdentifier.info_hazard_identifier_tool,
             DataAnalyzer.data_analysis_tool,
             ComputerUse.computer_use_tool,
@@ -174,17 +164,12 @@ class ChatPage(AppPage):
                 "Select a bot for forecast_question_tool (Main Bot is best)",
                 [bot.__name__ for bot in bot_options],
             )
-            bot = next(
-                bot for bot in bot_options if bot.__name__ == bot_choice
-            )
-            default_tools = [
-                create_tool_for_forecasting_bot(bot)
-            ] + default_tools
+            bot = next(bot for bot in bot_options if bot.__name__ == bot_choice)
+            default_tools = [create_tool_for_forecasting_bot(bot)] + default_tools
 
             tool_names = [tool.name for tool in default_tools]
             all_checked = all(
-                st.session_state.get(f"tool_{name}", True)
-                for name in tool_names
+                st.session_state.get(f"tool_{name}", True) for name in tool_names
             )
             toggle_label = "Toggle all Tools"
             if st.button(toggle_label):
@@ -209,11 +194,11 @@ class ChatPage(AppPage):
                 for property_name, metadata in tool.params_json_schema[
                     "properties"
                 ].items():
-                    description = metadata.get(
-                        "description", "No description provided"
-                    )
+                    description = metadata.get("description", "No description provided")
                     field_type = metadata.get("type", "No type provided")
-                    property_description += f"- {property_name}: {description} (type: {field_type})\n"
+                    property_description += (
+                        f"- {property_name}: {description} (type: {field_type})\n"
+                    )
                 st.write(
                     clean_indents(
                         f"""
@@ -278,9 +263,7 @@ class ChatPage(AppPage):
                         if session.trace_id:
                             st.session_state.trace_id = session.trace_id
                         if session.last_chat_cost:
-                            st.session_state.last_chat_cost = (
-                                session.last_chat_cost
-                            )
+                            st.session_state.last_chat_cost = session.last_chat_cost
                         if session.last_chat_duration:
                             st.session_state.last_chat_duration = (
                                 session.last_chat_duration
@@ -316,12 +299,8 @@ class ChatPage(AppPage):
                         last_chat_duration=st.session_state.last_chat_duration,
                     )
                     saved_sessions.append(chat_session)
-                    ChatSession.save_object_list_to_file_path(
-                        saved_sessions, save_path
-                    )
-                    st.sidebar.success(
-                        f"Chat session '{chat_session.name}' saved."
-                    )
+                    ChatSession.save_object_list_to_file_path(saved_sessions, save_path)
+                    st.sidebar.success(f"Chat session '{chat_session.name}' saved.")
                     logger.info(
                         f"Chat session '{chat_session.name}' saved. Rerunning app"
                     )
@@ -350,9 +329,7 @@ class ChatPage(AppPage):
                 call_id = message["name"]
                 with st.sidebar.expander(f"{call_emoji} Call: {call_id}"):
                     st.write(f"Call ID: {message['call_id']}")
-                    st.write(
-                        f"Assistant Message Number: {assistant_message_num}"
-                    )
+                    st.write(f"Assistant Message Number: {assistant_message_num}")
                     st.write(f"Function: {message['name']}")
                     st.write(f"Arguments: {message['arguments']}")
                     continue
@@ -360,9 +337,7 @@ class ChatPage(AppPage):
                 call_id = message["call_id"]
                 with st.sidebar.expander(f"{output_emoji} Output: {call_id}"):
                     st.write(f"Call ID: {message['call_id']}")
-                    st.write(
-                        f"Assistant Message Number: {assistant_message_num}"
-                    )
+                    st.write(f"Assistant Message Number: {assistant_message_num}")
                     st.write(
                         ReportDisplayer.clean_markdown(
                             f"Output:\n\n{message['output']}"
@@ -408,9 +383,7 @@ class ChatPage(AppPage):
                 new_files = HostedFile.upload_files_to_openai(files_to_upload)
                 session_files.extend(new_files)
                 for new_file in new_files:
-                    prompt += (
-                        f"\n\n*[User uploaded file: {new_file.file_name}]*"
-                    )
+                    prompt += f"\n\n*[User uploaded file: {new_file.file_name}]*"
 
             st.session_state.chat_files = session_files
         else:
@@ -422,9 +395,7 @@ class ChatPage(AppPage):
         cls, prompt: str | None, active_tools: list[AgentTool]
     ) -> None:
         if prompt:
-            st.session_state.messages.append(
-                {"role": "user", "content": prompt}
-            )
+            st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.write(prompt)
         if st.session_state.messages[-1]["role"] != "assistant":

@@ -3,18 +3,13 @@ import asyncio
 from forecasting_tools.agents_and_tools.question_generators.simple_question import (
     SimpleQuestion,
 )
-from forecasting_tools.agents_and_tools.research.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.agent_wrappers import AgentTool, agent_tool
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
-from forecasting_tools.helpers.metaculus_api import (
-    MetaculusApi,
-    MetaculusQuestion,
-)
+from forecasting_tools.helpers.metaculus_api import MetaculusApi, MetaculusQuestion
 from forecasting_tools.util.misc import get_schema_of_base_model
 
 
@@ -32,7 +27,7 @@ async def query_asknews(topic: str) -> str:
 
 
 @agent_tool
-async def perplexity_pro_search(query: str) -> str:
+async def perplexity_reasoning_pro_search(query: str) -> str:
     """
     Use Perplexity (sonar-reasoning-pro) to search for information on a topic.
     This will provide a LLM answer with citations.
@@ -48,7 +43,7 @@ async def perplexity_pro_search(query: str) -> str:
 
 
 @agent_tool
-async def perplexity_quick_search(query: str) -> str:
+async def perplexity_quick_search_high_context(query: str) -> str:
     """
     Use Perplexity (sonar) to search for information on a topic.
     This will provide a LLM answer with citations.
@@ -141,11 +136,9 @@ def create_tool_for_forecasting_bot(
     @agent_tool(description_override=description)
     def forecast_question_tool(question: SimpleQuestion) -> str:
 
-        metaculus_question = (
-            SimpleQuestion.simple_questions_to_metaculus_questions([question])[
-                0
-            ]
-        )
+        metaculus_question = SimpleQuestion.simple_questions_to_metaculus_questions(
+            [question]
+        )[0]
         task = bot.forecast_question(metaculus_question)
         report = asyncio.run(task)
         return report.explanation
