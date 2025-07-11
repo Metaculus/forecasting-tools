@@ -248,7 +248,7 @@ class PromptOptimizer:
                 {self.prompt_requirements_explanation}
 
                 # Instructions
-                1. Please analyze the scores from the previous prompt and identify what went wrong. You can run 2-5 searches to run this analysis.
+                1. Please analyze the scores from the previous prompt and identify what went wrong. You can run 3-5 searches to run this analysis.
                 2. Run 3-10 searches on the web to find inspiration for novel prompt structures, techniques, and ideas that will solve the goal.
                 3. Generate {num_mutations_to_generate} new, distinct PROMPT IDEAS based on the original.
 
@@ -256,9 +256,9 @@ class PromptOptimizer:
                 Each mutation idea must be a concept for a new, complete prompt.
 
                 For each idea please sequentially follow these policies to determine how much you try to mutate the original prompt:
-                1st idea: "significant variation, which should take a generally different approach and be a general rewrite while staying in general theme of the original",
-                2nd idea: "highly diverse mutation/experiment that explores a substantially different structure or set of principles, focus on a completely different idea than in the original. Search until you find something novel.",
-                nth idea: ... continue alternating between significant variation and highly diverse...
+                1st idea: "Normal variation, which should take a generally different approach and be a general rewrite while staying in general theme of the original",
+                2nd idea: "Highly Diverse variation, that explores a substantially different structure or set of principles, focus on a completely different idea than in the original. Search until you find something novel.",
+                nth idea: ... continue alternating between normal variation and highly diverse variation...
 
                 # Original Prompt Idea Details
                 Name: {prompt.idea.short_name}
@@ -280,10 +280,10 @@ class PromptOptimizer:
 
                 ```
                 **Mutated Idea Title 1**
-                New idea for prompt mutation 1, specifying in detail how to implement the prompt reflecting the target variation. The implementor will not be shown the original prompt, just this idea.
+                New idea for prompt mutation 1, specifying in detail how to implement the prompt reflecting the target variation. The implementor will not be shown the original prompt, just this idea and the prompt requirements (so don't repeat the requirements in your idea, but otherwise give a detailed overview).
 
                 **Mutated Idea Title 2**
-                New idea for prompt mutation 2, specifying in detail how to implement the prompt reflecting the target variation. The implementor will not be shown the original prompt, just this idea.
+                New idea for prompt mutation 2, specifying in detail how to implement the prompt reflecting the target variation. The implementor will not be shown the original prompt, just this idea and the prompt requirements (so don't repeat the requirements in your idea, but otherwise give a detailed overview).
                 ...
                 (up to {num_mutations_to_generate} ideas)
                 ```
@@ -377,10 +377,10 @@ class PromptOptimizer:
 
                 ```
                 **Bred Idea Title 1**
-                New idea for bred prompt 1, explaining how it combines elements from parents in detail. The implementor will not be shown the original prompts, just this idea.
+                New idea for bred prompt 1, explaining how it combines elements from parents in detail. The implementor will not be shown the original prompts, just this idea and the prompt requirements (so don't repeat the requirements in your idea, but otherwise give a detailed overview).
 
                 **Bred Idea Title 2**
-                New idea for bred prompt 2, explaining how it combines elements from parents in detail. The implementor will not be shown the original prompts, just this idea.
+                New idea for bred prompt 2, explaining how it combines elements from parents in detail. The implementor will not be shown the original prompts, just this idea and the prompt requirements (so don't repeat the requirements in your idea, but otherwise give a detailed overview).
                 ...
                 (up to {num_to_breed} ideas)
                 ```

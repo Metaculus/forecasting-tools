@@ -58,16 +58,13 @@ You write your rationale remembering that good forecasters put extra weight on t
 The last thing you write is your final answer as: "Probability: ZZ%", 0-100
 """
 
-# _CONTROL_RESEARCH_PROMPT: str = (
-#     PresetResearchStrategy.SEARCH_ASKNEWS_WITH_QUESTION_TEXT.value
-# )
-
 
 _CONTROL_AGENT_RESEARCH_PROMPT: str = """
-Please make only 1 search using the question text as a query using the tool you have avaialge (always default to AskNews if available).
+Please make only 1 search using the tools you have available (always default to AskNews if available).
+
+Use the query: {question_text}
+
 Completely restate what the search tool tells you in full without any additional commentary.
 Don't use any other tools other than the 1 search with the question text as the query.
-
-Question:
-{question_text}
+If you get any content about Metaculus community predictions, please remove it and replace those sentences/paragraphs with [[METACULUS_INFO_REMOVED]].
 """

@@ -1,8 +1,6 @@
 import pytest
 
-from forecasting_tools.agents_and_tools.research.find_a_dataset import (
-    DatasetFinder,
-)
+from forecasting_tools.agents_and_tools.research.find_a_dataset import DatasetFinder
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
     AgentSdkLlm,
@@ -21,9 +19,7 @@ def get_tool_tests() -> list[tuple[str, AgentTool]]:
 
 
 @pytest.mark.parametrize("name, function_tool", get_tool_tests())
-async def test_chat_app_function_tools(
-    name: str, function_tool: AgentTool
-) -> None:
+async def test_chat_app_function_tools(name: str, function_tool: AgentTool) -> None:
     instructions = clean_indents(
         """
         You are a software engineer testing a piece of code.
@@ -44,7 +40,7 @@ async def test_chat_app_function_tools(
         pytest.skip("DatasetFinder is not supported in this test")
     llm = AgentSdkLlm(model="openrouter/openai/gpt-4.1")
     agent = AiAgent(
-        name="Test Agent",
+        name="Tool Test Agent",
         instructions=instructions,
         model=llm,
         tools=[function_tool],

@@ -12,6 +12,7 @@ from forecasting_tools.ai_models.agent_wrappers import (
     CodingTool,
     agent_tool,
     event_to_tool_message,
+    general_trace_or_span,
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 
@@ -25,7 +26,7 @@ class AvailableFile(BaseModel):
 
 class DataAnalyzer:
 
-    def __init__(self, model: str = "gpt-4o") -> None:
+    def __init__(self, model: str = "gpt-4.1") -> None:
         self.model = model
 
     async def run_data_analysis(
@@ -90,7 +91,7 @@ class DataAnalyzer:
             event_message = event_to_tool_message(event)
             if event_message:
                 final_answer += event_message + "\n\n"
-        final_answer += f"\n\nFinal output: {result.final_output}"
+        final_answer += f"Final output: {result.final_output}"
         return final_answer
 
     @agent_tool
@@ -115,3 +116,13 @@ class DataAnalyzer:
                 instruction, additional_context, available_files
             )
         )
+
+
+if __name__ == "__main__":
+    with general_trace_or_span("Test Span 1"):
+        answer = asyncio.run(
+            DataAnalyzer().run_data_analysis(
+                instructions="Please multiple 52.675 x 6.547 x 9867.5476 x 4356.5",
+            )
+        )
+    print(answer)

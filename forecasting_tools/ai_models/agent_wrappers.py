@@ -79,7 +79,7 @@ def track_generation(*args, **kwargs) -> Span[GenerationSpanData]:
     if _current_trace_exists():
         return generation_span(*args, **kwargs)
     else:
-        with trace("One off Generation"):
+        with trace("One Off Generation"):
             return generation_span(*args, **kwargs)
 
 
