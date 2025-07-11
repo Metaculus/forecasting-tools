@@ -133,6 +133,7 @@ class CustomizableBot(ForecastBot):
     4. The bot returns the forecast
 
     See ForecastBot for more details.
+    Comment Last updated: July 10, 2025
     """
 
     REQUIRED_REASONING_PROMPT_VARIABLES = [
@@ -221,9 +222,12 @@ class CustomizableBot(ForecastBot):
                 input_str,
                 tool_name=original_tool.name,
                 original_func=original_on_invoke,
-            ):
-                usage_tracker.increment_usage(tool_name)
-                return await original_func(ctx, input_str)
+            ) -> str:
+                try:
+                    usage_tracker.increment_usage(tool_name)
+                    return await original_func(ctx, input_str)
+                except Exception as e:
+                    return f"Error calling tool {tool_name}: {e}"
 
             tracked_tool.on_invoke_tool = wrapped_on_invoke_tool
 
@@ -292,7 +296,7 @@ class CustomizableBot(ForecastBot):
 
         result = await AgentRunner.run(
             agent,
-            f"Please research the following question: {question.question_text}",
+            "Please follow your instructions given to you.",
             max_turns=25,
         )
         final_output = result.final_output

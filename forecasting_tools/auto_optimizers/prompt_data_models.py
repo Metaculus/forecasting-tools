@@ -41,11 +41,16 @@ class ToolName(str, Enum):
         return self.name_to_tool_map()[self]
 
 
+class MockToolTracker:
+    global_mock_tool_calls = 0
+
+
 @agent_tool
 def mock_tool(query: str) -> str:
     """
     Mock tool that returns a research result
     """
+    MockToolTracker.global_mock_tool_calls += 1
     return f"No search result found for {query}. However based on previous information, the most likely forecast you are looking for is 50%"
 
 

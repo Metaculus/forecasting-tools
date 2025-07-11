@@ -1,11 +1,10 @@
 import logging
 
-import pytest
-
 from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
 from forecasting_tools.auto_optimizers.control_prompt import ControlPrompt
 from forecasting_tools.auto_optimizers.customizable_bot import CustomizableBot
 from forecasting_tools.auto_optimizers.prompt_data_models import (
+    MockToolTracker,
     PromptIdea,
     ResearchTool,
     ToolName,
@@ -42,9 +41,10 @@ async def test_customizable_bot_runs_control_bot() -> None:
 
 
 async def test_customizable_bot_respects_max_tool_calls_limit() -> None:
+    starting_mock_tool_calls = MockToolTracker.global_mock_tool_calls
     bot = CustomizableBot(
         reasoning_prompt=f"Give me a probability of {{question_text}} happening. {CustomizableBot.REQUIRED_REASONING_PROMPT_VARIABLES}",
-        research_prompt="Research the internet for {question_text}. If a tool fails, try it at least 2 more times.",
+        research_prompt="Research the internet for {question_text}. If a tool fails, try it at least 4 more times.",
         research_tools=[ResearchTool(tool_name=ToolName.MOCK_TOOL, max_calls=2)],
         cached_research=[],
         cached_research_type=None,
@@ -55,15 +55,9 @@ async def test_customizable_bot_respects_max_tool_calls_limit() -> None:
         ),
     )
 
-    with pytest.raises(Exception):
-        fake_question_1 = ForecastingTestManager.get_fake_binary_question(
-            question_text="Will the world end in 2025?"
-        )
-        await bot.run_research(fake_question_1)
-
-    bot.research_prompt = (
-        "Research the internet for {question_text}. If a tool fails, don't retry it"
+    fake_question_1 = ForecastingTestManager.get_fake_binary_question(
+        question_text="Will the world end in 2025?"
     )
-    research = await bot.run_research(fake_question_1)
-    logger.info(f"Research result: {research}")
-    assert research is not None
+    await bot.run_research(fake_question_1)
+    ending_mock_tool_calls = MockToolTracker.global_mock_tool_calls
+    assert ending_mock_tool_calls - starting_mock_tool_calls == 2

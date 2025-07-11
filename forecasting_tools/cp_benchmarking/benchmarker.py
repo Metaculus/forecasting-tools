@@ -109,8 +109,11 @@ class Benchmarker:
                 self.concurrent_question_batch_size,
             )
             try:
-                for batch in batches:
-                    await self._run_a_batch(batch)
+                for i, batch in enumerate(batches):
+                    with general_trace_or_span(
+                        f"{batch.benchmark.name} - Batch {i+1} of {len(batches)}"
+                    ):
+                        await self._run_a_batch(batch)
                     if batch.is_last_batch_for_benchmark:
                         self._append_benchmarks_to_jsonl_if_configured(
                             [batch.benchmark]

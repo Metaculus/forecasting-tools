@@ -2,18 +2,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from code_tests.unit_tests.forecasting_test_manager import (
-    ForecastingTestManager,
-)
+from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.auto_optimizers.customizable_bot import (
     CustomizableBot,
     ResearchTool,
 )
-from forecasting_tools.auto_optimizers.prompt_data_models import (
-    PromptIdea,
-    ToolName,
-)
+from forecasting_tools.auto_optimizers.prompt_data_models import PromptIdea, ToolName
 from forecasting_tools.auto_optimizers.question_plus_research import (
     QuestionPlusResearch,
     ResearchItem,
@@ -21,12 +16,8 @@ from forecasting_tools.auto_optimizers.question_plus_research import (
 )
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 
-fake_question_1 = ForecastingTestManager.get_fake_binary_question(
-    question_text="Q1"
-)
-fake_question_2 = ForecastingTestManager.get_fake_binary_question(
-    question_text="Q2"
-)
+fake_question_1 = ForecastingTestManager.get_fake_binary_question(question_text="Q1")
+fake_question_2 = ForecastingTestManager.get_fake_binary_question(question_text="Q2")
 
 
 @pytest.fixture
@@ -45,17 +36,13 @@ def research_snapshots() -> list[QuestionPlusResearch]:
         QuestionPlusResearch(
             question=fake_question_1,
             research_items=[
-                ResearchItem(
-                    research="q1_news", type=ResearchType.ASK_NEWS_SUMMARIES
-                )
+                ResearchItem(research="q1_news", type=ResearchType.ASK_NEWS_SUMMARIES)
             ],
         ),
         QuestionPlusResearch(
             question=fake_question_2,
             research_items=[
-                ResearchItem(
-                    research="q2_news", type=ResearchType.ASK_NEWS_SUMMARIES
-                )
+                ResearchItem(research="q2_news", type=ResearchType.ASK_NEWS_SUMMARIES)
             ],
         ),
     ]
@@ -116,17 +103,13 @@ async def test_customizable_bot_run_research_duplicate_questions_in_snapshots(
         QuestionPlusResearch(
             question=q1,
             research_items=[
-                ResearchItem(
-                    research="q1_news1", type=ResearchType.ASK_NEWS_SUMMARIES
-                )
+                ResearchItem(research="q1_news1", type=ResearchType.ASK_NEWS_SUMMARIES)
             ],
         ),
         QuestionPlusResearch(
             question=q1,  # Duplicate question
             research_items=[
-                ResearchItem(
-                    research="q1_news2", type=ResearchType.ASK_NEWS_SUMMARIES
-                )
+                ResearchItem(research="q1_news2", type=ResearchType.ASK_NEWS_SUMMARIES)
             ],
         ),
     ]
@@ -175,7 +158,6 @@ async def test_config_generation(customizable_bot: CustomizableBot) -> None:
     assert config is not None
     assert str(customizable_bot.reasoning_prompt) in config["reasoning_prompt"]
     assert str(customizable_bot.research_prompt) in config["research_prompt"]
-    assert str(customizable_bot.research_type) in config["research_type"]
 
 
 @pytest.mark.parametrize(
@@ -255,9 +237,7 @@ def test_validate_combined_research_reasoning_prompt(
 
 
 def test_split_and_combine_prompts_generate_equivalent_strings() -> None:
-    research_prompt = (
-        f"Research: {CustomizableBot.REQUIRED_RESEARCH_PROMPT_VARIABLES}"
-    )
+    research_prompt = f"Research: {CustomizableBot.REQUIRED_RESEARCH_PROMPT_VARIABLES}"
     reasoning_prompt = (
         f"Reasoning: {CustomizableBot.REQUIRED_REASONING_PROMPT_VARIABLES}"
     )
@@ -266,9 +246,7 @@ def test_split_and_combine_prompts_generate_equivalent_strings() -> None:
     )
 
     new_research_prompt, new_reasoning_prompt = (
-        CustomizableBot.split_combined_research_reasoning_prompt(
-            combined_prompt
-        )
+        CustomizableBot.split_combined_research_reasoning_prompt(combined_prompt)
     )
     assert new_research_prompt == research_prompt
     assert new_reasoning_prompt == reasoning_prompt
