@@ -6,7 +6,11 @@ import typeguard
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.auto_optimizers.control_prompt import ControlPrompt
 from forecasting_tools.auto_optimizers.customizable_bot import CustomizableBot
-from forecasting_tools.auto_optimizers.prompt_data_models import BotConfig, PromptIdea
+from forecasting_tools.auto_optimizers.prompt_data_models import (
+    BotConfig,
+    PromptIdea,
+    ResearchTool,
+)
 from forecasting_tools.auto_optimizers.question_plus_research import (
     QuestionPlusResearch,
     ResearchType,
@@ -132,6 +136,7 @@ class BotEvaluator:
         benchmark_files: list[str],
         forecast_llm: GeneralLlm,
         research_llm_name: str,
+        research_tools: list[ResearchTool],
         top_n_prompts: int = 1,
         include_control_group_prompt: bool = True,
         include_worst_prompt: bool = False,
@@ -174,7 +179,7 @@ class BotEvaluator:
             best_prompt_config = BotConfig(
                 reasoning_prompt_template=reasoning_prompt,
                 research_prompt_template=research_prompt,
-                research_tools=benchmark.research_tools_used,
+                research_tools=research_tools,  # Enable choosing to use bot.research_tools if benchmarks allow for different available tools
                 reasoning_llm=forecast_llm,
                 research_llm=research_llm_name,
                 originating_idea=PromptIdea(

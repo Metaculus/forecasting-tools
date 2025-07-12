@@ -259,9 +259,15 @@ def test_split_and_combine_prompts_generate_equivalent_strings() -> None:
 
 
 def test_get_benchmark_config_dict() -> None:
+    research_prompt = (
+        f"Research prompt with {CustomizableBot.REQUIRED_RESEARCH_PROMPT_VARIABLES}"
+    )
+    reasoning_prompt = (
+        f"Test prompt with {CustomizableBot.REQUIRED_REASONING_PROMPT_VARIABLES}"
+    )
     customizable_bot = CustomizableBot(
-        reasoning_prompt=f"Test prompt with {CustomizableBot.REQUIRED_REASONING_PROMPT_VARIABLES}",
-        research_prompt=f"Research prompt with {CustomizableBot.REQUIRED_RESEARCH_PROMPT_VARIABLES}",
+        research_prompt=research_prompt,
+        reasoning_prompt=reasoning_prompt,
         research_tools=[mock_research_tool],
         cached_research=[],
         cached_research_type=None,
@@ -280,6 +286,13 @@ def test_get_benchmark_config_dict() -> None:
     )
     benchmark_config = benchmark.forecast_bot_config
     assert benchmark_config is not None
+
+    assert len(benchmark.research_tools_used) == 1
+    assert benchmark.research_tools_used[0].tool_name == mock_research_tool.tool_name
+
+    assert benchmark.bot_prompt == CustomizableBot.combine_research_reasoning_prompt(
+        research_prompt, reasoning_prompt
+    )
 
 
 async def test_preset_research_strategies_work() -> None:

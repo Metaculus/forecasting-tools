@@ -18,19 +18,14 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.data_models.data_organizer import (
-    DataOrganizer,
-    PredictionTypes,
-)
+from forecasting_tools.data_models.data_organizer import DataOrganizer, PredictionTypes
 from forecasting_tools.data_models.forecast_report import (
     ForecastReport,
     ReasonedPrediction,
     ResearchWithPredictions,
 )
 from forecasting_tools.data_models.markdown_tree import MarkdownTree
-from forecasting_tools.data_models.multiple_choice_report import (
-    PredictedOptionList,
-)
+from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
@@ -88,23 +83,17 @@ class ForecastBot(ABC):
         assert (
             research_reports_per_question > 0
         ), "Must run at least one research report"
-        assert (
-            predictions_per_research_report > 0
-        ), "Must run at least one prediction"
+        assert predictions_per_research_report > 0, "Must run at least one prediction"
         if use_research_summary_to_forecast and not enable_summarize_research:
             raise ValueError(
                 "Cannot use research summary to forecast if summarize_research is False"
             )
         self.research_reports_per_question = research_reports_per_question
         self.predictions_per_research_report = predictions_per_research_report
-        self.use_research_summary_to_forecast = (
-            use_research_summary_to_forecast
-        )
+        self.use_research_summary_to_forecast = use_research_summary_to_forecast
         self.folder_to_save_reports_to = folder_to_save_reports_to
         self.publish_reports_to_metaculus = publish_reports_to_metaculus
-        self.skip_previously_forecasted_questions = (
-            skip_previously_forecasted_questions
-        )
+        self.skip_previously_forecasted_questions = skip_previously_forecasted_questions
         self.parameters_to_exclude_from_config_dict = (
             parameters_to_exclude_from_config_dict or []
         )
@@ -127,9 +116,7 @@ class ForecastBot(ABC):
                     f"Please override and add it to the {self._llm_config_defaults.__name__} method"
                 )
 
-        logger.debug(
-            f"LLMs at initialization for bot are: {self.make_llm_dict()}"
-        )
+        logger.debug(f"LLMs at initialization for bot are: {self.make_llm_dict()}")
 
     @overload
     async def forecast_on_tournament(
@@ -157,9 +144,7 @@ class ForecastBot(ABC):
         tournament_id: int | str,
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
-        questions = MetaculusApi.get_all_open_questions_from_tournament(
-            tournament_id
-        )
+        questions = MetaculusApi.get_all_open_questions_from_tournament(tournament_id)
         return await self.forecast_questions(questions, return_exceptions)
 
     @overload
@@ -224,9 +209,7 @@ class ForecastBot(ABC):
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
         if self.skip_previously_forecasted_questions:
             unforecasted_questions = [
-                question
-                for question in questions
-                if not question.already_forecasted
+                question for question in questions if not question.already_forecasted
             ]
             if len(questions) != len(unforecasted_questions):
                 logger.info(
@@ -243,9 +226,7 @@ class ForecastBot(ABC):
         )
         if self.folder_to_save_reports_to:
             non_exception_reports = [
-                report
-                for report in reports
-                if not isinstance(report, BaseException)
+                report for report in reports if not isinstance(report, BaseException)
             ]
             questions_as_list = list(questions)
             file_path = self._create_file_path_to_save_to(questions_as_list)
@@ -268,9 +249,7 @@ class ForecastBot(ABC):
             return "Summarize research was disabled for this run"
 
         try:
-            logger.info(
-                f"Summarizing research for question: {question.page_url}"
-            )
+            logger.info(f"Summarizing research for question: {question.page_url}")
             model = self.get_llm("summarizer", "llm")
             prompt = clean_indents(
                 f"""
@@ -290,9 +269,7 @@ class ForecastBot(ABC):
             if self.use_research_summary_to_forecast:
                 raise e  # If the summary is needed for research, then returning the normal error message as the research will confuse the AI
             logger.warning(f"Could not summarize research. {e}")
-            return (
-                f"{e.__class__.__name__} exception while summarizing research"
-            )
+            return f"{e.__class__.__name__} exception while summarizing research"
 
     def get_config(self) -> dict[str, Any]:
         params = inspect.signature(self.__init__).parameters
@@ -309,8 +286,17 @@ class ForecastBot(ABC):
                 continue
             value = getattr(self, name)
             try:
-                json.dumps({name: value})
-                config[name] = value
+                if isinstance(value, BaseModel):
+                    config[name] = value.model_dump()
+                elif (
+                    isinstance(value, list)
+                    and len(value) > 0
+                    and isinstance(value[0], BaseModel)
+                ):
+                    config[name] = [item.model_dump() for item in value]
+                else:
+                    json.dumps({name: value})
+                    config[name] = value
             except Exception:
                 config[name] = str(value)
 
@@ -336,11 +322,11 @@ class ForecastBot(ABC):
             try:
                 return await self._run_individual_question(question)
             except Exception as e:
-                error_message = f"Error while processing question url: '{question.page_url}'"
-                logger.error(f"{error_message}: {e}")
-                self._reraise_exception_with_prepended_message(
-                    e, error_message
+                error_message = (
+                    f"Error while processing question url: '{question.page_url}'"
                 )
+                logger.error(f"{error_message}: {e}")
+                self._reraise_exception_with_prepended_message(e, error_message)
                 assert (
                     False
                 ), "This is to satisfy type checker. The previous function should raise an exception"
@@ -426,12 +412,8 @@ class ForecastBot(ABC):
                 f"Predictions have different types. Types: {prediction_types}. "
                 "This may cause problems when aggregating."
             )
-        report_type = DataOrganizer.get_report_type_for_question_type(
-            type(question)
-        )
-        aggregate = await report_type.aggregate_predictions(
-            predictions, question
-        )
+        report_type = DataOrganizer.get_report_type_for_question_type(type(question))
+        aggregate = await report_type.aggregate_predictions(predictions, question)
         return aggregate
 
     async def _research_and_make_predictions(
@@ -442,9 +424,7 @@ class ForecastBot(ABC):
         research = await self.run_research(question)
         summary_report = await self.summarize_research(question, research)
         research_to_use = (
-            summary_report
-            if self.use_research_summary_to_forecast
-            else research
+            summary_report if self.use_research_summary_to_forecast else research
         )
 
         tasks = cast(
@@ -481,13 +461,9 @@ class ForecastBot(ABC):
         if isinstance(question, BinaryQuestion):
             forecast_function = lambda q, r: self._run_forecast_on_binary(q, r)
         elif isinstance(question, MultipleChoiceQuestion):
-            forecast_function = (
-                lambda q, r: self._run_forecast_on_multiple_choice(q, r)
-            )
+            forecast_function = lambda q, r: self._run_forecast_on_multiple_choice(q, r)
         elif isinstance(question, NumericQuestion):
-            forecast_function = lambda q, r: self._run_forecast_on_numeric(
-                q, r
-            )
+            forecast_function = lambda q, r: self._run_forecast_on_numeric(q, r)
         elif isinstance(question, DateQuestion):
             raise NotImplementedError("Date questions not supported yet")
         else:
@@ -522,9 +498,7 @@ class ForecastBot(ABC):
         final_cost: float,
         time_spent_in_minutes: float,
     ) -> str:
-        report_type = DataOrganizer.get_report_type_for_question_type(
-            type(question)
-        )
+        report_type = DataOrganizer.get_report_type_for_question_type(type(question))
 
         all_summaries = []
         all_core_research = []
@@ -533,17 +507,13 @@ class ForecastBot(ABC):
             summary = self._format_and_expand_research_summary(
                 i + 1, report_type, collection
             )
-            core_research_for_collection = self._format_main_research(
+            core_research_for_collection = self._format_main_research(i + 1, collection)
+            forecaster_rationales_for_collection = self._format_forecaster_rationales(
                 i + 1, collection
-            )
-            forecaster_rationales_for_collection = (
-                self._format_forecaster_rationales(i + 1, collection)
             )
             all_summaries.append(summary)
             all_core_research.append(core_research_for_collection)
-            all_forecaster_rationales.append(
-                forecaster_rationales_for_collection
-            )
+            all_forecaster_rationales.append(forecaster_rationales_for_collection)
 
         combined_summaries = "\n".join(all_summaries)
         combined_research_reports = "\n".join(all_core_research)
@@ -601,12 +571,8 @@ class ForecastBot(ABC):
     ) -> str:
         markdown = predicted_research.research_report
         sections = MarkdownTree.turn_markdown_into_report_sections(markdown)
-        modified_content = MarkdownTree.report_sections_to_markdown(
-            sections, 3
-        )
-        final_content = (
-            f"## Report {report_number} Research\n{modified_content}"
-        )
+        modified_content = MarkdownTree.report_sections_to_markdown(sections, 3)
+        final_content = f"## Report {report_number} Research\n{modified_content}"
         return final_content
 
     def _format_forecaster_rationales(
@@ -623,9 +589,7 @@ class ForecastBot(ABC):
             rationales.append(new_rationale)
         return "\n".join(rationales)
 
-    def _create_file_path_to_save_to(
-        self, questions: list[MetaculusQuestion]
-    ) -> str:
+    def _create_file_path_to_save_to(self, questions: list[MetaculusQuestion]) -> str:
         assert (
             self.folder_to_save_reports_to is not None
         ), "Folder to save reports to is not set"
@@ -642,9 +606,7 @@ class ForecastBot(ABC):
     ) -> tuple[list[T], list[str], ExceptionGroup | None]:
         results = await asyncio.gather(*coroutines, return_exceptions=True)
         valid_results = [
-            result
-            for result in results
-            if not isinstance(result, BaseException)
+            result for result in results if not isinstance(result, BaseException)
         ]
         error_messages = []
         exceptions = []
@@ -671,18 +633,14 @@ class ForecastBot(ABC):
                 f"{message}: {exception.__class__.__name__} - {str(exception)}"
             ) from exception
 
-    async def _initialize_notepad(
-        self, question: MetaculusQuestion
-    ) -> Notepad:
+    async def _initialize_notepad(self, question: MetaculusQuestion) -> Notepad:
         new_notepad = Notepad(question=question)
         return new_notepad
 
     async def _remove_notepad(self, question: MetaculusQuestion) -> None:
         async with self._note_pad_lock:
             self._note_pads = [
-                notepad
-                for notepad in self._note_pads
-                if notepad.question != question
+                notepad for notepad in self._note_pads if notepad.question != question
             ]
 
     async def _get_notepad(self, question: MetaculusQuestion) -> Notepad:
@@ -701,9 +659,7 @@ class ForecastBot(ABC):
         raise_errors: bool = True,
     ) -> None:
         valid_reports = [
-            report
-            for report in forecast_reports
-            if isinstance(report, ForecastReport)
+            report for report in forecast_reports if isinstance(report, ForecastReport)
         ]
 
         full_summary = "\n"
@@ -767,9 +723,7 @@ class ForecastBot(ABC):
         logger.info(full_summary)
 
         exceptions = [
-            report
-            for report in forecast_reports
-            if isinstance(report, BaseException)
+            report for report in forecast_reports if isinstance(report, BaseException)
         ]
         minor_exceptions = [
             error for report in valid_reports for error in report.errors or []
@@ -780,9 +734,7 @@ class ForecastBot(ABC):
                 logger.error(
                     "Exception occurred during forecasting:\n%s",
                     "".join(
-                        traceback.format_exception(
-                            type(exc), exc, exc.__traceback__
-                        )
+                        traceback.format_exception(type(exc), exc, exc.__traceback__)
                     ),
                 )
             if raise_errors:
@@ -852,9 +804,7 @@ class ForecastBot(ABC):
 
         return return_value
 
-    def set_llm(
-        self, llm: GeneralLlm | str | None, purpose: str = "default"
-    ) -> None:
+    def set_llm(self, llm: GeneralLlm | str | None, purpose: str = "default") -> None:
         if purpose not in self._llms:
             raise ValueError(f"Unknown llm purpose: {purpose}")
         self._llms[purpose] = llm
@@ -882,27 +832,21 @@ class ForecastBot(ABC):
                 model="openrouter/openai/gpt-4o", temperature=0.3
             )
         elif os.getenv("METACULUS_TOKEN"):
-            main_default_llm = GeneralLlm(
-                model="metaculus/gpt-4o", temperature=0.3
-            )
+            main_default_llm = GeneralLlm(model="metaculus/gpt-4o", temperature=0.3)
         else:
             main_default_llm = GeneralLlm(model="gpt-4o", temperature=0.3)
 
         if os.getenv("OPENAI_API_KEY"):
             summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
         elif os.getenv("METACULUS_TOKEN"):
-            summarizer = GeneralLlm(
-                model="metaculus/gpt-4o-mini", temperature=0.3
-            )
+            summarizer = GeneralLlm(model="metaculus/gpt-4o-mini", temperature=0.3)
         else:
             summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
 
         if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
             researcher = "asknews/news-summaries"
         elif os.getenv("PERPLEXITY_API_KEY"):
-            researcher = GeneralLlm(
-                model="perplexity/sonar-pro", temperature=0.1
-            )
+            researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
         elif os.getenv("OPENROUTER_API_KEY"):
             researcher = GeneralLlm(
                 model="openrouter/perplexity/sonar-reasoning", temperature=0.1
@@ -910,9 +854,7 @@ class ForecastBot(ABC):
         elif os.getenv("EXA_API_KEY"):
             researcher = f"smart-searcher/{main_default_llm.model}"
         else:
-            researcher = GeneralLlm(
-                model="perplexity/sonar-pro", temperature=0.1
-            )
+            researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
 
         return {
             "default": main_default_llm,

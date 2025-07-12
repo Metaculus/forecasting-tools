@@ -3,6 +3,7 @@ import logging
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.auto_optimizers.bot_evaluator import BotEvaluator
+from forecasting_tools.auto_optimizers.prompt_data_models import ResearchTool, ToolName
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.util.custom_logger import CustomLogger
 
@@ -36,6 +37,24 @@ async def run_higher_model_evaluation() -> None:
     include_worse_benchmark = False
     research_reports_per_question = 1
     num_predictions_per_research_report = 1
+    research_tools = [
+        ResearchTool(
+            tool_name=ToolName.PERPLEXITY_LOW_COST,
+            max_calls=7,
+        ),
+        ResearchTool(
+            tool_name=ToolName.ASKNEWS,
+            max_calls=2,
+        ),
+        ResearchTool(
+            tool_name=ToolName.DATA_ANALYZER,
+            max_calls=1,
+        ),
+        ResearchTool(
+            tool_name=ToolName.PERPLEXITY_REASONING_PRO_SEARCH,
+            max_calls=1,
+        ),
+    ]
 
     # --- Run the evaluation ---
     for research_and_reason_llm in both_reason_and_research_llm:
@@ -49,6 +68,7 @@ async def run_higher_model_evaluation() -> None:
         evaluation_result = await evaluator.evaluate_best_benchmarked_prompts(
             forecast_llm=reason_llm,
             research_llm_name=research_llm,
+            research_tools=research_tools,
             benchmark_files=benchmark_files,
             top_n_prompts=top_n_prompts,
             include_control_group_prompt=True,
