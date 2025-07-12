@@ -294,6 +294,7 @@ async def test_preset_research_strategies_work() -> None:
             short_name="Test idea",
             full_text="Test idea process",
         ),
+        llms={"default": mock_llm, "researcher": mock_llm},
     )
     expected_research = "Here are the relevant news articles"
     original_function = (

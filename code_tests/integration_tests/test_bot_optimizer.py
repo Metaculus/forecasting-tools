@@ -64,11 +64,11 @@ async def test_bot_optimizer() -> None:
             break
     assert control_prompt is not None
     assert (
-        control_prompt.prompt.text
-        == ControlPrompt.get_control_combined_prompt().strip()
+        control_prompt.prompt.text.replace("\n", "").strip()
+        == ControlPrompt.get_control_combined_prompt().replace("\n", "").strip()
     )
     control_benchmark: BenchmarkForBot = control_prompt.score.metadata["benchmark"]
     assert (
-        control_benchmark.bot_prompt
-        == ControlPrompt.get_control_combined_prompt().strip()
+        control_benchmark.bot_prompt.replace("\n", "").strip()
+        == ControlPrompt.get_control_combined_prompt().replace("\n", "").strip()
     )

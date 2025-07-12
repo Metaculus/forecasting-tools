@@ -3,6 +3,7 @@ from forecasting_tools.auto_optimizers.customizable_bot import (
     CustomizableBot,
     PresetResearchStrategy,
 )
+from forecasting_tools.auto_optimizers.prompt_data_models import ResearchTool
 
 
 class ControlPrompt:
@@ -33,6 +34,10 @@ class ControlPrompt:
             {_CONTROL_REASONING_PROMPT}
             """
         )
+
+    @classmethod
+    def get_control_research_tools(cls) -> list[ResearchTool]:
+        return []
 
     @classmethod
     def get_seed_research_prompt(cls) -> str:

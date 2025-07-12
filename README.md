@@ -67,7 +67,7 @@ bot = TemplateBot(
     folder_to_save_reports_to="logs/forecasts/",  # Where to save detailed reports
     skip_previously_forecasted_questions=False,
     llms={ # LLM models to use for different tasks. Will use default llms if not specified. Requires the relevant provider environment variables to be set.
-        "default": GeneralLlm(model="anthropic/claude-3-5-sonnet-20240620", temperature=0),
+        "default": GeneralLlm(model="openrouter/google/gemini-2.5-pro", temperature=0),
         "summarizer": "openai/gpt-4o-mini",
     }
 )
@@ -80,6 +80,18 @@ for report in reports:
     print(f"\nQuestion: {report.question.question_text}")
     print(f"Prediction: {report.prediction}")
 ```
+
+
+    Question: Will a 2025 Major Atlantic Hurricane make landfall before September?
+    Prediction: 0.35
+
+    Question: Will China enact an export ban on a rare earth element to the United States before September 1, 2025?
+    Prediction: 0.15
+
+    Question: Will Israel strike the Iranian military in Iran again, before September 2025?
+    Prediction: 0.28
+
+
 
 ### Forecasting Outside a Tournament
 

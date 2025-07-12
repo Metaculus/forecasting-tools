@@ -141,7 +141,6 @@ class BotEvaluator:
         best_benchmarks = self._get_best_benchmark_prompts(
             benchmark_files, top_n_prompts, include_worst_prompt
         )
-        research_tools_of_best_benchmark = best_benchmarks[0].research_tools_used
 
         logger.info(
             f"Evaluating {len(best_benchmarks)} prompts with {forecast_llm.model}. Prompts are the best scoring from files {benchmark_files}"
@@ -151,12 +150,12 @@ class BotEvaluator:
             control_group_config = BotConfig(
                 reasoning_prompt_template=ControlPrompt.get_reasoning_prompt(),
                 research_prompt_template=ControlPrompt.get_control_research_prompt(),
-                research_tools=research_tools_of_best_benchmark,
+                research_tools=ControlPrompt.get_control_research_tools(),
                 reasoning_llm=forecast_llm,
                 research_llm=research_llm_name,
                 originating_idea=PromptIdea(
-                    short_name=f"Control Group v{ControlPrompt.version()}",
-                    full_text="The control group is a group of questions that are not optimized for the prompt. It is used to evaluate the performance of the optimized prompt.",
+                    short_name=f"Control v{ControlPrompt.version()}",
+                    full_text="The control is a prompt that is not optimized but used as a baseline comparison.",
                 ),
                 predictions_per_research_report=num_predictions_per_research_report,
                 research_reports_per_question=research_reports_per_question,
@@ -170,7 +169,7 @@ class BotEvaluator:
                 )
             )
             logger.info(
-                f"{benchmark.forecast_bot_class_name} - {benchmark.average_expected_baseline_score}:\n{combined_research_reasoning_prompt}"
+                f"{benchmark.forecast_bot_class_name} - {benchmark.average_expected_baseline_score}"
             )
             best_prompt_config = BotConfig(
                 reasoning_prompt_template=reasoning_prompt,
