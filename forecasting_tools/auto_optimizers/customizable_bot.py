@@ -154,8 +154,8 @@ class CustomizableBot(ForecastBot):
 
     def __init__(
         self,
-        reasoning_prompt: str,
         research_prompt: str,
+        reasoning_prompt: str,
         research_tools: list[ResearchTool],
         cached_research: list[QuestionPlusResearch] | None,
         cached_research_type: ResearchType | None,

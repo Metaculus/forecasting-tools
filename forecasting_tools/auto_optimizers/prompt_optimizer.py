@@ -145,6 +145,9 @@ class PromptOptimizer:
                 starting_prompts.extend(additional_initial_prompts)
 
             offspring_prompts: list[ImplementedPrompt] = starting_prompts
+            assert (
+                seed_prompt in offspring_prompts
+            ), "Seed prompt not found in offspring prompts"
             all_evaluated_prompts: list[ScoredPrompt] = (
                 await self._evaluate_new_members(offspring_prompts)
             )

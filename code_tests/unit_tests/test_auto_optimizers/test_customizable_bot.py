@@ -4,11 +4,17 @@ import pytest
 
 from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.auto_optimizers.control_prompt import ControlPrompt
 from forecasting_tools.auto_optimizers.customizable_bot import (
     CustomizableBot,
+    PresetResearchStrategy,
     ResearchTool,
 )
-from forecasting_tools.auto_optimizers.prompt_data_models import PromptIdea, ToolName
+from forecasting_tools.auto_optimizers.prompt_data_models import (
+    MockToolTracker,
+    PromptIdea,
+    ToolName,
+)
 from forecasting_tools.auto_optimizers.question_plus_research import (
     QuestionPlusResearch,
     ResearchItem,
@@ -274,3 +280,35 @@ def test_get_benchmark_config_dict() -> None:
     )
     benchmark_config = benchmark.forecast_bot_config
     assert benchmark_config is not None
+
+
+async def test_preset_research_strategies_work() -> None:
+    before_hand_mock_calls = MockToolTracker.global_mock_tool_calls
+    bot = CustomizableBot(
+        research_prompt=PresetResearchStrategy.SEARCH_ASKNEWS_WITH_QUESTION_TEXT.value,
+        reasoning_prompt=ControlPrompt.get_reasoning_prompt(),
+        research_tools=[mock_research_tool],
+        cached_research=[],
+        cached_research_type=None,
+        originating_idea=PromptIdea(
+            short_name="Test idea",
+            full_text="Test idea process",
+        ),
+    )
+    expected_research = "Here are the relevant news articles"
+    original_function = (
+        PresetResearchStrategy.SEARCH_ASKNEWS_WITH_QUESTION_TEXT.run_research
+    )
+    PresetResearchStrategy.SEARCH_ASKNEWS_WITH_QUESTION_TEXT.run_research = AsyncMock(
+        return_value=expected_research
+    )
+
+    research = await bot.run_research(fake_question_1)
+    assert research == expected_research
+    assert (
+        MockToolTracker.global_mock_tool_calls == before_hand_mock_calls
+    ), "A call to the mock tool was made when it should not have been"
+
+    PresetResearchStrategy.SEARCH_ASKNEWS_WITH_QUESTION_TEXT.run_research = (
+        original_function
+    )

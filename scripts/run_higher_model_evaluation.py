@@ -3,10 +3,7 @@ import logging
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.auto_optimizers.bot_evaluator import BotEvaluator
-from forecasting_tools.auto_optimizers.question_plus_research import (
-    QuestionPlusResearch,
-    ResearchType,
-)
+from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.util.custom_logger import CustomLogger
 
 logger = logging.getLogger(__name__)
@@ -14,50 +11,44 @@ logger = logging.getLogger(__name__)
 
 async def run_higher_model_evaluation() -> None:
     # --- Evaluation Parameters ---
-    evaluation_questions = QuestionPlusResearch.load_json_from_file_path(
-        "logs/forecasts/benchmarks/question_snapshots_v1.6.test__230qs.json"
+    evaluation_questions = DataOrganizer.load_questions_from_file_path(
+        "logs/forecasts/benchmarks/questions_v3.0.test__278qs.json"
     )
 
-    questions_batch_size = 115
-    forecast_llms = [
-        GeneralLlm(
-            model="openrouter/openai/gpt-4.1-nano",
-            temperature=0.3,
-        ),
-        GeneralLlm(
-            model="openrouter/anthropic/claude-sonnet-4",
-            temperature=0.3,
-        ),
-        GeneralLlm(
-            model="openrouter/openai/o4-mini",
-            # temperature=0.3,
-        ),
-        GeneralLlm(
-            model="openrouter/deepseek/deepseek-r1",
-            temperature=0.3,
+    questions_to_use = 200
+    evaluation_questions = evaluation_questions[:questions_to_use]
+    questions_batch_size = 100
+    both_reason_and_research_llm: list[tuple[str, GeneralLlm]] = [
+        (
+            "openai/o3",
+            GeneralLlm(
+                model="openai/o3",
+                temperature=0.3,
+            ),
         ),
     ]
     benchmark_files = [
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v4.1__gpt4.1_112qs.jsonl",
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v4.2__gpt4.1_112qs.jsonl",
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v4.3__gpt4.1_112qs.jsonl",
-        "logs/forecasts/benchmarks/benchmarks_prompt_optimization_v4.4__gpt4.1_112qs.jsonl",
+        "logs/forecasts/benchmarks/benchmarks_research_optimization_v3.1__o3__Qv3.0.train_50.jsonl",
+        "logs/forecasts/benchmarks/benchmarks_research_optimization_v3.2__o3__Qv3.0.train_50.jsonl",
+        "logs/forecasts/benchmarks/benchmarks_research_optimization_v3.3__o3__Qv3.0.train_50.jsonl",
     ]
-    top_n_prompts = 2
+    top_n_prompts = 5
     include_worse_benchmark = False
     research_reports_per_question = 1
     num_predictions_per_research_report = 1
 
     # --- Run the evaluation ---
-    for forecast_llm in forecast_llms:
+    for research_and_reason_llm in both_reason_and_research_llm:
+        research_llm, reason_llm = research_and_reason_llm
         evaluator = BotEvaluator(
             input_questions=evaluation_questions,
-            research_type=ResearchType.ASK_NEWS_SUMMARIES,
+            research_type=None,
             concurrent_evaluation_batch_size=questions_batch_size,
             file_or_folder_to_save_benchmarks="logs/forecasts/benchmarks/",
         )
         evaluation_result = await evaluator.evaluate_best_benchmarked_prompts(
-            forecast_llm=forecast_llm,
+            forecast_llm=reason_llm,
+            research_llm_name=research_llm,
             benchmark_files=benchmark_files,
             top_n_prompts=top_n_prompts,
             include_control_group_prompt=True,

@@ -7,11 +7,8 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 )
 from forecasting_tools.auto_optimizers.bot_optimizer import BotOptimizer
 from forecasting_tools.auto_optimizers.control_prompt import ControlPrompt
-from forecasting_tools.auto_optimizers.prompt_data_models import (
-    ResearchTool,
-    ScoredPrompt,
-    ToolName,
-)
+from forecasting_tools.auto_optimizers.prompt_data_models import ResearchTool, ToolName
+from forecasting_tools.auto_optimizers.prompt_optimizer import ScoredPrompt
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 
 logger = logging.getLogger(__name__)

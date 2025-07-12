@@ -42,13 +42,15 @@ class MetaculusApi:
     AI_COMPETITION_ID_Q4 = 32506  # https://www.metaculus.com/tournament/aibq4/
     AI_COMPETITION_ID_Q1 = 32627  # https://www.metaculus.com/tournament/aibq1/
     AI_COMPETITION_ID_Q2 = 32721  # https://www.metaculus.com/tournament/aibq2/
+    PRO_COMPARISON_TOURNAMENT_Q1 = 32631
+    PRO_COMPARISON_TOURNAMENT_Q2 = (
+        32761  # https://www.metaculus.com/tournament/pro-benchmark-q22025
+    )
     ACX_2025_TOURNAMENT = 32564
     Q3_2024_QUARTERLY_CUP = 3366
     Q4_2024_QUARTERLY_CUP = 3672
     Q1_2025_QUARTERLY_CUP = 32630
-    CURRENT_QUARTERLY_CUP_ID = (
-        "metaculus-cup"  # Consider this parameter deprecated
-    )
+    CURRENT_QUARTERLY_CUP_ID = "metaculus-cup"  # Consider this parameter deprecated
     METACULUS_CUP_2025_1_ID = 32726
     CURRENT_METACULUS_CUP_ID = "metaculus-cup"
     CURRENT_AI_COMPETITION_ID = AI_COMPETITION_ID_Q2
@@ -129,9 +131,7 @@ class MetaculusApi:
         """
         match = re.search(r"/questions/(\d+)", question_url)
         if not match:
-            raise ValueError(
-                f"Could not find question ID in URL: {question_url}"
-            )
+            raise ValueError(f"Could not find question ID in URL: {question_url}")
         question_id = int(match.group(1))
         return cls.get_question_by_post_id(question_id)
 
@@ -145,9 +145,7 @@ class MetaculusApi:
         )
         raise_for_status_with_additional_info(response)
         json_question = json.loads(response.content)
-        metaculus_question = MetaculusApi._metaculus_api_json_to_question(
-            json_question
-        )
+        metaculus_question = MetaculusApi._metaculus_api_json_to_question(json_question)
         logger.info(f"Retrieved question details for question {post_id}")
         return metaculus_question
 
@@ -177,9 +175,7 @@ class MetaculusApi:
                 api_filter, num_questions, error_if_question_target_missed
             )
         else:
-            questions = await cls._filter_sequential_strategy(
-                api_filter, num_questions
-            )
+            questions = await cls._filter_sequential_strategy(api_filter, num_questions)
         if (
             num_questions is not None
             and len(questions) != num_questions
@@ -220,9 +216,7 @@ class MetaculusApi:
         num_forecasters_gte: int = 30,
         error_if_question_target_missed: bool = True,
     ) -> list[BinaryQuestion]:
-        logger.info(
-            f"Retrieving {num_of_questions_to_return} benchmark questions"
-        )
+        logger.info(f"Retrieving {num_of_questions_to_return} benchmark questions")
         date_into_future = (
             datetime.now() + timedelta(days=days_to_resolve_in)
             if days_to_resolve_in
@@ -284,9 +278,7 @@ class MetaculusApi:
         raise_for_status_with_additional_info(response)
 
     @classmethod
-    def _get_questions_from_api(
-        cls, params: dict[str, Any]
-    ) -> list[MetaculusQuestion]:
+    def _get_questions_from_api(cls, params: dict[str, Any]) -> list[MetaculusQuestion]:
         random_sleep_time = random.uniform(2, 3)
         logger.debug(
             f"Sleeping for {random_sleep_time:.1f} seconds before next request"
@@ -309,9 +301,7 @@ class MetaculusApi:
             and "group_of_questions" not in q
             and "conditional" not in q
         ]
-        removed_posts = [
-            post for post in results if post not in supported_posts
-        ]
+        removed_posts = [post for post in results if post not in supported_posts]
         if len(removed_posts) > 0:
             logger.warning(
                 f"Removed {len(removed_posts)} posts that "
@@ -330,20 +320,14 @@ class MetaculusApi:
         return questions
 
     @classmethod
-    def _metaculus_api_json_to_question(
-        cls, api_json: dict
-    ) -> MetaculusQuestion:
-        assert (
-            "question" in api_json
-        ), f"Question not found in API JSON: {api_json}"
+    def _metaculus_api_json_to_question(cls, api_json: dict) -> MetaculusQuestion:
+        assert "question" in api_json, f"Question not found in API JSON: {api_json}"
         question_type_string = api_json["question"]["type"]  # type: ignore
         if question_type_string == BinaryQuestion.get_api_type_name():
             question_type = BinaryQuestion
         elif question_type_string == NumericQuestion.get_api_type_name():
             question_type = NumericQuestion
-        elif (
-            question_type_string == MultipleChoiceQuestion.get_api_type_name()
-        ):
+        elif question_type_string == MultipleChoiceQuestion.get_api_type_name():
             question_type = MultipleChoiceQuestion
         elif question_type_string == DateQuestion.get_api_type_name():
             question_type = DateQuestion
@@ -414,9 +398,7 @@ class MetaculusApi:
         cls, api_filter: ApiFilter, num_questions: int | None
     ) -> list[MetaculusQuestion]:
         if num_questions is None:
-            questions, _ = cls._grab_filtered_questions_with_offset(
-                api_filter, 0
-            )
+            questions, _ = cls._grab_filtered_questions_with_offset(api_filter, 0)
             return questions
 
         questions: list[MetaculusQuestion] = []
@@ -434,9 +416,7 @@ class MetaculusApi:
         return questions[:num_questions]
 
     @classmethod
-    def _determine_how_many_questions_match_filter(
-        cls, filter: ApiFilter
-    ) -> int:
+    def _determine_how_many_questions_match_filter(cls, filter: ApiFilter) -> int:
         """
         Search Metaculus API with binary search to find the number of questions
         matching the filter.
@@ -502,22 +482,18 @@ class MetaculusApi:
             )
 
         if api_filter.publish_time_gt:
-            url_params["published_at__gt"] = (
-                api_filter.publish_time_gt.strftime("%Y-%m-%d")
+            url_params["published_at__gt"] = api_filter.publish_time_gt.strftime(
+                "%Y-%m-%d"
             )
         if api_filter.publish_time_lt:
-            url_params["published_at__lt"] = (
-                api_filter.publish_time_lt.strftime("%Y-%m-%d")
+            url_params["published_at__lt"] = api_filter.publish_time_lt.strftime(
+                "%Y-%m-%d"
             )
 
         if api_filter.open_time_gt:
-            url_params["open_time__gt"] = api_filter.open_time_gt.strftime(
-                "%Y-%m-%d"
-            )
+            url_params["open_time__gt"] = api_filter.open_time_gt.strftime("%Y-%m-%d")
         if api_filter.open_time_lt:
-            url_params["open_time__lt"] = api_filter.open_time_lt.strftime(
-                "%Y-%m-%d"
-            )
+            url_params["open_time__lt"] = api_filter.open_time_lt.strftime("%Y-%m-%d")
 
         if api_filter.allowed_tournaments:
             url_params["tournaments"] = api_filter.allowed_tournaments
@@ -549,9 +525,7 @@ class MetaculusApi:
             questions = cls._filter_questions_by_community_prediction_exists(
                 questions, api_filter.community_prediction_exists
             )
-            questions = typeguard.check_type(
-                questions, list[MetaculusQuestion]
-            )
+            questions = typeguard.check_type(questions, list[MetaculusQuestion])
 
         if api_filter.cp_reveal_time_gt or api_filter.cp_reveal_time_lt:
             questions = cls._filter_questions_by_cp_reveal_time(
@@ -580,8 +554,7 @@ class MetaculusApi:
         return [
             question
             for question in questions
-            if question.includes_bots_in_aggregates
-            == includes_bots_in_aggregates
+            if question.includes_bots_in_aggregates == includes_bots_in_aggregates
         ]
 
     @classmethod
@@ -622,15 +595,9 @@ class MetaculusApi:
         questions_with_cp_reveal_time: list[Q] = []
         for question in questions:
             if question.cp_reveal_time is not None:
-                if (
-                    cp_reveal_time_gt
-                    and question.cp_reveal_time <= cp_reveal_time_gt
-                ):
+                if cp_reveal_time_gt and question.cp_reveal_time <= cp_reveal_time_gt:
                     continue
-                if (
-                    cp_reveal_time_lt
-                    and question.cp_reveal_time >= cp_reveal_time_lt
-                ):
+                if cp_reveal_time_lt and question.cp_reveal_time >= cp_reveal_time_lt:
                     continue
                 questions_with_cp_reveal_time.append(question)
         return questions_with_cp_reveal_time
@@ -638,17 +605,15 @@ class MetaculusApi:
 
 class ApiFilter(BaseModel):
     num_forecasters_gte: int | None = None
-    allowed_types: list[
-        Literal["binary", "numeric", "multiple_choice", "date"]
-    ] = [
+    allowed_types: list[Literal["binary", "numeric", "multiple_choice", "date"]] = [
         "binary",
         "numeric",
         "multiple_choice",
         "date",
     ]
-    allowed_statuses: (
-        list[Literal["open", "upcoming", "resolved", "closed"]] | None
-    ) = None
+    allowed_statuses: list[Literal["open", "upcoming", "resolved", "closed"]] | None = (
+        None
+    )
     scheduled_resolve_time_gt: datetime | None = None
     scheduled_resolve_time_lt: datetime | None = None
     publish_time_gt: datetime | None = None
