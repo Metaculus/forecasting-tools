@@ -215,6 +215,7 @@ class CustomizableBot(ForecastBot):
                     usage_tracker.increment_usage(tool_name)
                     return await original_func(ctx, input_str)
                 except Exception as e:
+                    logger.warning(f"Error calling tool {tool_name}: {e}")
                     return f"Error calling tool {tool_name}: {e}"
 
             tracked_tool.on_invoke_tool = wrapped_on_invoke_tool

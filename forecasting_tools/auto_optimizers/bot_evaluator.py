@@ -113,8 +113,8 @@ class BotEvaluator:
             CustomBotClass = type(custom_class_name, (CustomizableBot,), {})
             bot = CustomBotClass(
                 originating_idea=config.originating_idea,
-                reasoning_prompt=config.reasoning_prompt_template,
                 research_prompt=config.research_prompt_template,
+                reasoning_prompt=config.reasoning_prompt_template,
                 research_tools=config.research_tools,
                 cached_research=self.research_snapshots or None,
                 cached_research_type=self.research_type,
@@ -168,7 +168,7 @@ class BotEvaluator:
             configs.append(control_group_config)
         for benchmark in best_benchmarks:
             combined_research_reasoning_prompt = benchmark.bot_prompt
-            reasoning_prompt, research_prompt = (
+            research_prompt, reasoning_prompt = (
                 CustomizableBot.split_combined_research_reasoning_prompt(
                     combined_research_reasoning_prompt
                 )

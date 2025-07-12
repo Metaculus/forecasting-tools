@@ -18,7 +18,7 @@ async def run_higher_model_evaluation() -> None:
 
     questions_to_use = 200
     evaluation_questions = evaluation_questions[:questions_to_use]
-    questions_batch_size = 100
+    questions_batch_size = 25
     both_reason_and_research_llm: list[tuple[str, GeneralLlm]] = [
         (
             "openai/o3",
@@ -33,10 +33,11 @@ async def run_higher_model_evaluation() -> None:
         "logs/forecasts/benchmarks/benchmarks_research_optimization_v3.2__o3__Qv3.0.train_50.jsonl",
         "logs/forecasts/benchmarks/benchmarks_research_optimization_v3.3__o3__Qv3.0.train_50.jsonl",
     ]
-    top_n_prompts = 5
+    top_n_prompts = 4
     include_worse_benchmark = False
     research_reports_per_question = 1
     num_predictions_per_research_report = 1
+    remove_background_info = True
     research_tools = [
         ResearchTool(
             tool_name=ToolName.PERPLEXITY_LOW_COST,
@@ -57,6 +58,10 @@ async def run_higher_model_evaluation() -> None:
     ]
 
     # --- Run the evaluation ---
+    for question in evaluation_questions:
+        if remove_background_info:
+            question.background_info = None
+
     for research_and_reason_llm in both_reason_and_research_llm:
         research_llm, reason_llm = research_and_reason_llm
         evaluator = BotEvaluator(
