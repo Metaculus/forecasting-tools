@@ -28,9 +28,9 @@ async def grab_questions(include_research: bool) -> None:
         num_forecasters_gte=15,
         error_if_question_target_missed=False,
     )
-    file_name = f"logs/forecasts/benchmarks/questions_v3.0_{len(chosen_questions)}qs__>15f__<1.5yr_open__{datetime.now().strftime('%Y-%m-%d')}.json"
+    train_test_base_file_name = "logs/forecasts/benchmarks/questions_v4.0"
+    file_name = f"{train_test_base_file_name}_{len(chosen_questions)}qs__>15f__<1.5yr_open__{datetime.now().strftime('%Y-%m-%d')}.json"
     batch_size = 20
-    train_test_base_file_name = "logs/forecasts/benchmarks/questions_v3.0"
 
     # --- Validate the questions ---
     logger.info(f"Retrieved {len(chosen_questions)} questions")

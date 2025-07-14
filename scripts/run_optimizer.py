@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 async def run_optimizer() -> None:
     # ----- Settings for the optimizer -----
     metaculus_question_path = (
-        "logs/forecasts/benchmarks/questions_v3.0.train__50qs.json"
+        "logs/forecasts/benchmarks/questions_v4.0.train__50qs.json"
     )
     questions = DataOrganizer.load_questions_from_file_path(metaculus_question_path)
     questions_batch_size = 25
@@ -36,8 +36,8 @@ async def run_optimizer() -> None:
         ),
     ]
     ideation_llm = "openrouter/google/gemini-2.5-pro"
-    research_coordination_llm = "openai/o3"
-    reasoning_llm = GeneralLlm(model="openai/o3", temperature=None)
+    research_coordination_llm = "openrouter/openai/gpt-4.1-nano"
+    reasoning_llm = GeneralLlm(model="openrouter/openai/gpt-4.1-nano", temperature=0.3)
     folder_to_save_benchmarks = "logs/forecasts/benchmarks/"
     num_iterations_per_run = 3
     remove_background_info = True
