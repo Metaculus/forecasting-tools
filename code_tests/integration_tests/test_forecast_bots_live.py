@@ -4,9 +4,7 @@ from unittest.mock import Mock
 import pytest
 import typeguard
 
-from code_tests.unit_tests.forecasting_test_manager import (
-    ForecastingTestManager,
-)
+from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -51,22 +49,18 @@ async def test_predicts_test_question(
     assert report.question is not None
     assert question.id_of_post is not None
 
-    updated_question = MetaculusApi.get_question_by_post_id(
-        question.id_of_post
-    )
+    updated_question = MetaculusApi.get_question_by_post_id(question.id_of_post)
     assert updated_question.already_forecasted
 
 
 async def test_collects_reports_on_open_questions(mocker: Mock) -> None:
-    if ForecastingTestManager.quarterly_cup_is_not_active():
+    if ForecastingTestManager.metaculus_cup_is_not_active():
         pytest.skip("Quarterly cup is not active")
 
     bot_type = TemplateBot
     bot = bot_type()
     ForecastingTestManager.mock_forecast_bot_run_forecast(bot_type, mocker)
-    tournament_id = (
-        ForecastingTestManager.TOURNAMENT_WITH_MIXTURE_OF_OPEN_AND_NOT_OPEN
-    )
+    tournament_id = ForecastingTestManager.TOURNAMENT_WITH_MIXTURE_OF_OPEN_AND_NOT_OPEN
     reports = await bot.forecast_on_tournament(tournament_id)
     questions_that_should_be_being_forecast_on = (
         MetaculusApi.get_all_open_questions_from_tournament(tournament_id)
@@ -97,9 +91,7 @@ async def test_no_reports_when_questions_already_forecasted(
         question.already_forecasted = False
 
     reports = await bot.forecast_questions(questions)
-    assert len(reports) == len(
-        questions
-    ), "Expected all questions to be forecasted on"
+    assert len(reports) == len(questions), "Expected all questions to be forecasted on"
 
 
 async def test_works_with_configured_llm() -> None:
@@ -147,9 +139,7 @@ async def test_research(research_llm: GeneralLlm | str) -> None:
         if not research_llm:
             research = ""
         else:
-            assert (
-                len(research) > 0
-            ), "Expected research to return a non-empty string"
+            assert len(research) > 0, "Expected research to return a non-empty string"
             assert (
                 "https:" in research or "www." in research or "[1]"
             ), "Expected research to contain a URL"

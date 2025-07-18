@@ -10,10 +10,7 @@ from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOption,
     PredictedOptionList,
 )
-from forecasting_tools.data_models.numeric_report import (
-    NumericDistribution,
-    Percentile,
-)
+from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     MetaculusQuestion,
@@ -21,9 +18,7 @@ from forecasting_tools.data_models.questions import (
     NumericQuestion,
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
-from forecasting_tools.helpers.forecast_database_manager import (
-    ForecastDatabaseManager,
-)
+from forecasting_tools.helpers.forecast_database_manager import ForecastDatabaseManager
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
 
 T = TypeVar("T", bound=MetaculusQuestion)
@@ -31,15 +26,9 @@ T = TypeVar("T", bound=MetaculusQuestion)
 
 class ForecastingTestManager:
     TOURNAMENT_SAFE_TO_PULL_AND_PUSH_TO = MetaculusApi.AI_WARMUP_TOURNAMENT_ID
-    TOURNAMENT_WITH_MIXTURE_OF_OPEN_AND_NOT_OPEN = (
-        MetaculusApi.CURRENT_QUARTERLY_CUP_ID
-    )
-    TOURNAMENT_WITH_MIX_OF_QUESTION_TYPES = (
-        MetaculusApi.CURRENT_QUARTERLY_CUP_ID
-    )
-    TOURN_WITH_OPENNESS_AND_TYPE_VARIATIONS = (
-        MetaculusApi.CURRENT_QUARTERLY_CUP_ID
-    )
+    TOURNAMENT_WITH_MIXTURE_OF_OPEN_AND_NOT_OPEN = MetaculusApi.CURRENT_QUARTERLY_CUP_ID
+    TOURNAMENT_WITH_MIX_OF_QUESTION_TYPES = MetaculusApi.CURRENT_QUARTERLY_CUP_ID
+    TOURN_WITH_OPENNESS_AND_TYPE_VARIATIONS = MetaculusApi.CURRENT_QUARTERLY_CUP_ID
 
     @classmethod
     def get_fake_binary_question(
@@ -93,16 +82,12 @@ class ForecastingTestManager:
     def mock_forecast_bot_run_forecast(
         subclass: type[ForecastBot], mocker: Mock
     ) -> Mock:
-        test_binary_question = (
-            ForecastingTestManager.get_fake_binary_question()
-        )
+        test_binary_question = ForecastingTestManager.get_fake_binary_question()
         mock_function = mocker.patch(
             f"{subclass._run_individual_question_with_error_propagation.__module__}.{subclass._run_individual_question_with_error_propagation.__qualname__}"
         )
         assert isinstance(test_binary_question, BinaryQuestion)
-        mock_function.return_value = (
-            ForecastingTestManager.get_fake_forecast_report()
-        )
+        mock_function.return_value = ForecastingTestManager.get_fake_forecast_report()
         return mock_function
 
     @staticmethod
@@ -113,24 +98,22 @@ class ForecastingTestManager:
         return mock_function
 
     @staticmethod
-    def quarterly_cup_is_not_active() -> bool:
+    def metaculus_cup_is_not_active() -> bool:
         current_date = datetime.now().date()
         day_of_month = current_date.day
         month = current_date.month
 
-        is_first_month_of_quarter = month in [1, 4, 7, 10]
+        is_first_month_of_trimester = month in [1, 5, 9]
         is_first_21_days = day_of_month <= 21
 
-        return is_first_month_of_quarter and is_first_21_days
+        return is_first_month_of_trimester and is_first_21_days
 
     @staticmethod
     def mock_getting_benchmark_questions(mocker: Mock) -> Mock:
         mock_function = mocker.patch(
             f"{MetaculusApi.get_benchmark_questions.__module__}.{MetaculusApi.get_benchmark_questions.__qualname__}"
         )
-        mock_function.return_value = [
-            ForecastingTestManager.get_fake_binary_question()
-        ]
+        mock_function.return_value = [ForecastingTestManager.get_fake_binary_question()]
         return mock_function
 
 
@@ -173,16 +156,12 @@ class MockBot(ForecastBot):
         probability_per_option = 1.0 / num_options
 
         predicted_options = [
-            PredictedOption(
-                option_name=option, probability=probability_per_option
-            )
+            PredictedOption(option_name=option, probability=probability_per_option)
             for option in question.options
         ]
 
         return ReasonedPrediction(
-            prediction_value=PredictedOptionList(
-                predicted_options=predicted_options
-            ),
+            prediction_value=PredictedOptionList(predicted_options=predicted_options),
             reasoning="Mock rationale",
         )
 
@@ -200,10 +179,7 @@ class MockBot(ForecastBot):
                 percentile=0.25,
             ),
             Percentile(
-                value=(
-                    (question.lower_bound or 0) + (question.upper_bound or 100)
-                )
-                / 2,
+                value=((question.lower_bound or 0) + (question.upper_bound or 100)) / 2,
                 percentile=0.5,
             ),
             Percentile(

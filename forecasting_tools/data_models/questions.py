@@ -33,18 +33,26 @@ class MetaculusQuestion(BaseModel, Jsonable):
     resolution_criteria: str | None = None
     fine_print: str | None = None
     background_info: str | None = None
-    unit_of_measure: str | None = None  # TODO: Move this to continuous questions
-    close_time: datetime | None = None
+    unit_of_measure: str | None = None  # TODO: Move this field to continuous questions
+    close_time: datetime | None = (
+        None  # Time that the question was closed to new forecasts
+    )
     actual_resolution_time: datetime | None = None
     scheduled_resolution_time: datetime | None = None
-    published_time: datetime | None = None
-    open_time: datetime | None = None
+    published_time: datetime | None = (
+        None  # Time that the question was visible on the site
+    )
+    open_time: datetime | None = (
+        None  # Time the question was able to be forecasted on by individuals
+    )
     date_accessed: datetime = Field(default_factory=datetime.now)
     already_forecasted: bool = False
     tournament_slugs: list[str] = Field(default_factory=list)
     default_project_id: int | None = None
     includes_bots_in_aggregates: bool | None = None
     cp_reveal_time: datetime | None = None  # Community Prediction Reveal Time
+    question_weight: float | None = None
+    resolution_string: str | None = None
     api_json: dict = Field(
         description="The API JSON response used to create the question",
         default_factory=dict,
@@ -99,6 +107,8 @@ class MetaculusQuestion(BaseModel, Jsonable):
             tournament_slugs=tournament_slugs,
             default_project_id=post_api_json["projects"]["default_project"]["id"],
             includes_bots_in_aggregates=question_json["include_bots_in_aggregates"],
+            question_weight=question_json["question_weight"],
+            resolution_string=question_json.get("resolution"),
             api_json=post_api_json,
         )
         return question
@@ -289,6 +299,7 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
 
 class MultipleChoiceQuestion(MetaculusQuestion):
     options: list[str]
+    option_is_instance_of: str | None = None
 
     @classmethod
     def from_metaculus_api_json(cls, api_json: dict) -> MultipleChoiceQuestion:
