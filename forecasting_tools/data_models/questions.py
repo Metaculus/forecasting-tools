@@ -5,6 +5,7 @@ import textwrap
 from datetime import datetime
 from enum import Enum
 
+import typeguard
 from pydantic import AliasChoices, BaseModel, Field
 
 from forecasting_tools.util.jsonable import Jsonable
@@ -17,6 +18,26 @@ class QuestionState(Enum):
     OPEN = "open"
     RESOLVED = "resolved"
     CLOSED = "closed"
+
+
+class CanceledResolution(Enum):
+    ANNULLED = "annulled"
+    AMBIGUOUS = "ambiguous"
+
+
+class OutOfBoundsResolution(Enum):
+    ABOVE_UPPER_BOUND = "above_upper_bound"
+    BELOW_LOWER_BOUND = "below_lower_bound"
+    # NOTE: Sometimes the numeric resolution is a also number that is above/below bounds. OutOfBoundsResolution should be used when the resolution is known to be out of bounds but its exact value is unknown.
+
+
+BinaryResolution = bool | CanceledResolution
+NumericResolution = float | CanceledResolution | OutOfBoundsResolution
+DateResolution = datetime | CanceledResolution | OutOfBoundsResolution
+MultipleChoiceResolution = str | CanceledResolution
+ResolutionType = (
+    BinaryResolution | NumericResolution | DateResolution | MultipleChoiceResolution
+)
 
 
 class MetaculusQuestion(BaseModel, Jsonable):
@@ -164,9 +185,43 @@ class MetaculusQuestion(BaseModel, Jsonable):
         )
         return question_details.strip()
 
+    @property
+    def typed_resolution(
+        self,
+    ) -> ResolutionType | None:
+        if self.resolution_string is None:
+            return None
+
+        assert isinstance(self.resolution_string, str)
+
+        if self.resolution_string == "yes":
+            return True
+        elif self.resolution_string == "no":
+            return False
+        elif self.resolution_string in [v.value for v in CanceledResolution]:
+            return CanceledResolution(self.resolution_string)
+        elif self.resolution_string in [v.value for v in OutOfBoundsResolution]:
+            return OutOfBoundsResolution(self.resolution_string)
+        else:
+            try:
+                return float(self.resolution_string)
+            except ValueError:
+                try:
+                    # Try parsing as ISO 8601 with timezone
+                    return datetime.fromisoformat(self.resolution_string)
+                except ValueError:
+                    return self.resolution_string
+
 
 class BinaryQuestion(MetaculusQuestion):
     community_prediction_at_access_time: float | None = None
+
+    @property
+    def binary_resolution(self) -> BinaryResolution | None:
+        resolution = typeguard.check_type(
+            self.typed_resolution, BinaryResolution | None
+        )
+        return resolution
 
     @classmethod
     def from_metaculus_api_json(cls, api_json: dict) -> BinaryQuestion:
@@ -224,6 +279,11 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
     open_lower_bound: bool
     zero_point: float | None = None
 
+    @property
+    def date_resolution(self) -> DateResolution | None:
+        resolution = typeguard.check_type(self.typed_resolution, DateResolution | None)
+        return resolution
+
     @classmethod
     def from_metaculus_api_json(cls, api_json: dict) -> DateQuestion:
         normal_metaculus_question = super().from_metaculus_api_json(api_json)
@@ -245,6 +305,7 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
             lower_bound=lower_bound,
             open_upper_bound=not open_upper_bound,
             open_lower_bound=not open_lower_bound,
+            zero_point=zero_point,
             **normal_metaculus_question.model_dump(),
         )
 
@@ -259,6 +320,13 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
     open_upper_bound: bool
     open_lower_bound: bool
     zero_point: float | None = None
+
+    @property
+    def numeric_resolution(self) -> NumericResolution | None:
+        resolution = typeguard.check_type(
+            self.typed_resolution, NumericResolution | None
+        )
+        return resolution
 
     @classmethod
     def from_metaculus_api_json(cls, api_json: dict) -> NumericQuestion:
@@ -300,6 +368,17 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
 class MultipleChoiceQuestion(MetaculusQuestion):
     options: list[str]
     option_is_instance_of: str | None = None
+
+    @property
+    def mc_resolution(self) -> MultipleChoiceResolution | None:
+        resolution = typeguard.check_type(
+            self.typed_resolution, MultipleChoiceResolution | None
+        )
+        if isinstance(resolution, str) and resolution not in self.options:
+            raise ValueError(
+                f"Resolution {resolution} is not in options {self.options}"
+            )
+        return resolution
 
     @classmethod
     def from_metaculus_api_json(cls, api_json: dict) -> MultipleChoiceQuestion:

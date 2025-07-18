@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import typeguard
@@ -8,6 +8,7 @@ from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManage
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
+    CanceledResolution,
     DateQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
@@ -22,6 +23,9 @@ logger = logging.getLogger(__name__)
 # Can post numeric/date/multiple choice prediction
 # Post binary prediction errors if given a non binary question id (and all other combinations of questions)
 # Post numeric/date/multiple choice choice prediction errors if given a binary question id
+# Test resolutions for:
+# - Ambiguous
+# - Out of bounds via float and out of bounds via "above_upper_bound" and "below_lower_bound" (for both numeric and date questions)
 
 
 class TestGetSpecificQuestions:
@@ -36,6 +40,7 @@ class TestGetSpecificQuestions:
         assert question.state == QuestionState.OPEN
         assert question.default_project_id == 144
         assert question.question_weight == 1.0
+        assert question.typed_resolution is None
         assert_basic_question_attributes_not_none(question, post_id)
 
     def test_get_numeric_question_type_from_id(self) -> None:
@@ -90,6 +95,12 @@ class TestGetSpecificQuestions:
         )  # https://www.metaculus.com/questions/38536/
         assert question.question_weight == 0.7
 
+    def test_get_question_with_tournament_slug(self) -> None:
+        question = MetaculusApi.get_question_by_url(
+            "https://www.metaculus.com/questions/19741"
+        )
+        assert question.tournament_slugs == ["quarterly-cup-2024q1"]
+
     def test_binary_resolved_question(self) -> None:
         question = MetaculusApi.get_question_by_post_id(
             38543
@@ -97,6 +108,11 @@ class TestGetSpecificQuestions:
         assert question.state == QuestionState.RESOLVED
         assert question.actual_resolution_time is not None
         assert question.resolution_string == "no"
+
+        expected_resolution = False
+        assert question.typed_resolution == expected_resolution
+        assert isinstance(question, BinaryQuestion)
+        assert question.binary_resolution == expected_resolution
 
     def test_numeric_resolved_question(self) -> None:
         question = MetaculusApi.get_question_by_post_id(
@@ -107,6 +123,11 @@ class TestGetSpecificQuestions:
         assert question.resolution_string == "12.4"
         assert question.unit_of_measure == "Percentage points"
 
+        expected_resolution = 12.4
+        assert question.typed_resolution == expected_resolution
+        assert isinstance(question, NumericQuestion)
+        assert question.numeric_resolution == expected_resolution
+
     def test_multiple_choice_resolved_question(self) -> None:
         question = MetaculusApi.get_question_by_post_id(
             38535
@@ -115,19 +136,36 @@ class TestGetSpecificQuestions:
         assert question.actual_resolution_time is not None
         assert question.resolution_string == "Forty-first through fiftieth"
 
+        expected_resolution = "Forty-first through fiftieth"
+        assert question.typed_resolution == expected_resolution
+        assert isinstance(question, MultipleChoiceQuestion)
+        assert question.mc_resolution == expected_resolution
+
+    def test_date_resolved_question(self) -> None:
+        question = MetaculusApi.get_question_by_post_id(
+            6225
+        )  # https://www.metaculus.com/questions/6225/
+        assert question.state == QuestionState.RESOLVED
+        assert question.actual_resolution_time is not None
+        assert question.resolution_string == "2025-07-01 23:45:00+00:00"
+
+        expected_resolution = datetime(2025, 7, 1, 23, 45, tzinfo=timezone.utc)
+        assert question.typed_resolution == expected_resolution
+        assert isinstance(question, DateQuestion)
+        assert question.date_resolution == expected_resolution
+
     def test_annulled_resolution(self) -> None:
         question = MetaculusApi.get_question_by_post_id(
             37016
         )  # https://www.metaculus.com/questions/37016/
         assert question.state == QuestionState.RESOLVED
         assert question.actual_resolution_time is not None
-        assert question.resolution_string == "annulled"
 
-    def test_get_question_with_tournament_slug(self) -> None:
-        question = MetaculusApi.get_question_by_url(
-            "https://www.metaculus.com/questions/19741"
-        )
-        assert question.tournament_slugs == ["quarterly-cup-2024q1"]
+        expected_resolution = CanceledResolution.ANNULLED
+        assert question.resolution_string == "annulled"
+        assert question.typed_resolution == expected_resolution
+        assert isinstance(question, MultipleChoiceQuestion)
+        assert question.mc_resolution == expected_resolution
 
 
 class TestPosting:
