@@ -23189,8 +23189,8 @@
         },
         "upper_bound": "2025-12-31T22:59:00",
         "lower_bound": "2025-01-22T23:24:00",
-        "upper_bound_is_hard_limit": false,
-        "lower_bound_is_hard_limit": true,
+        "open_upper_bound": true,
+        "open_lower_bound": false,
         "zero_point": null
     },
     {

@@ -41,6 +41,8 @@ class TestGetSpecificQuestions:
         assert question.default_project_id == 144
         assert question.question_weight == 1.0
         assert question.typed_resolution is None
+        assert question.get_question_type() == "binary"
+        assert question.question_type == "binary"
         assert_basic_question_attributes_not_none(question, post_id)
 
     def test_get_numeric_question_type_from_id(self) -> None:
@@ -56,6 +58,8 @@ class TestGetSpecificQuestions:
         assert question.open_upper_bound
         assert question.unit_of_measure == "years old"
         assert question.question_weight == 1.0
+        assert question.get_question_type() == "numeric"
+        assert question.question_type == "numeric"
         assert_basic_question_attributes_not_none(question, question_id)
 
     @pytest.mark.skip(reason="Date questions are not fully supported yet")
@@ -69,6 +73,8 @@ class TestGetSpecificQuestions:
         assert question.open_lower_bound
         assert not question.open_upper_bound
         assert question.question_weight == 1.0
+        assert question.get_question_type() == "date"
+        assert question.question_type == "date"
         assert_basic_question_attributes_not_none(question, question_id)
 
     def test_get_multiple_choice_question_type_from_id(self) -> None:
@@ -87,6 +93,8 @@ class TestGetSpecificQuestions:
         assert "10 or more" in question.options
         assert question.question_weight == 1.0
         assert question.option_is_instance_of == "Number"
+        assert question.get_question_type() == "multiple_choice"
+        assert question.question_type == "multiple_choice"
         assert_basic_question_attributes_not_none(question, post_id)
 
     def test_question_weight(self) -> None:
@@ -217,7 +225,7 @@ class TestQuestionEndpoint:
         assert len(questions) > 0
         assert all(question.state == QuestionState.OPEN for question in questions)
 
-        quarterly_cup_slug = "quarterly-cup"
+        quarterly_cup_slug = "metaculus-cup"
         questions = MetaculusApi.get_all_open_questions_from_tournament(
             quarterly_cup_slug
         )
@@ -576,6 +584,9 @@ def assert_basic_question_attributes_not_none(
     assert (
         0 <= question.question_weight <= 1
     ), f"Question weight is not between 0 and 1 for post ID {post_id}"
+    assert (
+        question.get_question_type() is not None
+    ), f"Question type is None for post ID {post_id}"
 
 
 def assert_questions_match_filter(  # NOSONAR

@@ -295,7 +295,8 @@ class ForecastBot(ABC):
                 ):
                     config[name] = [item.model_dump() for item in value]
                 else:
-                    config[name] = json.dumps(value)
+                    json.dumps(value)
+                    config[name] = value
             except Exception:
                 config[name] = str(value)
 

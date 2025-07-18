@@ -4,9 +4,10 @@ import logging
 import textwrap
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 
 import typeguard
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field, model_validator
 
 from forecasting_tools.util.jsonable import Jsonable
 
@@ -212,8 +213,19 @@ class MetaculusQuestion(BaseModel, Jsonable):
                 except ValueError:
                     return self.resolution_string
 
+    def get_question_type(
+        self,
+    ) -> Literal["binary", "date", "numeric", "multiple_choice"]:
+        try:
+            return self.question_type  # type: ignore
+        except Exception as e:
+            raise AttributeError(
+                f"Question type not found for {self.__class__.__name__}. Error: {e}"
+            ) from e
+
 
 class BinaryQuestion(MetaculusQuestion):
+    question_type: Literal["binary"] = "binary"
     community_prediction_at_access_time: float | None = None
 
     @property
@@ -273,11 +285,23 @@ class BoundedQuestionMixin:
 
 
 class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
+    question_type: Literal["date"] = "date"
     upper_bound: datetime
     lower_bound: datetime
     open_upper_bound: bool
     open_lower_bound: bool
     zero_point: float | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_legacy_bounds(cls, data: dict) -> dict:
+        # Handle upper bound
+        if "upper_bound_is_hard_limit" in data and "open_upper_bound" not in data:
+            data["open_upper_bound"] = not data["upper_bound_is_hard_limit"]
+        # Handle lower bound
+        if "lower_bound_is_hard_limit" in data and "open_lower_bound" not in data:
+            data["open_lower_bound"] = not data["lower_bound_is_hard_limit"]
+        return data
 
     @property
     def date_resolution(self) -> DateResolution | None:
@@ -303,8 +327,8 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
         return DateQuestion(
             upper_bound=upper_bound,
             lower_bound=lower_bound,
-            open_upper_bound=not open_upper_bound,
-            open_lower_bound=not open_lower_bound,
+            open_upper_bound=open_upper_bound,
+            open_lower_bound=open_lower_bound,
             zero_point=zero_point,
             **normal_metaculus_question.model_dump(),
         )
@@ -315,6 +339,7 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
 
 
 class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
+    question_type: Literal["numeric"] = "numeric"
     upper_bound: float
     lower_bound: float
     open_upper_bound: bool
@@ -366,6 +391,7 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
 
 
 class MultipleChoiceQuestion(MetaculusQuestion):
+    question_type: Literal["multiple_choice"] = "multiple_choice"
     options: list[str]
     option_is_instance_of: str | None = None
 

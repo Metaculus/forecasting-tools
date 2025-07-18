@@ -139,7 +139,7 @@ class DataOrganizer:
         jsons: list[dict],
         types: list[type[ForecastReport] | type[MetaculusQuestion]],
     ) -> list[ForecastReport | MetaculusQuestion]:
-        objects = []
+        objects: list[ForecastReport | MetaculusQuestion] = []
         for json in jsons:
             for i, object_type in enumerate(types):
                 try:

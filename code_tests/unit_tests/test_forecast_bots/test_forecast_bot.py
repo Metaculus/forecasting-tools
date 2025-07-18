@@ -11,13 +11,8 @@ from code_tests.unit_tests.forecasting_test_manager import (
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.questions import BinaryQuestion
-from forecasting_tools.forecast_bots.bot_lists import (
-    get_all_important_bot_classes,
-)
-from forecasting_tools.forecast_bots.forecast_bot import (
-    ForecastBot,
-    ForecastReport,
-)
+from forecasting_tools.forecast_bots.bot_lists import get_all_important_bot_classes
+from forecasting_tools.forecast_bots.forecast_bot import ForecastBot, ForecastReport
 
 
 async def test_forecast_questions_returns_exceptions_when_specified() -> None:
@@ -39,9 +34,7 @@ async def test_forecast_questions_returns_exceptions_when_specified() -> None:
 
     bot.run_research = mock_research
 
-    results = await bot.forecast_questions(
-        test_questions, return_exceptions=True
-    )
+    results = await bot.forecast_questions(test_questions, return_exceptions=True)
     assert len(results) == 2
     assert isinstance(results[0], ForecastReport)
     assert isinstance(results[1], Exception)
@@ -141,9 +134,7 @@ async def test_research_reports_and_predictions_per_question_counts() -> None:
     async def count_predictions(*args, **kwargs):
         nonlocal prediction_call_count
         prediction_call_count += 1
-        return ReasonedPrediction(
-            prediction_value=0.5, reasoning="test reasoning"
-        )
+        return ReasonedPrediction(prediction_value=0.5, reasoning="test reasoning")
 
     bot.run_research = count_research
     bot._run_forecast_on_binary = count_predictions
@@ -172,9 +163,7 @@ async def test_use_research_summary_for_forecast() -> None:
     ) -> ReasonedPrediction[float]:
         nonlocal received_research
         received_research = research
-        return ReasonedPrediction(
-            prediction_value=0.5, reasoning="test reasoning"
-        )
+        return ReasonedPrediction(prediction_value=0.5, reasoning="test reasoning")
 
     bot.run_research = mock_research
     bot.summarize_research = mock_summary
@@ -237,6 +226,10 @@ def test_bot_has_config(bot: type[ForecastBot]) -> None:
         json.dumps(bot_config)
     except Exception as e:
         pytest.fail(f"Bot config is not JSON serializable: {e}")
+
+    assert (
+        bot_config["research_reports_per_question"] > 0
+    ), "Did not have parameter for expected config"
 
 
 async def test_llm_returns_general_llm_when_llm_is_str() -> None:
@@ -335,14 +328,11 @@ async def test_notepad_counts_research_and_prediction_attempts() -> None:
 
     assert notepad.total_research_reports_attempted == research_reports
     assert (
-        notepad.total_predictions_attempted
-        == predictions_per_report * research_reports
+        notepad.total_predictions_attempted == predictions_per_report * research_reports
     )
 
 
-async def test_summarize_research_returns_disabled_message_when_false() -> (
-    None
-):
+async def test_summarize_research_returns_disabled_message_when_false() -> None:
     bot = MockBot(enable_summarize_research=False)
     question = ForecastingTestManager.get_fake_binary_question()
     result = await bot.summarize_research(question, "some research")

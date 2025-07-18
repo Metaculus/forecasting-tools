@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 async def test_bot_optimizer() -> None:
+    # NOTE: This test costs around 10c
     question = ForecastingTestManager.get_fake_binary_question(
         question_text="Will the world end in 2100?"
     )
