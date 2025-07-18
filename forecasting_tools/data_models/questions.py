@@ -305,7 +305,8 @@ class MultipleChoiceQuestion(MetaculusQuestion):
     def from_metaculus_api_json(cls, api_json: dict) -> MultipleChoiceQuestion:
         normal_metaculus_question = super().from_metaculus_api_json(api_json)
         return MultipleChoiceQuestion(
-            options=api_json["question"]["options"],  # type: ignore
+            options=api_json["question"]["options"],
+            option_is_instance_of=api_json["question"]["group_variable"],
             **normal_metaculus_question.model_dump(),
         )
 

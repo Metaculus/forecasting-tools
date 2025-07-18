@@ -81,6 +81,7 @@ class TestGetSpecificQuestions:
         assert "8 or 9" in question.options
         assert "10 or more" in question.options
         assert question.question_weight == 1.0
+        assert question.option_is_instance_of == "Number"
         assert_basic_question_attributes_not_none(question, post_id)
 
     def test_question_weight(self) -> None:
