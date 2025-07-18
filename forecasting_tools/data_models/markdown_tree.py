@@ -32,18 +32,17 @@ class MarkdownTree(BaseModel):
     ) -> str:
         if top_heading_level is None:
             return "\n".join(
-                [
-                    section.text_of_section_and_subsections
-                    for section in report_sections
-                ]
+                [section.text_of_section_and_subsections for section in report_sections]
             ).strip()
 
         if report_sections[0].level != min(
             section.level for section in report_sections
         ):
             raise ValueError(
-                "First section must be at the highest heading level in order to change the heading levels recursively"
-            )
+                "First section must be at the highest heading level in order to change the heading levels recursively. "
+                f"Found section levels in order: {[section.level for section in report_sections]}. "
+                f"Report sections: {cls.report_sections_to_markdown(report_sections, top_heading_level=None)}"
+            )  # There becomes ambiguity in what the top level should be (if there is a top level 2 and 1 header, and 3 is asked for, does the 2 heading become 3 or 4?)
 
         copied_report_sections = copy.deepcopy(report_sections)
         updated_sections = []
@@ -53,10 +52,7 @@ class MarkdownTree(BaseModel):
             )
 
         text = "\n".join(
-            [
-                section.text_of_section_and_subsections
-                for section in updated_sections
-            ]
+            [section.text_of_section_and_subsections for section in updated_sections]
         ).strip()
         return text
 
@@ -69,21 +65,19 @@ class MarkdownTree(BaseModel):
         text_of_section = report_section.section_content
         if text_of_section.startswith("#"):
             stripped_text = text_of_section.lstrip("#")
-            text_with_new_heading = f"{'#' * target_heading_level} {stripped_text.lstrip()}".lstrip()
+            text_with_new_heading = (
+                f"{'#' * target_heading_level} {stripped_text.lstrip()}".lstrip()
+            )
         else:
             text_with_new_heading = text_of_section
 
         report_section.section_content = text_with_new_heading
         for subsection in report_section.sub_sections:
-            cls._update_headings_recursively(
-                subsection, target_heading_level + 1
-            )
+            cls._update_headings_recursively(subsection, target_heading_level + 1)
         return report_section
 
     @classmethod
-    def turn_markdown_into_report_sections(
-        cls, markdown: str
-    ) -> list[MarkdownTree]:
+    def turn_markdown_into_report_sections(cls, markdown: str) -> list[MarkdownTree]:
         final_heirarchial_sections: list[MarkdownTree] = []
         lines = markdown.splitlines()
         flattened_running_section_stack: list[MarkdownTree] = []
@@ -96,14 +90,10 @@ class MarkdownTree(BaseModel):
                 not at_top_level and not line_is_header
             )
             within_intro_section_without_header = (
-                final_heirarchial_sections
-                and not line_is_header
-                and at_top_level
+                final_heirarchial_sections and not line_is_header and at_top_level
             )
             should_create_intro_section_without_header = (
-                not final_heirarchial_sections
-                and not line_is_header
-                and at_top_level
+                not final_heirarchial_sections and not line_is_header and at_top_level
             )
 
             if should_create_new_header_section:

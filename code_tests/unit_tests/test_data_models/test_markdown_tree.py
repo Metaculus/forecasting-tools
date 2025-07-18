@@ -205,10 +205,7 @@ Section content"""
         assert len(result) == 2
         assert result[0].level == 0
         assert result[0].title is None
-        assert (
-            result[0].section_content
-            == "This is intro content without a header"
-        )
+        assert result[0].section_content == "This is intro content without a header"
         assert result[1].title == "First Section"
 
     def test_turn_markdown_into_report_sections_multiple_intro_lines(
@@ -225,9 +222,7 @@ Section content"""
         assert len(result) == 2
         assert result[0].level == 0
         assert result[0].title is None
-        expected_intro_content = (
-            "First intro line\nSecond intro line\nThird intro line"
-        )
+        expected_intro_content = "First intro line\nSecond intro line\nThird intro line"
         assert result[0].section_content == expected_intro_content
 
     def test_turn_markdown_into_report_sections_empty_first_section_kept(
@@ -419,9 +414,7 @@ Another main content"""
         subsection_1 = section_1.sub_sections[0]
         assert subsection_1.title == "Subsection 1"
         assert subsection_1.level == 4
-        assert (
-            subsection_1.section_content == "#### Subsection 1\nSub content 1"
-        )
+        assert subsection_1.section_content == "#### Subsection 1\nSub content 1"
         section_2 = result[1]
         assert section_2.title == "Section 2"
         assert section_2.level == 1
@@ -520,9 +513,7 @@ class TestReportSectionsToMarkdown:
             """
         )
 
-        report_sections = MarkdownTree.turn_markdown_into_report_sections(
-            markdown
-        )
+        report_sections = MarkdownTree.turn_markdown_into_report_sections(markdown)
         markdown_text_modified = MarkdownTree.report_sections_to_markdown(
             report_sections, top_heading_level
         )
@@ -565,9 +556,7 @@ class TestReportSectionsToMarkdown:
             ""
         )
 
-        report_sections = MarkdownTree.turn_markdown_into_report_sections(
-            markdown
-        )
+        report_sections = MarkdownTree.turn_markdown_into_report_sections(markdown)
         markdown_text = MarkdownTree.report_sections_to_markdown(
             report_sections, top_heading_level
         )
@@ -586,9 +575,8 @@ Sub content 1
 Content 2
 """
 
-        report_sections = MarkdownTree.turn_markdown_into_report_sections(
-            markdown
-        )
+        report_sections = MarkdownTree.turn_markdown_into_report_sections(markdown)
+        assert len(report_sections) == 2
         with pytest.raises(ValueError):
             MarkdownTree.report_sections_to_markdown(report_sections, 2)
 
@@ -599,13 +587,6 @@ Content 2
     def test_headerless_content_in_first_section_is_kept(self) -> None:
         markdown = "headerless content\n# Section 1\nContent 1"
 
-        report_sections = MarkdownTree.turn_markdown_into_report_sections(
-            markdown
-        )
-        markdown_text = MarkdownTree.report_sections_to_markdown(
-            report_sections, 3
-        )
-        assert (
-            markdown_text.strip()
-            == "headerless content\n### Section 1\nContent 1"
-        )
+        report_sections = MarkdownTree.turn_markdown_into_report_sections(markdown)
+        markdown_text = MarkdownTree.report_sections_to_markdown(report_sections, 3)
+        assert markdown_text.strip() == "headerless content\n### Section 1\nContent 1"

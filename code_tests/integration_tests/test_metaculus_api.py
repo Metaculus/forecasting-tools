@@ -4,9 +4,7 @@ from datetime import datetime, timedelta
 import pytest
 import typeguard
 
-from code_tests.unit_tests.forecasting_test_manager import (
-    ForecastingTestManager,
-)
+from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
@@ -28,22 +26,19 @@ logger = logging.getLogger(__name__)
 
 def test_get_binary_question_type_from_id() -> None:
     # Test question w/ <1% probability: https://www.metaculus.com/questions/578/human-extinction-by-2100/
-    post_id = DataOrganizer.get_example_post_id_for_question_type(
-        BinaryQuestion
-    )
+    post_id = DataOrganizer.get_example_post_id_for_question_type(BinaryQuestion)
     question = MetaculusApi.get_question_by_post_id(post_id)
     assert isinstance(question, BinaryQuestion)
     assert post_id == question.id_of_post
     assert question.community_prediction_at_access_time is not None
     assert question.community_prediction_at_access_time <= 0.03
     assert question.state == QuestionState.OPEN
+    assert question.default_project_id == 144
     assert_basic_question_attributes_not_none(question, post_id)
 
 
 def test_get_numeric_question_type_from_id() -> None:
-    question_id = DataOrganizer.get_example_post_id_for_question_type(
-        NumericQuestion
-    )
+    question_id = DataOrganizer.get_example_post_id_for_question_type(NumericQuestion)
     question = MetaculusApi.get_question_by_post_id(question_id)
     assert isinstance(question, NumericQuestion)
     assert question_id == question.id_of_post
@@ -57,16 +52,14 @@ def test_get_numeric_question_type_from_id() -> None:
 
 @pytest.mark.skip(reason="Date questions are not fully supported yet")
 def test_get_date_question_type_from_id() -> None:
-    question_id = DataOrganizer.get_example_post_id_for_question_type(
-        DateQuestion
-    )
+    question_id = DataOrganizer.get_example_post_id_for_question_type(DateQuestion)
     question = MetaculusApi.get_question_by_post_id(question_id)
     assert isinstance(question, DateQuestion)
     assert question_id == question.id_of_post
     assert question.lower_bound == datetime(2020, 8, 25)
     assert question.upper_bound == datetime(2199, 12, 25)
-    assert question.lower_bound_is_hard_limit
-    assert not question.upper_bound_is_hard_limit
+    assert question.open_lower_bound
+    assert not question.open_upper_bound
     assert_basic_question_attributes_not_none(question, question_id)
 
 
@@ -95,14 +88,10 @@ def test_get_question_with_tournament_slug() -> None:
 
 
 def test_post_comment_on_question() -> None:
-    post_id = DataOrganizer.get_example_post_id_for_question_type(
-        BinaryQuestion
-    )
+    post_id = DataOrganizer.get_example_post_id_for_question_type(BinaryQuestion)
     question = MetaculusApi.get_question_by_post_id(post_id)
     assert question.id_of_post is not None
-    MetaculusApi.post_question_comment(
-        question.id_of_post, "This is a test comment"
-    )
+    MetaculusApi.post_question_comment(question.id_of_post, "This is a test comment")
     # No assertion needed, just check that the request did not raise an exception
 
 
@@ -137,23 +126,16 @@ def test_questions_returned_from_list_questions() -> None:
     if ForecastingTestManager.quarterly_cup_is_not_active():
         pytest.skip("Quarterly cup is not active")
 
-    tournament_id = (
-        ForecastingTestManager.TOURNAMENT_WITH_MIXTURE_OF_OPEN_AND_NOT_OPEN
-    )
-    questions = MetaculusApi.get_all_open_questions_from_tournament(
-        tournament_id
-    )
+    tournament_id = ForecastingTestManager.TOURNAMENT_WITH_MIXTURE_OF_OPEN_AND_NOT_OPEN
+    questions = MetaculusApi.get_all_open_questions_from_tournament(tournament_id)
     assert len(questions) > 0
     assert all(question.state == QuestionState.OPEN for question in questions)
 
     quarterly_cup_slug = "quarterly-cup"
-    questions = MetaculusApi.get_all_open_questions_from_tournament(
-        quarterly_cup_slug
-    )
+    questions = MetaculusApi.get_all_open_questions_from_tournament(quarterly_cup_slug)
     assert len(questions) > 0
     assert all(
-        quarterly_cup_slug in question.tournament_slugs
-        for question in questions
+        quarterly_cup_slug in question.tournament_slugs for question in questions
     )
     assert all(question.state == QuestionState.OPEN for question in questions)
 
@@ -172,13 +154,9 @@ def test_get_questions_from_tournament() -> None:
         score += 1
     if any(isinstance(question, DateQuestion) for question in questions):
         score += 1
-    if any(
-        isinstance(question, MultipleChoiceQuestion) for question in questions
-    ):
+    if any(isinstance(question, MultipleChoiceQuestion) for question in questions):
         score += 1
-    assert (
-        score > 1
-    ), "There needs to be multiple question types in the tournament"
+    assert score > 1, "There needs to be multiple question types in the tournament"
 
     for question in questions:
         assert question.state == QuestionState.OPEN
@@ -235,9 +213,7 @@ def test_get_benchmark_questions() -> None:
         ), f"Community prediction at access time is None for question {question.id_of_post}"
         logger.info(f"Found question: {question.question_text}")
     question_ids = [question.id_of_post for question in questions]
-    assert len(question_ids) == len(
-        set(question_ids)
-    ), "Not all questions are unique"
+    assert len(question_ids) == len(set(question_ids)), "Not all questions are unique"
 
     questions2 = MetaculusApi.get_benchmark_questions(num_questions_to_get)
     question_ids1 = [q.id_of_post for q in questions]
@@ -251,9 +227,7 @@ def test_get_benchmark_questions() -> None:
     "api_filter, num_questions, randomly_sample",
     [
         (
-            ApiFilter(
-                num_forecasters_gte=100, allowed_statuses=["open", "resolved"]
-            ),
+            ApiFilter(num_forecasters_gte=100, allowed_statuses=["open", "resolved"]),
             10,
             False,
         ),
@@ -359,9 +333,7 @@ async def test_error_when_not_enough_questions_matching_filter() -> None:
 async def test_question_status_filters(
     status_filter: list[QuestionState],
 ) -> None:
-    api_filter = ApiFilter(
-        allowed_statuses=[state.value for state in status_filter]
-    )
+    api_filter = ApiFilter(allowed_statuses=[state.value for state in status_filter])
     questions = await MetaculusApi.get_questions_matching_filter(
         api_filter, num_questions=250, randomly_sample=True
     )
@@ -418,9 +390,7 @@ def assert_basic_attributes_at_percentage(
     for question in questions:
         assert question.id_of_post is not None
         try:
-            assert_basic_question_attributes_not_none(
-                question, question.id_of_post
-            )
+            assert_basic_question_attributes_not_none(question, question.id_of_post)
             passing.append(question)
         except Exception as e:
             failing_errors.append(e)
@@ -437,21 +407,15 @@ def assert_basic_question_attributes_not_none(
     assert (
         question.resolution_criteria is not None
     ), f"Resolution criteria is None for post ID {post_id}"
-    assert (
-        question.fine_print is not None
-    ), f"Fine print is None for post ID {post_id}"
+    assert question.fine_print is not None, f"Fine print is None for post ID {post_id}"
     assert (
         question.background_info is not None
     ), f"Background info is None for post ID {post_id}"
     assert (
         question.question_text is not None
     ), f"Question text is None for post ID {post_id}"
-    assert (
-        question.close_time is not None
-    ), f"Close time is None for post ID {post_id}"
-    assert (
-        question.open_time is not None
-    ), f"Open time is None for post ID {post_id}"
+    assert question.close_time is not None, f"Close time is None for post ID {post_id}"
+    assert question.open_time is not None, f"Open time is None for post ID {post_id}"
     assert (
         question.published_time is not None
     ), f"Published time is None for post ID {post_id}"
@@ -485,9 +449,7 @@ def assert_basic_question_attributes_not_none(
     assert isinstance(
         question.api_json, dict
     ), f"API JSON is not a dict for post ID {post_id}"
-    assert (
-        question.close_time is not None
-    ), f"Close time is None for post ID {post_id}"
+    assert question.close_time is not None, f"Close time is None for post ID {post_id}"
     if question.scheduled_resolution_time:
         assert (
             question.scheduled_resolution_time >= question.close_time
@@ -502,9 +464,7 @@ def assert_basic_question_attributes_not_none(
     assert (
         question.id_of_question is not None
     ), f"ID of question is None for post ID {post_id}"
-    assert (
-        question.id_of_post is not None
-    ), f"ID of post is None for post ID {post_id}"
+    assert question.id_of_post is not None, f"ID of post is None for post ID {post_id}"
     assert question.date_accessed > datetime.now() - timedelta(
         days=1
     ), f"Date accessed is not in the past for post ID {post_id}"
@@ -515,6 +475,9 @@ def assert_basic_question_attributes_not_none(
         assert (
             question.unit_of_measure is not None
         ), f"Unit of measure is None for post ID {post_id}"
+    assert isinstance(
+        question.default_project_id, int
+    ), f"Default project ID is not an int for post ID {post_id}"
 
 
 def assert_questions_match_filter(  # NOSONAR
@@ -536,8 +499,7 @@ def assert_questions_match_filter(  # NOSONAR
 
         if filter.allowed_statuses:
             assert (
-                question.state
-                and question.state.value in filter.allowed_statuses
+                question.state and question.state.value in filter.allowed_statuses
             ), f"Question {question.id_of_post} has state {question.state}, expected one of {filter.allowed_statuses}"
 
         if filter.scheduled_resolve_time_gt:
@@ -568,14 +530,12 @@ def assert_questions_match_filter(  # NOSONAR
 
         if filter.close_time_gt:
             assert (
-                question.close_time
-                and question.close_time > filter.close_time_gt
+                question.close_time and question.close_time > filter.close_time_gt
             ), f"Question {question.id_of_post} closes at {question.close_time}, expected after {filter.close_time_gt}"
 
         if filter.close_time_lt:
             assert (
-                question.close_time
-                and question.close_time < filter.close_time_lt
+                question.close_time and question.close_time < filter.close_time_lt
             ), f"Question {question.id_of_post} closes at {question.close_time}, expected before {filter.close_time_lt}"
 
         if filter.open_time_gt:
@@ -601,15 +561,13 @@ def assert_questions_match_filter(  # NOSONAR
             ), f"Question {question.id_of_post} CP reveal time is {question.cp_reveal_time}, expected before {filter.cp_reveal_time_lt}"
 
         if filter.allowed_tournaments and all(
-            isinstance(tournament, str)
-            for tournament in filter.allowed_tournaments
+            isinstance(tournament, str) for tournament in filter.allowed_tournaments
         ):
             # TODO: Handle when an allowed tournament is an int ID rather than a slug
             # TODO: As of Jan 25, 2025 you can pass in a question series slug and get back questions.
             #       this should be collected in the question
             assert any(
-                slug in filter.allowed_tournaments
-                for slug in question.tournament_slugs
+                slug in filter.allowed_tournaments for slug in question.tournament_slugs
             ), f"Question {question.id_of_post} tournaments {question.tournament_slugs} not in allowed tournaments {filter.allowed_tournaments}"
 
         if filter.community_prediction_exists is not None:

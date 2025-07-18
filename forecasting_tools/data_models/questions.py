@@ -33,7 +33,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     resolution_criteria: str | None = None
     fine_print: str | None = None
     background_info: str | None = None
-    unit_of_measure: str | None = None
+    unit_of_measure: str | None = None  # TODO: Move this to continuous questions
     close_time: datetime | None = None
     actual_resolution_time: datetime | None = None
     scheduled_resolution_time: datetime | None = None
@@ -42,6 +42,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     date_accessed: datetime = Field(default_factory=datetime.now)
     already_forecasted: bool = False
     tournament_slugs: list[str] = Field(default_factory=list)
+    default_project_id: int | None = None
     includes_bots_in_aggregates: bool | None = None
     cp_reveal_time: datetime | None = None  # Community Prediction Reveal Time
     api_json: dict = Field(
@@ -84,35 +85,26 @@ class MetaculusQuestion(BaseModel, Jsonable):
             page_url=f"https://www.metaculus.com/questions/{post_id}",
             num_forecasters=post_api_json["nr_forecasters"],
             num_predictions=post_api_json["forecasts_count"],
-            close_time=cls._parse_api_date(
-                post_api_json.get("scheduled_close_time")
-            ),
+            close_time=cls._parse_api_date(post_api_json.get("scheduled_close_time")),
             actual_resolution_time=cls._parse_api_date(
                 question_json.get("actual_resolve_time")
             ),
             scheduled_resolution_time=cls._parse_api_date(
                 post_api_json.get("scheduled_resolve_time")
             ),
-            published_time=cls._parse_api_date(
-                post_api_json.get("published_at")
-            ),
-            cp_reveal_time=cls._parse_api_date(
-                question_json.get("cp_reveal_time")
-            ),
+            published_time=cls._parse_api_date(post_api_json.get("published_at")),
+            cp_reveal_time=cls._parse_api_date(question_json.get("cp_reveal_time")),
             open_time=cls._parse_api_date(post_api_json.get("open_time")),
             already_forecasted=is_forecasted,
             tournament_slugs=tournament_slugs,
-            includes_bots_in_aggregates=question_json[
-                "include_bots_in_aggregates"
-            ],
+            default_project_id=post_api_json["projects"]["default_project"]["id"],
+            includes_bots_in_aggregates=question_json["include_bots_in_aggregates"],
             api_json=post_api_json,
         )
         return question
 
     @classmethod
-    def _parse_api_date(
-        cls, date_value: str | float | None
-    ) -> datetime | None:
+    def _parse_api_date(cls, date_value: str | float | None) -> datetime | None:
         if date_value is None:
             return None
 
@@ -172,9 +164,7 @@ class BinaryQuestion(MetaculusQuestion):
         try:
             q2_center_community_prediction = api_json["question"]["aggregations"]["recency_weighted"]["latest"]["centers"]  # type: ignore
             assert len(q2_center_community_prediction) == 1
-            community_prediction_at_access_time = (
-                q2_center_community_prediction[0]
-            )
+            community_prediction_at_access_time = q2_center_community_prediction[0]
         except (KeyError, TypeError):
             community_prediction_at_access_time = None
         return BinaryQuestion(
@@ -220,8 +210,8 @@ class BoundedQuestionMixin:
 class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
     upper_bound: datetime
     lower_bound: datetime
-    upper_bound_is_hard_limit: bool
-    lower_bound_is_hard_limit: bool
+    open_upper_bound: bool
+    open_lower_bound: bool
     zero_point: float | None = None
 
     @classmethod
@@ -243,8 +233,8 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
         return DateQuestion(
             upper_bound=upper_bound,
             lower_bound=lower_bound,
-            upper_bound_is_hard_limit=not open_upper_bound,
-            lower_bound_is_hard_limit=not open_lower_bound,
+            open_upper_bound=not open_upper_bound,
+            open_lower_bound=not open_lower_bound,
             **normal_metaculus_question.model_dump(),
         )
 
@@ -285,6 +275,16 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
     @classmethod
     def get_api_type_name(cls) -> str:
         return "numeric"
+
+    def give_question_details_as_markdown(self) -> str:
+        original_details = super().give_question_details_as_markdown()
+        final_details = (
+            original_details
+            + f"\n\nThe upper bound is {self.upper_bound} and the lower bound is {self.lower_bound}"
+            + f"\nOpen upper bound is {self.open_upper_bound} and open lower bound is {self.open_lower_bound}"
+            + f"\nThe zero point is {self.zero_point}"
+        )
+        return final_details.strip()
 
 
 class MultipleChoiceQuestion(MetaculusQuestion):

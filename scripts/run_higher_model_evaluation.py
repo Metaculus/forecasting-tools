@@ -13,25 +13,23 @@ logger = logging.getLogger(__name__)
 async def run_higher_model_evaluation() -> None:
     # --- Evaluation Parameters ---
     evaluation_questions = DataOrganizer.load_questions_from_file_path(
-        "logs/forecasts/benchmarks/questions_v3.0.test__278qs.json"
+        "logs/forecasts/benchmarks/questions_v4.0.test__282qs.json"
     )
 
-    questions_to_use = 200
-    evaluation_questions = evaluation_questions[:questions_to_use]
     questions_batch_size = 25
     both_reason_and_research_llm: list[tuple[str, GeneralLlm]] = [
         (
-            "openai/o3",
+            "openrouter/openai/gpt-4.1-nano",
             GeneralLlm(
-                model="openai/o3",
+                model="openrouter/openai/gpt-4.1-nano",
                 temperature=0.3,
             ),
         ),
     ]
     benchmark_files = [
-        "logs/forecasts/benchmarks/benchmarks_research_optimization_v3.1__o3__Qv3.0.train_50.jsonl",
-        "logs/forecasts/benchmarks/benchmarks_research_optimization_v3.2__o3__Qv3.0.train_50.jsonl",
-        "logs/forecasts/benchmarks/benchmarks_research_optimization_v3.3__o3__Qv3.0.train_50.jsonl",
+        "logs/forecasts/benchmarks/benchmarks_research_optimization_v4.1__gpt4.1-nano__Qv4.0.train_50.jsonl",
+        "logs/forecasts/benchmarks/benchmarks_research_optimization_v4.2__gpt4.1-nano__Qv4.0.train_50.jsonl",
+        "logs/forecasts/benchmarks/benchmarks_research_optimization_v4.3__gpt4.1-nano__Qv4.0.train_50.jsonl",
     ]
     top_n_prompts = 4
     include_worse_benchmark = False

@@ -295,8 +295,7 @@ class ForecastBot(ABC):
                 ):
                     config[name] = [item.model_dump() for item in value]
                 else:
-                    json.dumps({name: value})
-                    config[name] = value
+                    config[name] = json.dumps(value)
             except Exception:
                 config[name] = str(value)
 
@@ -571,7 +570,13 @@ class ForecastBot(ABC):
     ) -> str:
         markdown = predicted_research.research_report
         sections = MarkdownTree.turn_markdown_into_report_sections(markdown)
-        modified_content = MarkdownTree.report_sections_to_markdown(sections, 3)
+        try:
+            modified_content = MarkdownTree.report_sections_to_markdown(sections, 3)
+        except Exception as e:
+            logger.error(f"Error formatting research report: {e}")
+            modified_content = MarkdownTree.report_sections_to_markdown(
+                sections, None
+            ).replace("#", "[Hashtag]")
         final_content = f"## Report {report_number} Research\n{modified_content}"
         return final_content
 
