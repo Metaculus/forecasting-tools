@@ -35,7 +35,8 @@
 				"ms-toolsai.jupyter",
 				"anthropic.claude-code",
 				"coderabbit.coderabbit-vscode",
-				"oderwat.indent-rainbow"
+				"oderwat.indent-rainbow",
+				"janisdd.vscode-edit-csv"
 			]
 		}
 	},

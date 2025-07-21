@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import logging
 import math
@@ -145,9 +146,11 @@ class MetaculusApi:
         )
         raise_for_status_with_additional_info(response)
         json_question = json.loads(response.content)
-        metaculus_question = MetaculusApi._metaculus_api_json_to_question(json_question)
+        metaculus_questions = MetaculusApi._metaculus_api_json_to_questions(
+            json_question
+        )
         logger.info(f"Retrieved question details for question {post_id}")
-        return metaculus_question
+        return metaculus_questions
 
     @classmethod
     async def get_questions_matching_filter(
@@ -308,10 +311,10 @@ class MetaculusApi:
                 "are not supported (e.g. notebook or group question)"
             )
 
-        questions = []
+        questions: list[MetaculusQuestion] = []
         for q in supported_posts:
             try:
-                questions.append(cls._metaculus_api_json_to_question(q))
+                questions.append(cls._metaculus_api_json_to_questions(q))
             except Exception as e:
                 logger.warning(
                     f"Error processing post ID {q['id']}: {e.__class__.__name__} {e}"
@@ -320,8 +323,31 @@ class MetaculusApi:
         return questions
 
     @classmethod
+    def _metaculus_api_json_to_questions(
+        cls, post_json_from_api: dict
+    ) -> list[MetaculusQuestion]:
+        if "group_of_questions" in post_json_from_api:
+            group_json = post_json_from_api["group_of_questions"]
+            questions = []
+            question_jsons = group_json["questions"]
+            for question_json in question_jsons:
+                # Reformat the json to make it look like a normal post
+                new_question_json = copy.deepcopy(question_json)
+                new_question_json["fine_print"] = group_json["fine_print"]
+                new_question_json["description"] = group_json["description"]
+                new_question_json["resolution_criteria"] = group_json[
+                    "resolution_criteria"
+                ]
+
+                new_post_json = copy.deepcopy(post_json_from_api)
+                new_post_json["question"] = new_question_json
+                questions.append(cls._metaculus_api_json_to_question(new_post_json))
+            return questions
+        else:
+            return [cls._metaculus_api_json_to_question(post_json_from_api)]
+
+    @classmethod
     def _metaculus_api_json_to_question(cls, api_json: dict) -> MetaculusQuestion:
-        assert "question" in api_json, f"Question not found in API JSON: {api_json}"
         question_type_string = api_json["question"]["type"]  # type: ignore
         if question_type_string == BinaryQuestion.get_api_type_name():
             question_type = BinaryQuestion

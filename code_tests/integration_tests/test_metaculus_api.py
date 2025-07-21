@@ -97,6 +97,34 @@ class TestGetSpecificQuestions:
         assert question.question_type == "multiple_choice"
         assert_basic_question_attributes_not_none(question, post_id)
 
+    def test_get_group_question_type_from_id(self) -> None:
+        url = "https://www.metaculus.com/questions/38900/"
+        questions: list[MetaculusQuestion] = MetaculusApi.get_question_by_url(url)
+        for question in questions:
+            assert isinstance(question, BinaryQuestion)
+            assert question.id_of_post == 38900
+            assert (
+                "Which of the following parties will be part of the next Israeli government formed following the next Knesset election?"
+                in question.question_text
+            )
+            assert question.state == QuestionState.OPEN
+            assert question.resolution_criteria is not None
+            assert (
+                " if the corresponding party or alliance is part of the governing coalition"
+                in question.resolution_criteria
+            )
+            assert question.background_info is not None
+            assert (
+                "Current polling shows that the governing coalition "
+                in question.background_info
+            )
+            assert question.fine_print is not None
+            assert (
+                "an alliance changes member parties, it will be considered the same alliance for the purposes of this question"
+                in question.fine_print
+            )
+            assert question.close_time == datetime(2026, 10, 27, 4)
+
     def test_question_weight(self) -> None:
         question = MetaculusApi.get_question_by_post_id(
             38536
