@@ -67,6 +67,9 @@ async def test_file_is_made_for_benchmark(mocker: Mock, tmp_path: Path) -> None:
         created_file.unlink()
 
 
+@pytest.mark.skip(
+    reason="Reducing the number of calls to metaculus api due to rate limiting"
+)
 @pytest.mark.parametrize("num_questions", [10])
 async def test_benchmarks_run_properly_with_mocked_bot(
     mocker: Mock,

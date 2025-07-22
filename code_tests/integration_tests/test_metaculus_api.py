@@ -453,6 +453,9 @@ class TestQuestionEndpoint:
         ), "Questions should not be the same (randomly sampled)"
 
 
+@pytest.mark.skip(
+    reason="Reducing the number of calls to metaculus api due to rate limiting"
+)
 class TestApiFilter:
     @pytest.mark.parametrize(
         "api_filter, num_questions, randomly_sample",
@@ -530,6 +533,9 @@ class TestApiFilter:
             assert len(questions) > 0
         assert_basic_attributes_at_percentage(questions, 0.8)
 
+    @pytest.mark.skip(
+        reason="Reducing the number of calls to metaculus api due to rate limiting"
+    )
     async def test_error_when_not_enough_questions_matching_filter(self) -> None:
         single_question_filter = ApiFilter(
             close_time_gt=datetime(2024, 1, 15),
@@ -579,6 +585,9 @@ class TestApiFilter:
         for expected_state in status_filter:
             assert any(question.state == expected_state for question in questions)
 
+    @pytest.mark.skip(
+        reason="Reducing the number of calls to metaculus api due to rate limiting"
+    )
     @pytest.mark.parametrize(
         "api_filter, num_questions_in_tournament, randomly_sample",
         [
@@ -586,11 +595,6 @@ class TestApiFilter:
                 ApiFilter(allowed_tournaments=["quarterly-cup-2024q1"]),
                 46,
                 False,
-            ),
-            (
-                ApiFilter(allowed_tournaments=["quarterly-cup-2024q1"]),
-                46,
-                True,
             ),
             (
                 ApiFilter(

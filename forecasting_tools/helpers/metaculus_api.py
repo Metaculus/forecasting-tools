@@ -496,7 +496,7 @@ class MetaculusApi:
             raise ValueError(
                 f"Exhausted all {total_pages} pages but only found {len(questions)} questions, needed {num_questions}. Set error_if_not_enough_questions to False to return as many as possible"
             )
-        assert len(set(q.id_of_post for q in questions)) == len(
+        assert len(set(q.id_of_question for q in questions)) == len(
             questions
         ), "Not all questions found are unique"
 
