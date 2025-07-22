@@ -32,10 +32,13 @@ default_for_using_summary = False
 
 
 async def configure_and_run_bot(
-    mode: str, return_bot_dont_run: bool = False
+    mode: str, return_bot__dont_run: bool = False
 ) -> ForecastBot | list[ForecastReport | BaseException]:
 
     if "metaculus-cup" in mode:
+        assert (
+            "+" in mode
+        ), "Metaculus cup mode must be in the format 'token+tournament_id'"
         token = mode.split("+")[0]
         chosen_tournament = MetaculusApi.CURRENT_METACULUS_CUP_ID
         skip_previously_forecasted_questions = False
@@ -45,18 +48,16 @@ async def configure_and_run_bot(
         token = parts[0]
         chosen_tournament = parts[1]
         skip_previously_forecasted_questions = False
-    elif "+" not in mode:
+    else:
         chosen_tournament = MetaculusApi.CURRENT_AI_COMPETITION_ID
         skip_previously_forecasted_questions = True
         token = mode
-    else:
-        raise ValueError(f"Invalid mode: {mode}")
 
     bot = get_default_bot_dict()[token]["bot"]
     assert isinstance(bot, ForecastBot)
     bot.skip_previously_forecasted_questions = skip_previously_forecasted_questions
 
-    if return_bot_dont_run:
+    if return_bot__dont_run:
         return bot
     else:
         logger.info(f"LLMs for bot are: {bot.make_llm_dict()}")
@@ -71,7 +72,7 @@ async def get_all_bots() -> list[ForecastBot]:
     bots = []
     keys = list(get_default_bot_dict().keys())
     for key in keys:
-        bots.append(await configure_and_run_bot(key, return_bot_dont_run=True))
+        bots.append(await configure_and_run_bot(key, return_bot__dont_run=True))
     return bots
 
 
