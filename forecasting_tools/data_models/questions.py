@@ -40,13 +40,15 @@ ResolutionType = (
     BinaryResolution | NumericResolution | DateResolution | MultipleChoiceResolution
 )
 
+QuestionBasicType = Literal["binary", "numeric", "multiple_choice", "date"]
+
 
 class MetaculusQuestion(BaseModel, Jsonable):
     question_text: str
     id_of_post: int | None = Field(
         default=None,
         validation_alias=AliasChoices("question_id", "post_id", "id_of_post"),
-    )
+    )  # Posts can contain multiple questions (e.g. group questions or conditionals), which is why id_of_post is separate from id_of_question (id_of_post was originally misnamed as question_id). Post IDs are what is used in the URL.
     page_url: str | None = None
     id_of_question: int | None = None
     state: QuestionState | None = None
@@ -75,8 +77,15 @@ class MetaculusQuestion(BaseModel, Jsonable):
     cp_reveal_time: datetime | None = None  # Community Prediction Reveal Time
     question_weight: float | None = None
     resolution_string: str | None = None
+    group_question_option: str | None = (
+        None  # For group questions like "How many people will die of coronovirus in the following periouds" it would be "September 2024", "All of 2025", etc
+    )
     api_json: dict = Field(
-        description="The API JSON response used to create the question",
+        description=(
+            "The API JSON response used to create the question. "
+            "For group questions, a fake 'question' entry may be made to help with group question expansion "
+            "(full group question info is under 'group_of_questions')"
+        ),
         default_factory=dict,
     )
 
@@ -104,6 +113,8 @@ class MetaculusQuestion(BaseModel, Jsonable):
             tournament_slugs = []
 
         question = MetaculusQuestion(
+            # NOTE: Reminder - When adding new fields, consider if group questions
+            #       need to be parsed differently (i.e. if the field information is part of the post_json)
             state=question_state,
             question_text=question_json["title"],
             id_of_post=post_id,
@@ -131,6 +142,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             includes_bots_in_aggregates=question_json["include_bots_in_aggregates"],
             question_weight=question_json["question_weight"],
             resolution_string=question_json.get("resolution"),
+            group_question_option=question_json.get("label"),
             api_json=post_api_json,
         )
         return question
@@ -159,7 +171,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
         raise ValueError(f"Unable to parse date: {date_value}")
 
     @classmethod
-    def get_api_type_name(cls) -> str:
+    def get_api_type_name(cls) -> QuestionBasicType:
         raise NotImplementedError(
             f"This function doesn't apply for base class {type(cls)}"
         )
@@ -250,7 +262,7 @@ class BinaryQuestion(MetaculusQuestion):
         )
 
     @classmethod
-    def get_api_type_name(cls) -> str:
+    def get_api_type_name(cls) -> QuestionBasicType:
         return "binary"
 
 
@@ -334,7 +346,7 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
         )
 
     @classmethod
-    def get_api_type_name(cls) -> str:
+    def get_api_type_name(cls) -> QuestionBasicType:
         return "date"
 
 
@@ -376,7 +388,7 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
         )
 
     @classmethod
-    def get_api_type_name(cls) -> str:
+    def get_api_type_name(cls) -> QuestionBasicType:
         return "numeric"
 
     def give_question_details_as_markdown(self) -> str:
@@ -416,7 +428,7 @@ class MultipleChoiceQuestion(MetaculusQuestion):
         )
 
     @classmethod
-    def get_api_type_name(cls) -> str:
+    def get_api_type_name(cls) -> QuestionBasicType:
         return "multiple_choice"
 
     def give_question_details_as_markdown(self) -> str:

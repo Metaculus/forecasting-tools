@@ -124,6 +124,15 @@ class TestGetSpecificQuestions:
                 in question.fine_print
             )
             assert question.close_time == datetime(2026, 10, 27, 4)
+            assert isinstance(question.group_question_option, str)
+            assert_basic_question_attributes_not_none(question, question.id_of_post)
+        for option in [
+            "United Torah Judaism",
+            "Bennett 2026",
+            "The Democrats",
+            "Hadash–Ta'al",
+        ]:
+            assert option in [question.group_question_option for question in questions]
 
     def test_question_weight(self) -> None:
         question = MetaculusApi.get_question_by_post_id(
@@ -263,6 +272,80 @@ class TestQuestionEndpoint:
         )
         assert all(question.state == QuestionState.OPEN for question in questions)
 
+    async def test_group_question_field_in_filter(self) -> None:
+        target_tournament = "quarterly-cup-2023q4"
+
+        unpack_groups_filter = ApiFilter(
+            group_question_mode="unpack_subquestions",
+            allowed_tournaments=[target_tournament],
+        )
+        questions_with_unpacking = await MetaculusApi.get_questions_matching_filter(
+            unpack_groups_filter,
+        )
+
+        unpack_group_numeric_filter = ApiFilter(
+            group_question_mode="unpack_subquestions",
+            allowed_tournaments=[target_tournament],
+            allowed_types=["numeric"],
+        )
+        questions_with_unpacking_numeric = (
+            await MetaculusApi.get_questions_matching_filter(
+                unpack_group_numeric_filter,
+            )
+        )
+
+        exclude_groups_filter = ApiFilter(
+            group_question_mode="exclude",
+            allowed_tournaments=[target_tournament],
+        )
+        questions_without_unpacking = await MetaculusApi.get_questions_matching_filter(
+            exclude_groups_filter,
+        )
+
+        assert len(questions_without_unpacking) == 41
+        assert len(questions_with_unpacking) == 47
+        assert (
+            len(questions_with_unpacking_numeric) == 5 + 2
+        )  # 5 numeric questions in the tournament, 2 more with unpacking
+
+        # https://www.metaculus.com/questions/19643/
+        assert any(
+            "October 7 Hamas attack" in q.question_text
+            for q in questions_with_unpacking
+        )
+        assert any(
+            "October 7 Hamas attack" in q.question_text
+            for q in questions_with_unpacking_numeric
+        )
+        assert not any(
+            "October 7 Hamas attack" in q.question_text
+            for q in questions_without_unpacking
+        )
+
+        # https://www.metaculus.com/questions/25069/
+        assert any(
+            "Will OpenAI publicly commit" in q.question_text
+            for q in questions_with_unpacking
+        )
+        assert not any(
+            "Will OpenAI publicly commit" in q.question_text
+            for q in questions_with_unpacking_numeric
+        )
+        assert not any(
+            "Will OpenAI publicly commit" in q.question_text
+            for q in questions_without_unpacking
+        )
+
+        for question in questions_with_unpacking:
+            assert question.id_of_post is not None
+            assert_basic_question_attributes_not_none(question, question.id_of_post)
+        for question in questions_with_unpacking_numeric:
+            assert question.id_of_post is not None
+            assert_basic_question_attributes_not_none(question, question.id_of_post)
+        for question in questions_without_unpacking:
+            assert question.id_of_post is not None
+            assert_basic_question_attributes_not_none(question, question.id_of_post)
+
     def test_get_questions_from_tournament(self) -> None:
         if ForecastingTestManager.metaculus_cup_is_not_active():
             pytest.skip("Quarterly cup is not active")
@@ -362,6 +445,7 @@ class TestApiFilter:
                 ApiFilter(
                     allowed_types=["binary"],
                     allowed_statuses=["closed", "resolved"],
+                    group_question_mode="unpack_subquestions",
                     scheduled_resolve_time_lt=datetime(2024, 1, 20),
                     open_time_gt=datetime(2022, 12, 22),
                 ),
@@ -391,6 +475,7 @@ class TestApiFilter:
                     allowed_statuses=["resolved"],
                     publish_time_gt=datetime(2023, 12, 22),
                     close_time_lt=datetime(2025, 12, 22),
+                    group_question_mode="unpack_subquestions",
                 ),
                 120,
                 True,
@@ -398,6 +483,7 @@ class TestApiFilter:
             (
                 ApiFilter(
                     allowed_statuses=["resolved"],
+                    group_question_mode="exclude",
                     cp_reveal_time_gt=datetime(2023, 1, 1),
                     cp_reveal_time_lt=datetime(2024, 1, 1),
                 ),
