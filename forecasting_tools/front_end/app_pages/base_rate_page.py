@@ -17,9 +17,7 @@ from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
     BaseRateReport,
     BaseRateResearcher,
 )
-from forecasting_tools.front_end.helpers.report_displayer import (
-    ReportDisplayer,
-)
+from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
 from forecasting_tools.front_end.helpers.tool_page import ToolPage
 from forecasting_tools.helpers.forecast_database_manager import (
     ForecastDatabaseManager,
@@ -39,7 +37,9 @@ class BaseRatePage(ToolPage):
     URL_PATH: str = "/base-rate-generator"
     INPUT_TYPE = BaseRateInput
     OUTPUT_TYPE = BaseRateReport
-    EXAMPLES_FILE_PATH = "forecasting_tools/front_end/example_outputs/base_rate_page_examples.json"
+    EXAMPLES_FILE_PATH = (
+        "forecasting_tools/front_end/example_outputs/base_rate_page_examples.json"
+    )
     QUESTION_TEXT_BOX = "base_rate_question_text"
 
     @classmethod
@@ -62,9 +62,7 @@ class BaseRatePage(ToolPage):
     @classmethod
     async def _run_tool(cls, input: BaseRateInput) -> BaseRateReport:
         with st.spinner("Analyzing... This may take a minute or two..."):
-            return await BaseRateResearcher(
-                input.question_text
-            ).make_base_rate_report()
+            return await BaseRateResearcher(input.question_text).make_base_rate_report()
 
     @classmethod
     async def _save_run_to_coda(
@@ -83,9 +81,7 @@ class BaseRatePage(ToolPage):
     async def _display_outputs(cls, outputs: list[BaseRateReport]) -> None:
         for report in outputs:
             with st.expander(report.question, expanded=True):
-                st.markdown(
-                    ReportDisplayer.clean_markdown(report.markdown_report)
-                )
+                st.markdown(ReportDisplayer.clean_markdown(report.markdown_report))
 
 
 if __name__ == "__main__":

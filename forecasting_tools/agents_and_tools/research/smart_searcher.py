@@ -10,14 +10,9 @@ from forecasting_tools.ai_models.exa_searcher import (
 )
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
-from forecasting_tools.ai_models.model_interfaces.outputs_text import (
-    OutputsText,
-)
+from forecasting_tools.ai_models.model_interfaces.outputs_text import OutputsText
 from forecasting_tools.helpers.works_cited_creator import WorksCitedCreator
-from forecasting_tools.util.misc import (
-    fill_in_citations,
-    make_text_fragment_url,
-)
+from forecasting_tools.util.misc import fill_in_citations, make_text_fragment_url
 
 logger = logging.getLogger(__name__)
 
@@ -74,24 +69,18 @@ class SmartSearcher(OutputsText, AiModel):
         quotes = await self.__search_for_quotes(search_terms)
         report = await self.__compile_report(quotes, prompt)
         if self.include_works_cited_list:
-            works_cited_list = WorksCitedCreator.create_works_cited_list(
-                quotes, report
-            )
+            works_cited_list = WorksCitedCreator.create_works_cited_list(quotes, report)
             report = report + "\n\n" + works_cited_list
         final_report = self.__add_links_to_citations(report, quotes)
         return final_report, quotes
 
-    async def __come_up_with_search_queries(
-        self, prompt: str
-    ) -> list[SearchInput]:
+    async def __come_up_with_search_queries(self, prompt: str) -> list[SearchInput]:
         if self.use_advanced_filters:
             return await self.__create_search_queries_with_filters(prompt)
         else:
             return await self.__create_basic_search_queries(prompt)
 
-    async def __create_basic_search_queries(
-        self, prompt: str
-    ) -> list[SearchInput]:
+    async def __create_basic_search_queries(self, prompt: str) -> list[SearchInput]:
         prompt = clean_indents(
             f"""
             You have been given the following instructions. Instructions are included between <><><><><><><><><><><><> tags.
@@ -107,9 +96,7 @@ class SmartSearcher(OutputsText, AiModel):
             Give no other text than the list of search terms.
             """
         )
-        search_terms = await self.llm.invoke_and_return_verified_type(
-            prompt, list[str]
-        )
+        search_terms = await self.llm.invoke_and_return_verified_type(prompt, list[str])
         logger.debug(f"Decided on searches: {search_terms}")
         search_inputs = [
             self.exa_searcher.string_to_default_search_input(search_term)
@@ -150,10 +137,7 @@ class SmartSearcher(OutputsText, AiModel):
             prompt, list[SearchInput]
         )
         search_log = "\n".join(
-            [
-                f"Search {i+1}: {search}"
-                for i, search in enumerate(search_terms)
-            ]
+            [f"Search {i+1}: {search}" for i, search in enumerate(search_terms)]
         )
         logger.info(f"Decided on searches:\n{search_log}")
         return search_terms
@@ -163,15 +147,11 @@ class SmartSearcher(OutputsText, AiModel):
     ) -> list[ExaHighlightQuote]:
         all_quotes: list[list[ExaHighlightQuote]] = await asyncio.gather(
             *[
-                self.exa_searcher.invoke_for_highlights_in_relevance_order(
-                    search
-                )
+                self.exa_searcher.invoke_for_highlights_in_relevance_order(search)
                 for search in search_inputs
             ]
         )
-        flattened_quotes = [
-            quote for sublist in all_quotes for quote in sublist
-        ]
+        flattened_quotes = [quote for sublist in all_quotes for quote in sublist]
         unique_quotes: dict[str, ExaHighlightQuote] = {}
         for quote in flattened_quotes:
             if quote.highlight_text not in unique_quotes:
@@ -195,16 +175,16 @@ class SmartSearcher(OutputsText, AiModel):
         original_instructions: str,
     ) -> str:
         if len(search_results) == 0:
-            return "No search results found for the query using the search filter chosen"
+            return (
+                "No search results found for the query using the search filter chosen"
+            )
 
         assert (
             len(search_results) <= self.num_quotes_to_evaluate_from_search
         ), "Too many search results found"
 
-        search_result_context = (
-            self.__turn_highlights_into_search_context_for_prompt(
-                search_results
-            )
+        search_result_context = self.__turn_highlights_into_search_context_for_prompt(
+            search_results
         )
         logger.info(f"Generating response using {len(search_results)} quotes")
         logger.debug(f"Search results:\n{search_result_context}")
@@ -256,9 +236,7 @@ class SmartSearcher(OutputsText, AiModel):
             if url is None:
                 url = "No URL found"
                 logger.warning(f"Highlight {i} has no url")
-            text_fragment_url = make_text_fragment_url(
-                highlight.highlight_text, url
-            )
+            text_fragment_url = make_text_fragment_url(highlight.highlight_text, url)
             urls_for_citations.append(text_fragment_url)
         report = fill_in_citations(
             urls_for_citations, report, self.use_citation_brackets

@@ -25,9 +25,7 @@ def skip_if_file_writing_not_allowed(func: Callable) -> Callable:
         if is_allowed:
             return func(*args, **kwargs)
         else:
-            print(
-                "WARNING: Skipping file writing as it is set or defaults to FALSE"
-            )
+            print("WARNING: Skipping file writing as it is set or defaults to FALSE")
             return None
 
     return wrapper
@@ -111,9 +109,7 @@ def _create_directory_if_needed(file_path: str) -> None:
 
 
 @skip_if_file_writing_not_allowed
-def log_to_file(
-    file_path_in_package: str, text: str, type: str = "DEBUG"
-) -> None:
+def log_to_file(file_path_in_package: str, text: str, type: str = "DEBUG") -> None:
     """
     This function writes text to a file but adds a time stamp and a type statement
     """
@@ -138,9 +134,7 @@ def current_date_time_string() -> str:
 
 
 @skip_if_file_writing_not_allowed
-def write_csv_file(
-    file_path_in_package: str, data: list[dict[str, Any]]
-) -> None:
+def write_csv_file(file_path_in_package: str, data: list[dict[str, Any]]) -> None:
     """
     Writes a list of dictionaries to a CSV file, using the keys of the first dictionary as headers.
     Validates that all dictionaries have the same keys.
@@ -159,7 +153,9 @@ def write_csv_file(
         if set(entry.keys()) != set(fieldnames):
             missing_keys = set(fieldnames) - set(entry.keys())
             extra_keys = set(entry.keys()) - set(fieldnames)
-            error_msg = f"Dictionary at index {i} has different keys than the first dictionary."
+            error_msg = (
+                f"Dictionary at index {i} has different keys than the first dictionary."
+            )
             if missing_keys:
                 error_msg += f" Missing keys: {missing_keys}."
             if extra_keys:

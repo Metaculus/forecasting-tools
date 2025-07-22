@@ -289,13 +289,9 @@ class TestSheetOrganizer:
         from datetime import datetime
 
         friday = datetime(2025, 3, 14, 10, 30, 0)
-        with patch(
-            "forecasting_tools.util.launch_utils.datetime"
-        ) as mock_datetime:
+        with patch("forecasting_tools.util.launch_utils.datetime") as mock_datetime:
             mock_datetime.now.return_value = friday
-            mock_datetime.side_effect = lambda *args, **kw: datetime(
-                *args, **kw
-            )
+            mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
 
             monday = SheetOrganizer.compute_upcoming_day("monday")
             assert monday.day == 17
@@ -313,13 +309,9 @@ class TestSheetOrganizer:
             assert saturday.year == 2025
 
         sunday = datetime(2025, 3, 16, 10, 30, 0)
-        with patch(
-            "forecasting_tools.util.launch_utils.datetime"
-        ) as mock_datetime:
+        with patch("forecasting_tools.util.launch_utils.datetime") as mock_datetime:
             mock_datetime.now.return_value = sunday
-            mock_datetime.side_effect = lambda *args, **kw: datetime(
-                *args, **kw
-            )
+            mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
 
             monday = SheetOrganizer.compute_upcoming_day("monday")
             assert monday.day == 17

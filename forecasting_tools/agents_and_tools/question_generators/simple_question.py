@@ -207,9 +207,7 @@ class SimpleQuestion(BaseModel, Jsonable):
                     scheduled_resolution_time=question.expected_resolution_date,
                 )
             else:
-                raise ValueError(
-                    f"Unknown question type: {question.question_type}"
-                )
+                raise ValueError(f"Unknown question type: {question.question_type}")
             full_questions.append(full_question)
         return full_questions
 

@@ -35,11 +35,7 @@ async def stress_test_proxy() -> None:
         print("--------------------------------")
         logger.info(f"Time taken: {(end_time - start_time)/60} minutes")
         number_of_errors = len(
-            [
-                response
-                for response in responses
-                if isinstance(response, BaseException)
-            ]
+            [response for response in responses if isinstance(response, BaseException)]
         )
         logger.info(f"Number of errors: {number_of_errors}")
         number_of_responses = len(

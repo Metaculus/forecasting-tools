@@ -24,9 +24,7 @@ def test_responder_gets_example_base_rate_right_for_per_day_question() -> None:
     assert_base_rate_report_parts_exist(base_rate_report)
 
 
-def test_responder_gets_example_base_rate_right_for_per_event_class_question() -> (
-    None
-):
+def test_responder_gets_example_base_rate_right_for_per_event_class_question() -> None:
     question = "How many US presidential elections have been won by Democrats?"
     responder = BaseRateResearcher(question)
     base_rate_report = asyncio.run(responder.make_base_rate_report())

@@ -60,9 +60,7 @@ def make_text_fragment_url(quote: str, url: str) -> str:
     else:
         first_five_words = " ".join(quote.split()[:5])
         last_five_words = " ".join(quote.split()[-5:])
-        encoded_first_five_words = urllib.parse.quote(
-            first_five_words, safe=""
-        )
+        encoded_first_five_words = urllib.parse.quote(first_five_words, safe="")
         encoded_last_five_words = urllib.parse.quote(last_five_words, safe="")
         text_fragment = f"{encoded_first_five_words},{encoded_last_five_words}"  # Comma indicates that anything can be included in between
     text_fragment = text_fragment.replace("(", "%28").replace(")", "%29")

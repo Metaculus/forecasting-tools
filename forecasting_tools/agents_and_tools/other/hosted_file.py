@@ -26,9 +26,7 @@ class HostedFile(BaseModel):
     host: Literal["openai"] = "openai"
 
     @classmethod
-    def upload_files_to_openai(
-        cls, file_data: list[FileToUpload]
-    ) -> list[HostedFile]:
+    def upload_files_to_openai(cls, file_data: list[FileToUpload]) -> list[HostedFile]:
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY is not set")
@@ -65,9 +63,7 @@ class HostedFile(BaseModel):
         for chunk in response.iter_content(chunk_size=8192):
             downloaded_size += len(chunk)
             if downloaded_size > MAX_ZIP_SIZE:
-                raise ValueError(
-                    f"Download exceeded maximum size of {MAX_GB} GB"
-                )
+                raise ValueError(f"Download exceeded maximum size of {MAX_GB} GB")
             zip_content.write(chunk)
         zip_content.seek(0)
 
@@ -85,9 +81,7 @@ class HostedFile(BaseModel):
 
                 # Extract file to memory
                 file_data = BytesIO(zip_ref.read(full_filename))
-                safe_filename = os.path.basename(full_filename).replace(
-                    "..", ""
-                )
+                safe_filename = os.path.basename(full_filename).replace("..", "")
                 safe_filename = "".join(
                     c for c in safe_filename if c.isalnum() or c in "._- "
                 )

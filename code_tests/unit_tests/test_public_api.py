@@ -77,18 +77,14 @@ def test_public_api_imports() -> None:
     # This provides an additional layer of verification if you decide to use __all__.
     if hasattr(forecasting_tools, "__all__"):
         # Ensure all members in public_members are in __all__
-        all_missing_from_public = set(public_members) - set(
-            forecasting_tools.__all__
-        )
+        all_missing_from_public = set(public_members) - set(forecasting_tools.__all__)
         assert not all_missing_from_public, (
             f"Mismatch: Members in public_members list but not in __all__: "
             f"{', '.join(all_missing_from_public)}"
         )
 
         # Ensure all members in __all__ are in public_members (helps catch outdated public_members list)
-        public_missing_from_all = set(forecasting_tools.__all__) - set(
-            public_members
-        )
+        public_missing_from_all = set(forecasting_tools.__all__) - set(public_members)
         assert not public_missing_from_all, (
             f"Mismatch: Members in __all__ but not in public_members list (please update test): "
             f"{', '.join(public_missing_from_all)}"

@@ -74,9 +74,7 @@ class AskNewsSearcher:
             if hot_articles:
                 formatted_articles += self._format_articles(hot_articles)
             if historical_articles:
-                formatted_articles += self._format_articles(
-                    historical_articles
-                )
+                formatted_articles += self._format_articles(historical_articles)
             if not hot_articles and not historical_articles:
                 formatted_articles += "No articles were found.\n\n"
                 return formatted_articles
@@ -85,9 +83,7 @@ class AskNewsSearcher:
 
     def _format_articles(self, articles: list[SearchResponseDictItem]) -> str:
         formatted_articles = ""
-        sorted_articles = sorted(
-            articles, key=lambda x: x.pub_date, reverse=True
-        )
+        sorted_articles = sorted(articles, key=lambda x: x.pub_date, reverse=True)
 
         for article in sorted_articles:
             pub_date = article.pub_date.strftime("%B %d, %Y %I:%M %p")
@@ -99,9 +95,7 @@ class AskNewsSearcher:
         self,
         query: str,
         sources: list[str] | None = None,
-        model: Literal[
-            "deepseek", "claude-3-7-sonnet-latest", "o3-mini"
-        ] = "deepseek",
+        model: Literal["deepseek", "claude-3-7-sonnet-latest", "o3-mini"] = "deepseek",
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
     ) -> str:
@@ -126,9 +120,7 @@ class AskNewsSearcher:
         self,
         query: str,
         sources: list[str] | None = None,
-        model: Literal[
-            "deepseek", "claude-3-7-sonnet-latest", "o3-mini"
-        ] = "deepseek",
+        model: Literal["deepseek", "claude-3-7-sonnet-latest", "o3-mini"] = "deepseek",
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
     ) -> CreateDeepNewsResponse:

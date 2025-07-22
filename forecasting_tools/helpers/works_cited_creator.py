@@ -1,8 +1,6 @@
 import urllib.parse
 
-from forecasting_tools.agents_and_tools.research.smart_searcher import (
-    ExaHighlightQuote,
-)
+from forecasting_tools.agents_and_tools.research.smart_searcher import ExaHighlightQuote
 
 
 class WorksCitedCreator:
@@ -50,13 +48,9 @@ class WorksCitedCreator:
         cls, works_cited_dict: dict[str, list[tuple[int, str]]]
     ) -> str:
         works_cited_list = ""
-        for source_num, (source, highlights) in enumerate(
-            works_cited_dict.items(), 1
-        ):
+        for source_num, (source, highlights) in enumerate(works_cited_dict.items(), 1):
             works_cited_list += f"Source {source_num}: {source}\n"
             for citation_num, highlight in highlights:
-                works_cited_list += (
-                    f'- [{citation_num}] Quote: "{highlight}"\n'
-                )
+                works_cited_list += f'- [{citation_num}] Quote: "{highlight}"\n'
             works_cited_list += "\n"
         return works_cited_list

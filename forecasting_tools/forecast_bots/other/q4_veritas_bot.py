@@ -6,10 +6,7 @@ from forecasting_tools.agents_and_tools.deprecated.research_coordinator import (
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
-from forecasting_tools.data_models.questions import (
-    BinaryQuestion,
-    MetaculusQuestion,
-)
+from forecasting_tools.data_models.questions import BinaryQuestion, MetaculusQuestion
 from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot2024,
 )
@@ -44,21 +41,17 @@ class Q4VeritasBot(Q3TemplateBot2024):
         self.number_of_background_questions_to_ask = (
             number_of_background_questions_to_ask
         )
-        self.number_of_base_rate_questions_to_ask = (
-            number_of_base_rate_questions_to_ask
-        )
+        self.number_of_base_rate_questions_to_ask = number_of_base_rate_questions_to_ask
         self.number_of_base_rates_to_do_deep_research_on = (
             number_of_base_rates_to_do_deep_research_on
         )
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         research_manager = ResearchCoordinator(question)
-        combined_markdown = (
-            await research_manager.create_full_markdown_research_report(
-                self.number_of_background_questions_to_ask,
-                self.number_of_base_rate_questions_to_ask,
-                self.number_of_base_rates_to_do_deep_research_on,
-            )
+        combined_markdown = await research_manager.create_full_markdown_research_report(
+            self.number_of_background_questions_to_ask,
+            self.number_of_base_rate_questions_to_ask,
+            self.number_of_base_rates_to_do_deep_research_on,
         )
         return combined_markdown
 
@@ -66,17 +59,15 @@ class Q4VeritasBot(Q3TemplateBot2024):
         self, question: MetaculusQuestion, research: str
     ) -> str:
         research_coordinator = ResearchCoordinator(question)
-        summary_report = (
-            await research_coordinator.summarize_full_research_report(research)
+        summary_report = await research_coordinator.summarize_full_research_report(
+            research
         )
         return summary_report
 
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
-        assert isinstance(
-            question, BinaryQuestion
-        ), "Question must be a BinaryQuestion"
+        assert isinstance(question, BinaryQuestion), "Question must be a BinaryQuestion"
         prompt = clean_indents(
             f"""
             You are a professional forecaster interviewing for a job.
@@ -121,6 +112,4 @@ class Q4VeritasBot(Q3TemplateBot2024):
             gpt_forecast
             + "\nThe original forecast may have been clamped between 5% and 95%."
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)

@@ -2,9 +2,7 @@ from typing import Any
 
 import typing_extensions
 
-from forecasting_tools.ai_models.ai_utils.response_types import (
-    TextTokenCostResponse,
-)
+from forecasting_tools.ai_models.ai_utils.response_types import TextTokenCostResponse
 from forecasting_tools.ai_models.model_interfaces.combined_llm_archetype import (
     CombinedLlmArchetype,
 )
@@ -29,9 +27,7 @@ class GptO1Preview(CombinedLlmArchetype):
         system_prompt: str | None = None,
         **kwargs: Any,
     ):
-        assert (
-            system_prompt is None
-        ), "GptO1Preview does not support system prompts"
+        assert system_prompt is None, "GptO1Preview does not support system prompts"
         assert (
             temperature == 1
         ), f"GptO1Preview must have temperature 1, but {temperature} was given."
@@ -41,8 +37,6 @@ class GptO1Preview(CombinedLlmArchetype):
     def _get_mock_return_for_direct_call_to_model_using_cheap_input(
         cls,
     ) -> TextTokenCostResponse:
-        response = (
-            super()._get_mock_return_for_direct_call_to_model_using_cheap_input()
-        )
+        response = super()._get_mock_return_for_direct_call_to_model_using_cheap_input()
         response.total_tokens_used += 269  # Add reasoning tokens
         return response

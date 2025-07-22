@@ -1,8 +1,6 @@
 import pytest
 
-from code_tests.unit_tests.forecasting_test_manager import (
-    ForecastingTestManager,
-)
+from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
 from forecasting_tools.data_models.binary_report import BinaryReport
 
 
@@ -131,9 +129,7 @@ def test_calculate_average_expected_log_score() -> None:
         ),
     ]
 
-    average_score = BinaryReport.calculate_average_expected_baseline_score(
-        reports
-    )
+    average_score = BinaryReport.calculate_average_expected_baseline_score(reports)
     assert isinstance(average_score, float)
 
     # Test with None community prediction
@@ -143,9 +139,7 @@ def test_calculate_average_expected_log_score() -> None:
         )
     ]
     with pytest.raises(Exception):
-        BinaryReport.calculate_average_expected_baseline_score(
-            reports_with_none
-        )
+        BinaryReport.calculate_average_expected_baseline_score(reports_with_none)
 
 
 def test_calculate_average_deviation_points() -> None:
@@ -161,9 +155,7 @@ def test_calculate_average_deviation_points() -> None:
         ),  # 0.1 deviation
     ]
 
-    average_deviation = BinaryReport.calculate_average_deviation_points(
-        reports
-    )
+    average_deviation = BinaryReport.calculate_average_deviation_points(reports)
     assert average_deviation == pytest.approx(0.1)
 
     # Test with None community prediction

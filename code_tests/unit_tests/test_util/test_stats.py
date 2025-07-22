@@ -250,9 +250,7 @@ class TestConfidenceInterval:
         )
 
         assert confidence_interval.mean == pytest.approx(-0.08513, 0.1)
-        assert confidence_interval.margin_of_error == pytest.approx(
-            0.3818, 0.1
-        )
+        assert confidence_interval.margin_of_error == pytest.approx(0.3818, 0.1)
         assert confidence_interval.lower_bound == pytest.approx(-0.4669, 0.1)
         assert confidence_interval.upper_bound == pytest.approx(0.2967, 0.1)
 
@@ -379,12 +377,8 @@ class TestConfidenceInterval:
         )
 
         assert confidence_interval.mean == pytest.approx(127.45, 0.1)
-        assert confidence_interval.standard_deviation == pytest.approx(
-            25.965, 0.1
-        )
-        assert confidence_interval.margin_of_error == pytest.approx(
-            10.038, 0.1
-        )
+        assert confidence_interval.standard_deviation == pytest.approx(25.965, 0.1)
+        assert confidence_interval.margin_of_error == pytest.approx(10.038, 0.1)
         assert confidence_interval.lower_bound == pytest.approx(117.412, 0.1)
         assert confidence_interval.upper_bound == pytest.approx(137.488, 0.1)
 
@@ -424,8 +418,10 @@ class TestMeanStatCalculator:
         hypothesis_mean = 65.0
         confidence = 0.99
 
-        hypothesis_test = MeanHypothesisCalculator.test_if_mean_is_greater_than_hypothesis_mean(
-            observations, hypothesis_mean, confidence
+        hypothesis_test = (
+            MeanHypothesisCalculator.test_if_mean_is_greater_than_hypothesis_mean(
+                observations, hypothesis_mean, confidence
+            )
         )
 
         assert hypothesis_test.p_value == pytest.approx(0.0396, 0.01)

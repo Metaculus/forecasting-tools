@@ -62,9 +62,7 @@ class QuestionPlusResearch(BaseModel, Jsonable):
 
     def get_research_for_type(self, research_type: ResearchType) -> str:
         items = [
-            item.research
-            for item in self.research_items
-            if item.type == research_type
+            item.research for item in self.research_items if item.type == research_type
         ]
         if len(items) != 1:
             raise ValueError(

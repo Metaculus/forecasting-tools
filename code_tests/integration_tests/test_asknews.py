@@ -39,7 +39,5 @@ async def test_formatted_deep_research() -> None:
     logger.info(f"News: {news}")
     assert news is not None, "News is None"
     assert len(news) > 100, "News is too short"
-    assert (
-        "<final_answer>" not in news
-    ), "<final_answer> is in the final answer"
+    assert "<final_answer>" not in news, "<final_answer> is in the final answer"
     assert "<think>" not in news, "<think> is in the news"

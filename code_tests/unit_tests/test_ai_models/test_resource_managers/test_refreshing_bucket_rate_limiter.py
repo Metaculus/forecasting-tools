@@ -45,9 +45,7 @@ class ResourceLimiterTester:
         )
         await self.increment_counter(resources_acquired)
 
-    async def function_using_fixed_resources(
-        self, resources_to_acquire: int
-    ) -> None:
+    async def function_using_fixed_resources(self, resources_to_acquire: int) -> None:
         await self.resource_limiter.wait_till_able_to_acquire_resources(
             resources_to_acquire
         )
@@ -85,9 +83,7 @@ def test_resource_manager_refreshes_at_right_rate() -> None:
     ), "Resources refreshed too much"
 
 
-def test_resource_manager_blocks_when_no_resources_for_single_coroutine() -> (
-    None
-):
+def test_resource_manager_blocks_when_no_resources_for_single_coroutine() -> None:
     refresh_rate = 5
     capacity = 20
     resources_to_consume = capacity
@@ -107,9 +103,7 @@ def test_resource_manager_blocks_when_no_resources_for_single_coroutine() -> (
 
 
 @pytest.mark.skip(reason="This test takes a while to run")
-def test_resource_manager_blocks_when_no_resources_for_many_coroutines() -> (
-    None
-):
+def test_resource_manager_blocks_when_no_resources_for_many_coroutines() -> None:
     refresh_rate = 1
     capacity = 10
     resources_to_consume = 1
@@ -166,9 +160,7 @@ def test_resources_taken_out_correctly_for_a_lot_of_calls_that_dont_zero_out_buc
     capacity = 1000
     resources_to_consume = 1
     tester = ResourceLimiterTester(refresh_rate, capacity)
-    number_of_coroutines_to_run_each_half = int(
-        capacity / resources_to_consume / 2
-    )
+    number_of_coroutines_to_run_each_half = int(capacity / resources_to_consume / 2)
 
     first_coroutines = [
         tester.function_using_fixed_resources(resources_to_consume)
@@ -191,9 +183,7 @@ def test_resources_taken_out_correctly_for_a_lot_of_calls_that_dont_zero_out_buc
     assert (
         resources_after_first_half == capacity / 2
     ), "Resources not taken out correctly"
-    assert (
-        resources_after_second_half == 0
-    ), "Resources not taken out correctly"
+    assert resources_after_second_half == 0, "Resources not taken out correctly"
 
 
 def test_error_thrown_if_capacity_reached_with_zero_refresh() -> None:
@@ -211,16 +201,12 @@ def test_error_thrown_if_capacity_reached_with_zero_refresh() -> None:
         )
 
 
-def test_error_mode_errors_when_resource_limit_reached_with_no_refresh() -> (
-    None
-):
+def test_error_mode_errors_when_resource_limit_reached_with_no_refresh() -> None:
     limit_reached_response = LimitReachedResponse.RAISE_EXCEPTION
     refresh_rate = 0
     capacity = 10
     resources_to_consume = 6
-    tester = ResourceLimiterTester(
-        refresh_rate, capacity, limit_reached_response
-    )
+    tester = ResourceLimiterTester(refresh_rate, capacity, limit_reached_response)
 
     try:
         asyncio.run(
@@ -229,9 +215,7 @@ def test_error_mode_errors_when_resource_limit_reached_with_no_refresh() -> (
             )
         )
     except Exception:
-        raise AssertionError(
-            "Resource limiter errored when there was enough capacity"
-        )
+        raise AssertionError("Resource limiter errored when there was enough capacity")
 
     with pytest.raises(Exception):
         asyncio.run(
@@ -246,9 +230,7 @@ def test_error_mode_errors_when_resource_limit_reached_with_refresh() -> None:
     refresh_rate = 1
     capacity = 10
     resources_to_consume = 6
-    tester = ResourceLimiterTester(
-        refresh_rate, capacity, limit_reached_response
-    )
+    tester = ResourceLimiterTester(refresh_rate, capacity, limit_reached_response)
 
     try:
         asyncio.run(
@@ -257,9 +239,7 @@ def test_error_mode_errors_when_resource_limit_reached_with_refresh() -> None:
             )
         )
     except Exception:
-        raise AssertionError(
-            "Resource limiter errored when there was enough capacity"
-        )
+        raise AssertionError("Resource limiter errored when there was enough capacity")
 
     time.sleep(2)
 
@@ -286,13 +266,8 @@ def test_waits_till_bucket_is_full_if_it_runs_out_of_resources() -> None:
     resources_to_consume = 1
     tester = ResourceLimiterTester(refresh_rate, capacity)
 
-    asyncio.run(
-        tester.resource_limiter.wait_till_able_to_acquire_resources(capacity)
-    )
-    assert (
-        tester.resource_limiter.refresh_and_then_get_available_resources()
-        < 0.001
-    )
+    asyncio.run(tester.resource_limiter.wait_till_able_to_acquire_resources(capacity))
+    assert tester.resource_limiter.refresh_and_then_get_available_resources() < 0.001
 
     start_time = time.time()
     asyncio.run(
@@ -342,9 +317,7 @@ def test_rate_is_respected_between_burst_and_after() -> None:
     number_of_burst_coroutines_to_run = (
         allowed_resources_per_period // resources_to_consume
     )
-    number_of_regular_coroutines_to_run = int(
-        number_of_burst_coroutines_to_run * 0.2
-    )
+    number_of_regular_coroutines_to_run = int(number_of_burst_coroutines_to_run * 0.2)
     total_number_of_coroutines_to_run = (
         number_of_burst_coroutines_to_run + number_of_regular_coroutines_to_run
     )
@@ -362,9 +335,7 @@ def test_rate_is_respected_between_burst_and_after() -> None:
 
 
 @pytest.mark.skip(reason="This test takes a while to run")
-def test_resource_manager_works_with_a_lot_of_random_resource_requests() -> (
-    None
-):
+def test_resource_manager_works_with_a_lot_of_random_resource_requests() -> None:
     allowed_resources_per_period = 5000
     period_length_in_seconds = 2
     resources_to_use_range = (20, 50)
@@ -398,8 +369,10 @@ def assert_whether_rate_limit_is_respected_and_resources_tracked_right(
     if duration < period_length_in_seconds:
         raise ValueError("Test did not take long enough")
 
-    total_resources_used = tester.resource_limiter.calculate_resources_passed_into_acquire_in_time_range(
-        stats.start_time_as_datetime, stats.end_time_as_datetime
+    total_resources_used = (
+        tester.resource_limiter.calculate_resources_passed_into_acquire_in_time_range(
+            stats.start_time_as_datetime, stats.end_time_as_datetime
+        )
     )
 
     assert total_resources_used != 0, "No resources used in last period"
@@ -410,14 +383,16 @@ def assert_whether_rate_limit_is_respected_and_resources_tracked_right(
 
     log_message = "\n"
     log_message += f"Duration of coroutines: {duration}\n"
-    log_message += (
-        f"Allowed resources per period: {allowed_resources_per_period}\n"
-    )
+    log_message += f"Allowed resources per period: {allowed_resources_per_period}\n"
     log_message += f"Period length in seconds: {period_length_in_seconds}\n"
     log_message += f"Allowed resources per second: {allowed_resources_per_period / period_length_in_seconds}\n"
-    log_message += f"Resources used by coroutines over last period: {total_resources_used}\n"
+    log_message += (
+        f"Resources used by coroutines over last period: {total_resources_used}\n"
+    )
     log_message += f"Number of coroutines run: {len(coroutines)}\n"
-    log_message += f"Total resources used by coroutines: {tester.total_resource_counter}\n"
+    log_message += (
+        f"Total resources used by coroutines: {tester.total_resource_counter}\n"
+    )
     log_message += f"Actual resources used per second over last period: {total_resources_used / period_length_in_seconds}\n"
     logger.info(log_message)
     coroutine_testing.assert_resource_rate_not_too_high_or_too_low(

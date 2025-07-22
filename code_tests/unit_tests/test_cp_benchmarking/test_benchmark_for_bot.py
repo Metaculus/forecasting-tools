@@ -3,9 +3,7 @@ import pytest
 from code_tests.utilities_for_tests import jsonable_assertations
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 from forecasting_tools.data_models.binary_report import BinaryReport
-from forecasting_tools.data_models.multiple_choice_report import (
-    MultipleChoiceReport,
-)
+from forecasting_tools.data_models.multiple_choice_report import MultipleChoiceReport
 from forecasting_tools.data_models.numeric_report import NumericReport
 
 
@@ -26,12 +24,8 @@ def test_benchmark_for_bot(file_path: str) -> None:
 
     benchmarks = BenchmarkForBot.load_json_from_file_path(read_path)
     all_reports = [
-        report
-        for benchmark in benchmarks
-        for report in benchmark.forecast_reports
+        report for benchmark in benchmarks for report in benchmark.forecast_reports
     ]
     assert any(isinstance(report, NumericReport) for report in all_reports)
-    assert any(
-        isinstance(report, MultipleChoiceReport) for report in all_reports
-    )
+    assert any(isinstance(report, MultipleChoiceReport) for report in all_reports)
     assert any(isinstance(report, BinaryReport) for report in all_reports)

@@ -60,9 +60,7 @@ class RefreshingBucketRateLimiter:
             logger.info("refresh_rate is 0, resources will not refresh")
         self.refresh_rate: Final[float] = refresh_rate
 
-        self.__limit_reached_response: LimitReachedResponse = (
-            limit_reached_response
-        )
+        self.__limit_reached_response: LimitReachedResponse = limit_reached_response
         self.__available_resources: float = capacity
         self.__resource_history: list[ResourceUseEntry] = []
         self.__last_replenish_time: datetime = datetime.now()
@@ -108,10 +106,8 @@ class RefreshingBucketRateLimiter:
                 f"resources_being_consumed must be less than or equal to capacity. Capacity: {self.capacity}, resources_being_consumed: {resources_being_consumed}"
             )
 
-        resources_are_available: bool = (
-            await self._determine_if_resources_available(
-                resources_being_consumed
-            )
+        resources_are_available: bool = await self._determine_if_resources_available(
+            resources_being_consumed
         )
         await self.__update_fill_the_bucket_mode(
             resources_ran_out=(not resources_are_available)
@@ -119,8 +115,7 @@ class RefreshingBucketRateLimiter:
 
         if (
             not resources_are_available
-            and self.__limit_reached_response
-            == LimitReachedResponse.RAISE_EXCEPTION
+            and self.__limit_reached_response == LimitReachedResponse.RAISE_EXCEPTION
         ):
             raise ResourceUnavailableError(
                 "Resources not available. Limit Reached Response is RAISE_EXCEPTION"
@@ -136,10 +131,8 @@ class RefreshingBucketRateLimiter:
                 resources_being_consumed
             )
             await asyncio.sleep(seconds_to_sleep)
-            resources_are_available = (
-                await self._determine_if_resources_available(
-                    resources_being_consumed
-                )
+            resources_are_available = await self._determine_if_resources_available(
+                resources_being_consumed
             )
             await self.__update_fill_the_bucket_mode(
                 resources_ran_out=(not resources_are_available)
@@ -160,9 +153,7 @@ class RefreshingBucketRateLimiter:
             )
             return resources_are_available
 
-    async def __update_fill_the_bucket_mode(
-        self, resources_ran_out: bool
-    ) -> None:
+    async def __update_fill_the_bucket_mode(self, resources_ran_out: bool) -> None:
         await self._refresh_resource_count()
         if self._available_resources >= self.capacity:
             if resources_ran_out == True:

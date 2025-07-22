@@ -12,9 +12,7 @@ from forecasting_tools.agents_and_tools.deprecated.general_researcher import (
 from forecasting_tools.agents_and_tools.deprecated.question_responder import (
     QuestionResponder,
 )
-from forecasting_tools.agents_and_tools.deprecated.question_router import (
-    QuestionRouter,
-)
+from forecasting_tools.agents_and_tools.deprecated.question_router import QuestionRouter
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 
@@ -51,9 +49,7 @@ RESPONDERS_WITH_TEST_QUESTIONS = [
 #################################### TESTS ####################################
 
 
-@pytest.mark.parametrize(
-    "responder_class, question", RESPONDERS_WITH_TEST_QUESTIONS
-)
+@pytest.mark.parametrize("responder_class, question", RESPONDERS_WITH_TEST_QUESTIONS)
 async def test_responders_give_answer(
     responder_class: type[QuestionResponder], question: str
 ) -> None:
@@ -122,9 +118,7 @@ def test_question_router_calls_correct_responder(
         )
 
     router = QuestionRouter()
-    asyncio.run(
-        router.answer_question_with_markdown_using_routing(router_question)
-    )
+    asyncio.run(router.answer_question_with_markdown_using_routing(router_question))
 
     for responder, mocked_function in zip(
         QuestionRouter.AVAILABLE_REPONDERS, mocked_functions
@@ -139,9 +133,7 @@ def test_question_router_raises_error_if_responder_errors(
     mocker: Mock,
 ) -> None:
     for responder in QuestionRouter.AVAILABLE_REPONDERS:
-        mock_question_responder__answer_with_markdown__with_error(
-            mocker, responder
-        )
+        mock_question_responder__answer_with_markdown__with_error(mocker, responder)
 
     router = QuestionRouter()
     with pytest.raises(Exception):

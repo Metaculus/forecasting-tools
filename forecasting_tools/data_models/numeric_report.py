@@ -45,9 +45,7 @@ class NumericDistribution(BaseModel):
     ) -> list[Percentile]:
         for i in range(len(percentiles) - 1):
             if percentiles[i].percentile >= percentiles[i + 1].percentile:
-                raise ValueError(
-                    "Percentiles must be in strictly increasing order"
-                )
+                raise ValueError("Percentiles must be in strictly increasing order")
             if percentiles[i].value >= percentiles[i + 1].value:
                 raise ValueError("Values must be in strictly increasing order")
         return percentiles
@@ -72,8 +70,7 @@ class NumericDistribution(BaseModel):
 
         # Convert to dict so I don't have to rewrite this whole function
         percentile_values: dict[float, float] = {
-            percentile.percentile * 100: percentile.value
-            for percentile in percentiles
+            percentile.percentile * 100: percentile.value for percentile in percentiles
         }
 
         percentile_max = max(float(key) for key in percentile_values.keys())
@@ -93,9 +90,7 @@ class NumericDistribution(BaseModel):
         # Set cdf values outside range
         if open_upper_bound:
             if range_max > percentile_values[percentile_max]:
-                percentile_values[
-                    int(100 - (0.5 * (100 - percentile_max)))
-                ] = range_max
+                percentile_values[int(100 - (0.5 * (100 - percentile_max)))] = range_max
         else:
             percentile_values[100] = range_max
 
@@ -125,9 +120,7 @@ class NumericDistribution(BaseModel):
             if zero_point is None:
                 scale = lambda x: range_min + (range_max - range_min) * x
             else:
-                deriv_ratio = (range_max - zero_point) / (
-                    range_min - zero_point
-                )
+                deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
                 scale = lambda x: range_min + (range_max - range_min) * (
                     deriv_ratio**x - 1
                 ) / (deriv_ratio - 1)
@@ -184,8 +177,7 @@ class NumericDistribution(BaseModel):
         # Validate minimum spacing between consecutive values
         for i in range(len(percentiles) - 1):
             assert (
-                abs(percentiles[i + 1].percentile - percentiles[i].percentile)
-                >= 5e-05
+                abs(percentiles[i + 1].percentile - percentiles[i].percentile) >= 5e-05
             ), (
                 f"Percentiles at indices {i} and {i+1} are too close: "
                 f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
@@ -212,9 +204,7 @@ class NumericDistribution(BaseModel):
         desired_percentile_points = np.linspace(
             0, len(starting_percentiles) - 1, num_percentiles
         )
-        desired_indices = [
-            int(round(point)) for point in desired_percentile_points
-        ]
+        desired_indices = [int(round(point)) for point in desired_percentile_points]
 
         representative_percentiles = [
             starting_percentiles[idx] for idx in desired_indices
@@ -236,9 +226,7 @@ class NumericReport(ForecastReport):
         all_values_of_cdf: list[list[float]] = []
         x_axis: list[float] = [percentile.value for percentile in cdfs[0]]
         for cdf in cdfs:
-            all_percentiles_of_cdf.append(
-                [percentile.percentile for percentile in cdf]
-            )
+            all_percentiles_of_cdf.append([percentile.percentile for percentile in cdf])
             all_values_of_cdf.append([percentile.value for percentile in cdf])
 
         for cdf in cdfs:
@@ -294,6 +282,4 @@ class NumericReport(ForecastReport):
         MetaculusApi.post_numeric_question_prediction(
             self.question.id_of_question, cdf_probabilities
         )
-        MetaculusApi.post_question_comment(
-            self.question.id_of_post, self.explanation
-        )
+        MetaculusApi.post_question_comment(self.question.id_of_post, self.explanation)

@@ -6,20 +6,14 @@ from abc import ABC
 from litellm import model_cost
 
 from forecasting_tools.ai_models.ai_utils.openai_utils import VisionMessageData
-from forecasting_tools.ai_models.ai_utils.response_types import (
-    TextTokenCostResponse,
-)
+from forecasting_tools.ai_models.ai_utils.response_types import TextTokenCostResponse
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.model_interfaces.named_model import NamedModel
-from forecasting_tools.ai_models.model_interfaces.outputs_text import (
-    OutputsText,
-)
+from forecasting_tools.ai_models.model_interfaces.outputs_text import OutputsText
 from forecasting_tools.ai_models.model_interfaces.request_limited_model import (
     RequestLimitedModel,
 )
-from forecasting_tools.ai_models.model_interfaces.retryable_model import (
-    RetryableModel,
-)
+from forecasting_tools.ai_models.model_interfaces.retryable_model import RetryableModel
 from forecasting_tools.ai_models.model_interfaces.time_limited_model import (
     TimeLimitedModel,
 )
@@ -75,24 +69,18 @@ class CombinedLlmArchetype(
         supported_model_names = model_cost.keys()
         model_not_supported = cls.MODEL_NAME not in supported_model_names
         if model_not_supported:
-            logger.warning(
-                f"Model {cls.MODEL_NAME} does not support cost tracking. "
-            )
+            logger.warning(f"Model {cls.MODEL_NAME} does not support cost tracking. ")
 
     async def invoke(
         self, prompt: str | VisionMessageData | list[dict[str, str]]
     ) -> str:
         MonetaryCostManager.raise_error_if_limit_would_be_reached()
         if self.system_prompt is not None:
-            prompt = self.llm.model_input_to_message(
-                prompt, self.system_prompt
-            )
-        response: TextTokenCostResponse = (
-            await self._mockable_direct_call_to_model(prompt)
+            prompt = self.llm.model_input_to_message(prompt, self.system_prompt)
+        response: TextTokenCostResponse = await self._mockable_direct_call_to_model(
+            prompt
         )
-        MonetaryCostManager.increase_current_usage_in_parent_managers(
-            response.cost
-        )
+        MonetaryCostManager.increase_current_usage_in_parent_managers(response.cost)
         return response.data
 
     @classmethod
@@ -132,6 +120,4 @@ class CombinedLlmArchetype(
     def calculate_cost_from_tokens(
         self, prompt_tkns: int, completion_tkns: int
     ) -> float:
-        return self.llm.calculate_cost_from_tokens(
-            prompt_tkns, completion_tkns
-        )
+        return self.llm.calculate_cost_from_tokens(prompt_tkns, completion_tkns)

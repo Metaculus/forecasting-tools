@@ -34,9 +34,7 @@ class AiModelMockManager:
         mocker: Mock, subclass: type[AiModel]
     ) -> Mock:
         mock_function = mocker.patch(
-            AiModelMockManager.get_direct_call_function_path_as_string(
-                subclass
-            )
+            AiModelMockManager.get_direct_call_function_path_as_string(subclass)
         )
         mock_function.side_effect = [
             Exception("Mock Exception 1"),
@@ -62,9 +60,7 @@ class AiModelMockManager:
             )
 
         mock_function = mocker.patch(
-            AiModelMockManager.get_direct_call_function_path_as_string(
-                subclass
-            ),
+            AiModelMockManager.get_direct_call_function_path_as_string(subclass),
             side_effect=wait_longer_than_timeout,
         )
         return mock_function
@@ -76,10 +72,8 @@ class AiModelMockManager:
         input_value = (
             subclass._get_mock_return_for_direct_call_to_model_using_cheap_input()
         )
-        mock_function = (
-            AiModelMockManager.mock_ai_model_direct_call_with_value(
-                mocker, subclass, input_value
-            )
+        mock_function = AiModelMockManager.mock_ai_model_direct_call_with_value(
+            mocker, subclass, input_value
         )
         return mock_function
 
@@ -91,10 +85,8 @@ class AiModelMockManager:
         if isinstance(direct_call_function, Mock):
             return direct_call_function
 
-        full_function_path = (
-            AiModelMockManager.get_direct_call_function_path_as_string(
-                subclass
-            )
+        full_function_path = AiModelMockManager.get_direct_call_function_path_as_string(
+            subclass
         )
         mock_function = mocker.patch(full_function_path)
         mock_function.return_value = value
@@ -108,9 +100,7 @@ class AiModelMockManager:
             raise RuntimeError("Mock Exception")
 
         mock_function = mocker.patch(
-            AiModelMockManager.get_direct_call_function_path_as_string(
-                subclass
-            ),
+            AiModelMockManager.get_direct_call_function_path_as_string(subclass),
             side_effect=throw_error,
         )
         return mock_function

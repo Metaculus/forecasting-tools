@@ -5,6 +5,4 @@ from forecasting_tools.forecast_bots.experiments.q4v_w_exa_and_o1_preview import
 
 
 class Q4VeritasWithExaAndDeepSeekR1(Q4VeritasWithExaAndO1Preview):
-    FINAL_DECISION_LLM = GeneralLlm(
-        model="deepseek/deepseek-reasoner", temperature=0.1
-    )
+    FINAL_DECISION_LLM = GeneralLlm(model="deepseek/deepseek-reasoner", temperature=0.1)

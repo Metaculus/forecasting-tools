@@ -3,9 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from code_tests.unit_tests.test_ai_models.ai_mock_manager import (
-    AiModelMockManager,
-)
+from code_tests.unit_tests.test_ai_models.ai_mock_manager import AiModelMockManager
 from forecasting_tools.ai_models.exa_searcher import (
     ExaHighlightQuote,
     ExaSearcher,
@@ -47,9 +45,7 @@ async def test_invoke_for_highlights_in_relevance_order(mocker: Mock) -> None:
 
     searcher = ExaSearcher()
     cheap_input = searcher._get_cheap_input_for_invoke()
-    result = await searcher.invoke_for_highlights_in_relevance_order(
-        cheap_input
-    )
+    result = await searcher.invoke_for_highlights_in_relevance_order(cheap_input)
 
     assert len(result) == 5
     expected_highlights = [
@@ -60,9 +56,7 @@ async def test_invoke_for_highlights_in_relevance_order(mocker: Mock) -> None:
         ("Highlight 1B", 0.6),
     ]
 
-    for i, (expected_highlight, expected_score) in enumerate(
-        expected_highlights
-    ):
+    for i, (expected_highlight, expected_score) in enumerate(expected_highlights):
         assert isinstance(result[i], ExaHighlightQuote)
         assert result[i].highlight_text == expected_highlight
         assert (
@@ -131,8 +125,6 @@ async def test_filtered_invoke() -> None:
     assert len(sources) == num_results
 
 
-@pytest.mark.skip(
-    reason="Not implemented yet. Currently cost more than is worth it"
-)
+@pytest.mark.skip(reason="Not implemented yet. Currently cost more than is worth it")
 async def test_with_only_urls() -> None:
     raise NotImplementedError

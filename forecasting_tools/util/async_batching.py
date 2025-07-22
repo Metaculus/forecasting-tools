@@ -25,8 +25,7 @@ def wrap_coroutines_with_rate_limit(
         max_rate=calls_per_period, time_period=time_period_in_seconds
     )
     return [
-        apply_limiter_to_coroutine(coroutine, limiter)
-        for coroutine in coroutine_list
+        apply_limiter_to_coroutine(coroutine, limiter) for coroutine in coroutine_list
     ]
 
 
@@ -40,9 +39,7 @@ async def apply_limiter_to_coroutine(
 def wrap_coroutines_with_timeout(
     coroutine_list: list[Coroutine[Any, Any, T]], timeout_time: float
 ) -> list[Coroutine[Any, Any, T]]:
-    async def coroutine_with_timeout(
-        coroutine: Coroutine, timeout_time: float
-    ) -> Any:
+    async def coroutine_with_timeout(coroutine: Coroutine, timeout_time: float) -> Any:
         try:
             result = await asyncio.wait_for(coroutine, timeout=timeout_time)
             return result
@@ -56,8 +53,7 @@ def wrap_coroutines_with_timeout(
             )
 
     return [
-        coroutine_with_timeout(coroutine, timeout_time)
-        for coroutine in coroutine_list
+        coroutine_with_timeout(coroutine, timeout_time) for coroutine in coroutine_list
     ]
 
 
@@ -91,17 +87,13 @@ def wrap_coroutines_with_limit_timeout_and_returning_exceptions(
         rate_limited_coroutines, timeout_time
     )
     limited_timed_error_handled_coroutines = (
-        wrap_coroutines_to_return_not_raise_exceptions(
-            limited_and_timed_coroutines
-        )
+        wrap_coroutines_to_return_not_raise_exceptions(limited_and_timed_coroutines)
     )
     return limited_timed_error_handled_coroutines
 
 
 def run_coroutines(coroutines: list[Coroutine[Any, Any, T]]) -> list[T]:
-    async def run_coroutines(
-        coroutines: list[Coroutine[Any, Any, T]]
-    ) -> list[T]:
+    async def run_coroutines(coroutines: list[Coroutine[Any, Any, T]]) -> list[T]:
         tasks = []
         for coroutine in coroutines:
             tasks.append(loop.create_task(coroutine))
@@ -133,8 +125,8 @@ def run_coroutines_while_removing_and_logging_exceptions(
         coroutines
     ), "The number of inputs must match the number of coroutines"
 
-    exception_wrapped_coroutines = (
-        wrap_coroutines_to_return_not_raise_exceptions(coroutines)
+    exception_wrapped_coroutines = wrap_coroutines_to_return_not_raise_exceptions(
+        coroutines
     )
     results = run_coroutines(exception_wrapped_coroutines)
 

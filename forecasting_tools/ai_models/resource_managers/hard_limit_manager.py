@@ -74,9 +74,7 @@ class HardLimitManager:
         if amount < 0:
             raise ValueError("Cost should be a positive number or zero")
         if amount == 0:
-            logger.debug(
-                "The cost inputted is zero which may or may not be a problem"
-            )
+            logger.debug("The cost inputted is zero which may or may not be a problem")
         for cost_manager in cls._active_limit_managers.get():
             cost_manager._current_usage += amount
             if (

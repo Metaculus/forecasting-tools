@@ -14,9 +14,7 @@ from forecasting_tools.agents_and_tools.question_generators.simple_question impo
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
-from forecasting_tools.data_models.multiple_choice_report import (
-    PredictedOptionList,
-)
+from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
@@ -76,14 +74,12 @@ class Q2TemplateBotWithDecompositionV1(Q2TemplateBot2025):
         )
 
         model = self.get_llm("decomposer", "llm")
-        decomposition_result = (
-            await QuestionDecomposer().decompose_into_questions_deep(
-                model=model,
-                fuzzy_topic_or_question=question.question_text,
-                number_of_questions=5,
-                related_research=ask_news_research,
-                additional_context=question_context,
-            )
+        decomposition_result = await QuestionDecomposer().decompose_into_questions_deep(
+            model=model,
+            fuzzy_topic_or_question=question.question_text,
+            number_of_questions=5,
+            related_research=ask_news_research,
+            additional_context=question_context,
         )
         logger.info(f"Decomposition result: {decomposition_result}")
 
@@ -96,10 +92,8 @@ class Q2TemplateBotWithDecompositionV1(Q2TemplateBot2025):
         ]
         operationalized_questions = await asyncio.gather(*operationalize_tasks)
 
-        metaculus_questions = (
-            SimpleQuestion.simple_questions_to_metaculus_questions(
-                operationalized_questions
-            )
+        metaculus_questions = SimpleQuestion.simple_questions_to_metaculus_questions(
+            operationalized_questions
         )
         sub_predictor = Q2TemplateBot2025(
             llms=self._llms,
@@ -116,9 +110,7 @@ class Q2TemplateBotWithDecompositionV1(Q2TemplateBot2025):
             if isinstance(forecast, BaseException):
                 logger.error(f"Error forecasting on question: {forecast}")
                 continue
-            formatted_forecasts += (
-                f"QUESTION: {forecast.question.question_text}\n\n"
-            )
+            formatted_forecasts += f"QUESTION: {forecast.question.question_text}\n\n"
             formatted_forecasts += f"PREDICTION: {forecast.make_readable_prediction(forecast.prediction)}\n\n"
             formatted_forecasts += f"SUMMARY: {forecast.summary}\n\n----------------------------------------\n\n"
             sub_question_bullets += f"- {forecast.question.question_text}\n"
@@ -183,14 +175,12 @@ class Q2TemplateBotWithDecompositionV2(Q2TemplateBot2025):
             """
         )
         model = self.get_llm("decomposer", "llm")
-        decomposition_result = (
-            await QuestionDecomposer().decompose_into_questions_deep(
-                model=model,
-                fuzzy_topic_or_question=question.question_text,
-                number_of_questions=5,
-                related_research=None,
-                additional_context=additional_context,
-            )
+        decomposition_result = await QuestionDecomposer().decompose_into_questions_deep(
+            model=model,
+            fuzzy_topic_or_question=question.question_text,
+            number_of_questions=5,
+            related_research=None,
+            additional_context=additional_context,
         )
         sub_questions = decomposition_result.questions
 
@@ -287,12 +277,8 @@ class Q2TemplateBotWithDecompositionV2(Q2TemplateBot2025):
         prediction: float = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=0.99, min_prediction=0.01
         )
-        logger.info(
-            f"Forecasted URL {question.page_url} with prediction: {prediction}"
-        )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        logger.info(f"Forecasted URL {question.page_url} with prediction: {prediction}")
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -346,12 +332,8 @@ class Q2TemplateBotWithDecompositionV2(Q2TemplateBot2025):
                 reasoning, question.options
             )
         )
-        logger.info(
-            f"Forecasted URL {question.page_url} with prediction: {prediction}"
-        )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        logger.info(f"Forecasted URL {question.page_url} with prediction: {prediction}")
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
@@ -424,6 +406,4 @@ class Q2TemplateBotWithDecompositionV2(Q2TemplateBot2025):
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}"
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)

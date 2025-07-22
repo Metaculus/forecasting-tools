@@ -133,9 +133,7 @@ instance_of_test_model_2 = PydanticModelExample2(
 def test_validate_complex_type(
     type_to_check: type, value_to_check: Any, expected_output: bool
 ) -> None:
-    assert (
-        validate_complex_type(value_to_check, type_to_check) == expected_output
-    )
+    assert validate_complex_type(value_to_check, type_to_check) == expected_output
 
 
 @pytest.mark.parametrize(
@@ -224,8 +222,6 @@ def test_stripping_indents_from_lines_works(
         ('{"key": "value"}', '{"key": "value"}'),
     ],
 )
-def test_strip_code_block_markdown(
-    string_input: str, expected_output: str
-) -> None:
+def test_strip_code_block_markdown(string_input: str, expected_output: str) -> None:
     stripped_string = strip_code_block_markdown(string_input)
     assert stripped_string == expected_output

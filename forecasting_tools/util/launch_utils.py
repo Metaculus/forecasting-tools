@@ -158,9 +158,7 @@ class LaunchQuestion(BaseModel, Jsonable):
             "description": self.description,
             "question_weight": self.question_weight,
             "open_time": (
-                self.open_time.strftime(full_datetime_format)
-                if self.open_time
-                else ""
+                self.open_time.strftime(full_datetime_format) if self.open_time else ""
             ),
             "scheduled_close_time": (
                 self.scheduled_close_time.strftime(full_datetime_format)
@@ -261,9 +259,7 @@ class SheetOrganizer:
             if q.open_time is not None and q.scheduled_close_time is not None
         ]
         questions_to_schedule = [
-            q
-            for q in copied_input_questions
-            if q not in prescheduled_questions
+            q for q in copied_input_questions if q not in prescheduled_questions
         ]
         # May 2 2025: Consider not sorting by scheduled resolve time since it can put too many numerics back to back which s hard for pros.
         questions_to_schedule.sort(
@@ -373,16 +369,11 @@ class SheetOrganizer:
                 question.scheduled_close_time
                 and question.scheduled_close_time > start_date
             ):
-                if (
-                    question.scheduled_close_time.date()
-                    not in date_to_question_map
-                ):
-                    date_to_question_map[
-                        question.scheduled_close_time.date()
-                    ] = []
-                date_to_question_map[
-                    question.scheduled_close_time.date()
-                ].append(question)
+                if question.scheduled_close_time.date() not in date_to_question_map:
+                    date_to_question_map[question.scheduled_close_time.date()] = []
+                date_to_question_map[question.scheduled_close_time.date()].append(
+                    question
+                )
 
         questions_left_to_sample = num_pro_questions
         pro_launch_questions: list[LaunchQuestion] = []
@@ -430,10 +421,7 @@ class SheetOrganizer:
     ) -> bool:
         # TODO: This is incorrectly triggered when the adjacent question had a weight of 1
         #       (or a different weight overall) and thus was not a weighted pair.
-        if (
-            question.question_weight is not None
-            and question.question_weight < 1
-        ):
+        if question.question_weight is not None and question.question_weight < 1:
             question_index_one_above = question.original_order + 1
             question_index_one_below = question.original_order - 1
             all_question_indexes = [q.original_order for q in chosen_questions]
@@ -459,8 +447,7 @@ class SheetOrganizer:
     def load_questions_from_csv(cls, file_path: str) -> list[LaunchQuestion]:
         questions = load_csv_file(file_path)
         loaded_questions = [
-            LaunchQuestion.from_csv_row(row, i)
-            for i, row in enumerate(questions)
+            LaunchQuestion.from_csv_row(row, i) for i, row in enumerate(questions)
         ]
         return loaded_questions
 
@@ -468,9 +455,7 @@ class SheetOrganizer:
     def save_questions_to_csv(
         cls, questions: list[LaunchQuestion], file_path: str
     ) -> None:
-        write_csv_file(
-            file_path, [question.to_csv_row() for question in questions]
-        )
+        write_csv_file(file_path, [question.to_csv_row() for question in questions])
 
     @classmethod
     async def find_processing_errors(  # NOSONAR
@@ -506,10 +491,7 @@ class SheetOrganizer:
                                     warning=f"Existing open times must be preserved. Original: {orig_q.open_time} to {orig_q.scheduled_close_time}",
                                 )
                             )
-                        if (
-                            new_q.scheduled_close_time
-                            != orig_q.scheduled_close_time
-                        ):
+                        if new_q.scheduled_close_time != orig_q.scheduled_close_time:
                             warnings.append(
                                 LaunchWarning(
                                     relevant_question=new_q,
@@ -561,9 +543,7 @@ class SheetOrganizer:
 
             for question in new_questions:
                 if question.open_time and question.scheduled_close_time:
-                    actual_duration = (
-                        question.scheduled_close_time - question.open_time
-                    )
+                    actual_duration = question.scheduled_close_time - question.open_time
                     if actual_duration != required_duration:
                         warnings.append(
                             LaunchWarning(
@@ -634,12 +614,8 @@ class SheetOrganizer:
             for question in new_questions:
                 if question.type == "numeric":
                     try:
-                        assert (
-                            question.range_min is not None
-                        ), "range_min is required"
-                        assert (
-                            question.range_max is not None
-                        ), "range_max is required"
+                        assert question.range_min is not None, "range_min is required"
+                        assert question.range_max is not None, "range_max is required"
                         assert (
                             question.open_lower_bound is not None
                         ), "open_lower_bound is required"
@@ -724,9 +700,7 @@ class SheetOrganizer:
                                 ):
                                     continue
 
-                                if getattr(orig_q, field) != getattr(
-                                    new_q, field
-                                ):
+                                if getattr(orig_q, field) != getattr(new_q, field):
                                     warnings.append(
                                         LaunchWarning(
                                             relevant_question=new_q,
@@ -748,9 +722,7 @@ class SheetOrganizer:
                         assert (
                             question.resolution_criteria == ".p"
                         ), "resolution_criteria should be '.p'"
-                        assert (
-                            question.fine_print == ".p"
-                        ), "fine_print should be '.p'"
+                        assert question.fine_print == ".p", "fine_print should be '.p'"
                     except AssertionError as e:
                         warnings.append(
                             LaunchWarning(
@@ -767,11 +739,7 @@ class SheetOrganizer:
             warnings = []
 
             earliest_open = min(
-                (
-                    q.open_time
-                    for q in new_questions
-                    if q.open_time is not None
-                ),
+                (q.open_time for q in new_questions if q.open_time is not None),
                 default=None,
             )
             target_date = (
@@ -814,9 +782,7 @@ class SheetOrganizer:
                             f"Question opens at {question.open_time} before start date {start_date}"
                         )
                 if question.scheduled_close_time:
-                    if question.scheduled_close_time > end_date + timedelta(
-                        days=1
-                    ):
+                    if question.scheduled_close_time > end_date + timedelta(days=1):
                         warning_messages.append(
                             f"Question closes at {question.scheduled_close_time} after end date {end_date}"
                         )
@@ -840,10 +806,7 @@ class SheetOrganizer:
 
             if question_type == "pros":
                 for question in new_questions:
-                    if (
-                        question.tournament
-                        and "Bridgewater" in question.tournament
-                    ):
+                    if question.tournament and "Bridgewater" in question.tournament:
                         warnings.append(
                             LaunchWarning(
                                 relevant_question=question,
@@ -879,9 +842,7 @@ class SheetOrganizer:
             warnings = []
             title_count = {}
 
-            new_question_titles = [
-                question.title for question in new_questions
-            ]
+            new_question_titles = [question.title for question in new_questions]
             if use_stored_titles:
                 stored_question_titles = load_text_file(title_file)
                 assert (
@@ -892,9 +853,7 @@ class SheetOrganizer:
                     for title in stored_question_titles.split("\n")
                     if title.strip()
                 ]
-                combined_question_titles = (
-                    stored_question_titles + new_question_titles
-                )
+                combined_question_titles = stored_question_titles + new_question_titles
             else:
                 combined_question_titles = new_question_titles
 
@@ -917,9 +876,7 @@ class SheetOrganizer:
                     for title in new_question_titles
                     if title not in duplicate_titles
                 ]
-                append_to_text_file(
-                    title_file, "\n".join(non_duplicate_titles)
-                )
+                append_to_text_file(title_file, "\n".join(non_duplicate_titles))
 
             if len(warnings) > 8:
                 warnings = [
@@ -941,15 +898,9 @@ class SheetOrganizer:
                 if total == 0:
                     return warnings
 
-                numeric_count = sum(
-                    1 for q in new_questions if q.type == "numeric"
-                )
-                mc_count = sum(
-                    1 for q in new_questions if q.type == "multiple_choice"
-                )
-                binary_count = sum(
-                    1 for q in new_questions if q.type == "binary"
-                )
+                numeric_count = sum(1 for q in new_questions if q.type == "numeric")
+                mc_count = sum(1 for q in new_questions if q.type == "multiple_choice")
+                binary_count = sum(1 for q in new_questions if q.type == "binary")
 
                 numeric_percent = numeric_count / total * 100
                 mc_percent = mc_count / total * 100
@@ -1023,8 +974,7 @@ class SheetOrganizer:
                 if (
                     previous_question.open_time
                     and current_question.open_time
-                    and previous_question.open_time
-                    > current_question.open_time
+                    and previous_question.open_time > current_question.open_time
                 ):
                     warnings.append(
                         LaunchWarning(
@@ -1048,7 +998,9 @@ class SheetOrganizer:
                 warning_msg = f"Number of questions is different from original -> Original: {len(original_questions)} != New: {len(new_questions)}"
 
                 if missing_from_new:
-                    warning_msg += f"\nMissing from new: {', '.join(sorted(missing_from_new))}"
+                    warning_msg += (
+                        f"\nMissing from new: {', '.join(sorted(missing_from_new))}"
+                    )
                 if missing_from_original:
                     warning_msg += f"\nNew questions not in original: {', '.join(sorted(missing_from_original))}"
 
@@ -1056,9 +1008,7 @@ class SheetOrganizer:
             return warnings
 
         # There are no glaring errors in the text of the question
-        async def _no_inconsistencies_causing_annulment_gpt() -> (
-            list[LaunchWarning]
-        ):
+        async def _no_inconsistencies_causing_annulment_gpt() -> list[LaunchWarning]:
             tasks: list[Coroutine[Any, Any, dict[str, Any]]] = []
             for question in new_questions:
                 model = GeneralLlm(
@@ -1188,9 +1138,7 @@ class SheetOrganizer:
         # Questions are evenly distributed per day
         def _questions_evenly_distributed_per_day() -> list[LaunchWarning]:
             duration_of_period = end_date - start_date
-            target_questions_per_day = (
-                len(new_questions) / duration_of_period.days
-            )
+            target_questions_per_day = len(new_questions) / duration_of_period.days
             list_of_dates = [
                 (start_date + timedelta(days=i)).date()
                 for i in range(duration_of_period.days)
@@ -1202,12 +1150,8 @@ class SheetOrganizer:
                         question.scheduled_close_time.date()
                         not in question_count_per_day
                     ):
-                        question_count_per_day[
-                            question.scheduled_close_time.date()
-                        ] = 0
-                    question_count_per_day[
-                        question.scheduled_close_time.date()
-                    ] += 1
+                        question_count_per_day[question.scheduled_close_time.date()] = 0
+                    question_count_per_day[question.scheduled_close_time.date()] += 1
             warnings = []
             for date_key, count in question_count_per_day.items():
                 if not (
@@ -1246,9 +1190,7 @@ class SheetOrganizer:
         final_warnings.extend(_check_no_field_changes(question_type))
         final_warnings.extend(_check_parent_url_fields())
         final_warnings.extend(_check_earliest_open_time(question_type))
-        final_warnings.extend(
-            _check_adherence_to_end_and_start_time(question_type)
-        )
+        final_warnings.extend(_check_adherence_to_end_and_start_time(question_type))
         final_warnings.extend(_check_bridgewater_tournament())
         final_warnings.extend(_check_numeric_range())
         final_warnings.extend(_check_duplicate_titles(use_stored_titles=True))
@@ -1259,9 +1201,7 @@ class SheetOrganizer:
         final_warnings.extend(_check_resolve_date_is_in_future())
         if question_type == "bots":
             final_warnings.extend(_check_same_number_of_questions())
-            final_warnings.extend(
-                await _no_inconsistencies_causing_annulment_gpt()
-            )
+            final_warnings.extend(await _no_inconsistencies_causing_annulment_gpt())
         if question_type == "pros":
             final_warnings.extend(_weighted_pairs_are_not_in_list())
             final_warnings.extend(_questions_evenly_distributed_per_day())

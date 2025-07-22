@@ -4,14 +4,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from code_tests.unit_tests.test_ai_models.ai_mock_manager import (
-    AiModelMockManager,
-)
+from code_tests.unit_tests.test_ai_models.ai_mock_manager import AiModelMockManager
 from code_tests.unit_tests.test_ai_models.models_to_test import ModelsToTest
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
-from forecasting_tools.ai_models.model_interfaces.retryable_model import (
-    RetryableModel,
-)
+from forecasting_tools.ai_models.model_interfaces.retryable_model import RetryableModel
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +16,7 @@ RETRYABLE_ERROR_MESSAGE = "Model must be Retryable"
 
 @pytest.mark.skip(reason="Skipping test because it's slow")
 @pytest.mark.parametrize("subclass", ModelsToTest.RETRYABLE_LIST)
-def test_ai_model_successfully_retries(
-    mocker: Mock, subclass: type[AiModel]
-) -> None:
+def test_ai_model_successfully_retries(mocker: Mock, subclass: type[AiModel]) -> None:
     if not issubclass(subclass, RetryableModel):
         raise ValueError(RETRYABLE_ERROR_MESSAGE)
 
@@ -40,9 +34,7 @@ def test_ai_model_successfully_retries(
 
 @pytest.mark.skip(reason="Skipping test because it's slow")
 @pytest.mark.parametrize("subclass", ModelsToTest.RETRYABLE_LIST)
-def test_errors_when_runs_out_of_tries(
-    mocker: Mock, subclass: type[AiModel]
-) -> None:
+def test_errors_when_runs_out_of_tries(mocker: Mock, subclass: type[AiModel]) -> None:
     if not issubclass(subclass, RetryableModel):
         raise ValueError(RETRYABLE_ERROR_MESSAGE)
 
@@ -50,9 +42,7 @@ def test_errors_when_runs_out_of_tries(
         mocker, subclass
     )
     model = subclass()
-    model.allowed_tries = (
-        2  # It should run out of retries with the first 2 errors
-    )
+    model.allowed_tries = 2  # It should run out of retries with the first 2 errors
     model_input = model._get_cheap_input_for_invoke()
     with pytest.raises(Exception):
         asyncio.run(model.invoke(model_input))

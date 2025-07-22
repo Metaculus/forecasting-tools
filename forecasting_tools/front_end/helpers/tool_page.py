@@ -30,22 +30,16 @@ class ToolPage(AppPage, ABC):
         super().__init_subclass__(*args, **kwargs)
         is_abstract = ABC in cls.__bases__
         if not is_abstract:
-            if cls.OUTPUT_TYPE is Jsonable or not issubclass(
-                cls.OUTPUT_TYPE, Jsonable
-            ):
+            if cls.OUTPUT_TYPE is Jsonable or not issubclass(cls.OUTPUT_TYPE, Jsonable):
                 raise NotImplementedError(
                     "You forgot to define OUTPUT_TYPE as a subclass of Jsonable"
                 )
-            if cls.INPUT_TYPE is Jsonable or not issubclass(
-                cls.INPUT_TYPE, Jsonable
-            ):
+            if cls.INPUT_TYPE is Jsonable or not issubclass(cls.INPUT_TYPE, Jsonable):
                 raise NotImplementedError(
                     "You forgot to define INPUT_TYPE as a subclass of Jsonable"
                 )
             if cls.EXAMPLES_FILE_PATH is NotImplemented:
-                raise NotImplementedError(
-                    "You forgot to define EXAMPLES_FILE_PATH"
-                )
+                raise NotImplementedError("You forgot to define EXAMPLES_FILE_PATH")
 
     @classmethod
     async def _async_main(cls) -> None:
@@ -75,9 +69,7 @@ class ToolPage(AppPage, ABC):
                 cols = st.columns(len(examples))
                 for index, example in enumerate(examples):
                     with cols[index]:
-                        await cls._display_single_example_button(
-                            example, index
-                        )
+                        await cls._display_single_example_button(example, index)
 
     @classmethod
     async def _display_single_example_button(
@@ -137,9 +129,7 @@ class ToolPage(AppPage, ABC):
         output = output.model_copy(deep=True)
 
         try:
-            await cls._save_run_to_coda(
-                input_to_tool, output, is_premade_example
-            )
+            await cls._save_run_to_coda(input_to_tool, output, is_premade_example)
         except Exception as e:
             logger.error(f"Error saving output to Coda: {e}")
 
@@ -162,9 +152,7 @@ class ToolPage(AppPage, ABC):
         st.session_state[session_state_key].insert(0, output)
 
     @classmethod
-    async def _save_run_to_file(
-        cls, input_to_tool: Jsonable, output: Jsonable
-    ) -> None:
+    async def _save_run_to_file(cls, input_to_tool: Jsonable, output: Jsonable) -> None:
         assert isinstance(output, cls.OUTPUT_TYPE)
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_path = f"logs/forecasts/streamlit/{timestamp}_{cls.__name__}.json"

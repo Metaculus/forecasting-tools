@@ -22,9 +22,7 @@ class AppPage(ABC):
         is_abstract = ABC in cls.__bases__
         if not is_abstract:
             if cls.PAGE_DISPLAY_NAME is NotImplemented:
-                raise NotImplementedError(
-                    "You forgot to define PAGE_DISPLAY_NAME"
-                )
+                raise NotImplementedError("You forgot to define PAGE_DISPLAY_NAME")
             if cls.URL_PATH is NotImplemented:
                 raise NotImplementedError("You forgot to define URL_PATH")
 

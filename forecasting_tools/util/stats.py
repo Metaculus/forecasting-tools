@@ -38,10 +38,7 @@ class ProportionStatCalculator:
         https://www.statssolver.com/hypothesis-testing.html
         """
 
-        if (
-            self.number_of_trials * p0 < 5
-            or self.number_of_trials * (1 - p0) < 5
-        ):
+        if self.number_of_trials * p0 < 5 or self.number_of_trials * (1 - p0) < 5:
             raise ValueError(
                 "The normal distribution approximation conditions are not satisfied. Too few samples given the desired p0 to test"
             )
@@ -211,9 +208,7 @@ class MeanHypothesisCalculator:
         )
 
     @classmethod
-    def _get_observation_stats(
-        cls, observations: list[float]
-    ) -> ObservationStats:
+    def _get_observation_stats(cls, observations: list[float]) -> ObservationStats:
         average = np.mean(observations)
         standard_deviation = np.std(observations, ddof=1)
         count = len(observations)

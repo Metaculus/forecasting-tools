@@ -9,10 +9,7 @@ from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOption,
     PredictedOptionList,
 )
-from forecasting_tools.data_models.numeric_report import (
-    NumericDistribution,
-    Percentile,
-)
+from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
 logger = logging.getLogger(__name__)
@@ -29,21 +26,15 @@ class PredictionExtractor:
                 "While trying to extract last percentage value found that the text is None or an empty string"
             )
         if not 0 <= max_prediction <= 1:
-            raise ValueError(
-                f"Max prediction {max_prediction} is not between 0 and 1"
-            )
+            raise ValueError(f"Max prediction {max_prediction} is not between 0 and 1")
         if not 0 <= min_prediction <= 1:
-            raise ValueError(
-                f"Min prediction {min_prediction} is not between 0 and 1"
-            )
+            raise ValueError(f"Min prediction {min_prediction} is not between 0 and 1")
         if max_prediction < min_prediction:
             raise ValueError(
                 f"Max prediction {max_prediction} is not greater than or equal to min prediction {min_prediction}"
             )
         if not 0 <= min_prediction <= 1:
-            raise ValueError(
-                f"Min prediction {min_prediction} is not between 0 and 1"
-            )
+            raise ValueError(f"Min prediction {min_prediction} is not between 0 and 1")
         if max_prediction < min_prediction:
             raise ValueError(
                 f"Max prediction {max_prediction} is not greater than or equal to min prediction {min_prediction}"
@@ -56,9 +47,7 @@ class PredictionExtractor:
                 raise ValueError(
                     f"Probability {original_number} is not between 0 and 1, so won't attempt to clamp the value"
                 )
-            clamped_number = min(
-                max_prediction, max(min_prediction, original_number)
-            )
+            clamped_number = min(max_prediction, max(min_prediction, original_number))
             return float(clamped_number)
         else:
             raise ValueError(
@@ -74,13 +63,9 @@ class PredictionExtractor:
                 "While trying to extract option list found that the text is None or an empty string"
             )
 
-        alphabet_abc_option_letters = list(
-            string.ascii_uppercase[: len(options)]
-        )
+        alphabet_abc_option_letters = list(string.ascii_uppercase[: len(options)])
         cleaned_options = [option.strip() for option in options]
-        underscored_options = [
-            option.strip().replace(" ", "_") for option in options
-        ]
+        underscored_options = [option.strip().replace(" ", "_") for option in options]
         option_lists_to_try = [
             options,
             cleaned_options,
@@ -338,9 +323,8 @@ class PredictionExtractor:
                     raise ValueError(
                         "There should not be negative numbers in number section separated by spaces"
                     )
-                value_at_percentile = (
-                    value_at_percentile * 1000
-                    + other_number * (-1 if value_is_negative else 1)
+                value_at_percentile = value_at_percentile * 1000 + other_number * (
+                    -1 if value_is_negative else 1
                 )
         return Percentile(
             value=value_at_percentile,

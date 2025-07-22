@@ -27,9 +27,7 @@ logger = logging.getLogger(__name__)
 def test_large_lists_fail(things_to_generate: str) -> None:
     with pytest.raises(ValueError):
         asyncio.run(
-            NicheListResearcher(
-                things_to_generate
-            ).research_niche_reference_class()
+            NicheListResearcher(things_to_generate).research_niche_reference_class()
         )
 
 
@@ -201,9 +199,7 @@ async def test_exhaustive_list_generation(
     list_markdown = FactCheckedItem.make_markdown_with_valid_and_invalid_lists(
         all_items_including_incorrect
     )
-    exhaustive_list = [
-        item for item in all_items_including_incorrect if item.is_valid
-    ]
+    exhaustive_list = [item for item in all_items_including_incorrect if item.is_valid]
     logger.info(
         f"\nCost: {cost_manager.current_usage}\nGenerated list: {list_markdown}\n\n Expected list: {expected_items}"
     )

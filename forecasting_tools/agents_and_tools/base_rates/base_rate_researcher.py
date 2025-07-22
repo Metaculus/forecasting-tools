@@ -12,9 +12,7 @@ from forecasting_tools.agents_and_tools.base_rates.niche_list_researcher import 
     FactCheckedItem,
     NicheListResearcher,
 )
-from forecasting_tools.agents_and_tools.deprecated.configured_llms import (
-    BasicLlm,
-)
+from forecasting_tools.agents_and_tools.deprecated.configured_llms import BasicLlm
 from forecasting_tools.agents_and_tools.deprecated.general_researcher import (
     GeneralResearcher,
 )
@@ -68,9 +66,7 @@ class BaseRateResearcher(QuestionResponder):
             return back_up_report
 
     async def make_base_rate_report(self) -> BaseRateReport:
-        logger.info(
-            f"Starting to make base rate report for question: {self.question}"
-        )
+        logger.info(f"Starting to make base rate report for question: {self.question}")
         with MonetaryCostManager() as cost_manager:
             report = await self.__make_base_rate_report(cost_manager)
             logger.info(
@@ -211,26 +207,18 @@ class BaseRateResearcher(QuestionResponder):
             Remember to return only the json and nothing else
             """
         )
-        numerator_ref_class = await self.__call_model_expecting_ref_class(
-            prompt
-        )
+        numerator_ref_class = await self.__call_model_expecting_ref_class(prompt)
         numerator_ref_class_with_size: ReferenceClassWithCount = (
             await self.__find_size_of_ref_class(numerator_ref_class)
         )
-        logger.info(
-            f"Numerator: {str(numerator_ref_class_with_size)[:1000]}..."
-        )
+        logger.info(f"Numerator: {str(numerator_ref_class_with_size)[:1000]}...")
         return numerator_ref_class_with_size
 
-    async def __call_model_expecting_ref_class(
-        self, prompt: str
-    ) -> ReferenceClass:
+    async def __call_model_expecting_ref_class(self, prompt: str) -> ReferenceClass:
         assert self.__start_date
         assert self.__end_date
         model = BasicLlm(temperature=0)
-        reference_class = await model.invoke_and_return_verified_type(
-            prompt, dict
-        )
+        reference_class = await model.invoke_and_return_verified_type(prompt, dict)
         hit_definition: str = reference_class["hit_definition"]
         search_query: str = reference_class["search_query"]
         return ReferenceClass(
@@ -244,14 +232,9 @@ class BaseRateResearcher(QuestionResponder):
         self, reference_class: ReferenceClass
     ) -> ReferenceClassWithCount:
         estimated_reference_class = (
-            await self.__find_size_of_ref_class_through_estimation(
-                reference_class
-            )
+            await self.__find_size_of_ref_class_through_estimation(reference_class)
         )
-        if (
-            estimated_reference_class.count
-            < NicheListResearcher.MAX_ITEMS_IN_LIST
-        ):
+        if estimated_reference_class.count < NicheListResearcher.MAX_ITEMS_IN_LIST:
             new_reference_class = estimated_reference_class
             try:
                 new_reference_class = (
@@ -290,10 +273,8 @@ class BaseRateResearcher(QuestionResponder):
             reference_class.hit_description_with_dates_included
         ).research_niche_reference_class(return_invalid_items=True)
         correct_items = [item for item in items_found if item.is_valid]
-        markdown_of_items = (
-            FactCheckedItem.make_markdown_with_valid_and_invalid_lists(
-                items_found
-            )
+        markdown_of_items = FactCheckedItem.make_markdown_with_valid_and_invalid_lists(
+            items_found
         )
         markdown_report = clean_indents(
             f"""
@@ -345,17 +326,13 @@ class BaseRateResearcher(QuestionResponder):
         elif DenominatorOption.PER_EVENT.name in string_answer:
             real_answer = DenominatorOption.PER_EVENT
         else:
-            raise ValueError(
-                f"Could not understand the answer: {string_answer}"
-            )
+            raise ValueError(f"Could not understand the answer: {string_answer}")
         per_day_or_event_decision = EventOrDayDecision(
             prompt=choosing_event_or_days_prompt,
             reasoning=reasoning,
             answer=real_answer,
         )
-        logger.info(
-            f"Found hits per day decision: {per_day_or_event_decision}"
-        )
+        logger.info(f"Found hits per day decision: {per_day_or_event_decision}")
         return per_day_or_event_decision
 
     async def __get_denominator_reference_class(
@@ -400,9 +377,7 @@ class BaseRateResearcher(QuestionResponder):
             Remember to return only the json and nothing else
             """
         )
-        denominator_ref_class = await self.__call_model_expecting_ref_class(
-            prompt
-        )
+        denominator_ref_class = await self.__call_model_expecting_ref_class(prompt)
         denominator_ref_class_with_size = await self.__find_size_of_ref_class(
             denominator_ref_class
         )
@@ -507,9 +482,7 @@ class BaseRateResearcher(QuestionResponder):
     def __create_date_range_string(
         self, numerator_class: ReferenceClassWithCount
     ) -> str:
-        days_in_period = (
-            numerator_class.end_date - numerator_class.start_date
-        ).days
+        days_in_period = (numerator_class.end_date - numerator_class.start_date).days
         months_in_period = days_in_period / 30
         years_in_period = days_in_period / 365
         return f"Date Range: {numerator_class.readable_start_date} to {numerator_class.readable_end_date} | {days_in_period} days, {months_in_period:.2f} months, {years_in_period:.2f} years"
@@ -529,9 +502,7 @@ class BaseRateResearcher(QuestionResponder):
         elif denominator_type == DenominatorOption.PER_EVENT:
             return f"Chances of {numerator_class.hit_definition}: {round(historical_rate * 100, 4)}% per {denominator_class.hit_definition}"
         else:
-            raise ValueError(
-                f"Unsupported denominator type: {denominator_type}"
-            )
+            raise ValueError(f"Unsupported denominator type: {denominator_type}")
 
 
 class ReferenceClass(BaseModel):

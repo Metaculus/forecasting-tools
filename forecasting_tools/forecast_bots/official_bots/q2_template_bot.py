@@ -4,15 +4,11 @@ import logging
 from datetime import datetime
 from typing import Literal
 
-from forecasting_tools.agents_and_tools.research.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
-from forecasting_tools.data_models.multiple_choice_report import (
-    PredictedOptionList,
-)
+from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
@@ -61,7 +57,9 @@ class Q2TemplateBot2025(ForecastBot):
     Additionally OpenRouter has large rate limits immediately on account creation
     """
 
-    _max_concurrent_questions = 2  # Set this to whatever works for your search-provider/ai-model rate limits
+    _max_concurrent_questions = (
+        2  # Set this to whatever works for your search-provider/ai-model rate limits
+    )
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
@@ -114,12 +112,8 @@ class Q2TemplateBot2025(ForecastBot):
             elif not researcher or researcher == "None":
                 research = ""
             else:
-                research = await self.get_llm("researcher", "llm").invoke(
-                    prompt
-                )
-            logger.info(
-                f"Found Research for URL {question.page_url}:\n{research}"
-            )
+                research = await self.get_llm("researcher", "llm").invoke(prompt)
+            logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
 
     async def _run_forecast_on_binary(
@@ -163,12 +157,8 @@ class Q2TemplateBot2025(ForecastBot):
         prediction: float = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=0.99, min_prediction=0.01
         )
-        logger.info(
-            f"Forecasted URL {question.page_url} with prediction: {prediction}"
-        )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        logger.info(f"Forecasted URL {question.page_url} with prediction: {prediction}")
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -217,12 +207,8 @@ class Q2TemplateBot2025(ForecastBot):
                 reasoning, question.options
             )
         )
-        logger.info(
-            f"Forecasted URL {question.page_url} with prediction: {prediction}"
-        )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        logger.info(f"Forecasted URL {question.page_url} with prediction: {prediction}")
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
@@ -290,9 +276,7 @@ class Q2TemplateBot2025(ForecastBot):
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}"
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
@@ -334,9 +318,7 @@ if __name__ == "__main__":
         help="Specify the run mode (default: tournament)",
     )
     args = parser.parse_args()
-    run_mode: Literal["tournament", "quarterly_cup", "test_questions"] = (
-        args.mode
-    )
+    run_mode: Literal["tournament", "quarterly_cup", "test_questions"] = args.mode
     assert run_mode in [
         "tournament",
         "quarterly_cup",

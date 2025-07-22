@@ -6,18 +6,14 @@ from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
     BaseRateReport,
     BaseRateResearcher,
 )
-from forecasting_tools.agents_and_tools.deprecated.configured_llms import (
-    BasicLlm,
-)
+from forecasting_tools.agents_and_tools.deprecated.configured_llms import BasicLlm
 from forecasting_tools.agents_and_tools.deprecated.general_researcher import (
     GeneralResearcher,
 )
 from forecasting_tools.agents_and_tools.deprecated.question_responder import (
     QuestionResponder,
 )
-from forecasting_tools.agents_and_tools.deprecated.question_router import (
-    QuestionRouter,
-)
+from forecasting_tools.agents_and_tools.deprecated.question_router import QuestionRouter
 from forecasting_tools.ai_models.ai_utils.ai_misc import (
     clean_indents,
     strip_code_block_markdown,
@@ -102,10 +98,8 @@ class ResearchCoordinator:
         questions = await self.brainstorm_base_rate_questions(
             num_base_rate_questions, additional_context
         )
-        deep_questions, shallow_questions = (
-            await self.pick_best_base_rate_questions(
-                num_base_rate_questions_with_deep_research, questions
-            )
+        deep_questions, shallow_questions = await self.pick_best_base_rate_questions(
+            num_base_rate_questions_with_deep_research, questions
         )
         deep_answers = await self.answer_question_list(
             deep_questions, BaseRateResearcher
@@ -143,9 +137,7 @@ class ResearchCoordinator:
         num_background_questions: int,
         additional_context: str | None = None,
     ) -> list[str]:
-        logger.info(
-            f"Running forecasts on question `{self.question.question_text}`"
-        )
+        logger.info(f"Running forecasts on question `{self.question.question_text}`")
         prompt = clean_indents(
             f"""
             # Instructions
@@ -291,17 +283,14 @@ class ResearchCoordinator:
         )
 
         model = BasicLlm(temperature=0.8)
-        base_rate_questions: list[str] = (
-            await model.invoke_and_return_verified_type(prompt, list[str])
+        base_rate_questions: list[str] = await model.invoke_and_return_verified_type(
+            prompt, list[str]
         )
 
-        logger.info(
-            f"Brainstormed {len(base_rate_questions)} questions for baserate"
-        )
+        logger.info(f"Brainstormed {len(base_rate_questions)} questions for baserate")
         question_text_prepend = self.__get_question_context_prepend()
         full_questions_to_get_context = [
-            f"{question_text_prepend}{question}"
-            for question in base_rate_questions
+            f"{question_text_prepend}{question}" for question in base_rate_questions
         ]
         return full_questions_to_get_context
 
@@ -313,9 +302,7 @@ class ResearchCoordinator:
         question_router = QuestionRouter()
         if responder_type is None:
             answering_question_coroutines = [
-                question_router.answer_question_with_markdown_using_routing(
-                    question
-                )
+                question_router.answer_question_with_markdown_using_routing(question)
                 for question in questions
             ]
         else:
@@ -328,22 +315,18 @@ class ResearchCoordinator:
                 answering_question_coroutines
             )
         )
-        unverified_answers: list[str | Exception] = (
-            async_batching.run_coroutines(exception_handled_coroutines)
+        unverified_answers: list[str | Exception] = async_batching.run_coroutines(
+            exception_handled_coroutines
         )
         verified_answers = []
         for question, answer in zip(questions, unverified_answers):
             if isinstance(answer, Exception):
-                logger.warning(
-                    f"Error in answering question `{question}`: {answer}"
-                )
+                logger.warning(f"Error in answering question `{question}`: {answer}")
                 verified_answer = "Error in generating answer"
             elif isinstance(answer, str):
                 verified_answer = answer
             else:
-                raise ValueError(
-                    f"answer is not a string or exception: {type(answer)}"
-                )
+                raise ValueError(f"answer is not a string or exception: {type(answer)}")
             verified_answers.append(verified_answer)
 
         logger.info(
@@ -351,9 +334,7 @@ class ResearchCoordinator:
         )
         return verified_answers
 
-    async def summarize_full_research_report(
-        self, research_as_markdown: str
-    ) -> str:
+    async def summarize_full_research_report(self, research_as_markdown: str) -> str:
         prompt = clean_indents(
             f"""
             You are an assistant to a superforecaster working to summarize research you've done.
@@ -421,9 +402,7 @@ class ResearchCoordinator:
         num_base_rate_questions_with_deep_research: int,
         base_rate_questions: list[str],
     ) -> list[str]:
-        number_of_questions_to_pick = (
-            num_base_rate_questions_with_deep_research
-        )
+        number_of_questions_to_pick = num_base_rate_questions_with_deep_research
         prompt = clean_indents(
             f"""
             You are a superforecaster forecasting on Metaculus.
@@ -456,14 +435,16 @@ class ResearchCoordinator:
             """
         )
         model = BasicLlm(temperature=0)
-        picked_questions: list[str] = (
-            await model.invoke_and_return_verified_type(prompt, list[str])
+        picked_questions: list[str] = await model.invoke_and_return_verified_type(
+            prompt, list[str]
         )
         assert len(picked_questions) == number_of_questions_to_pick
         return picked_questions
 
     def __get_question_context_prepend(self) -> str:
-        return f"In the context of the larger question '{self.question.question_text}', "
+        return (
+            f"In the context of the larger question '{self.question.question_text}', "
+        )
 
     async def __create_question_answer_markdown_section(
         self,
@@ -476,14 +457,10 @@ class ResearchCoordinator:
             question.replace(context_prepend, "")
             for question in questions_to_get_context
         ]
-        question_answer_pairs = list(
-            zip(questions_without_context_prepended, answers)
-        )
+        question_answer_pairs = list(zip(questions_without_context_prepended, answers))
         questions_with_answer_as_markdown = [
             f"## {question_prepend}{i + 1}: {pair[0]}\n  Answer:\n {pair[1]}\n\n"
             for i, pair in enumerate(question_answer_pairs)
         ]
-        combined_question_answer_markdown = "\n".join(
-            questions_with_answer_as_markdown
-        )
+        combined_question_answer_markdown = "\n".join(questions_with_answer_as_markdown)
         return combined_question_answer_markdown

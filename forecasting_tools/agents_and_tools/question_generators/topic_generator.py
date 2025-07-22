@@ -5,9 +5,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from forecasting_tools.agents_and_tools.research.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.agent_wrappers import agent_tool
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
@@ -177,9 +175,7 @@ class TopicGenerator:
         if isinstance(model, str):
             model = GeneralLlm(model=model, temperature=1, timeout=40)
 
-        ask_news_results = await AskNewsSearcher().get_formatted_news_async(
-            topic
-        )
+        ask_news_results = await AskNewsSearcher().get_formatted_news_async(topic)
         prompt = clean_indents(
             f"""
             # Instructions
@@ -259,9 +255,7 @@ class TopicGenerator:
         """
         number_of_items = 10
         topics = asyncio.run(
-            TopicGenerator.generate_random_news_items(
-                number_of_items=number_of_items
-            )
+            TopicGenerator.generate_random_news_items(number_of_items=number_of_items)
         )
         topic_list = ""
         for topic in topics:
@@ -274,9 +268,7 @@ class TopicGenerator:
         """
         By picking a randomly generated Ticker symbol, finds a list of news items on a company.
         """
-        company, topics = asyncio.run(
-            TopicGenerator.get_news_on_random_company()
-        )
+        company, topics = asyncio.run(TopicGenerator.get_news_on_random_company())
         company_info = f"Company: {company.name} ({company.symbol})\n"
         company_info += f"Overview: {company.overview}\n"
         company_info += f"URL: {company.url}\n"

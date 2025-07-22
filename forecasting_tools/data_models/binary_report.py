@@ -33,9 +33,7 @@ class BinaryReport(ForecastReport):
         MetaculusApi.post_binary_question_prediction(
             self.question.id_of_question, self.prediction
         )
-        MetaculusApi.post_question_comment(
-            self.question.id_of_post, self.explanation
-        )
+        MetaculusApi.post_question_comment(self.question.id_of_post, self.explanation)
 
     @classmethod
     async def aggregate_predictions(
@@ -59,9 +57,7 @@ class BinaryReport(ForecastReport):
         p = self.prediction
         if c is None:
             return None
-        return 100.0 * (
-            c * (np.log2(p) + 1.0) + (1.0 - c) * (np.log2(1.0 - p) + 1.0)
-        )
+        return 100.0 * (c * (np.log2(p) + 1.0) + (1.0 - c) * (np.log2(1.0 - p) + 1.0))
 
     @property
     def inversed_expected_log_score(self) -> float | None:
@@ -91,6 +87,4 @@ class BinaryReport(ForecastReport):
             assert report.deviation_points is not None
             validated_deviation_points.append(report.deviation_points)
         assert validated_deviation_points
-        return sum(validated_deviation_points) / len(
-            validated_deviation_points
-        )
+        return sum(validated_deviation_points) / len(validated_deviation_points)

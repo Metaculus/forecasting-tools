@@ -47,9 +47,7 @@ class CustomLogger:
     DEBUG_LOG_FILE_PATH = file_manipulation.normalize_package_path(
         "logs/debug/debug.log"
     )
-    INFO_LOG_FILE_PATH = file_manipulation.normalize_package_path(
-        "logs/info/info.log"
-    )
+    INFO_LOG_FILE_PATH = file_manipulation.normalize_package_path("logs/info/info.log")
     LATEST_INFO_LOG_FILE_PATH = file_manipulation.normalize_package_path(
         "logs/latest_info.log"
     )
@@ -64,9 +62,7 @@ class CustomLogger:
         root_logger.setLevel(logging.DEBUG)
 
         # Prevent specific noisy logs from propagating to root logger
-        watchdog_logger = logging.getLogger(
-            "watchdog.observers.inotify_buffer"
-        )
+        watchdog_logger = logging.getLogger("watchdog.observers.inotify_buffer")
         watchdog_logger.setLevel(logging.WARNING)
         watchdog_logger.propagate = False
 
@@ -101,9 +97,7 @@ class CustomLogger:
             handler_5 = cls.create_latest_log_file_handler(
                 logging.INFO, cls.LATEST_INFO_LOG_FILE_PATH
             )
-            handlers.extend(
-                [handler_1, handler_2, handler_3, handler_4, handler_5]
-            )
+            handlers.extend([handler_1, handler_2, handler_3, handler_4, handler_5])
 
         handler_6 = cls.create_stream_handler(logging.INFO)
         handlers.append(handler_6)
@@ -130,9 +124,7 @@ class CustomLogger:
             file_path, cls.__message_to_append_to_file
         )
         formatter = logging.Formatter(cls.DEFAULT_MESSAGE_FORMAT)
-        handler = RotatingFileHandler(
-            file_path, maxBytes=1000000, backupCount=10
-        )
+        handler = RotatingFileHandler(file_path, maxBytes=1000000, backupCount=10)
         handler.setLevel(log_level)
         handler.setFormatter(formatter)
         return handler
@@ -160,9 +152,5 @@ class CustomLogger:
 
     @classmethod
     def clear_latest_log_files(cls) -> None:
-        file_manipulation.create_or_overwrite_file(
-            cls.LATEST_DEBUG_LOG_FILE_PATH, ""
-        )
-        file_manipulation.create_or_overwrite_file(
-            cls.LATEST_INFO_LOG_FILE_PATH, ""
-        )
+        file_manipulation.create_or_overwrite_file(cls.LATEST_DEBUG_LOG_FILE_PATH, "")
+        file_manipulation.create_or_overwrite_file(cls.LATEST_INFO_LOG_FILE_PATH, "")

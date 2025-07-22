@@ -6,15 +6,9 @@ import logging
 
 from pydantic import BaseModel, field_validator
 
-from forecasting_tools.agents_and_tools.base_rates.deduplicator import (
-    Deduplicator,
-)
-from forecasting_tools.agents_and_tools.deprecated.configured_llms import (
-    BasicLlm,
-)
-from forecasting_tools.agents_and_tools.research.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.agents_and_tools.base_rates.deduplicator import Deduplicator
+from forecasting_tools.agents_and_tools.deprecated.configured_llms import BasicLlm
+from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.util import async_batching
 from forecasting_tools.util.misc import (
@@ -116,18 +110,14 @@ class FactCheckedItem(InitialListItem):
                 url = criteria.url_proving_assessment
                 assert url is not None
                 escaped_url = url.replace("(", "%28").replace(")", "%29")
-                summary_parts.append(
-                    f"{emoji}[{criteria.short_name}]({escaped_url})"
-                )
+                summary_parts.append(f"{emoji}[{criteria.short_name}]({escaped_url})")
             else:
                 summary_parts.append(f"{emoji}{criteria.short_name}")
 
         return " | ".join(summary_parts)
 
     @classmethod
-    def make_markdown_with_fact_check_items(
-        cls, items: list[FactCheckedItem]
-    ) -> str:
+    def make_markdown_with_fact_check_items(cls, items: list[FactCheckedItem]) -> str:
         items_with_bullet_points = [
             f"- {item.one_line_fact_check_summary}" for item in items
         ]
@@ -246,9 +236,7 @@ class NicheListResearcher:
         )
 
         regular_calls = [
-            smart_model.invoke_and_return_verified_type(
-                prompt, list[InitialListItem]
-            )
+            smart_model.invoke_and_return_verified_type(prompt, list[InitialListItem])
             for _ in range(self.num_llm_calls_to_find_new_items)
         ]
         internet_calls = [
@@ -265,14 +253,10 @@ class NicheListResearcher:
         )
 
         if len(non_errored_responses) == 0:
-            raise RuntimeError(
-                "Could not generate any items for exhaustive list"
-            )
+            raise RuntimeError("Could not generate any items for exhaustive list")
         log_message = "\n---\n".join(
             [
-                InitialListItem.make_markdown_with_name_and_description(
-                    response
-                )
+                InitialListItem.make_markdown_with_name_and_description(response)
                 for response in non_errored_responses
             ]
         )
@@ -291,9 +275,7 @@ class NicheListResearcher:
                 name_item_dict[item.item_name] = item
         uniquely_named_items = list(name_item_dict.values())
 
-        strings_to_check = [
-            item.name_plus_description for item in uniquely_named_items
-        ]
+        strings_to_check = [item.name_plus_description for item in uniquely_named_items]
         deduplicated_strings = await Deduplicator.deduplicate_list_in_batches(
             strings_to_check,
             f"I am a superforecaster trying to find all instances of '{self.type_of_thing_to_generate}' in order to construct a base rate how how many times this thing occurs per year. Don't decide if the items match this type of thing, just deduplicate, as I will be doing fact checking later. When picking between duplicates, choose ones that include more specifics that can help it be fact checked.",
@@ -320,9 +302,7 @@ class NicheListResearcher:
         ]
         fact_check_results = await asyncio.gather(*fact_check_coroutines)
         list_items: list[FactCheckedItem] = []
-        for initial_item, fact_check_result in zip(
-            list_to_check, fact_check_results
-        ):
+        for initial_item, fact_check_result in zip(list_to_check, fact_check_results):
             list_items.append(
                 FactCheckedItem(
                     **initial_item.model_dump(),
@@ -369,9 +349,7 @@ class NicheListResearcher:
             example_item, example_thing_to_generate = (
                 self.__get_example_list_item_and_thing_to_generate()
             )
-            example_criteria_assessments = (
-                self.__get_example_criteria_assessments()
-            )
+            example_criteria_assessments = self.__get_example_criteria_assessments()
 
             prompt = clean_indents(
                 f"""
@@ -416,9 +394,7 @@ class NicheListResearcher:
                 num_sites_per_search=4,
             )
             fact_check_tasks = [
-                model.invoke_and_return_verified_type(
-                    prompt, list[CriteriaAssessment]
-                )
+                model.invoke_and_return_verified_type(prompt, list[CriteriaAssessment])
                 for _ in range(self.number_of_fact_checks_per_item)
             ]
             fact_check_results = await asyncio.gather(*fact_check_tasks)
@@ -455,8 +431,7 @@ class NicheListResearcher:
         unified_criteria_assessments: list[CriteriaAssessment] = []
         for i in range(number_of_criteria):
             all_assessments_of_single_criteria = [
-                fact_check.criteria_assessments[i]
-                for fact_check in fact_checks
+                fact_check.criteria_assessments[i] for fact_check in fact_checks
             ]
             unified_criteria_assessment = cls.__combined_criteria_assessments(
                 all_assessments_of_single_criteria

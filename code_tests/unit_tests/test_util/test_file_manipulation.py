@@ -22,9 +22,7 @@ def test_read_file_of_inner_package() -> None:
 
 def test_read_file_of_outer_package() -> None:
     file_path_to_gitignore_file = ".gitignore"
-    file_contents = file_manipulation.load_text_file(
-        file_path_to_gitignore_file
-    )
+    file_contents = file_manipulation.load_text_file(file_path_to_gitignore_file)
     assert file_contents is not None
     assert ".env" in file_contents
 
@@ -33,9 +31,7 @@ def test_read_file_of_outer_package() -> None:
 @patch("os.makedirs")
 def test_create_or_overwrite_file(mock_makedirs, mock_open_file):
     test_file = TestFileManipulationData.FILE_PATH
-    with patch.dict(
-        os.environ, TestFileManipulationData.DISALLOW_WRITING_DICT
-    ):
+    with patch.dict(os.environ, TestFileManipulationData.DISALLOW_WRITING_DICT):
         file_manipulation.create_or_overwrite_file(test_file, "test content")
         mock_open_file.assert_not_called()
 
@@ -49,13 +45,9 @@ def test_create_or_overwrite_file(mock_makedirs, mock_open_file):
 
 @patch("builtins.open", new_callable=mock_open)
 @patch("os.makedirs")
-def test_create_or_append_to_file(
-    mock_makedirs: Mock, mock_open_file: Mock
-) -> None:
+def test_create_or_append_to_file(mock_makedirs: Mock, mock_open_file: Mock) -> None:
     test_file = TestFileManipulationData.FILE_PATH
-    with patch.dict(
-        os.environ, TestFileManipulationData.DISALLOW_WRITING_DICT
-    ):
+    with patch.dict(os.environ, TestFileManipulationData.DISALLOW_WRITING_DICT):
         file_manipulation.create_or_append_to_file(test_file, "test content")
         mock_open_file.assert_not_called()
 
@@ -71,9 +63,7 @@ def test_create_or_append_to_file(
 @patch("os.makedirs")
 def test_log_to_file(mock_makedirs: Mock, mock_open_file: Mock) -> None:
     test_file = TestFileManipulationData.FILE_PATH
-    with patch.dict(
-        os.environ, TestFileManipulationData.DISALLOW_WRITING_DICT
-    ):
+    with patch.dict(os.environ, TestFileManipulationData.DISALLOW_WRITING_DICT):
         file_manipulation.log_to_file(test_file, "test log")
         mock_open_file.assert_not_called()
 
@@ -85,9 +75,7 @@ def test_log_to_file(mock_makedirs: Mock, mock_open_file: Mock) -> None:
         )
 
 
-def find__with_open__usage(
-    directory: str, excluded_files: list[str]
-) -> list[str]:
+def find__with_open__usage(directory: str, excluded_files: list[str]) -> list[str]:
     pattern = re.compile(r"\bwith\s+open\(")
     violations = []
     for root, _, files in os.walk(directory):
@@ -110,9 +98,7 @@ def test_no__with_open__usage() -> None:
     file_manipulation_name = file_manipulation.__name__.split(".")[-1] + ".py"
     excluded_files: list[str] = [file_manipulation_name]
 
-    directory_to_check = file_manipulation.normalize_package_path(
-        "forecasting_tools"
-    )
+    directory_to_check = file_manipulation.normalize_package_path("forecasting_tools")
     violations = find__with_open__usage(directory_to_check, excluded_files)
     assert (
         not violations
@@ -167,12 +153,8 @@ def test_file_creation_at_top_and_lower_levels() -> None:
     test_nested_json_file_path = "temp/test_nested_file.json"
 
     try:
-        file_manipulation.write_json_file(
-            test_nested_json_file_path, [test_json]
-        )
-        loaded_json = file_manipulation.load_json_file(
-            test_nested_json_file_path
-        )
+        file_manipulation.write_json_file(test_nested_json_file_path, [test_json])
+        loaded_json = file_manipulation.load_json_file(test_nested_json_file_path)
         assert loaded_json == [test_json]
     finally:
         os.remove(test_nested_json_file_path)

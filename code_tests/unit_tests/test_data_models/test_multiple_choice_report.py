@@ -65,9 +65,7 @@ async def test_aggregate_predictions_with_same_options() -> None:
     ]
 
     question = create_test_mc_question()
-    result = await MultipleChoiceReport.aggregate_predictions(
-        predictions, question
-    )
+    result = await MultipleChoiceReport.aggregate_predictions(predictions, question)
 
     assert len(result.predicted_options) == 3
     option_probs = {

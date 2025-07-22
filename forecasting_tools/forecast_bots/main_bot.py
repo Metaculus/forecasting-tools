@@ -35,16 +35,12 @@ class MainBot(Q1TemplateBot2025):
             research = await AskNewsSearcher().get_formatted_news_async(
                 question.question_text
             )
-            logger.info(
-                f"Found Research for URL {question.page_url}:\n{research}"
-            )
+            logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
 
     @classmethod
     def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm]:
         return {
             "default": GeneralLlm(model="openai/o1", temperature=1),
-            "summarizer": GeneralLlm(
-                model="openai/gpt-4o-mini", temperature=0
-            ),
+            "summarizer": GeneralLlm(model="openai/gpt-4o-mini", temperature=0),
         }

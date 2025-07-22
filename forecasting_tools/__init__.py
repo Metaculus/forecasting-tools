@@ -27,9 +27,7 @@ from forecasting_tools.agents_and_tools.research.key_factors_researcher import (
 from forecasting_tools.agents_and_tools.research.smart_searcher import (
     SmartSearcher as SmartSearcher,
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import (
-    clean_indents as clean_indents,
-)
+from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents as clean_indents
 from forecasting_tools.ai_models.ai_utils.openai_utils import (
     VisionMessageData as VisionMessageData,
 )
@@ -39,9 +37,7 @@ from forecasting_tools.ai_models.deprecated_model_classes.claude35sonnet import 
 from forecasting_tools.ai_models.deprecated_model_classes.deepseek_r1 import (
     DeepSeekR1 as DeepSeekR1,
 )
-from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import (
-    Gpt4o as Gpt4o,
-)
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o as Gpt4o
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4ovision import (
     Gpt4oVision as Gpt4oVision,
 )
@@ -56,24 +52,16 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm as GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager as MonetaryCostManager,
 )
-from forecasting_tools.auto_optimizers.bot_optimizer import (
-    BotOptimizer as BotOptimizer,
-)
+from forecasting_tools.auto_optimizers.bot_optimizer import BotOptimizer as BotOptimizer
 from forecasting_tools.cp_benchmarking.benchmark_displayer import (
     run_benchmark_streamlit_page as run_benchmark_streamlit_page,
 )
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import (
     BenchmarkForBot as BenchmarkForBot,
 )
-from forecasting_tools.cp_benchmarking.benchmarker import (
-    Benchmarker as Benchmarker,
-)
-from forecasting_tools.data_models.binary_report import (
-    BinaryReport as BinaryReport,
-)
-from forecasting_tools.data_models.data_organizer import (
-    DataOrganizer as DataOrganizer,
-)
+from forecasting_tools.cp_benchmarking.benchmarker import Benchmarker as Benchmarker
+from forecasting_tools.data_models.binary_report import BinaryReport as BinaryReport
+from forecasting_tools.data_models.data_organizer import DataOrganizer as DataOrganizer
 from forecasting_tools.data_models.forecast_report import (
     ForecastReport as ForecastReport,
 )
@@ -92,27 +80,17 @@ from forecasting_tools.data_models.multiple_choice_report import (
 from forecasting_tools.data_models.numeric_report import (
     NumericDistribution as NumericDistribution,
 )
-from forecasting_tools.data_models.numeric_report import (
-    NumericReport as NumericReport,
-)
-from forecasting_tools.data_models.questions import (
-    BinaryQuestion as BinaryQuestion,
-)
+from forecasting_tools.data_models.numeric_report import NumericReport as NumericReport
+from forecasting_tools.data_models.questions import BinaryQuestion as BinaryQuestion
 from forecasting_tools.data_models.questions import (
     MetaculusQuestion as MetaculusQuestion,
 )
 from forecasting_tools.data_models.questions import (
     MultipleChoiceQuestion as MultipleChoiceQuestion,
 )
-from forecasting_tools.data_models.questions import (
-    NumericQuestion as NumericQuestion,
-)
-from forecasting_tools.data_models.questions import (
-    QuestionState as QuestionState,
-)
-from forecasting_tools.forecast_bots.forecast_bot import (
-    ForecastBot as ForecastBot,
-)
+from forecasting_tools.data_models.questions import NumericQuestion as NumericQuestion
+from forecasting_tools.data_models.questions import QuestionState as QuestionState
+from forecasting_tools.forecast_bots.forecast_bot import ForecastBot as ForecastBot
 from forecasting_tools.forecast_bots.forecast_bot import Notepad as Notepad
 from forecasting_tools.forecast_bots.main_bot import MainBot as MainBot
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
@@ -130,16 +108,12 @@ from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
 from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
     UniformProbabilityBot as UniformProbabilityBot,
 )
-from forecasting_tools.forecast_bots.template_bot import (
-    TemplateBot as TemplateBot,
-)
+from forecasting_tools.forecast_bots.template_bot import TemplateBot as TemplateBot
 from forecasting_tools.helpers.asknews_searcher import (
     AskNewsSearcher as AskNewsSearcher,
 )
 from forecasting_tools.helpers.metaculus_api import ApiFilter as ApiFilter
-from forecasting_tools.helpers.metaculus_api import (
-    MetaculusApi as MetaculusApi,
-)
+from forecasting_tools.helpers.metaculus_api import MetaculusApi as MetaculusApi
 from forecasting_tools.helpers.prediction_extractor import (
     PredictionExtractor as PredictionExtractor,
 )

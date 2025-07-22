@@ -30,9 +30,7 @@ class IncursCost(ABC):
 
             direct_call_response = await func(self, *args, **kwargs)
 
-            await self._track_cost_in_manager_using_model_response(
-                direct_call_response
-            )
+            await self._track_cost_in_manager_using_model_response(direct_call_response)
             return direct_call_response
 
         return wrapper

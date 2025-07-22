@@ -4,9 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from code_tests.unit_tests.test_ai_models.ai_mock_manager import (
-    AiModelMockManager,
-)
+from code_tests.unit_tests.test_ai_models.ai_mock_manager import AiModelMockManager
 from code_tests.unit_tests.test_ai_models.models_to_test import ModelsToTest
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.model_interfaces.time_limited_model import (

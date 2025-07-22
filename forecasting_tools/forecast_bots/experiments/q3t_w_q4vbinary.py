@@ -14,9 +14,7 @@ class Q3TemplatePlusQ4VeritasBinaryPrompt(Q3TemplateBot2024):
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
-        assert isinstance(
-            question, BinaryQuestion
-        ), "Question must be a BinaryQuestion"
+        assert isinstance(question, BinaryQuestion), "Question must be a BinaryQuestion"
         prompt = clean_indents(
             f"""
             You are a professional forecaster interviewing for a job.
@@ -57,6 +55,4 @@ class Q3TemplatePlusQ4VeritasBinaryPrompt(Q3TemplateBot2024):
         prediction = PredictionExtractor.extract_last_percentage_value(
             gpt_forecast, max_prediction=0.99, min_prediction=0.01
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=gpt_forecast
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=gpt_forecast)

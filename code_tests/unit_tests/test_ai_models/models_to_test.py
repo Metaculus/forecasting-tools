@@ -4,32 +4,22 @@ from forecasting_tools.ai_models.ai_utils.openai_utils import VisionMessageData
 from forecasting_tools.ai_models.deprecated_model_classes.claude35sonnet import (
     Claude35Sonnet,
 )
-from forecasting_tools.ai_models.deprecated_model_classes.deepseek_r1 import (
-    DeepSeekR1,
-)
+from forecasting_tools.ai_models.deprecated_model_classes.deepseek_r1 import DeepSeekR1
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
-from forecasting_tools.ai_models.deprecated_model_classes.gpt4ovision import (
-    Gpt4oVision,
-)
+from forecasting_tools.ai_models.deprecated_model_classes.gpt4ovision import Gpt4oVision
 from forecasting_tools.ai_models.deprecated_model_classes.metaculus4o import (
     Gpt4oMetaculusProxy,
 )
-from forecasting_tools.ai_models.deprecated_model_classes.perplexity import (
-    Perplexity,
-)
+from forecasting_tools.ai_models.deprecated_model_classes.perplexity import Perplexity
 from forecasting_tools.ai_models.exa_searcher import ExaSearcher
 from forecasting_tools.ai_models.general_llm import GeneralLlm, ModelInputType
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.model_interfaces.incurs_cost import IncursCost
-from forecasting_tools.ai_models.model_interfaces.outputs_text import (
-    OutputsText,
-)
+from forecasting_tools.ai_models.model_interfaces.outputs_text import OutputsText
 from forecasting_tools.ai_models.model_interfaces.request_limited_model import (
     RequestLimitedModel,
 )
-from forecasting_tools.ai_models.model_interfaces.retryable_model import (
-    RetryableModel,
-)
+from forecasting_tools.ai_models.model_interfaces.retryable_model import RetryableModel
 from forecasting_tools.ai_models.model_interfaces.time_limited_model import (
     TimeLimitedModel,
 )
@@ -105,9 +95,7 @@ class GeneralLlmInstancesToTest:
 
     def _all_tests(self) -> list[ModelTest]:
         return [
-            ModelTest(
-                GeneralLlm(model="gpt-4o"), self._get_cheap_user_message()
-            ),
+            ModelTest(GeneralLlm(model="gpt-4o"), self._get_cheap_user_message()),
             ModelTest(
                 GeneralLlm(model="gpt-4o"),
                 self._get_cheap_vision_message_data(),

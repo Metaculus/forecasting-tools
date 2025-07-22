@@ -5,10 +5,7 @@ from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOption,
     PredictedOptionList,
 )
-from forecasting_tools.data_models.numeric_report import (
-    NumericDistribution,
-    Percentile,
-)
+from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     MetaculusQuestion,
@@ -31,9 +28,7 @@ class UniformProbabilityBot(ForecastBot):
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
-        return ReasonedPrediction(
-            prediction_value=0.5, reasoning="Always predict 50%"
-        )
+        return ReasonedPrediction(prediction_value=0.5, reasoning="Always predict 50%")
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str

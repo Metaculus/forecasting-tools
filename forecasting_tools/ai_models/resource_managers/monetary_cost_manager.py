@@ -3,9 +3,7 @@ from __future__ import annotations
 import logging
 
 import litellm
-from litellm.integrations.custom_logger import (
-    CustomLogger as LitellmCustomLogger,
-)
+from litellm.integrations.custom_logger import CustomLogger as LitellmCustomLogger
 
 from forecasting_tools.ai_models.resource_managers.hard_limit_manager import (  # For other files to easily import from this file #NOSONAR
     HardLimitManager,

@@ -3,9 +3,7 @@ import logging
 from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
     BaseRateResearcher,
 )
-from forecasting_tools.agents_and_tools.deprecated.configured_llms import (
-    BasicLlm,
-)
+from forecasting_tools.agents_and_tools.deprecated.configured_llms import BasicLlm
 from forecasting_tools.agents_and_tools.deprecated.general_researcher import (
     GeneralResearcher,
 )
@@ -23,9 +21,7 @@ class QuestionRouter:
         BaseRateResearcher,
     ]
 
-    async def answer_question_with_markdown_using_routing(
-        self, question: str
-    ) -> str:
+    async def answer_question_with_markdown_using_routing(self, question: str) -> str:
         available_responder_descriptions = ""
 
         for responder in self.AVAILABLE_REPONDERS:
@@ -65,9 +61,7 @@ class QuestionRouter:
 
         logger.info(f"Chose responder strategy: {chosen_responder.NAME}")
         answer = await chosen_responder(question).respond_with_markdown()
-        logger.info(
-            f"Answered question with strategy: {chosen_responder.NAME}"
-        )
+        logger.info(f"Answered question with strategy: {chosen_responder.NAME}")
 
         if default_strategy_chosen:
             return f"Defaulting to strategy {chosen_responder.NAME}:\n"

@@ -45,9 +45,7 @@ class ForecastReport(BaseModel, Jsonable, ABC):
 
     @property
     def report_sections(self) -> list[MarkdownTree]:
-        return MarkdownTree.turn_markdown_into_report_sections(
-            self.explanation
-        )
+        return MarkdownTree.turn_markdown_into_report_sections(self.explanation)
 
     @property
     def summary(self) -> str:
@@ -105,9 +103,7 @@ class ForecastReport(BaseModel, Jsonable, ABC):
             scores: list[float | None] = [
                 report.expected_baseline_score for report in reports
             ]
-            validated_scores: list[float] = typeguard.check_type(
-                scores, list[float]
-            )
+            validated_scores: list[float] = typeguard.check_type(scores, list[float])
             average_score = sum(validated_scores) / len(validated_scores)
         except Exception as e:
             raise ValueError(
@@ -121,26 +117,18 @@ class ForecastReport(BaseModel, Jsonable, ABC):
     async def aggregate_predictions(
         cls, predictions: list[T], question: MetaculusQuestion
     ) -> T:
-        raise NotImplementedError(
-            "Subclass must implement this abstract method"
-        )
+        raise NotImplementedError("Subclass must implement this abstract method")
 
     @classmethod
     @abstractmethod
     def make_readable_prediction(cls, prediction: Any) -> str:
-        raise NotImplementedError(
-            "Subclass must implement this abstract method"
-        )
+        raise NotImplementedError("Subclass must implement this abstract method")
 
     @abstractmethod
     async def publish_report_to_metaculus(self) -> None:
-        raise NotImplementedError(
-            "Subclass must implement this abstract method"
-        )
+        raise NotImplementedError("Subclass must implement this abstract method")
 
-    def _get_and_validate_section(
-        self, index: int, expected_word: str
-    ) -> MarkdownTree:
+    def _get_and_validate_section(self, index: int, expected_word: str) -> MarkdownTree:
         if len(self.report_sections) <= index:
             raise ValueError(f"Report must have at least {index + 1} sections")
         section = self.report_sections[index]

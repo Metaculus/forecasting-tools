@@ -10,9 +10,7 @@ from forecasting_tools.agents_and_tools.base_rates.niche_list_researcher import 
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.front_end.helpers.report_displayer import (
-    ReportDisplayer,
-)
+from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
 from forecasting_tools.front_end.helpers.tool_page import ToolPage
 from forecasting_tools.helpers.forecast_database_manager import (
     ForecastDatabaseManager,
@@ -44,7 +42,9 @@ class NicheListResearchPage(ToolPage):
     URL_PATH: str = "/niche-list-researcher"
     INPUT_TYPE = NicheListInput
     OUTPUT_TYPE = NicheListOutput
-    EXAMPLES_FILE_PATH = "forecasting_tools/front_end/example_outputs/niche_list_page_examples.json"
+    EXAMPLES_FILE_PATH = (
+        "forecasting_tools/front_end/example_outputs/niche_list_page_examples.json"
+    )
 
     @classmethod
     async def _display_intro_text(cls) -> None:
@@ -62,9 +62,7 @@ class NicheListResearchPage(ToolPage):
     @classmethod
     async def _get_input(cls) -> NicheListInput | None:
         with st.form("niche_list_form"):
-            question_text = st.text_input(
-                "Enter your niche list research query here"
-            )
+            question_text = st.text_input("Enter your niche list research query here")
             submitted = st.form_submit_button("Research and Generate List")
             if submitted and question_text:
                 return NicheListInput(question_text=question_text)
@@ -77,10 +75,8 @@ class NicheListResearchPage(ToolPage):
         ):
             with MonetaryCostManager() as cost_manager:
                 generator = NicheListResearcher(input.question_text)
-                fact_checked_items = (
-                    await generator.research_niche_reference_class(
-                        return_invalid_items=True
-                    )
+                fact_checked_items = await generator.research_niche_reference_class(
+                    return_invalid_items=True
                 )
 
                 cost = cost_manager.current_usage
@@ -117,9 +113,7 @@ class NicheListResearchPage(ToolPage):
         for output in outputs:
             with st.expander(f"{output.question_text}", expanded=True):
                 st.markdown(f"**Cost:** ${output.cost:.2f}")
-                st.markdown(
-                    ReportDisplayer.clean_markdown(output.markdown_output)
-                )
+                st.markdown(ReportDisplayer.clean_markdown(output.markdown_output))
 
 
 if __name__ == "__main__":

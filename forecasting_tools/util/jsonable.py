@@ -38,13 +38,9 @@ class Jsonable(ABC):
             )
 
     @classmethod
-    def load_json_from_file_path(
-        cls: type[T], project_file_path: str
-    ) -> list[T]:
-        return (
-            cls._use__from_json__to_convert_project_file_path_to_object_list(
-                project_file_path
-            )
+    def load_json_from_file_path(cls: type[T], project_file_path: str) -> list[T]:
+        return cls._use__from_json__to_convert_project_file_path_to_object_list(
+            project_file_path
         )
 
     @classmethod
@@ -86,9 +82,7 @@ class Jsonable(ABC):
         return json_dict
 
     @staticmethod
-    def _pydantic_model_from_dict(
-        cls_type: type[BaseModel], json_dict: dict
-    ) -> Any:
+    def _pydantic_model_from_dict(cls_type: type[BaseModel], json_dict: dict) -> Any:
         json_string: str = json.dumps(json_dict)
         pydantic_object = cls_type.model_validate_json(json_string)
         return pydantic_object

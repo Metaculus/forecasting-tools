@@ -5,12 +5,7 @@ from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
     BaseRateReport,
 )
 from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.util.coda_utils import (
-    CodaCell,
-    CodaColumn,
-    CodaRow,
-    CodaTable,
-)
+from forecasting_tools.util.coda_utils import CodaCell, CodaColumn, CodaRow, CodaTable
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +35,7 @@ class ForecastDatabaseManager:
 
     QUESTION_COLUMN = CodaColumn("Question", "c-rDW4kf2dUl")
     BACKGROUND_INFO_COLUMN = CodaColumn("Background Info", "c-eOYV3GdLJL")
-    RESOLUTION_CRITERIA_COLUMN = CodaColumn(
-        "Resolution Criteria", "c-sb19UcdKNF"
-    )
+    RESOLUTION_CRITERIA_COLUMN = CodaColumn("Resolution Criteria", "c-sb19UcdKNF")
     FINE_PRINT_COLUMN = CodaColumn("Fine Print", "c-cxeoRPkdzX")
     PREDICTION_COLUMN = CodaColumn("Prediction", "c-IEjaL5UKx3")
     EXPLANATION_COLUMN = CodaColumn("Explanation", "c-VV-ZSafEGk")
@@ -204,9 +197,7 @@ class ForecastDatabaseManager:
     ) -> CodaRow:
         cells = [
             CodaCell(ForecastDatabaseManager.QUESTION_COLUMN, question_text),
-            CodaCell(
-                ForecastDatabaseManager.BACKGROUND_INFO_COLUMN, background_info
-            ),
+            CodaCell(ForecastDatabaseManager.BACKGROUND_INFO_COLUMN, background_info),
             CodaCell(
                 ForecastDatabaseManager.RESOLUTION_CRITERIA_COLUMN,
                 resolution_criteria,
@@ -221,9 +212,7 @@ class ForecastDatabaseManager:
                 explanation,
             ),
             CodaCell(ForecastDatabaseManager.PAGE_URL, page_url),
-            CodaCell(
-                ForecastDatabaseManager.PRICE_ESTIMATE_COLUMN, price_estimate
-            ),
+            CodaCell(ForecastDatabaseManager.PRICE_ESTIMATE_COLUMN, price_estimate),
             CodaCell(ForecastDatabaseManager.RUN_TYPE_COLUMN, run_type.value),
         ]
         return CodaRow(cells)

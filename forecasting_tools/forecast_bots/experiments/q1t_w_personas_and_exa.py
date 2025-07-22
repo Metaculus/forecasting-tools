@@ -5,15 +5,11 @@ from datetime import datetime
 import typeguard
 from pydantic import BaseModel
 
-from forecasting_tools.agents_and_tools.research.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
-from forecasting_tools.data_models.multiple_choice_report import (
-    PredictedOptionList,
-)
+from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
@@ -84,14 +80,10 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
             "summarizer": GeneralLlm(model="gpt-4o-mini", temperature=0.3),
         }
 
-    async def _initialize_notepad(
-        self, question: MetaculusQuestion
-    ) -> PersonaNotePad:
+    async def _initialize_notepad(self, question: MetaculusQuestion) -> PersonaNotePad:
         personas = await self._create_personas(question)
         personas_with_none = personas + [None]
-        new_notepad = PersonaNotePad(
-            question=question, personas=personas_with_none
-        )
+        new_notepad = PersonaNotePad(question=question, personas=personas_with_none)
         return new_notepad
 
     async def run_research(self, question: MetaculusQuestion) -> str:
@@ -171,9 +163,7 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
             reasoning, max_prediction=1, min_prediction=0
         )
         reasoning = f"Persona:\n{persona_message}\n\nReasoning:\n{reasoning}"
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -219,15 +209,11 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
-        prediction = (
-            PredictionExtractor.extract_option_list_with_percentage_afterwards(
-                reasoning, question.options
-            )
+        prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            reasoning, question.options
         )
         reasoning = f"Persona:\n{persona_message}\n\nReasoning:\n{reasoning}"
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
@@ -292,16 +278,11 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
-    async def _create_personas(
-        self, question: MetaculusQuestion
-    ) -> list[Persona]:
+    async def _create_personas(self, question: MetaculusQuestion) -> list[Persona]:
         number_of_personas = (
-            self.research_reports_per_question
-            * self.predictions_per_research_report
+            self.research_reports_per_question * self.predictions_per_research_report
             + self.research_reports_per_question
         )
         prompt = clean_indents(
@@ -336,13 +317,9 @@ class Q1TemplateWithPersonasAndExa(Q1TemplateBot2025):
             try:
                 scratch_pad.personas.remove(persona)
             except ValueError:
-                logger.error(
-                    f"Could not remove persona '{persona}' from scratchpad"
-                )
+                logger.error(f"Could not remove persona '{persona}' from scratchpad")
         return persona_message
 
-    async def _get_notepad(
-        self, question: MetaculusQuestion
-    ) -> PersonaNotePad:
+    async def _get_notepad(self, question: MetaculusQuestion) -> PersonaNotePad:
         scratchpad = await super()._get_notepad(question)
         return typeguard.check_type(scratchpad, PersonaNotePad)

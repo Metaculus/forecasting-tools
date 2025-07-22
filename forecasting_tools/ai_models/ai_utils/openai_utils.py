@@ -44,9 +44,7 @@ class OpenAiUtils:
         try:
             encoding = tiktoken.encoding_for_model(model)
         except KeyError:
-            logger.warning(
-                "Warning: model not found. Using o200k_base encoding."
-            )
+            logger.warning("Warning: model not found. Using o200k_base encoding.")
             encoding = tiktoken.get_encoding("o200k_base")
         return encoding
 
@@ -64,12 +62,8 @@ class OpenAiUtils:
 
         num_tokens = 0
         for message in messages:
-            num_tokens += OpenAiUtils.__message_to_tokens(
-                message, model, encoding
-            )
-        num_tokens += (
-            3  # every reply is primed with <|start|>assistant<|message|>
-        )
+            num_tokens += OpenAiUtils.__message_to_tokens(message, model, encoding)
+        num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
         return num_tokens
 
     @staticmethod
@@ -81,9 +75,7 @@ class OpenAiUtils:
                 message, model, encoding
             )
         else:
-            return OpenAiUtils.__turn_regular_message_into_tokens(
-                message, encoding
-            )
+            return OpenAiUtils.__turn_regular_message_into_tokens(message, encoding)
 
     @staticmethod
     def __determine_if_message_is_an_image_message(
@@ -152,9 +144,7 @@ class OpenAiUtils:
             image = Image.open(response)
             return image.size
         elif re.match(base_64_regex, image_url_or_b64):
-            image_url_or_b64 = re.sub(
-                r"data:image\/\w+;base64,", "", image_url_or_b64
-            )
+            image_url_or_b64 = re.sub(r"data:image\/\w+;base64,", "", image_url_or_b64)
             image = Image.open(BytesIO(base64.b64decode(image_url_or_b64)))
             return image.size
         else:
@@ -172,9 +162,7 @@ class OpenAiUtils:
             return LOW_DETAIL_COST
         elif detail == "high":
             # Calculate token cost for high detail images
-            width, height = OpenAiUtils.__get_image_dimensions(
-                image_url_or_b64
-            )
+            width, height = OpenAiUtils.__get_image_dimensions(image_url_or_b64)
             # Check if resizing is needed to fit within a 2048 x 2048 square
             if max(width, height) > 2048:
                 # Resize the image to fit within a 2048 x 2048 square
@@ -190,9 +178,7 @@ class OpenAiUtils:
 
             # Calculate the number of 512px squares
             num_squares = math.ceil(width / 512) * math.ceil(height / 512)
-            total_cost = (
-                num_squares * HIGH_DETAIL_COST_PER_TILE + ADDITIONAL_COST
-            )
+            total_cost = num_squares * HIGH_DETAIL_COST_PER_TILE + ADDITIONAL_COST
             return total_cost
         else:
             # Invalid detail_option
@@ -202,9 +188,7 @@ class OpenAiUtils:
     def put_single_user_message_in_list_using_prompt(
         user_prompt: str,
     ) -> list[ChatCompletionMessageParam]:
-        return [
-            ChatCompletionUserMessageParam(role="user", content=user_prompt)
-        ]
+        return [ChatCompletionUserMessageParam(role="user", content=user_prompt)]
 
     @staticmethod
     def put_single_image_message_in_list_using_gpt_vision_input(
@@ -217,9 +201,7 @@ class OpenAiUtils:
             ChatCompletionUserMessageParam(
                 role="user",
                 content=[
-                    ChatCompletionContentPartTextParam(
-                        type="text", text=prompt
-                    ),
+                    ChatCompletionContentPartTextParam(type="text", text=prompt),
                     ChatCompletionContentPartImageParam(
                         type="image_url",
                         image_url=ImageURL(
@@ -236,9 +218,7 @@ class OpenAiUtils:
         user_prompt: str, system_prompt: str
     ) -> list[ChatCompletionMessageParam]:
         return [
-            ChatCompletionSystemMessageParam(
-                role="system", content=system_prompt
-            ),
+            ChatCompletionSystemMessageParam(role="system", content=system_prompt),
             ChatCompletionUserMessageParam(role="user", content=user_prompt),
         ]
 
@@ -253,8 +233,6 @@ class OpenAiUtils:
         )
         image_message = image_message_as_list[0]
         return [
-            ChatCompletionSystemMessageParam(
-                role="system", content=system_prompt
-            ),
+            ChatCompletionSystemMessageParam(role="system", content=system_prompt),
             image_message,
         ]

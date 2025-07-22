@@ -6,19 +6,13 @@ from unittest.mock import Mock
 import pytest
 from pydantic import BaseModel
 
-from code_tests.unit_tests.test_ai_models.ai_mock_manager import (
-    AiModelMockManager,
-)
+from code_tests.unit_tests.test_ai_models.ai_mock_manager import AiModelMockManager
 from code_tests.unit_tests.test_ai_models.models_to_test import ModelsToTest
 from forecasting_tools.ai_models.ai_utils.ai_misc import validate_complex_type
-from forecasting_tools.ai_models.ai_utils.response_types import (
-    TextTokenCostResponse,
-)
+from forecasting_tools.ai_models.ai_utils.response_types import TextTokenCostResponse
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
-from forecasting_tools.ai_models.model_interfaces.outputs_text import (
-    OutputsText,
-)
+from forecasting_tools.ai_models.model_interfaces.outputs_text import OutputsText
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +57,7 @@ class PydanticModelExample2(BaseModel):
 
 
 instance_of_test_model_1 = PydanticModelExample(int_value=1, float_value=1.0)
-sub_model_instance_1 = SubPydanticModel2(
-    str_value="hello", list_value=[1, 2, 3]
-)
+sub_model_instance_1 = SubPydanticModel2(str_value="hello", list_value=[1, 2, 3])
 instance_of_test_model_2 = PydanticModelExample2(
     str_value="hello",
     list_value=[1, 2, 3],
@@ -267,10 +259,8 @@ def test_schema_generation_works() -> None:
         float_value: float
         list_value: list[int]
 
-    format_instructions = (
-        Gpt4o().get_schema_format_instructions_for_pydantic_type(
-            TestPydanticModel
-        )
+    format_instructions = Gpt4o().get_schema_format_instructions_for_pydantic_type(
+        TestPydanticModel
     )
     logger.debug(format_instructions)
     assert "int_value" in format_instructions

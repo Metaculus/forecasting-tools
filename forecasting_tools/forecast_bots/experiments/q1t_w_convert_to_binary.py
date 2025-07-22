@@ -3,9 +3,7 @@ from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
-from forecasting_tools.data_models.multiple_choice_report import (
-    PredictedOptionList,
-)
+from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
@@ -91,10 +89,8 @@ class Q1TemplateBotWithConvertToBinary(Q1TemplateBot2025):
         final_distribution = await self.get_llm("default", "llm").invoke(
             consistency_prompt
         )
-        prediction = (
-            PredictionExtractor.extract_option_list_with_percentage_afterwards(
-                final_distribution, question.options
-            )
+        prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            final_distribution, question.options
         )
         reasoning = (
             "Individual option assessments and reasoning:\n"
@@ -126,9 +122,7 @@ class Q1TemplateBotWithConvertToBinary(Q1TemplateBot2025):
         upper_bound_message, lower_bound_message = (
             self._create_upper_and_lower_bound_messages(question)
         )
-        for (
-            percentile
-        ) in initial_prediction.prediction_value.declared_percentiles:
+        for percentile in initial_prediction.prediction_value.declared_percentiles:
             new_question = BinaryQuestion(
                 question_text=f'Will the value be less than or equal to {percentile.value} for the question "{question.question_text}"?',
                 background_info=f"{question.background_info}\n{upper_bound_message}\n{lower_bound_message}",

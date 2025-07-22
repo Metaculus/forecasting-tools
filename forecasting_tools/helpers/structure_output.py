@@ -23,9 +23,7 @@ async def structure_output(
     try:
         if issubclass(output_type, BaseModel):
             pydantic_instructions = (
-                GeneralLlm.get_schema_format_instructions_for_pydantic_type(
-                    output_type
-                )
+                GeneralLlm.get_schema_format_instructions_for_pydantic_type(output_type)
             )
     except TypeError:
         # Not a class, might be a generic type like list[BaseModel]
@@ -39,8 +37,10 @@ async def structure_output(
             item_type = args[0]
             try:
                 if issubclass(item_type, BaseModel):
-                    pydantic_instructions = GeneralLlm.get_schema_format_instructions_for_pydantic_type(
-                        item_type
+                    pydantic_instructions = (
+                        GeneralLlm.get_schema_format_instructions_for_pydantic_type(
+                            item_type
+                        )
                     )
             except TypeError:
                 pass

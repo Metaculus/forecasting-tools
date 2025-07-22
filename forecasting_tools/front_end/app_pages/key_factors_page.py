@@ -21,9 +21,7 @@ from forecasting_tools.agents_and_tools.research.key_factors_researcher import (
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.front_end.helpers.report_displayer import (
-    ReportDisplayer,
-)
+from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
 from forecasting_tools.front_end.helpers.tool_page import ToolPage
 from forecasting_tools.helpers.forecast_database_manager import (
     ForecastDatabaseManager,
@@ -51,7 +49,9 @@ class KeyFactorsPage(ToolPage):
     URL_PATH: str = "/key-factors"
     INPUT_TYPE = KeyFactorsInput
     OUTPUT_TYPE = KeyFactorsOutput
-    EXAMPLES_FILE_PATH = "forecasting_tools/front_end/example_outputs/key_factors_page_examples.json"
+    EXAMPLES_FILE_PATH = (
+        "forecasting_tools/front_end/example_outputs/key_factors_page_examples.json"
+    )
 
     @classmethod
     async def _display_intro_text(cls) -> None:
@@ -69,13 +69,9 @@ class KeyFactorsPage(ToolPage):
 
     @classmethod
     async def _run_tool(cls, input: KeyFactorsInput) -> KeyFactorsOutput:
-        with st.spinner(
-            "Finding key factors... This may take a minute or two..."
-        ):
+        with st.spinner("Finding key factors... This may take a minute or two..."):
             question_id = cls.__extract_question_id(input.metaculus_url)
-            metaculus_question = MetaculusApi.get_question_by_post_id(
-                question_id
-            )
+            metaculus_question = MetaculusApi.get_question_by_post_id(question_id)
 
             with MonetaryCostManager() as cost_manager:
                 num_questions_to_research = 16
@@ -120,9 +116,7 @@ class KeyFactorsPage(ToolPage):
     @classmethod
     async def _display_outputs(cls, outputs: list[KeyFactorsOutput]) -> None:
         for output in outputs:
-            with st.expander(
-                f"Key Factors for: {output.question_text}", expanded=True
-            ):
+            with st.expander(f"Key Factors for: {output.question_text}", expanded=True):
                 st.markdown(f"Cost: ${output.cost:.2f}")
                 st.markdown(ReportDisplayer.clean_markdown(output.markdown))
 

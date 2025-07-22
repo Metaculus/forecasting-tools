@@ -3,11 +3,7 @@ import logging
 import os
 
 from hyperbrowser import AsyncHyperbrowser
-from hyperbrowser.models import (
-    CreateSessionParams,
-    CuaTaskData,
-    StartCuaTaskParams,
-)
+from hyperbrowser.models import CreateSessionParams, CuaTaskData, StartCuaTaskParams
 from pydantic import BaseModel
 
 from forecasting_tools.agents_and_tools.other.hosted_file import HostedFile
@@ -109,14 +105,12 @@ class ComputerUse:
         final_result = data.final_result
         if final_result is None:
             raise RuntimeError("No response from Hyperbrowser")
-        downloads_response = await self.hb_client.sessions.get_downloads_url(
-            session.id
-        )
+        downloads_response = await self.hb_client.sessions.get_downloads_url(session.id)
         while downloads_response.status == "in_progress":
             logger.info("Waiting for downloads zip to be ready...")
             await asyncio.sleep(1)
-            downloads_response = (
-                await self.hb_client.sessions.get_downloads_url(session.id)
+            downloads_response = await self.hb_client.sessions.get_downloads_url(
+                session.id
             )
 
         download_url = downloads_response.downloads_url
@@ -128,9 +122,7 @@ class ComputerUse:
         else:
             hosted_files = []
 
-        recording_data = await self.hb_client.sessions.get_recording_url(
-            session.id
-        )
+        recording_data = await self.hb_client.sessions.get_recording_url(session.id)
         recording_url = recording_data.recording_url
         logger.info(f"Hyperbrowser Recording URL: {recording_url}")
 

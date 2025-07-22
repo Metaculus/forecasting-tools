@@ -35,12 +35,10 @@ async def test_find_key_factors_end_to_end(question_url: str) -> None:
             num_key_factors_to_return=num_factors_to_return,
             num_questions_to_research_with=num_questions_to_research_with,
         )
-        key_factors_markdown = (
-            ScoredKeyFactor.turn_key_factors_into_markdown_list(key_factors)
+        key_factors_markdown = ScoredKeyFactor.turn_key_factors_into_markdown_list(
+            key_factors
         )
-        logger.info(
-            f"\nCost: {cost_manager.current_usage}\n{key_factors_markdown}"
-        )
+        logger.info(f"\nCost: {cost_manager.current_usage}\n{key_factors_markdown}")
 
     assert len(key_factors) == num_factors_to_return
     assert all(isinstance(factor, ScoredKeyFactor) for factor in key_factors)

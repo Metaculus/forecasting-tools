@@ -20,9 +20,7 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.skip(
-    reason="Skipping question generator test since its expensive"
-)
+@pytest.mark.skip(reason="Skipping question generator test since its expensive")
 async def test_question_generator_returns_necessary_number_and_stays_within_cost() -> (
     None
 ):
@@ -33,9 +31,7 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
     topic = "Lithuania"
     model = GeneralLlm(model="gpt-4o-mini")
     before_date = datetime.now() + timedelta(days=14)
-    before_date = before_date.replace(
-        hour=23, minute=59, second=59, microsecond=999999
-    )
+    before_date = before_date.replace(hour=23, minute=59, second=59, microsecond=999999)
     after_date = datetime.now()
     after_date = after_date.replace(hour=0, minute=0, second=0, microsecond=0)
     with MonetaryCostManager(cost_threshold) as cost_manager:
@@ -78,9 +74,7 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
                 [
                     question
                     for question in questions
-                    if before_date
-                    > question.expected_resolution_date
-                    > after_date
+                    if before_date > question.expected_resolution_date > after_date
                 ]
             )
             >= number_of_questions_to_generate
@@ -94,9 +88,7 @@ async def test_question_generator_returns_necessary_number_and_stays_within_cost
         ), f"Cost exceeded threshold: ${final_cost:.4f} > ${cost_threshold:.4f}"
 
 
-@pytest.mark.skip(
-    reason="Skipping question generator test since its expensive"
-)
+@pytest.mark.skip(reason="Skipping question generator test since its expensive")
 async def test_question_generator_works_with_empty_topic() -> None:
     model = GeneralLlm(model="gpt-4o-mini")
     generator = QuestionGenerator(model=model)

@@ -7,10 +7,7 @@ from forecasting_tools.data_models.numeric_report import (
     NumericReport,
     Percentile,
 )
-from forecasting_tools.data_models.questions import (
-    NumericQuestion,
-    QuestionState,
-)
+from forecasting_tools.data_models.questions import NumericQuestion, QuestionState
 
 logger = logging.getLogger(__name__)
 
@@ -105,9 +102,7 @@ def test_get_representative_percentiles() -> None:
     assert rep_percentiles[2] == percentiles[4]
 
     # Test with invalid number of percentiles
-    with pytest.raises(
-        ValueError, match="Number of percentiles must be at least 2"
-    ):
+    with pytest.raises(ValueError, match="Number of percentiles must be at least 2"):
         distribution.get_representative_percentiles(1)
 
     # Test with too many percentiles
@@ -223,9 +218,7 @@ def test_close_bound_distribution(percentiles: list[Percentile]) -> None:
     assert distribution.cdf[-1].value == pytest.approx(100.0)
 
     for i in range(len(distribution.cdf) - 1):
-        assert (
-            distribution.cdf[i + 1].value - distribution.cdf[i].value > 0.00001
-        )
+        assert distribution.cdf[i + 1].value - distribution.cdf[i].value > 0.00001
 
 
 def test_error_on_too_little_probability_assigned_in_range() -> None:

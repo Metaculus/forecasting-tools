@@ -8,9 +8,7 @@ from pydantic import BaseModel
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.questions import BinaryQuestion
 from forecasting_tools.forecast_bots.main_bot import MainBot
-from forecasting_tools.front_end.helpers.report_displayer import (
-    ReportDisplayer,
-)
+from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
 from forecasting_tools.front_end.helpers.tool_page import ToolPage
 from forecasting_tools.helpers.forecast_database_manager import (
     ForecastDatabaseManager,
@@ -31,7 +29,9 @@ class ForecasterPage(ToolPage):
     URL_PATH: str = "/forecast"
     INPUT_TYPE = ForecastInput
     OUTPUT_TYPE = BinaryReport
-    EXAMPLES_FILE_PATH = "forecasting_tools/front_end/example_outputs/forecast_page_examples.json"
+    EXAMPLES_FILE_PATH = (
+        "forecasting_tools/front_end/example_outputs/forecast_page_examples.json"
+    )
 
     # Form input keys
     QUESTION_TEXT_BOX = "question_text_box"
@@ -61,9 +61,7 @@ class ForecasterPage(ToolPage):
                 "Resolution Criteria (optional)",
                 key=cls.RESOLUTION_CRITERIA_BOX,
             )
-            fine_print = st.text_area(
-                "Fine Print (optional)", key=cls.FINE_PRINT_BOX
-            )
+            fine_print = st.text_area("Fine Print (optional)", key=cls.FINE_PRINT_BOX)
             background_info = st.text_area(
                 "Background Info (optional)", key=cls.BACKGROUND_INFO_BOX
             )
@@ -119,9 +117,7 @@ class ForecasterPage(ToolPage):
     @classmethod
     def __display_metaculus_url_input(cls) -> None:
         with st.expander("Use an existing Metaculus Binary question"):
-            st.write(
-                "Enter a Metaculus question URL to autofill the form below."
-            )
+            st.write("Enter a Metaculus question URL to autofill the form below.")
 
             metaculus_url = st.text_input(
                 "Metaculus Question URL", key=cls.METACULUS_URL_INPUT
@@ -132,8 +128,8 @@ class ForecasterPage(ToolPage):
                 with st.spinner("Fetching question details..."):
                     try:
                         question_id = cls.__extract_question_id(metaculus_url)
-                        metaculus_question = (
-                            MetaculusApi.get_question_by_post_id(question_id)
+                        metaculus_question = MetaculusApi.get_question_by_post_id(
+                            question_id
                         )
                         if isinstance(metaculus_question, BinaryQuestion):
                             cls.__autofill_form(metaculus_question)
@@ -158,9 +154,7 @@ class ForecasterPage(ToolPage):
     @classmethod
     def __autofill_form(cls, question: BinaryQuestion) -> None:
         st.session_state[cls.QUESTION_TEXT_BOX] = question.question_text
-        st.session_state[cls.BACKGROUND_INFO_BOX] = (
-            question.background_info or ""
-        )
+        st.session_state[cls.BACKGROUND_INFO_BOX] = question.background_info or ""
         st.session_state[cls.RESOLUTION_CRITERIA_BOX] = (
             question.resolution_criteria or ""
         )

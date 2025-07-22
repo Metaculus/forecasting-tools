@@ -4,9 +4,7 @@ from typing import NamedTuple
 from forecasting_tools.agents_and_tools.deprecated.general_researcher import (
     GeneralResearcher,
 )
-from forecasting_tools.agents_and_tools.research.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 
 
@@ -90,14 +88,9 @@ class Estimator:
         model = SmartSearcher(temperature=0)
         estimation = await model.invoke_and_return_verified_type(prompt, dict)
 
-        facts_as_markdown = "\n".join(
-            [f"- {fact}" for fact in estimation["facts"]]
-        )
+        facts_as_markdown = "\n".join([f"- {fact}" for fact in estimation["facts"]])
         estimation_reasoning = "\n".join(
-            [
-                f"{i+1}. {step}"
-                for i, step in enumerate(estimation["reasoning_steps"])
-            ]
+            [f"{i+1}. {step}" for i, step in enumerate(estimation["reasoning_steps"])]
         )
         number_of_hits = estimation["answer"]
         estimation_as_markdown = clean_indents(
@@ -112,8 +105,6 @@ class Estimator:
             """
         )
         if not self.__previous_research:
-            estimation_as_markdown += (
-                f"\n\n**Background Research**: {research_to_use}"
-            )
+            estimation_as_markdown += f"\n\n**Background Research**: {research_to_use}"
         assert isinstance(number_of_hits, int)
         return EstimationResult(number_of_hits, estimation_as_markdown)

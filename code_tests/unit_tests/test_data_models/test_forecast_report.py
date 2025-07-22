@@ -3,15 +3,11 @@ import textwrap
 
 import pytest
 
-from code_tests.unit_tests.forecasting_test_manager import (
-    ForecastingTestManager,
-)
+from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.markdown_tree import MarkdownTree
-from forecasting_tools.data_models.multiple_choice_report import (
-    MultipleChoiceReport,
-)
+from forecasting_tools.data_models.multiple_choice_report import MultipleChoiceReport
 from forecasting_tools.data_models.numeric_report import NumericReport
 
 
@@ -121,9 +117,7 @@ def test_report_sections_are_parsed_correctly() -> None:
     assert "- Conclusion 2" in conclusion_section.section_content
 
     combined_content = combine_all_section_content(sections)
-    assert combined_content.replace("\n", "") == fake_explanation.replace(
-        "\n", ""
-    )
+    assert combined_content.replace("\n", "") == fake_explanation.replace("\n", "")
 
 
 def combine_all_section_content(sections: list[MarkdownTree]) -> str:

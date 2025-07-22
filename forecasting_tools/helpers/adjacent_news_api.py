@@ -19,9 +19,7 @@ class AdjacentQuestion(BaseModel):
     question_text: str
     description: str | None = None
     rules: str | None = None
-    status: Literal[
-        "active"
-    ]  # TODO: Figure out what other statuses are possible
+    status: Literal["active"]  # TODO: Figure out what other statuses are possible
     probability_at_access_time: float | None = None
     num_forecasters: int | None = None
     liquidity: float | None = None
@@ -74,9 +72,7 @@ class AdjacentQuestion(BaseModel):
         return question
 
     @classmethod
-    def _parse_api_date(
-        cls, date_value: str | float | None
-    ) -> datetime | None:
+    def _parse_api_date(cls, date_value: str | float | None) -> datetime | None:
         """Parse date from API response."""
         if date_value is None:
             return None
@@ -174,9 +170,7 @@ class AdjacentNewsApi:
     def _get_auth_headers(cls) -> dict[str, dict[str, str]]:
         ADJACENT_NEWS_API_KEY = os.getenv("ADJACENT_NEWS_API_KEY")
         if ADJACENT_NEWS_API_KEY is None:
-            raise ValueError(
-                "ADJACENT_NEWS_API_KEY environment variable not set"
-            )
+            raise ValueError("ADJACENT_NEWS_API_KEY environment variable not set")
         return {
             "headers": {
                 "Authorization": f"Bearer {ADJACENT_NEWS_API_KEY}",
@@ -245,9 +239,7 @@ class AdjacentNewsApi:
             url_params["keyword"] = api_filter.keyword
 
         if api_filter.created_after:
-            url_params["created_after"] = api_filter.created_after.strftime(
-                "%Y-%m-%d"
-            )
+            url_params["created_after"] = api_filter.created_after.strftime("%Y-%m-%d")
 
         if api_filter.created_before:
             url_params["created_before"] = api_filter.created_before.strftime(
@@ -273,16 +265,14 @@ class AdjacentNewsApi:
             markets = [
                 m
                 for m in markets
-                if m.liquidity is not None
-                and m.liquidity >= api_filter.liquidity_min
+                if m.liquidity is not None and m.liquidity >= api_filter.liquidity_min
             ]
 
         if api_filter.liquidity_max is not None:
             markets = [
                 m
                 for m in markets
-                if m.liquidity is not None
-                and m.liquidity <= api_filter.liquidity_max
+                if m.liquidity is not None and m.liquidity <= api_filter.liquidity_max
             ]
 
         if api_filter.num_forecasters_min is not None:
@@ -311,16 +301,14 @@ class AdjacentNewsApi:
             markets = [
                 m
                 for m in markets
-                if m.end_date is not None
-                and m.end_date >= api_filter.end_date_after
+                if m.end_date is not None and m.end_date >= api_filter.end_date_after
             ]
 
         if api_filter.end_date_before:
             markets = [
                 m
                 for m in markets
-                if m.end_date is not None
-                and m.end_date <= api_filter.end_date_before
+                if m.end_date is not None and m.end_date <= api_filter.end_date_before
             ]
 
         return markets, more_markets_available
@@ -331,23 +319,18 @@ class AdjacentNewsApi:
     ) -> tuple[list[AdjacentQuestion], bool]:
         num_requested = params.get("limit")
         assert (
-            num_requested is None
-            or num_requested <= cls.MAX_MARKETS_PER_REQUEST
+            num_requested is None or num_requested <= cls.MAX_MARKETS_PER_REQUEST
         ), f"You cannot get more than {cls.MAX_MARKETS_PER_REQUEST} markets at a time"
 
         url = f"{cls.API_BASE_URL}/api/markets"
         auth_headers = cls._get_auth_headers()
-        response = requests.get(
-            url, params=params, headers=auth_headers["headers"]
-        )
+        response = requests.get(url, params=params, headers=auth_headers["headers"])
         raise_for_status_with_additional_info(response)
         data = json.loads(response.content)
 
         markets = []
         for market_data in data["data"]:
-            markets.append(
-                AdjacentQuestion.from_adjacent_api_json(market_data)
-            )
+            markets.append(AdjacentQuestion.from_adjacent_api_json(market_data))
         more_markets_available = data["meta"]["hasMore"]
         time.sleep(sleep_time)
         return markets, more_markets_available

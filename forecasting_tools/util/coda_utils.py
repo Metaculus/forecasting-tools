@@ -60,9 +60,7 @@ class CodaTable:
         self.key_columns = key_columns
 
     def add_row_to_table(self, row: CodaRow):
-        assert self.check_that_row_matches_columns(
-            row
-        ), "Row does not match columns"
+        assert self.check_that_row_matches_columns(row), "Row does not match columns"
         json_payload = row.turn_to_payload_friendly_json()
         key_columns = [column.column_id for column in self.key_columns]
         headers = {"Authorization": f"Bearer {CodaUtils.CODA_API_KEY}"}

@@ -3,11 +3,7 @@ import logging
 import pytest
 from openai.types.responses import ResponseTextDeltaEvent
 
-from forecasting_tools.ai_models.agent_wrappers import (
-    AgentRunner,
-    AgentSdkLlm,
-    AiAgent,
-)
+from forecasting_tools.ai_models.agent_wrappers import AgentRunner, AgentSdkLlm, AiAgent
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )

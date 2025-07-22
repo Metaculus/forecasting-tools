@@ -8,12 +8,8 @@ import requests
 from openai import OpenAI
 from sklearn.metrics.pairwise import cosine_similarity
 
-from forecasting_tools.agents_and_tools.deprecated.configured_llms import (
-    BasicLlm,
-)
-from forecasting_tools.agents_and_tools.research.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.agents_and_tools.deprecated.configured_llms import BasicLlm
+from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.util.misc import raise_for_status_with_additional_info
 
@@ -44,8 +40,7 @@ class Deduplicator:
         ]
 
         batch_tasks = [
-            cls.__deduplicate_list_in_batch(batch, prompt_context)
-            for batch in batches
+            cls.__deduplicate_list_in_batch(batch, prompt_context) for batch in batches
         ]
         deduplicated_batches = await asyncio.gather(*batch_tasks)
         deduplicated_batches_flattened = [
@@ -55,9 +50,7 @@ class Deduplicator:
         final_deduplicated_list = await cls.__deduplicate_list_in_batch(
             deduplicated_batches_flattened, prompt_context
         )
-        cls.__log_deduplication_results(
-            items_to_deduplicate, final_deduplicated_list
-        )
+        cls.__log_deduplication_results(items_to_deduplicate, final_deduplicated_list)
         return final_deduplicated_list
 
     @classmethod
@@ -150,10 +143,8 @@ class Deduplicator:
         if is_exact_duplicate:
             return True
 
-        is_semantically_duplicate = (
-            cls.__determine_if_text_is_duplicate_semantically(
-                item, list_to_check, threshold_for_initial_semantic_check
-            )
+        is_semantically_duplicate = cls.__determine_if_text_is_duplicate_semantically(
+            item, list_to_check, threshold_for_initial_semantic_check
         )
         if is_semantically_duplicate:
             return True
@@ -224,9 +215,7 @@ class Deduplicator:
             logger.warning(
                 f"Could not get embeddings using huggingface. Instead now getting embeddings with OpenAI. Error: {e}"
             )
-            embeddings = cls.__get_embeddings_using_openai(
-                texts_to_get_embeddings_for
-            )
+            embeddings = cls.__get_embeddings_using_openai(texts_to_get_embeddings_for)
 
         text_embedding = embeddings[0]
         list_embeddings = embeddings[1:]
@@ -240,9 +229,7 @@ class Deduplicator:
         return False
 
     @classmethod
-    def __get_embeddings_using_openai(
-        cls, texts: list[str]
-    ) -> list[list[float]]:
+    def __get_embeddings_using_openai(cls, texts: list[str]) -> list[list[float]]:
         # TODO: Track costs from this in llm cost tracker
         api_key = os.getenv("OPENAI_API_KEY")
         assert api_key is not None, "OPENAI_API_KEY is not set"
@@ -257,9 +244,7 @@ class Deduplicator:
         return query(texts)
 
     @classmethod
-    def __get_embeddings_using_huggingface(
-        cls, texts: list[str]
-    ) -> list[list[float]]:
+    def __get_embeddings_using_huggingface(cls, texts: list[str]) -> list[list[float]]:
         model_id = "sentence-transformers/all-MiniLM-L6-v2"
         api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_id}"
         api_key = os.getenv("HUGGINGFACE_API_KEY")
@@ -284,9 +269,7 @@ class Deduplicator:
         removed_items = [
             item for item in original_list if item not in deduplicated_items
         ]
-        logger.info(
-            f"Removed {len(removed_items)} duplicate items: {removed_items}"
-        )
+        logger.info(f"Removed {len(removed_items)} duplicate items: {removed_items}")
         logger.info(
             f"Kept {len(deduplicated_items)} unique items: {deduplicated_items}"
         )

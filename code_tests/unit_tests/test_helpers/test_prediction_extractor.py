@@ -1,8 +1,6 @@
 import pytest
 
-from forecasting_tools.data_models.multiple_choice_report import (
-    PredictedOptionList,
-)
+from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 from forecasting_tools.helpers.prediction_extractor import PredictionExtractor
@@ -434,9 +432,7 @@ def test_multiple_choice_extraction_success(
         ),
     ],
 )
-def test_multiple_choice_extraction_failure(
-    reasoning: str, options: list[str]
-) -> None:
+def test_multiple_choice_extraction_failure(reasoning: str, options: list[str]) -> None:
     with pytest.raises(ValueError):
         PredictionExtractor.extract_option_list_with_percentage_afterwards(
             reasoning, options
@@ -447,11 +443,11 @@ def create_numeric_question(
     magnitude_units: str | None = None,
 ) -> NumericQuestion:
     if magnitude_units is None:
-        question_text = (
-            "How much will the stock market be worth in 2026? (exact value)"
-        )
+        question_text = "How much will the stock market be worth in 2026? (exact value)"
     else:
-        question_text = f"How much will the stock market be worth in 2026 in {magnitude_units}?"
+        question_text = (
+            f"How much will the stock market be worth in 2026 in {magnitude_units}?"
+        )
 
     return NumericQuestion(
         question_text=question_text,
@@ -758,9 +754,7 @@ def test_numeric_parsing(
     for declared_percentile, expected_percentile in zip(
         numeric_distribution.declared_percentiles, expected_percentiles
     ):
-        assert declared_percentile.value == pytest.approx(
-            expected_percentile.value
-        )
+        assert declared_percentile.value == pytest.approx(expected_percentile.value)
         assert declared_percentile.percentile == pytest.approx(
             expected_percentile.percentile
         )
@@ -857,9 +851,7 @@ def test_numeric_parsing_failure(gpt_response: str) -> None:
         ),
     ],
 )
-def test_binary_parsing(
-    gpt_response: str, expected_probability: list[float]
-) -> None:
+def test_binary_parsing(gpt_response: str, expected_probability: list[float]) -> None:
     binary_prediction = PredictionExtractor.extract_last_percentage_value(
         gpt_response,
         max_prediction=0.95,

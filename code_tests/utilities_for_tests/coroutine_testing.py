@@ -30,15 +30,11 @@ def assert_coroutines_run_under_x_times_duration_of_benchmark(
     for benchmark_coroutine in benchmark_coroutines:
         duration, _, _ = asyncio.run(time_coroutine(benchmark_coroutine))
         benchmark_durations.append(duration)
-    average_benchmark_duration = sum(benchmark_durations) / len(
-        benchmark_durations
-    )
+    average_benchmark_duration = sum(benchmark_durations) / len(benchmark_durations)
     max_allowed_duration = average_benchmark_duration * x
 
     # Wrap the coroutines
-    timing_coroutines = [
-        time_coroutine(coroutine) for coroutine in test_coroutines
-    ]
+    timing_coroutines = [time_coroutine(coroutine) for coroutine in test_coroutines]
     timed_timedout_coroutines = async_batching.wrap_coroutines_with_timeout(
         timing_coroutines, max_allowed_duration
     )
@@ -51,9 +47,7 @@ def assert_coroutines_run_under_x_times_duration_of_benchmark(
     # Time the async_batching ask_chat
     list_start_time = time.time()
     duration_result_tuples: list[Tuple[float, float, Any] | Exception] = (
-        async_batching.run_coroutines(
-            timed_timedout_and_error_handled_coroutines
-        )
+        async_batching.run_coroutines(timed_timedout_and_error_handled_coroutines)
     )
     list_end_time = time.time()
 
@@ -89,16 +83,10 @@ def assert_coroutines_run_under_x_times_duration_of_benchmark(
     logger.info(f"Number of non-errored results: {len(non_errored_results)}")
     logger.info(f"Number of errored results: {len(errored_results)}")
     logger.info(f"Non-errored durations: {non_errored_durations}")
-    logger.info(
-        f"Non-errored end times {non_errored_end_times_with_start_time_as_0}"
-    )
-    logger.info(
-        f"Average non-errored duration: {average_non_errored_duration}"
-    )
+    logger.info(f"Non-errored end times {non_errored_end_times_with_start_time_as_0}")
+    logger.info(f"Average non-errored duration: {average_non_errored_duration}")
     logger.info(f"Full duration of test: {full_duration_of_coroutine_list}")
-    logger.info(
-        f"Full duration of coroutines w/o errors: {non_errored_full_duration}"
-    )
+    logger.info(f"Full duration of coroutines w/o errors: {non_errored_full_duration}")
     logger.info(f"Max allowed duration: {max_allowed_duration}")
     logger.info(f"Not errored results: {non_errored_results}")
     logger.info(f"Errored results: {errored_results}")
@@ -116,9 +104,7 @@ def assert_coroutines_run_under_x_times_duration_of_benchmark(
 
 
 class CoroutineTestInfo:
-    def __init__(
-        self, start_time: float, end_time: float, number_of_runs: int
-    ):
+    def __init__(self, start_time: float, end_time: float, number_of_runs: int):
         self.start_time = start_time
         self.end_time = end_time
         self.number_of_runs = number_of_runs
@@ -178,14 +164,10 @@ def assert_resource_rate_not_too_high_or_too_low(
         total_resources_used / duration_of_coroutines_in_seconds
     )
     allowed_upper_bound = (
-        allowed_resources_per_period
-        / period_length_in_seconds
-        * over_rate_allowed
+        allowed_resources_per_period / period_length_in_seconds * over_rate_allowed
     )
     allowed_lower_bound = (
-        allowed_resources_per_period
-        / period_length_in_seconds
-        * under_rate_allowed
+        allowed_resources_per_period / period_length_in_seconds * under_rate_allowed
     )
 
     additional_message = f"Average resources per second: {average_resources_per_second}, duration of coroutines: {duration_of_coroutines_in_seconds}, Total resources used: {total_resources_used}, allowed resources per period: {allowed_resources_per_period}, period length: {period_length_in_seconds}"
@@ -198,7 +180,9 @@ def assert_resource_rate_not_too_high_or_too_low(
 
 
 def assert_resource_burst_is_short(burst_size: int, duration: float) -> None:
-    average_time_to_run_a_coroutine_by_computer = 0.0567936897277832  # From manutal test of 1000 'add two number' coroutines
+    average_time_to_run_a_coroutine_by_computer = (
+        0.0567936897277832  # From manutal test of 1000 'add two number' coroutines
+    )
     expected_time_to_run_all_coroutines = (
         average_time_to_run_a_coroutine_by_computer * burst_size
     )

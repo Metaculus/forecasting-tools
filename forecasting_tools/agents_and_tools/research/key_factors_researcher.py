@@ -6,9 +6,7 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, field_validator
 
-from forecasting_tools.agents_and_tools.base_rates.deduplicator import (
-    Deduplicator,
-)
+from forecasting_tools.agents_and_tools.base_rates.deduplicator import Deduplicator
 from forecasting_tools.agents_and_tools.deprecated.configured_llms import (
     AdvancedLlm,
     BasicLlm,
@@ -16,9 +14,7 @@ from forecasting_tools.agents_and_tools.deprecated.configured_llms import (
 from forecasting_tools.agents_and_tools.deprecated.research_coordinator import (
     ResearchCoordinator,
 )
-from forecasting_tools.agents_and_tools.research.smart_searcher import (
-    SmartSearcher,
-)
+from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.helpers.metaculus_api import MetaculusQuestion
 from forecasting_tools.util import async_batching
@@ -75,10 +71,8 @@ class KeyFactorsResearcher:
         metaculus_question: MetaculusQuestion,
     ) -> list[KeyFactor]:
         research_manager = ResearchCoordinator(metaculus_question)
-        background_questions = (
-            await research_manager.brainstorm_background_questions(
-                num_background_questions
-            )
+        background_questions = await research_manager.brainstorm_background_questions(
+            num_background_questions
         )
         background_key_factors = await cls.__find_key_factors_for_questions(
             background_questions
@@ -92,10 +86,8 @@ class KeyFactorsResearcher:
         metaculus_question: MetaculusQuestion,
     ) -> list[KeyFactor]:
         research_manager = ResearchCoordinator(metaculus_question)
-        base_rate_questions = (
-            await research_manager.brainstorm_base_rate_questions(
-                num_base_rate_questions
-            )
+        base_rate_questions = await research_manager.brainstorm_base_rate_questions(
+            num_base_rate_questions
         )
         base_rate_key_factors = await cls.__find_key_factors_for_questions(
             base_rate_questions
@@ -107,8 +99,7 @@ class KeyFactorsResearcher:
         cls, questions: list[str]
     ) -> list[KeyFactor]:
         key_factor_tasks = [
-            cls.__find_key_factors_for_question(question)
-            for question in questions
+            cls.__find_key_factors_for_question(question) for question in questions
         ]
         key_factors, _ = (
             async_batching.run_coroutines_while_removing_and_logging_exceptions(
@@ -216,10 +207,8 @@ class KeyFactorsResearcher:
     async def __score_key_factor(
         cls, question: str, key_factor: KeyFactor
     ) -> ScoredKeyFactor:
-        pydantic_prompt = (
-            BasicLlm.get_schema_format_instructions_for_pydantic_type(
-                ScoreCard
-            )
+        pydantic_prompt = BasicLlm.get_schema_format_instructions_for_pydantic_type(
+            ScoreCard
         )
         prompt = clean_indents(
             f"""
@@ -249,9 +238,7 @@ class KeyFactorsResearcher:
         )
 
         model = BasicLlm(temperature=0)
-        score_card = await model.invoke_and_return_verified_type(
-            prompt, ScoreCard
-        )
+        score_card = await model.invoke_and_return_verified_type(prompt, ScoreCard)
         logger.info(
             f"Score: {score_card.calculated_score} for key factor: {key_factor.text}: {score_card}"
         )
@@ -268,9 +255,7 @@ class KeyFactorsResearcher:
         key_factors_to_compare: list[ScoredKeyFactor],
         num_factors_to_return: int,
     ) -> list[ScoredKeyFactor]:
-        assert (
-            len(key_factors_to_compare) < 25
-        ), "Too many key factors to compare"
+        assert len(key_factors_to_compare) < 25, "Too many key factors to compare"
         assert len(key_factors_to_compare) >= num_factors_to_return
         prompt = clean_indents(
             f"""
@@ -338,9 +323,7 @@ class ScoredKeyFactor(KeyFactor):
     def turn_key_factors_into_markdown_list(
         cls, key_factors: list[ScoredKeyFactor]
     ) -> str:
-        return "\n".join(
-            [f"- {factor.display_text}" for factor in key_factors]
-        )
+        return "\n".join([f"- {factor.display_text}" for factor in key_factors])
 
 
 class KeyFactorType(str, Enum):
@@ -411,9 +394,7 @@ class ScoreCard(BaseModel):
         final_score += 1 * self.recency.grade_as_number
         final_score += 1 * self.relevance.grade_as_number
         final_score += 1 * self.specificness.grade_as_number
-        final_score += (
-            2 * self.predictive_power_and_applicability.grade_as_number
-        )
+        final_score += 2 * self.predictive_power_and_applicability.grade_as_number
         final_score += 1 * self.reputable_source.grade_as_number
         final_score += 2 * self.overall_quality.grade_as_number
         final_score += 5 if self.includes_number else 0

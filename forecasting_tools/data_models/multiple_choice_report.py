@@ -40,9 +40,7 @@ class MultipleChoiceReport(ForecastReport):
         MetaculusApi.post_multiple_choice_question_prediction(
             self.question.id_of_question, options_with_probabilities
         )
-        MetaculusApi.post_question_comment(
-            self.question.id_of_post, self.explanation
-        )
+        MetaculusApi.post_question_comment(self.question.id_of_post, self.explanation)
 
     @classmethod
     async def aggregate_predictions(
@@ -51,8 +49,7 @@ class MultipleChoiceReport(ForecastReport):
         question: MultipleChoiceQuestion,
     ) -> PredictedOptionList:
         first_list_option_names = [
-            pred_option.option_name
-            for pred_option in predictions[0].predicted_options
+            pred_option.option_name for pred_option in predictions[0].predicted_options
         ]
 
         # Check for predicted option consistency

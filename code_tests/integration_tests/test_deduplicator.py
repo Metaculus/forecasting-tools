@@ -2,9 +2,7 @@ import logging
 
 import pytest
 
-from forecasting_tools.agents_and_tools.base_rates.deduplicator import (
-    Deduplicator,
-)
+from forecasting_tools.agents_and_tools.base_rates.deduplicator import Deduplicator
 
 logger = logging.getLogger(__name__)
 
@@ -101,9 +99,7 @@ logger = logging.getLogger(__name__)
         # ),
     ],
 )
-async def test_deduplicate_in_batches(
-    input_list: list[str], output_list: list[str]
-):
+async def test_deduplicate_in_batches(input_list: list[str], output_list: list[str]):
     observed_answer = await Deduplicator.deduplicate_list_in_batches(
         input_list,
         initial_semantic_threshold=0.85,

@@ -18,9 +18,7 @@ class ReportDisplayer:
     REPORT_SELECTBOX_KEY = "select_report_selectbox"
 
     @classmethod
-    def display_report_list(
-        cls, reports_to_display: list[BinaryReport]
-    ) -> None:
+    def display_report_list(cls, reports_to_display: list[BinaryReport]) -> None:
         if len(reports_to_display) == 0:
             return
 
@@ -85,8 +83,7 @@ class ReportDisplayer:
 
         tab_names = [section.title or "Untitled" for section in sections]
         show_question_details = (
-            report.question.id_of_post is not None
-            and report.question.id_of_post > 0
+            report.question.id_of_post is not None and report.question.id_of_post > 0
         )
         if show_question_details:
             tab_names.append("Question Details")
@@ -107,16 +104,12 @@ class ReportDisplayer:
         )
 
     @classmethod
-    def __display_normal_tab(
-        cls, tab: DeltaGenerator, section: MarkdownTree
-    ) -> None:
+    def __display_normal_tab(cls, tab: DeltaGenerator, section: MarkdownTree) -> None:
         with tab:
             st.markdown(cls.clean_markdown(section.section_content))
             for sub_section in section.sub_sections:
                 with st.expander(sub_section.title or "Untitled"):
-                    st.markdown(
-                        cls.clean_markdown(sub_section.section_content)
-                    )
+                    st.markdown(cls.clean_markdown(sub_section.section_content))
                     cls.__display_nested_sections(sub_section.sub_sections)
 
     @classmethod
@@ -124,9 +117,7 @@ class ReportDisplayer:
         cls, tab: DeltaGenerator, question: BinaryQuestion
     ) -> None:
         with tab:
-            st.write(
-                f"**Question Text:** {cls.clean_markdown(question.question_text)}"
-            )
+            st.write(f"**Question Text:** {cls.clean_markdown(question.question_text)}")
             st.write(
                 f"**Resolution Criteria:** {cls.clean_markdown(question.resolution_criteria or 'None')}"
             )
@@ -145,9 +136,7 @@ class ReportDisplayer:
                 if question.community_prediction_at_access_time is not None
                 else "N/A"
             )
-            st.write(
-                f"**Community Prediction:** {community_prediction_formatted}"
-            )
+            st.write(f"**Community Prediction:** {community_prediction_formatted}")
             st.write(f"**Date Accessed:** {question.date_accessed}")
             st.write(f"**State at Access:** {question.state.value}")
             if question.close_time:
@@ -169,17 +158,13 @@ class ReportDisplayer:
     ) -> None:
         for section in sections:
             st.markdown(cls.clean_markdown(section.section_content))
-            ReportDisplayer.__display_nested_sections(
-                section.sub_sections, level + 1
-            )
+            ReportDisplayer.__display_nested_sections(section.sub_sections, level + 1)
 
     @staticmethod
     def clean_markdown(text: str) -> str:
         def replace_dollar(match: re.Match) -> str:
             backslashes = match.group(1) or ""
-            if (
-                len(backslashes) % 2 == 1
-            ):  # Odd number of backslashes means escaped
+            if len(backslashes) % 2 == 1:  # Odd number of backslashes means escaped
                 return match.group(0)
             else:  # Even number of backslashes means not escaped
                 return backslashes + r"\$"

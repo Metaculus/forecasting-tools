@@ -31,8 +31,7 @@ def test_example_questions_forecasted_saved_and_loaded() -> None:
         template_bot.forecast_questions(questions, return_exceptions=False)
     )
     urls_forecasted = [
-        forecast_report.question.page_url
-        for forecast_report in forecast_reports
+        forecast_report.question.page_url for forecast_report in forecast_reports
     ]
     assert len(urls_forecasted) == len(MetaculusApi.TEST_QUESTION_URLS)
     for url in urls_forecasted:
@@ -82,9 +81,7 @@ def test_saving_and_loading_question() -> None:
         "https://www.metaculus.com/questions/578/human-extinction-by-2100/"
     )
     question.save_object_list_to_file_path([question], "test_question.json")
-    loaded_questions = MetaculusQuestion.load_json_from_file_path(
-        "test_question.json"
-    )
+    loaded_questions = MetaculusQuestion.load_json_from_file_path("test_question.json")
     assert len(loaded_questions) == 1
     loaded_question = loaded_questions[0]
     assert question.question_text == loaded_question.question_text
