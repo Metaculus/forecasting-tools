@@ -33,9 +33,7 @@ def get_chosen_q2_bots() -> list[ForecastBot]:
 
     bots = []
     for bot_name in chosen_bot_names:
-        bot = asyncio.run(
-            configure_and_run_bot(bot_name, return_bot_dont_run=True)
-        )
+        bot = asyncio.run(configure_and_run_bot(bot_name, return_bot__dont_run=True))
         assert isinstance(bot, ForecastBot)
         bots.append(bot)
 
@@ -55,7 +53,9 @@ async def benchmark_forecast_bots() -> None:
         "logs/forecasts/question_snapshots_v1.6.train__112qs.json"
     )
     chosen_questions = [snapshot.question for snapshot in snapshots]
-    remove_background_info = True  # AIB (and real life questions) often don't have detailed background info
+    remove_background_info = (
+        True  # AIB (and real life questions) often don't have detailed background info
+    )
     num_predictions_per_report: int | None = 1
 
     # ----- Run the benchmarker -----
@@ -79,9 +79,7 @@ async def benchmark_forecast_bots() -> None:
             additional_code_to_snapshot=additional_code_to_snapshot,
         ).run_benchmark()
         for i, benchmark in enumerate(benchmarks):
-            logger.info(
-                f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}"
-            )
+            logger.info(f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}")
             try:
                 logger.info(
                     f"- Final Score: {benchmark.average_expected_baseline_score}"

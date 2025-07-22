@@ -126,16 +126,16 @@ class MetaculusQuestion(BaseModel, Jsonable):
             page_url=f"https://www.metaculus.com/questions/{post_id}",
             num_forecasters=post_api_json["nr_forecasters"],
             num_predictions=post_api_json["forecasts_count"],
-            close_time=cls._parse_api_date(post_api_json.get("scheduled_close_time")),
+            close_time=cls._parse_api_date(question_json.get("scheduled_close_time")),
             actual_resolution_time=cls._parse_api_date(
                 question_json.get("actual_resolve_time")
             ),
             scheduled_resolution_time=cls._parse_api_date(
-                post_api_json.get("scheduled_resolve_time")
+                question_json.get("scheduled_resolve_time")
             ),
             published_time=cls._parse_api_date(post_api_json.get("published_at")),
             cp_reveal_time=cls._parse_api_date(question_json.get("cp_reveal_time")),
-            open_time=cls._parse_api_date(post_api_json.get("open_time")),
+            open_time=cls._parse_api_date(question_json.get("open_time")),
             already_forecasted=is_forecasted,
             tournament_slugs=tournament_slugs,
             default_project_id=post_api_json["projects"]["default_project"]["id"],

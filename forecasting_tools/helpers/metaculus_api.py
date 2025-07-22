@@ -157,13 +157,23 @@ class MetaculusApi:
         group_question_mode: GroupQuestionMode = "exclude",
     ) -> MetaculusQuestion | list[MetaculusQuestion]:
         """
-        URL looks like https://www.metaculus.com/questions/28841/will-eric-adams-be-the-nyc-mayor-on-january-1-2025/
+        Handles both question and community URLs:
+        - Question: https://www.metaculus.com/questions/28841/...
+        - Community: https://www.metaculus.com/c/risk/38787/
         """
-        match = re.search(r"/questions/(\d+)", question_url)
-        if not match:
-            raise ValueError(f"Could not find question ID in URL: {question_url}")
-        question_id = int(match.group(1))
-        return cls.get_question_by_post_id(question_id, group_question_mode)
+        question_match = re.search(r"/questions/(\d+)", question_url)
+        if question_match:
+            post_id = int(question_match.group(1))
+            return cls.get_question_by_post_id(post_id, group_question_mode)
+
+        community_match = re.search(r"/c/[^/]+/(\d+)", question_url)
+        if community_match:
+            post_id = int(community_match.group(1))
+            return cls.get_question_by_post_id(post_id, group_question_mode)
+
+        raise ValueError(
+            f"Could not find question or collection ID in URL: {question_url}"
+        )
 
     @overload
     @classmethod

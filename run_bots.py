@@ -36,19 +36,25 @@ async def configure_and_run_bot(
 ) -> ForecastBot | list[ForecastReport | BaseException]:
 
     if "metaculus-cup" in mode:
+        token = mode.split("+")[0]
         chosen_tournament = MetaculusApi.CURRENT_METACULUS_CUP_ID
         skip_previously_forecasted_questions = False
-        token = mode.split("+")[0]
-    else:
+    elif "+" in mode:
+        parts = mode.split("+")
+        assert len(parts) == 2
+        token = parts[0]
+        chosen_tournament = parts[1]
+        skip_previously_forecasted_questions = False
+    elif "+" not in mode:
         chosen_tournament = MetaculusApi.CURRENT_AI_COMPETITION_ID
         skip_previously_forecasted_questions = True
         token = mode
+    else:
+        raise ValueError(f"Invalid mode: {mode}")
 
     bot = get_default_bot_dict()[token]["bot"]
     assert isinstance(bot, ForecastBot)
-    bot.skip_previously_forecasted_questions = (
-        skip_previously_forecasted_questions
-    )
+    bot.skip_previously_forecasted_questions = skip_previously_forecasted_questions
 
     if return_bot_dont_run:
         return bot
@@ -536,9 +542,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     }
 
     modes = list(mode_base_bot_mapping.keys())
-    bots: list[ForecastBot] = [
-        mode_base_bot_mapping[key]["bot"] for key in modes
-    ]
+    bots: list[ForecastBot] = [mode_base_bot_mapping[key]["bot"] for key in modes]
     for mode, bot in zip(modes, bots):
         if "sonar" in mode.lower():
             researcher = bot.get_llm("researcher", "llm")
@@ -547,9 +551,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
 
             assert researcher.model.startswith("perplexity/")
             assert (
-                researcher.litellm_kwargs["web_search_options"][
-                    "search_context_size"
-                ]
+                researcher.litellm_kwargs["web_search_options"]["search_context_size"]
                 == "high"
             )
             assert researcher.litellm_kwargs["reasoning_effort"] == "high"

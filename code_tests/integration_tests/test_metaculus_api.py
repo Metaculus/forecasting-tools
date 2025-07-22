@@ -140,6 +140,23 @@ class TestGetSpecificQuestions:
         ]:
             assert option in [question.group_question_option for question in questions]
 
+    def test_group_question_has_right_dates(self) -> None:
+        questions = MetaculusApi.get_question_by_url(
+            "https://www.metaculus.com/c/risk/38787/",
+            group_question_mode="unpack_subquestions",
+        )
+        assert isinstance(questions, list)
+        assert len(questions) == 2
+        high_risk_question = questions[0]
+        critical_risk_question = questions[1]
+
+        assert high_risk_question.scheduled_resolution_time == datetime(2036, 3, 1, 0)
+        assert critical_risk_question.scheduled_resolution_time == datetime(
+            2041, 3, 1, 0
+        )
+        assert high_risk_question.close_time == datetime(2036, 1, 1, 0)
+        assert critical_risk_question.close_time == datetime(2041, 1, 1, 0)
+
     def test_question_weight(self) -> None:
         question = MetaculusApi.get_question_by_post_id(
             38536
