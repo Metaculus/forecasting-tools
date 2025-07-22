@@ -32,7 +32,7 @@ Q = TypeVar("Q", bound=MetaculusQuestion)
 GroupQuestionMode = Literal["exclude", "unpack_subquestions"]
 """
 If group_question_mode is "exclude", then group questions will be removed from the list of questions.
-If group_question_mode is "expand_subquestions", then each subquestion in the group question will be added as a separate question.
+If group_question_mode is "unpack_subquestions", then each subquestion in the group question will be added as a separate question.
 """
 QuestionFullType = Literal[
     "binary", "numeric", "multiple_choice", "date", "group_of_questions", "conditional"
@@ -272,7 +272,7 @@ class MetaculusApi:
         api_filter = ApiFilter(
             allowed_tournaments=[tournament_id],
             allowed_statuses=["open"],
-            group_question_mode="unpack_subquestions",
+            group_question_mode=group_question_mode,
         )
         questions = asyncio.run(cls.get_questions_matching_filter(api_filter))
         logger.info(

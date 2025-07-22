@@ -9,10 +9,7 @@ from forecasting_tools.agents_and_tools.research.key_factors_researcher import (
     KeyFactorsResearcher,
     ScoredKeyFactor,
 )
-from forecasting_tools.data_models.questions import (
-    MetaculusQuestion,
-    QuestionState,
-)
+from forecasting_tools.data_models.questions import MetaculusQuestion, QuestionState
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
 from forecasting_tools.util import file_manipulation
 from forecasting_tools.util.custom_logger import CustomLogger
@@ -61,10 +58,8 @@ async def run_key_factors_on_tournament(
     if tournament_id is None:
         questions = post_id_or_string_question
     else:
-        tournament_questions = (
-            MetaculusApi.get_all_open_questions_from_tournament(
-                tournament_id,
-            )
+        tournament_questions = MetaculusApi.get_all_open_questions_from_tournament(
+            tournament_id,
         )
         open_questions = [
             question
@@ -86,9 +81,7 @@ async def run_key_factors_on_tournament(
     file_manipulation.write_json_file(file_path, results)
 
     results = file_manipulation.load_json_file(file_path)
-    formatted_output = _extract_all_markdown_info_from_key_results_file(
-        results
-    )
+    formatted_output = _extract_all_markdown_info_from_key_results_file(results)
 
     output_path = f"logs/forecasts/key_factors/key_factors_{date_string}.txt"
     file_manipulation.log_to_file(output_path, formatted_output)
@@ -127,9 +120,7 @@ async def _process_question(question: int | str | MetaculusQuestion) -> dict:
         "combined_markdown": f"## Background Information\n\n{background_info}\n\n## Key Factors\n\n{key_factor_markdown}\n\n*The above has been researched by AI and may have flaws*",
         "key_factors_markdown": key_factor_markdown,
         "background_info": background_info,
-        "key_factors": [
-            key_factor.model_dump_json() for key_factor in key_factors
-        ],
+        "key_factors": [key_factor.model_dump_json() for key_factor in key_factors],
         "question": metaculus_question.to_json(),
     }
     return return_value
