@@ -10,7 +10,7 @@ import random
 import re
 import time
 from datetime import datetime, timedelta
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, overload
 
 import requests
 import typeguard
@@ -134,11 +134,27 @@ class MetaculusApi:
         }
         cls._post_question_prediction(question_id, payload)
 
+    @overload
     @classmethod
     def get_question_by_url(
         cls,
         question_url: str,
-        group_question_mode: GroupQuestionMode = "unpack_subquestions",
+        group_question_mode: Literal["exclude"] = "exclude",
+    ) -> MetaculusQuestion: ...
+
+    @overload
+    @classmethod
+    def get_question_by_url(
+        cls,
+        question_url: str,
+        group_question_mode: GroupQuestionMode = "exclude",
+    ) -> MetaculusQuestion | list[MetaculusQuestion]: ...
+
+    @classmethod
+    def get_question_by_url(
+        cls,
+        question_url: str,
+        group_question_mode: GroupQuestionMode = "exclude",
     ) -> MetaculusQuestion | list[MetaculusQuestion]:
         """
         URL looks like https://www.metaculus.com/questions/28841/will-eric-adams-be-the-nyc-mayor-on-january-1-2025/
@@ -149,11 +165,27 @@ class MetaculusApi:
         question_id = int(match.group(1))
         return cls.get_question_by_post_id(question_id, group_question_mode)
 
+    @overload
     @classmethod
     def get_question_by_post_id(
         cls,
         post_id: int,
-        group_question_mode: GroupQuestionMode = "unpack_subquestions",
+        group_question_mode: Literal["exclude"] = "exclude",
+    ) -> MetaculusQuestion: ...
+
+    @overload
+    @classmethod
+    def get_question_by_post_id(
+        cls,
+        post_id: int,
+        group_question_mode: GroupQuestionMode = "exclude",
+    ) -> MetaculusQuestion | list[MetaculusQuestion]: ...
+
+    @classmethod
+    def get_question_by_post_id(
+        cls,
+        post_id: int,
+        group_question_mode: GroupQuestionMode = "exclude",
     ) -> MetaculusQuestion | list[MetaculusQuestion]:
         logger.info(f"Retrieving question details for question {post_id}")
         url = f"{cls.API_BASE_URL}/posts/{post_id}/"
@@ -172,6 +204,10 @@ class MetaculusApi:
         if len(metaculus_questions) == 1:
             return metaculus_questions[0]
         else:
+            if group_question_mode == "exclude":
+                raise ValueError(
+                    f"Expected 1 question but got {len(metaculus_questions)}. You probably accessed a group question. Group question mode is set to {group_question_mode}."
+                )
             return metaculus_questions
 
     @classmethod

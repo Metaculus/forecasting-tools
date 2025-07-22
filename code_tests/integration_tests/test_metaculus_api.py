@@ -99,7 +99,12 @@ class TestGetSpecificQuestions:
 
     def test_get_group_question_type_from_id(self) -> None:
         url = "https://www.metaculus.com/questions/38900/"
-        questions: list[MetaculusQuestion] = MetaculusApi.get_question_by_url(url)
+        questions: MetaculusQuestion | list[MetaculusQuestion] = (
+            MetaculusApi.get_question_by_url(
+                url, group_question_mode="unpack_subquestions"
+            )
+        )
+        assert isinstance(questions, list)
         for question in questions:
             assert isinstance(question, BinaryQuestion)
             assert question.id_of_post == 38900
@@ -126,6 +131,7 @@ class TestGetSpecificQuestions:
             assert question.close_time == datetime(2026, 10, 27, 4)
             assert isinstance(question.group_question_option, str)
             assert_basic_question_attributes_not_none(question, question.id_of_post)
+
         for option in [
             "United Torah Judaism",
             "Bennett 2026",
