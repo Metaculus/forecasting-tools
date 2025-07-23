@@ -98,6 +98,11 @@ class TestGetSpecificQuestions:
         assert_basic_question_attributes_not_none(question, post_id)
 
     def test_get_group_question_type_from_id(self) -> None:
+        # Other useful questions to test with (later):
+        # - Numeric, group Question - https://www.metaculus.com/questions/25053/number-of-wild-polio-cases/
+        # - Date group question - https://www.metaculus.com/c/risk/38787/dates-that-openai-reports-an-ai-reached-these-self-improvement-risk-levels/
+        # - Group binary https://www.metaculus.com/questions/38900/israeli-government-member-parties-following-2025-2026-election/
+
         url = "https://www.metaculus.com/questions/38900/"
         questions: MetaculusQuestion | list[MetaculusQuestion] = (
             MetaculusApi.get_question_by_url(
