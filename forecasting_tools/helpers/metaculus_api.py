@@ -10,7 +10,7 @@ import random
 import re
 import time
 from datetime import datetime, timedelta
-from typing import Any, Literal, TypeVar, overload
+from typing import Any, Callable, Literal, TypeVar, overload
 
 import requests
 import typeguard
@@ -37,6 +37,34 @@ If group_question_mode is "unpack_subquestions", then each subquestion in the gr
 QuestionFullType = Literal[
     "binary", "numeric", "multiple_choice", "date", "group_of_questions", "conditional"
 ]
+QuestionStateAsString = Literal[
+    "open", "upcoming", "resolved", "closed"
+]  # Also see QuestionState enum
+
+
+class ApiFilter(BaseModel):
+    num_forecasters_gte: int | None = None
+    allowed_types: list[QuestionBasicType] = [
+        "binary",
+        "numeric",
+        "multiple_choice",
+        "date",
+    ]
+    group_question_mode: GroupQuestionMode = "exclude"
+    allowed_statuses: list[QuestionStateAsString] | None = None
+    scheduled_resolve_time_gt: datetime | None = None
+    scheduled_resolve_time_lt: datetime | None = None
+    publish_time_gt: datetime | None = None
+    publish_time_lt: datetime | None = None
+    close_time_gt: datetime | None = None
+    close_time_lt: datetime | None = None
+    open_time_gt: datetime | None = None
+    open_time_lt: datetime | None = None
+    allowed_tournaments: list[str | int] | None = None
+    includes_bots_in_aggregates: bool | None = None
+    community_prediction_exists: bool | None = None
+    cp_reveal_time_gt: datetime | None = None
+    cp_reveal_time_lt: datetime | None = None
 
 
 class MetaculusApi:
@@ -576,6 +604,18 @@ class MetaculusApi:
         api_filter: ApiFilter,
         offset: int = 0,
     ) -> tuple[list[MetaculusQuestion], bool]:
+        url_params = cls._create_url_params_for_search(api_filter, offset)
+        questions = cls._get_questions_from_api(
+            url_params, api_filter.group_question_mode
+        )
+        questions_were_found_before_local_filter = len(questions) > 0
+        filtered_questions = cls._apply_local_filters(questions, api_filter)
+        return filtered_questions, questions_were_found_before_local_filter
+
+    @classmethod
+    def _create_url_params_for_search(
+        cls, api_filter: ApiFilter, offset: int = 0
+    ) -> dict[str, Any]:
         url_params: dict[str, Any] = {
             "limit": cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST,
             "offset": offset,
@@ -618,29 +658,24 @@ class MetaculusApi:
         if api_filter.allowed_tournaments:
             url_params["tournaments"] = api_filter.allowed_tournaments
 
-        questions = cls._get_questions_from_api(
-            url_params, api_filter.group_question_mode
-        )
-        questions_were_found_before_local_filter = len(questions) > 0
+        return url_params
 
+    @classmethod
+    def _apply_local_filters(
+        cls, input_questions: list[MetaculusQuestion], api_filter: ApiFilter
+    ) -> list[MetaculusQuestion]:
+        questions = copy.deepcopy(input_questions)
         if api_filter.allowed_types:
             questions = cls._filter_questions_by_type(
                 questions, api_filter.allowed_types
             )
 
+        if api_filter.allowed_statuses:
+            questions = cls._filter_by_status(questions, api_filter.allowed_statuses)
+
         if api_filter.num_forecasters_gte is not None:
             questions = cls._filter_questions_by_forecasters(
                 questions, api_filter.num_forecasters_gte
-            )
-
-        if api_filter.close_time_gt or api_filter.close_time_lt:
-            questions = cls._filter_questions_by_close_time(
-                questions, api_filter.close_time_gt, api_filter.close_time_lt
-            )
-
-        if api_filter.includes_bots_in_aggregates is not None:
-            questions = cls._filter_questions_by_includes_bots_in_aggregates(
-                questions, api_filter.includes_bots_in_aggregates
             )
 
         if api_filter.community_prediction_exists is not None:
@@ -654,6 +689,28 @@ class MetaculusApi:
             )
             questions = typeguard.check_type(questions, list[MetaculusQuestion])
 
+        if api_filter.close_time_gt or api_filter.close_time_lt:
+            questions = cls._filter_questions_by_close_time(
+                questions, api_filter.close_time_gt, api_filter.close_time_lt
+            )
+
+        if api_filter.open_time_gt or api_filter.open_time_lt:
+            questions = cls._filter_questions_by_open_time(
+                questions, api_filter.open_time_gt, api_filter.open_time_lt
+            )
+
+        if api_filter.scheduled_resolve_time_gt or api_filter.scheduled_resolve_time_lt:
+            questions = cls._filter_by_scheduled_resolve_time(
+                questions,
+                api_filter.scheduled_resolve_time_gt,
+                api_filter.scheduled_resolve_time_lt,
+            )
+
+        if api_filter.includes_bots_in_aggregates is not None:
+            questions = cls._filter_questions_by_includes_bots_in_aggregates(
+                questions, api_filter.includes_bots_in_aggregates
+            )
+
         if api_filter.cp_reveal_time_gt or api_filter.cp_reveal_time_lt:
             questions = cls._filter_questions_by_cp_reveal_time(
                 questions,
@@ -661,7 +718,7 @@ class MetaculusApi:
                 api_filter.cp_reveal_time_lt,
             )
 
-        return questions, questions_were_found_before_local_filter
+        return questions
 
     @classmethod
     def _filter_questions_by_type(
@@ -671,6 +728,16 @@ class MetaculusApi:
             question
             for question in questions
             if question.get_api_type_name() in allowed_types
+        ]
+
+    @classmethod
+    def _filter_by_status(
+        cls, questions: list[Q], statuses: list[QuestionStateAsString]
+    ) -> list[Q]:
+        return [
+            question
+            for question in questions
+            if question.state is not None and question.state.value in statuses
         ]
 
     @classmethod
@@ -695,23 +762,6 @@ class MetaculusApi:
         ]
 
     @classmethod
-    def _filter_questions_by_close_time(
-        cls,
-        questions: list[Q],
-        close_time_gt: datetime | None,
-        close_time_lt: datetime | None,
-    ) -> list[Q]:
-        questions_with_close_time: list[Q] = []
-        for question in questions:
-            if question.close_time is not None:
-                if close_time_gt and question.close_time <= close_time_gt:
-                    continue
-                if close_time_lt and question.close_time >= close_time_lt:
-                    continue
-                questions_with_close_time.append(question)
-        return questions_with_close_time
-
-    @classmethod
     def _filter_questions_by_community_prediction_exists(
         cls, questions: list[BinaryQuestion], community_prediction_exists: bool
     ) -> list[BinaryQuestion]:
@@ -723,45 +773,76 @@ class MetaculusApi:
         ]
 
     @classmethod
+    def _filter_by_date(
+        cls,
+        questions: list[Q],
+        date_field_getter: Callable[[Q], datetime | None],
+        date_gt: datetime | None,
+        date_lt: datetime | None,
+    ) -> list[Q]:
+        filtered_questions: list[Q] = []
+        for question in questions:
+            question_date = date_field_getter(question)
+            if question_date is not None:
+                if date_gt and question_date <= date_gt:
+                    continue
+                if date_lt and question_date >= date_lt:
+                    continue
+                filtered_questions.append(question)
+        return filtered_questions
+
+    @classmethod
+    def _filter_questions_by_close_time(
+        cls,
+        questions: list[Q],
+        close_time_gt: datetime | None,
+        close_time_lt: datetime | None,
+    ) -> list[Q]:
+        return cls._filter_by_date(
+            questions,
+            lambda q: q.close_time,
+            close_time_gt,
+            close_time_lt,
+        )
+
+    @classmethod
+    def _filter_by_scheduled_resolve_time(
+        cls,
+        questions: list[Q],
+        scheduled_resolve_time_gt: datetime | None,
+        scheduled_resolve_time_lt: datetime | None,
+    ) -> list[Q]:
+        return cls._filter_by_date(
+            questions,
+            lambda q: q.scheduled_resolution_time,
+            scheduled_resolve_time_gt,
+            scheduled_resolve_time_lt,
+        )
+
+    @classmethod
+    def _filter_questions_by_open_time(
+        cls,
+        questions: list[Q],
+        open_time_gt: datetime | None,
+        open_time_lt: datetime | None,
+    ) -> list[Q]:
+        return cls._filter_by_date(
+            questions,
+            lambda q: q.open_time,
+            open_time_gt,
+            open_time_lt,
+        )
+
+    @classmethod
     def _filter_questions_by_cp_reveal_time(
         cls,
         questions: list[Q],
         cp_reveal_time_gt: datetime | None,
         cp_reveal_time_lt: datetime | None,
     ) -> list[Q]:
-        questions_with_cp_reveal_time: list[Q] = []
-        for question in questions:
-            if question.cp_reveal_time is not None:
-                if cp_reveal_time_gt and question.cp_reveal_time <= cp_reveal_time_gt:
-                    continue
-                if cp_reveal_time_lt and question.cp_reveal_time >= cp_reveal_time_lt:
-                    continue
-                questions_with_cp_reveal_time.append(question)
-        return questions_with_cp_reveal_time
-
-
-class ApiFilter(BaseModel):
-    num_forecasters_gte: int | None = None
-    allowed_types: list[QuestionBasicType] = [
-        "binary",
-        "numeric",
-        "multiple_choice",
-        "date",
-    ]
-    group_question_mode: GroupQuestionMode = "exclude"
-    allowed_statuses: list[Literal["open", "upcoming", "resolved", "closed"]] | None = (
-        None
-    )
-    scheduled_resolve_time_gt: datetime | None = None
-    scheduled_resolve_time_lt: datetime | None = None
-    publish_time_gt: datetime | None = None
-    publish_time_lt: datetime | None = None
-    close_time_gt: datetime | None = None
-    close_time_lt: datetime | None = None
-    open_time_gt: datetime | None = None
-    open_time_lt: datetime | None = None
-    allowed_tournaments: list[str | int] | None = None
-    includes_bots_in_aggregates: bool | None = None
-    community_prediction_exists: bool | None = None
-    cp_reveal_time_gt: datetime | None = None
-    cp_reveal_time_lt: datetime | None = None
+        return cls._filter_by_date(
+            questions,
+            lambda q: q.cp_reveal_time,
+            cp_reveal_time_gt,
+            cp_reveal_time_lt,
+        )

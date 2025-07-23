@@ -115,6 +115,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
         question = MetaculusQuestion(
             # NOTE: Reminder - When adding new fields, consider if group questions
             #       need to be parsed differently (i.e. if the field information is part of the post_json)
+            #       Also, anything that filters on the question level needs a local filter added to MetaculusApi (since the site does not filter subquestions)
             state=question_state,
             question_text=question_json["title"],
             id_of_post=post_id,
