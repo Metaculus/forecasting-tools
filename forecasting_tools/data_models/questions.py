@@ -299,18 +299,16 @@ class BoundedQuestionMixin:
         )
 
     @classmethod
-    def _get_cdf_from_api_json(cls, api_json: dict) -> tuple[int, list[float] | None]:
+    def _get_cdf_size_from_json(cls, api_json: dict) -> int:
         try:
             outcome_count = api_json["question"]["scaling"]["inbound_outcome_count"]
             if outcome_count is None:
                 outcome_count = 200
             cdf_size = outcome_count + 1  # Add 1 to account for this being a cdf
-            cdf_x_axis = api_json["question"]["scaling"]["continuous_range"]
-            # assert len(cdf_x_axis) == cdf_size, f"CDF size is {cdf_size} but x_axis is {len(cdf_x_axis)} long"
         except KeyError:
             logger.warning("CDF not found in API JSON using defaults")
-            return 201, None
-        return cdf_size, cdf_x_axis
+            return 201
+        return cdf_size
 
 
 class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
@@ -374,8 +372,9 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
     open_upper_bound: bool
     open_lower_bound: bool
     zero_point: float | None = None
-    cdf_size: int = 201
-    cdf_x_axis: list[float] | None = None
+    cdf_size: int = (
+        201  # Normal numeric questions have 201 points, but discrete questions have fewer
+    )
 
     @property
     def numeric_resolution(self) -> NumericResolution | None:
@@ -396,7 +395,6 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
         ) = cls._get_bounds_from_api_json(api_json)
         assert isinstance(upper_bound, float)
         assert isinstance(lower_bound, float)
-        cdf_size, cdf_x_axis = cls._get_cdf_from_api_json(api_json)
 
         return NumericQuestion(
             upper_bound=upper_bound,
@@ -404,8 +402,7 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
             open_upper_bound=open_upper_bound,
             open_lower_bound=open_lower_bound,
             zero_point=zero_point,
-            cdf_size=cdf_size,
-            cdf_x_axis=cdf_x_axis,
+            cdf_size=cls._get_cdf_size_from_json(api_json),
             **normal_metaculus_question.model_dump(),
         )
 

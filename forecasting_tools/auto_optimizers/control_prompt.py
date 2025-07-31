@@ -1,4 +1,3 @@
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.auto_optimizers.customizable_bot import (
     CustomizableBot,
     PresetResearchStrategy,
@@ -28,12 +27,7 @@ class ControlPrompt:
 
     @classmethod
     def get_control_combined_prompt(cls) -> str:
-        return clean_indents(
-            f"""{_CONTROL_RESEARCH_PROMPT}
-            {CustomizableBot.RESEARCH_REASONING_SPLIT_STRING}
-            {_CONTROL_REASONING_PROMPT}
-            """
-        )
+        return f"{_CONTROL_RESEARCH_PROMPT}{CustomizableBot.RESEARCH_REASONING_SPLIT_STRING}{_CONTROL_REASONING_PROMPT}"
 
     @classmethod
     def get_control_research_tools(cls) -> list[ResearchTool]:
@@ -45,12 +39,7 @@ class ControlPrompt:
 
     @classmethod
     def get_seed_combined_prompt(cls) -> str:
-        return clean_indents(
-            f"""{_SEED_RESEARCH_PROMPT}
-            {CustomizableBot.RESEARCH_REASONING_SPLIT_STRING}
-            {_CONTROL_REASONING_PROMPT}
-            """
-        )
+        return f"{_SEED_RESEARCH_PROMPT}{CustomizableBot.RESEARCH_REASONING_SPLIT_STRING}{_CONTROL_REASONING_PROMPT}"
 
     @classmethod
     def version(cls) -> str:

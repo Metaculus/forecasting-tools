@@ -282,14 +282,21 @@ class NumericReport(ForecastReport):
 
     async def publish_report_to_metaculus(self) -> None:
         if self.question.id_of_question is None:
-            raise ValueError("Question ID is None")
-        cdf_probabilities = [
-            percentile.percentile for percentile in self.prediction.cdf
-        ]
+            raise ValueError("Publishing to Metaculus requires a question ID")
+
         if self.question.id_of_post is None:
             raise ValueError(
                 "Publishing to Metaculus requires a post ID for the question"
             )
+
+        prediction = self.prediction
+        if prediction.cdf_size is None:
+            prediction = prediction.from_question(
+                prediction.declared_percentiles, self.question
+            )
+
+        cdf_probabilities = [percentile.percentile for percentile in prediction.cdf]
+
         MetaculusApi.post_numeric_question_prediction(
             self.question.id_of_question, cdf_probabilities
         )

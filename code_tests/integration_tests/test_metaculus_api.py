@@ -58,8 +58,6 @@ class TestGetSpecificQuestions:
         assert not question.open_lower_bound
         assert question.open_upper_bound
         assert question.cdf_size == 201
-        assert question.cdf_x_axis is not None
-        assert len(question.cdf_x_axis) == 201
         assert question.unit_of_measure == "years old"
         assert question.question_weight == 1.0
         assert question.get_question_type() == "numeric"
@@ -75,8 +73,6 @@ class TestGetSpecificQuestions:
         assert question.lower_bound == -0.5
         assert question.upper_bound == 7.5
         assert question.cdf_size == 9
-        assert question.cdf_x_axis is not None
-        assert len(question.cdf_x_axis) == 9
         assert question.unit_of_measure == "strikes"
         assert not question.open_lower_bound
         assert question.open_upper_bound
