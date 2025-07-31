@@ -844,6 +844,10 @@ class ForecastBot(ABC):
 
         if os.getenv("OPENAI_API_KEY"):
             summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+        elif os.getenv("OPENROUTER_API_KEY"):
+            summarizer = GeneralLlm(
+                model="openrouter/openai/gpt-4o-mini", temperature=0.3
+            )
         elif os.getenv("METACULUS_TOKEN"):
             summarizer = GeneralLlm(model="metaculus/gpt-4o-mini", temperature=0.3)
         else:

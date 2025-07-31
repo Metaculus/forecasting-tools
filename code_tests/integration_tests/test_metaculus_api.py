@@ -10,6 +10,7 @@ from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     CanceledResolution,
     DateQuestion,
+    DiscreteQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
@@ -56,25 +57,45 @@ class TestGetSpecificQuestions:
         assert question.upper_bound == 200
         assert not question.open_lower_bound
         assert question.open_upper_bound
+        assert question.cdf_size == 201
+        assert question.cdf_x_axis is not None
+        assert len(question.cdf_x_axis) == 201
         assert question.unit_of_measure == "years old"
         assert question.question_weight == 1.0
         assert question.get_question_type() == "numeric"
         assert question.question_type == "numeric"
         assert_basic_question_attributes_not_none(question, question_id)
 
-    @pytest.mark.skip(reason="Date questions are not fully supported yet")
+    def test_get_discrete_question_from_id(self) -> None:
+        question = MetaculusApi.get_question_by_url(
+            "https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/"
+        )
+        assert isinstance(question, DiscreteQuestion)
+        assert question.id_of_post == 38880
+        assert question.lower_bound == -0.5
+        assert question.upper_bound == 7.5
+        assert question.cdf_size == 9
+        assert question.cdf_x_axis is not None
+        assert len(question.cdf_x_axis) == 9
+        assert question.unit_of_measure == "strikes"
+        assert not question.open_lower_bound
+        assert question.open_upper_bound
+        assert question.get_question_type() == "discrete"
+        assert question.get_api_type_name() == "discrete"
+
     def test_get_date_question_type_from_id(self) -> None:
         question_id = DataOrganizer.get_example_post_id_for_question_type(DateQuestion)
         question = MetaculusApi.get_question_by_post_id(question_id)
         assert isinstance(question, DateQuestion)
         assert question_id == question.id_of_post
-        assert question.lower_bound == datetime(2020, 8, 25)
-        assert question.upper_bound == datetime(2199, 12, 25)
-        assert question.open_lower_bound
-        assert not question.open_upper_bound
+        assert question.lower_bound == datetime(1902, 12, 31)
+        assert question.upper_bound == datetime(2084, 12, 31)
+        assert not question.open_lower_bound
+        assert question.open_upper_bound
         assert question.question_weight == 1.0
         assert question.get_question_type() == "date"
         assert question.question_type == "date"
+        assert question.state == QuestionState.OPEN
         assert_basic_question_attributes_not_none(question, question_id)
 
     def test_get_multiple_choice_question_type_from_id(self) -> None:
@@ -382,14 +403,9 @@ class TestQuestionEndpoint:
             ForecastingTestManager.TOURN_WITH_OPENNESS_AND_TYPE_VARIATIONS
         )
         score = 0
-        if any(isinstance(question, BinaryQuestion) for question in questions):
-            score += 1
-        if any(isinstance(question, NumericQuestion) for question in questions):
-            score += 1
-        if any(isinstance(question, DateQuestion) for question in questions):
-            score += 1
-        if any(isinstance(question, MultipleChoiceQuestion) for question in questions):
-            score += 1
+        for question_type in DataOrganizer.get_all_question_types():
+            if any(isinstance(question, question_type) for question in questions):
+                score += 1
         assert score > 1, "There needs to be multiple question types in the tournament"
 
         for question in questions:

@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     DateQuestion,
+    DiscreteQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
@@ -49,6 +50,7 @@ class ApiFilter(BaseModel):
         "numeric",
         "multiple_choice",
         "date",
+        "discrete",
     ]
     group_question_mode: GroupQuestionMode = "exclude"
     allowed_statuses: list[QuestionStateAsString] | None = None
@@ -138,8 +140,6 @@ class MetaculusApi:
         In this case we use the cdf.
         """
         logger.info(f"Posting prediction on question {question_id}")
-        if len(cdf_values) != 201:
-            raise ValueError("CDF must contain exactly 201 values")
         if not all(0 <= x <= 1 for x in cdf_values):
             raise ValueError("All CDF values must be between 0 and 1")
         if not all(a <= b for a, b in zip(cdf_values, cdf_values[1:])):
@@ -470,6 +470,8 @@ class MetaculusApi:
         question_type_string = post_json["question"]["type"]  # type: ignore
         if question_type_string == BinaryQuestion.get_api_type_name():
             question_type = BinaryQuestion
+        elif question_type_string == DiscreteQuestion.get_api_type_name():
+            question_type = DiscreteQuestion
         elif question_type_string == NumericQuestion.get_api_type_name():
             question_type = NumericQuestion
         elif question_type_string == MultipleChoiceQuestion.get_api_type_name():

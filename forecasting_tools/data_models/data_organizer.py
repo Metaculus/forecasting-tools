@@ -8,12 +8,14 @@ from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOptionList,
 )
 from forecasting_tools.data_models.numeric_report import (
+    DiscreteReport,
     NumericDistribution,
     NumericReport,
 )
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     DateQuestion,
+    DiscreteQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
@@ -29,8 +31,14 @@ class TypeMapping(BaseModel):
 
 
 PredictionTypes = NumericDistribution | PredictedOptionList | float
-QuestionTypes = NumericQuestion | DateQuestion | MultipleChoiceQuestion | BinaryQuestion
-ReportTypes = NumericReport | MultipleChoiceReport | BinaryReport
+QuestionTypes = (
+    NumericQuestion
+    | DateQuestion
+    | MultipleChoiceQuestion
+    | BinaryQuestion
+    | DiscreteQuestion
+)
+ReportTypes = NumericReport | MultipleChoiceReport | BinaryReport | DiscreteReport
 
 
 class DataOrganizer:
@@ -39,6 +47,11 @@ class DataOrganizer:
             question_type=NumericQuestion,
             test_post_id=14333,  # https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
             report_type=NumericReport,
+        ),
+        TypeMapping(
+            question_type=DiscreteQuestion,
+            test_post_id=38880,  # https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
+            report_type=DiscreteReport,
         ),
         TypeMapping(
             question_type=DateQuestion,

@@ -1,13 +1,7 @@
 import os
 
 from forecasting_tools.data_models.data_organizer import DataOrganizer
-from forecasting_tools.data_models.questions import (
-    BinaryQuestion,
-    DateQuestion,
-    MetaculusQuestion,
-    MultipleChoiceQuestion,
-    NumericQuestion,
-)
+from forecasting_tools.data_models.questions import DateQuestion, MetaculusQuestion
 
 
 def test_metaculus_question_is_jsonable() -> None:
@@ -31,33 +25,20 @@ def test_metaculus_question_is_jsonable() -> None:
 
 
 def _assert_correct_number_of_questions(questions: list[MetaculusQuestion]) -> None:
-    numeric_questions = [
-        question for question in questions if isinstance(question, NumericQuestion)
-    ]
-    binary_questions = [
-        question for question in questions if isinstance(question, BinaryQuestion)
-    ]
-    multiple_choice_questions = [
-        question
-        for question in questions
-        if isinstance(question, MultipleChoiceQuestion)
-    ]
-    date_questions = [
-        question for question in questions if isinstance(question, DateQuestion)
-    ]
+    for question_type in DataOrganizer.get_all_question_types():
+        questions_of_type = [
+            question for question in questions if isinstance(question, question_type)
+        ]
+        if question_type == DateQuestion:
+            assert (
+                len(questions_of_type) == 2
+            ), f"Expected 2 {question_type} questions, got {len(questions_of_type)}"
+        else:
+            assert (
+                len(questions_of_type) > 0
+            ), f"Expected > 0 {question_type} questions, got {len(questions_of_type)}"
 
-    assert len(numeric_questions) > 0
-    assert len(binary_questions) > 0
-    assert len(multiple_choice_questions) > 0
-    assert len(date_questions) == 2  # Consider adding explicit numbers above
-
-    for question in numeric_questions:
-        assert question.question_type == "numeric"
-    for question in binary_questions:
-        assert question.question_type == "binary"
-    for question in multiple_choice_questions:
-        assert question.question_type == "multiple_choice"
-    for question in date_questions:
-        assert question.question_type == "date"
-    for question in questions:
-        assert question.get_question_type() is not None
+        for question in questions_of_type:
+            api_type_name = question_type.get_api_type_name()  # type: ignore
+            assert question.get_question_type() == api_type_name
+            assert question.question_type == api_type_name  # type: ignore

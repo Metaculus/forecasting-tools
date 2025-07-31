@@ -6,7 +6,7 @@ import numpy as np
 from pydantic import BaseModel, field_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.data_models.questions import NumericQuestion
+from forecasting_tools.data_models.questions import DiscreteQuestion, NumericQuestion
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,23 @@ class NumericDistribution(BaseModel):
     upper_bound: float
     lower_bound: float
     zero_point: float | None
+    cdf_size: int | None = (
+        None  # Normal numeric questions have 201 points, but discrete questions have fewer
+    )
+
+    @classmethod
+    def from_question(
+        cls, percentiles: list[Percentile], question: NumericQuestion
+    ) -> NumericDistribution:
+        return NumericDistribution(
+            declared_percentiles=percentiles,
+            open_upper_bound=question.open_upper_bound,
+            open_lower_bound=question.open_lower_bound,
+            upper_bound=question.upper_bound,
+            lower_bound=question.lower_bound,
+            zero_point=question.zero_point,
+            cdf_size=question.cdf_size,
+        )
 
     @property
     def inversed_expected_log_score(self) -> float | None:
@@ -53,7 +70,7 @@ class NumericDistribution(BaseModel):
     @property
     def cdf(self) -> list[Percentile]:
         """
-        Turns a list of percentiles into a full distribution with 201 points
+        Turns a list of percentiles into a full distribution (201 points, if numeric, otherwise based on discrete values)
         between upper and lower bound (taking into account probability assigned above and below the bounds)
         that is compatible with Metaculus questions.
 
@@ -67,6 +84,7 @@ class NumericDistribution(BaseModel):
         upper_bound = self.upper_bound
         lower_bound = self.lower_bound
         zero_point = self.zero_point
+        cdf_size = self.cdf_size or 201
 
         # Convert to dict so I don't have to rewrite this whole function
         percentile_values: dict[float, float] = {
@@ -124,7 +142,7 @@ class NumericDistribution(BaseModel):
                 scale = lambda x: range_min + (range_max - range_min) * (
                     deriv_ratio**x - 1
                 ) / (deriv_ratio - 1)
-            return [scale(x) for x in np.linspace(0, 1, 201)]
+            return [scale(x) for x in np.linspace(0, 1, cdf_size)]
 
         cdf_xaxis = generate_cdf_locations(range_min, range_max, zero_point)
 
@@ -172,7 +190,7 @@ class NumericDistribution(BaseModel):
             Percentile(value=value, percentile=percentile)
             for value, percentile in zip(cdf_xaxis, continuous_cdf)
         ]
-        assert len(percentiles) == 201
+        assert len(percentiles) == cdf_size
 
         # Validate minimum spacing between consecutive values
         for i in range(len(percentiles) - 1):
@@ -245,14 +263,7 @@ class NumericReport(ForecastReport):
         if not predictions:
             raise ValueError("No predictions to aggregate")
 
-        return NumericDistribution(
-            declared_percentiles=median_cdf,
-            open_upper_bound=question.open_upper_bound,
-            open_lower_bound=question.open_lower_bound,
-            upper_bound=question.upper_bound,
-            lower_bound=question.lower_bound,
-            zero_point=question.zero_point,
-        )
+        return NumericDistribution.from_question(median_cdf, question)
 
     @classmethod
     def make_readable_prediction(cls, prediction: NumericDistribution) -> str:
@@ -283,3 +294,8 @@ class NumericReport(ForecastReport):
             self.question.id_of_question, cdf_probabilities
         )
         MetaculusApi.post_question_comment(self.question.id_of_post, self.explanation)
+
+
+class DiscreteReport(NumericReport):
+    question: DiscreteQuestion
+    prediction: NumericDistribution
