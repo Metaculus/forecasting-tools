@@ -93,6 +93,7 @@ class MetaculusApi:
     CURRENT_QUARTERLY_CUP_ID = "metaculus-cup"  # Consider this parameter deprecated since quarterly cup is no longer active
     METACULUS_CUP_2025_1_ID = 32726
     CURRENT_METACULUS_CUP_ID = "metaculus-cup"
+    AI_2027_TOURNAMENT_ID = "ai-2027"
     CURRENT_AI_COMPETITION_ID = AI_COMPETITION_ID_Q2
     TEST_QUESTION_URLS = [
         "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary

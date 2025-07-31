@@ -295,7 +295,7 @@ class TestPosting:
             MetaculusApi.post_binary_question_prediction(question_id, 1.1)
 
 
-class TestQuestionEndpoint:
+class TestPostEndpoint:
     def test_questions_returned_from_list_questions(self) -> None:
         if ForecastingTestManager.metaculus_cup_is_not_active():
             pytest.skip("Quarterly cup is not active")
@@ -398,11 +398,9 @@ class TestQuestionEndpoint:
         questions = MetaculusApi.get_all_open_questions_from_tournament(
             ForecastingTestManager.TOURN_WITH_OPENNESS_AND_TYPE_VARIATIONS
         )
-        score = 0
         for question_type in DataOrganizer.get_all_question_types():
-            if any(isinstance(question, question_type) for question in questions):
-                score += 1
-        assert score > 1, "There needs to be multiple question types in the tournament"
+            assert any(isinstance(question, question_type) for question in questions)
+        assert len(questions) == 19
 
         for question in questions:
             assert question.state == QuestionState.OPEN

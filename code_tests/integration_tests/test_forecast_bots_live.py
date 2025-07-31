@@ -53,6 +53,21 @@ async def test_predicts_test_question(
     assert updated_question.already_forecasted
 
 
+async def test_predicts_ai_2027_tournament() -> None:
+    # This tournament has all questions end in 2 years, and has at least one of every question type (binary, numeric, multiple choice, discrete, date)
+    bot = TemplateBot(
+        llms={
+            "default": GeneralLlm(
+                model="openrouter/deepseek/deepseek-r1", temperature=None
+            )
+        },
+        predictions_per_research_report=3,
+        publish_reports_to_metaculus=True,
+    )
+    reports = await bot.forecast_on_tournament("ai-2027")
+    bot.log_report_summary(reports)
+
+
 async def test_collects_reports_on_open_questions(mocker: Mock) -> None:
     if ForecastingTestManager.metaculus_cup_is_not_active():
         pytest.skip("Quarterly cup is not active")

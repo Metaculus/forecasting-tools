@@ -61,9 +61,9 @@ class NumericDistribution(BaseModel):
         cls: NumericDistribution, percentiles: list[Percentile]
     ) -> list[Percentile]:
         for i in range(len(percentiles) - 1):
-            if percentiles[i].percentile >= percentiles[i + 1].percentile:
+            if percentiles[i].percentile > percentiles[i + 1].percentile:
                 raise ValueError("Percentiles must be in strictly increasing order")
-            if percentiles[i].value >= percentiles[i + 1].value:
+            if percentiles[i].value > percentiles[i + 1].value:
                 raise ValueError("Values must be in strictly increasing order")
         return percentiles
 

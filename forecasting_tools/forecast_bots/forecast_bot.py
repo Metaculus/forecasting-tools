@@ -145,6 +145,21 @@ class ForecastBot(ABC):
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
         questions = MetaculusApi.get_all_open_questions_from_tournament(tournament_id)
+        supported_question_types = [
+            NumericQuestion,
+            MultipleChoiceQuestion,
+            BinaryQuestion,
+        ]
+        supported_questions = [
+            question
+            for question in questions
+            if isinstance(question, tuple(supported_question_types))
+        ]
+        if len(supported_questions) != len(questions):
+            logger.warning(
+                f"Skipping {len(questions) - len(supported_questions)} questions that are not supported (probably date questions)"
+            )
+        questions = supported_questions
         return await self.forecast_questions(questions, return_exceptions)
 
     @overload
