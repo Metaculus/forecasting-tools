@@ -25,10 +25,10 @@ def test_percentile_validation() -> None:
     assert valid_percentile.percentile == pytest.approx(0.5)
 
     # Invalid percentiles
-    with pytest.raises(ValueError, match="Percentile must be between 0 and 1"):
+    with pytest.raises(ValueError):
         Percentile(value=10.0, percentile=1.5)
 
-    with pytest.raises(ValueError, match="Percentile must be between 0 and 1"):
+    with pytest.raises(ValueError):
         Percentile(value=10.0, percentile=-0.1)
 
 

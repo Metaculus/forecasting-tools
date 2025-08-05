@@ -878,13 +878,17 @@ class ForecastBot(ABC):
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
         elif os.getenv("OPENROUTER_API_KEY"):
             researcher = GeneralLlm(
-                model="openrouter/perplexity/sonar-reasoning", temperature=0.1
+                model="openrouter/openai/gpt-4.1:online", temperature=0.1
             )
         elif os.getenv("EXA_API_KEY"):
             researcher = f"smart-searcher/{main_default_llm.model}"
         elif os.getenv("OPENAI_API_KEY"):
             researcher = GeneralLlm(
                 model="openai/gpt-4o-search-preview", temperature=0.1
+            )
+        elif os.getenv("METACULUS_TOKEN"):
+            researcher = GeneralLlm(
+                model="metaculus/gpt-4o-search-preview", temperature=0.1
             )
         else:
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
@@ -896,6 +900,10 @@ class ForecastBot(ABC):
         elif os.getenv("ANTHROPIC_API_KEY"):
             parser = GeneralLlm(
                 model="anthropic/claude-3-5-sonnet-20241022", temperature=0.3
+            )
+        elif os.getenv("METACULUS_TOKEN"):
+            parser = GeneralLlm(
+                model="metaculus/gpt-4o-search-preview", temperature=0.3
             )
         else:
             parser = GeneralLlm(model="gpt-4o-mini", temperature=0.3)

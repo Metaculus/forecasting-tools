@@ -32,7 +32,7 @@ def test_metaculus_question_is_jsonable() -> None:
 def _assert_correct_number_of_questions(questions: list[MetaculusQuestion]) -> None:
     for question_type in DataOrganizer.get_all_question_types():
         questions_of_type = [
-            question for question in questions if isinstance(question, question_type)
+            question for question in questions if type(question) == question_type
         ]
         if question_type == DateQuestion:
             assert (
@@ -48,8 +48,8 @@ def _assert_correct_number_of_questions(questions: list[MetaculusQuestion]) -> N
             assert question.get_question_type() == api_type_name
             assert question.question_type == api_type_name  # type: ignore
 
-            if isinstance(question, NumericQuestion):
+            if type(question) is NumericQuestion:
                 assert question.cdf_size == 201
-            elif isinstance(question, DiscreteQuestion):
+            elif type(question) is DiscreteQuestion:
                 assert question.cdf_size is not None
                 assert question.cdf_size < 201

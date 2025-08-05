@@ -28,7 +28,10 @@ logger = logging.getLogger(__name__)
 class FallTemplateBot2025(ForecastBot):
     """
     This is a copy of the template bot for Fall 2025 Metaculus AI Tournament.
-    The official bots on the leaderboard use AskNews in Fall.
+    This bot is what is used by Metaculus in our benchmark, but is also provided as a template for new bot makers.
+    This template is "use at your own risk", and though we have covered most test cases
+    in forecasting-tools it is worth double checking key components locally.
+
     Main changes since Q2:
     - An LLM now parses the final forecast output (rather than programmatic parsing)
     - Added resolution criteria and fine print explicitly to the research prompt
