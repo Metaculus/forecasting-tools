@@ -88,6 +88,9 @@ class MetaculusQuestion(BaseModel, Jsonable):
         ),
         default_factory=dict,
     )
+    custom_metadata: dict = Field(
+        default_factory=dict
+    )  # Additional metadata not tracked above or through the Metaculus API
 
     @classmethod
     def from_metaculus_api_json(cls, post_api_json: dict) -> MetaculusQuestion:
@@ -310,6 +313,18 @@ class BoundedQuestionMixin:
             return 201
         return cdf_size
 
+    @classmethod
+    def _get_nominal_bounds_from_json(
+        cls, api_json: dict
+    ) -> tuple[float | None, float | None]:
+        try:
+            nominal_lower_bound = api_json["question"]["scaling"]["nominal_min"]
+            nominal_upper_bound = api_json["question"]["scaling"]["nominal_max"]
+        except KeyError:
+            nominal_lower_bound = None
+            nominal_upper_bound = None
+        return nominal_lower_bound, nominal_upper_bound
+
 
 class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
     question_type: Literal["date"] = "date"
@@ -375,6 +390,8 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
     cdf_size: int = (
         201  # Normal numeric questions have 201 points, but discrete questions have fewer
     )
+    nominal_upper_bound: float | None = None
+    nominal_lower_bound: float | None = None
 
     @property
     def numeric_resolution(self) -> NumericResolution | None:
@@ -396,6 +413,10 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
         assert isinstance(upper_bound, float)
         assert isinstance(lower_bound, float)
 
+        nominal_lower_bound, nominal_upper_bound = cls._get_nominal_bounds_from_json(
+            api_json
+        )
+
         return NumericQuestion(
             upper_bound=upper_bound,
             lower_bound=lower_bound,
@@ -403,6 +424,8 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
             open_lower_bound=open_lower_bound,
             zero_point=zero_point,
             cdf_size=cls._get_cdf_size_from_json(api_json),
+            nominal_upper_bound=nominal_upper_bound,
+            nominal_lower_bound=nominal_lower_bound,
             **normal_metaculus_question.model_dump(),
         )
 

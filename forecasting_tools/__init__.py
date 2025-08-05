@@ -52,6 +52,9 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm as GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager as MonetaryCostManager,
 )
+from forecasting_tools.ai_models.resource_managers.refreshing_bucket_rate_limiter import (
+    RefreshingBucketRateLimiter as RefreshingBucketRateLimiter,
+)
 from forecasting_tools.auto_optimizers.bot_optimizer import BotOptimizer as BotOptimizer
 from forecasting_tools.cp_benchmarking.benchmark_displayer import (
     run_benchmark_streamlit_page as run_benchmark_streamlit_page,

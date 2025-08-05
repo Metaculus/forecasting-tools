@@ -32,10 +32,11 @@ logger = logging.getLogger(__name__)
 class TestGetSpecificQuestions:
     def test_get_binary_question_type_from_id(self) -> None:
         # Test question w/ <1% probability: https://www.metaculus.com/questions/578/human-extinction-by-2100/
-        post_id = DataOrganizer.get_example_post_id_for_question_type(BinaryQuestion)
-        question = MetaculusApi.get_question_by_post_id(post_id)
+        question = MetaculusApi.get_question_by_url(
+            "https://www.metaculus.com/questions/578/human-extinction-by-2100/"
+        )
         assert isinstance(question, BinaryQuestion)
-        assert post_id == question.id_of_post
+        assert question.id_of_post == 578
         assert question.community_prediction_at_access_time is not None
         assert question.community_prediction_at_access_time <= 0.03
         assert question.state == QuestionState.OPEN
@@ -44,17 +45,18 @@ class TestGetSpecificQuestions:
         assert question.typed_resolution is None
         assert question.get_question_type() == "binary"
         assert question.question_type == "binary"
-        assert_basic_question_attributes_not_none(question, post_id)
+        assert_basic_question_attributes_not_none(question, question.id_of_post)
 
     def test_get_numeric_question_type_from_id(self) -> None:
-        question_id = DataOrganizer.get_example_post_id_for_question_type(
-            NumericQuestion
+        question = MetaculusApi.get_question_by_url(
+            "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/"
         )
-        question = MetaculusApi.get_question_by_post_id(question_id)
         assert isinstance(question, NumericQuestion)
-        assert question_id == question.id_of_post
+        assert question.id_of_post == 14333
         assert question.lower_bound == 0
         assert question.upper_bound == 200
+        assert question.nominal_lower_bound == 0
+        assert question.nominal_upper_bound == 200
         assert not question.open_lower_bound
         assert question.open_upper_bound
         assert question.cdf_size == 201
@@ -62,7 +64,7 @@ class TestGetSpecificQuestions:
         assert question.question_weight == 1.0
         assert question.get_question_type() == "numeric"
         assert question.question_type == "numeric"
-        assert_basic_question_attributes_not_none(question, question_id)
+        assert_basic_question_attributes_not_none(question, question.id_of_post)
 
     def test_get_discrete_question_from_id(self) -> None:
         question = MetaculusApi.get_question_by_url(
@@ -72,6 +74,8 @@ class TestGetSpecificQuestions:
         assert question.id_of_post == 38880
         assert question.lower_bound == -0.5
         assert question.upper_bound == 7.5
+        assert question.nominal_lower_bound == 0
+        assert question.nominal_upper_bound == 7
         assert question.cdf_size == 9
         assert question.unit_of_measure == "strikes"
         assert not question.open_lower_bound

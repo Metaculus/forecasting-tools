@@ -13,6 +13,7 @@ from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.bot_lists import (
     get_all_bot_question_type_pairs_for_cheap_tests,
+    get_all_bots_for_doing_cheap_tests,
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
@@ -53,17 +54,14 @@ async def test_predicts_test_question(
     assert updated_question.already_forecasted
 
 
-async def test_predicts_ai_2027_tournament() -> None:
-    # This tournament has all questions end in 2 years, and has at least one of every question type (binary, numeric, multiple choice, discrete, date)
-    bot = TemplateBot(
-        llms={
-            "default": GeneralLlm(
-                model="openrouter/deepseek/deepseek-r1", temperature=None
-            )
-        },
-        predictions_per_research_report=3,
-        publish_reports_to_metaculus=True,
-    )
+@pytest.mark.parametrize(
+    "bot",
+    get_all_bots_for_doing_cheap_tests(),
+)
+async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
+    # This tournament has all questions end in 2 years,
+    # and has at least one of every question type (binary, numeric, multiple choice, discrete, date)
+    bot.publish_reports_to_metaculus = True
     reports = await bot.forecast_on_tournament("ai-2027")
     bot.log_report_summary(reports)
 
