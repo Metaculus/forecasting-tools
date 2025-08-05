@@ -31,6 +31,8 @@ class FallTemplateBot2025(ForecastBot):
     Main changes since Q2:
     - An LLM now parses the final forecast output (rather than programmatic parsing)
     - Added resolution criteria and fine print explicitly to the research prompt
+    - Previously in the prompt, nothing about upper/lower bound was shown when the bounds were open. Now a suggestion is made when this is the case.
+    - Support for nominal bounds was added (i.e. when there are discrete questions and normal upper/lower bounds are not as intuitive)
 
     The main entry point of this bot is `forecast_on_tournament` in the parent class.
     See the script at the bottom of the file for more details on how to run the bot.
@@ -77,10 +79,9 @@ class FallTemplateBot2025(ForecastBot):
                 Question:
                 {question.question_text}
 
-                Resolution Criteria:
+                This question's outcome will be determined by the specific criteria below:
                 {question.resolution_criteria}
 
-                Fine Print:
                 {question.fine_print}
                 """
             )
@@ -287,17 +288,27 @@ class FallTemplateBot2025(ForecastBot):
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
     ) -> tuple[str, str]:
+        if question.nominal_upper_bound is not None:
+            upper_bound_number = question.nominal_upper_bound
+        else:
+            upper_bound_number = question.upper_bound
+        if question.nominal_lower_bound is not None:
+            lower_bound_number = question.nominal_lower_bound
+        else:
+            lower_bound_number = question.lower_bound
+
         if question.open_upper_bound:
-            upper_bound_message = ""
+            upper_bound_message = f"The question creator thinks the number is likely not higher than {upper_bound_number}."
         else:
             upper_bound_message = (
-                f"The outcome can not be higher than {question.upper_bound}."
+                f"The outcome can not be higher than {upper_bound_number}."
             )
+
         if question.open_lower_bound:
-            lower_bound_message = ""
+            lower_bound_message = f"The question creator thinks the number is likely not lower than {lower_bound_number}."
         else:
             lower_bound_message = (
-                f"The outcome can not be lower than {question.lower_bound}."
+                f"The outcome can not be lower than {lower_bound_number}."
             )
         return upper_bound_message, lower_bound_message
 
