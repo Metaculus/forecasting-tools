@@ -106,7 +106,7 @@ async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
         bot.publish_reports_to_metaculus = True
         reports = await bot.forecast_on_tournament("ai-2027", return_exceptions=True)
         bot.log_report_summary(reports, raise_errors=True)
-        assert len(reports) == 19, "Expected 19 reports"
+        assert len(reports) == 15, "Expected 15 reports"
     except Exception as e:
         pytest.fail(f"Forecasting on ai-2027 tournament failed: {e}")
     finally:

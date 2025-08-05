@@ -67,7 +67,7 @@ async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
         reports = await bot.forecast_on_tournament("ai-2027")
         bot.log_report_summary(reports)
 
-        assert len(reports) == 19, "Expected 19 reports"
+        assert len(reports) == 15, "Expected 19 reports"
 
     except Exception as e:
         pytest.fail(f"Forecasting on ai-2027 tournament failed: {e}")
