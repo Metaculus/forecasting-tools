@@ -863,6 +863,10 @@ class ForecastBot(ABC):
             summarizer = GeneralLlm(
                 model="openrouter/openai/gpt-4o-mini", temperature=0.3
             )
+        elif os.getenv("ANTHROPIC_API_KEY"):
+            summarizer = GeneralLlm(
+                model="anthropic/claude-3-5-sonnet-20241022", temperature=0.3
+            )
         elif os.getenv("METACULUS_TOKEN"):
             summarizer = GeneralLlm(model="metaculus/gpt-4o-mini", temperature=0.3)
         else:
@@ -881,8 +885,20 @@ class ForecastBot(ABC):
         else:
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
 
+        if os.getenv("OPENAI_API_KEY"):
+            parser = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+        elif os.getenv("OPENROUTER_API_KEY"):
+            parser = GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.3)
+        elif os.getenv("ANTHROPIC_API_KEY"):
+            parser = GeneralLlm(
+                model="anthropic/claude-3-5-sonnet-20241022", temperature=0.3
+            )
+        else:
+            parser = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+
         return {
             "default": main_default_llm,
             "summarizer": summarizer,
             "researcher": researcher,
+            "parser": parser,
         }

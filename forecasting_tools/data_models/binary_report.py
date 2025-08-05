@@ -4,18 +4,34 @@ import statistics
 from typing import Sequence
 
 import numpy as np
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import BinaryQuestion
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
 
 
+class BinaryPrediction(BaseModel):
+    prediction_in_decimal: float
+
+    @field_validator("prediction_in_decimal")
+    @classmethod
+    def validate_prediction_range(cls, value: float) -> float:
+        if 0.001 <= value <= 0.999:
+            return value
+        elif 0 <= value < 0.001:
+            return 0.001
+        elif 0.999 < value <= 1:
+            return 0.999
+        else:
+            raise ValueError("Prediction must be between 0 and 1")
+
+
 class BinaryReport(ForecastReport):
     question: BinaryQuestion
     prediction: float = Field(
         validation_alias=AliasChoices("prediction_in_decimal", "prediction")
-    )
+    )  # It was a poor design decision to not make oreductuib a BaseModel originally, but keeping it a float for backwards compatibility
 
     @field_validator("prediction")
     def validate_prediction(cls: BinaryReport, v: float) -> float:

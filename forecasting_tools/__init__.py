@@ -63,6 +63,9 @@ from forecasting_tools.cp_benchmarking.benchmark_for_bot import (
     BenchmarkForBot as BenchmarkForBot,
 )
 from forecasting_tools.cp_benchmarking.benchmarker import Benchmarker as Benchmarker
+from forecasting_tools.data_models.binary_report import (
+    BinaryPrediction as BinaryPrediction,
+)
 from forecasting_tools.data_models.binary_report import BinaryReport as BinaryReport
 from forecasting_tools.data_models.data_organizer import DataOrganizer as DataOrganizer
 from forecasting_tools.data_models.forecast_report import (
@@ -84,6 +87,7 @@ from forecasting_tools.data_models.numeric_report import (
     NumericDistribution as NumericDistribution,
 )
 from forecasting_tools.data_models.numeric_report import NumericReport as NumericReport
+from forecasting_tools.data_models.numeric_report import Percentile as Percentile
 from forecasting_tools.data_models.questions import BinaryQuestion as BinaryQuestion
 from forecasting_tools.data_models.questions import (
     MetaculusQuestion as MetaculusQuestion,

@@ -1,8 +1,14 @@
-from pydantic import BaseModel, Field
+from __future__ import annotations
+
+import logging
+
+from pydantic import BaseModel, Field, model_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import MultipleChoiceQuestion
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
+
+logger = logging.getLogger(__name__)
 
 
 class PredictedOption(BaseModel):
@@ -12,6 +18,48 @@ class PredictedOption(BaseModel):
 
 class PredictedOptionList(BaseModel):
     predicted_options: list[PredictedOption]
+
+    @model_validator(mode="after")
+    def validate_probability_sum(self) -> PredictedOptionList:
+        sum_of_probabilities = sum(
+            option.probability for option in self.predicted_options
+        )
+        if abs(sum_of_probabilities - 1) < 0.0001:
+            return self
+        if sum_of_probabilities > 1.01 or sum_of_probabilities < 0.99:
+            raise ValueError(
+                f"Sum of option probabilities {sum_of_probabilities} is "
+                "too far from 1 to be confident that normalization will deliver an "
+                "intended prediction."
+            )
+        else:
+            logger.warning(
+                f"Sum of option probabilities {sum_of_probabilities} is not 1, but is close to 1. "
+                "Normalizing the probabilities."
+            )
+            # Step 1: Clamp values
+            clamped_list = [
+                max(min(x.probability, 0.999), 0.001) for x in self.predicted_options
+            ]
+
+            # Step 2: Calculate the sum of all elements
+            total_sum_decimal = sum(clamped_list)
+
+            # Step 3: Normalize the list so that all elements add up to 1
+            normalized_list = [x / total_sum_decimal for x in clamped_list]
+
+            # Step 4: Adjust for any small floating-point errors
+            adjustment = 1.0 - sum(normalized_list)
+            normalized_list[-1] += adjustment
+            normalized_option_probabilities = normalized_list
+
+            self.predicted_options = [
+                PredictedOption(option_name=option.option_name, probability=probability)
+                for option, probability in zip(
+                    self.predicted_options, normalized_option_probabilities
+                )
+            ]
+            return self
 
 
 class MultipleChoiceReport(ForecastReport):

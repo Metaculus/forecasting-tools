@@ -7,9 +7,10 @@ from typing import Literal
 from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.data_models.binary_report import BinaryPrediction
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
-from forecasting_tools.data_models.numeric_report import NumericDistribution
+from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     MetaculusQuestion,
@@ -19,7 +20,7 @@ from forecasting_tools.data_models.questions import (
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
-from forecasting_tools.helpers.prediction_extractor import PredictionExtractor
+from forecasting_tools.helpers.structure_output import structure_output
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,35 @@ class FallTemplateBot2025(ForecastBot):
     - Return a list of ForecastReport objects
 
     Only the research and forecast functions need to be implemented in ForecastBot subclasses, though you may want to override other ones.
+
+    You can experiment with what models work best with your bot by using the `llms` parameter when initializing the bot.
+    You can initialize the bot with any number of models. For example,
+    ```
+    my_bot = MyBot(
+        ...
+        llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
+            "default": GeneralLlm(
+                model="metaculus/anthropic/claude-3-5-sonnet-20241022", # or "openrouter/openai/gpt-4o-mini", "openai/gpt-4o", etc (see docs for litellm)
+                temperature=0.3,
+                timeout=40,
+                allowed_tries=2,
+            ),
+            "summarizer": "openai/gpt-4o-mini",
+            "researcher": "asknews/deep-research/low",
+        },
+    )
+    ```
+
+    Then you can access the model in custom functions like this:
+    ```
+    research_strategy = self.get_llm("researcher", "model_name"
+    if research_strategy == "asknews/deep-research/low":
+        ...
+    # OR
+    summarizer = await self.get_llm("summarizer", "model_name").invoke(prompt)
+    # OR
+    reasoning = await self.get_llm("default", "llm").invoke(prompt)
+    ```
 
     If you end up having trouble with rate limits and want to try a more sophisticated rate limiter try:
     ```
@@ -161,11 +191,15 @@ class FallTemplateBot2025(ForecastBot):
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
-        prediction: float = PredictionExtractor.extract_last_percentage_value(
-            reasoning, max_prediction=0.99, min_prediction=0.01
+        binary_prediction: BinaryPrediction = await structure_output(
+            reasoning, BinaryPrediction, model=self.get_llm("parser", "llm")
         )
-        logger.info(f"Forecasted URL {question.page_url} with prediction: {prediction}")
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+        decimal_pred = max(0.01, min(0.99, binary_prediction.prediction_in_decimal))
+
+        logger.info(
+            f"Forecasted URL {question.page_url} with prediction: {decimal_pred}"
+        )
+        return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -209,13 +243,15 @@ class FallTemplateBot2025(ForecastBot):
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
-        prediction: PredictedOptionList = (
-            PredictionExtractor.extract_option_list_with_percentage_afterwards(
-                reasoning, question.options
-            )
+        predicted_option_list: PredictedOptionList = await structure_output(
+            reasoning, PredictedOptionList, model=self.get_llm("parser", "llm")
         )
-        logger.info(f"Forecasted URL {question.page_url} with prediction: {prediction}")
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+        logger.info(
+            f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}"
+        )
+        return ReasonedPrediction(
+            prediction_value=predicted_option_list, reasoning=reasoning
+        )
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
@@ -275,11 +311,10 @@ class FallTemplateBot2025(ForecastBot):
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
-        prediction: NumericDistribution = (
-            PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-                reasoning, question
-            )
+        percentile_list: list[Percentile] = await structure_output(
+            reasoning, list[Percentile], model=self.get_llm("parser", "llm")
         )
+        prediction = NumericDistribution.from_question(percentile_list, question)
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}"
         )
@@ -330,15 +365,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mode",
         type=str,
-        choices=["tournament", "quarterly_cup", "test_questions"],
+        choices=["tournament", "metaculus_cup", "test_questions"],
         default="tournament",
         help="Specify the run mode (default: tournament)",
     )
     args = parser.parse_args()
-    run_mode: Literal["tournament", "quarterly_cup", "test_questions"] = args.mode
+    run_mode: Literal["tournament", "metaculus_cup", "test_questions"] = args.mode
     assert run_mode in [
         "tournament",
-        "quarterly_cup",
+        "metaculus_cup",
         "test_questions",
     ], "Invalid run mode"
 
@@ -358,6 +393,7 @@ if __name__ == "__main__":
         #     ),
         #     "summarizer": "openai/gpt-4o-mini",
         #     "researcher": "asknews/deep-research/low",
+        #     "parser": "openai/gpt-4o-mini",
         # },
     )
 
@@ -367,13 +403,13 @@ if __name__ == "__main__":
                 MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True
             )
         )
-    elif run_mode == "quarterly_cup":
-        # The quarterly cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564
-        # The new quarterly cup may not be initialized near the beginning of a quarter
+    elif run_mode == "metaculus_cup":
+        # The Metaculus cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564 or AI_2027_TOURNAMENT_ID = "ai-2027"
+        # The Metaculus cup may not be initialized near the beginning of a season (i.e. January, May, September)
         template_bot.skip_previously_forecasted_questions = False
         forecast_reports = asyncio.run(
             template_bot.forecast_on_tournament(
-                MetaculusApi.CURRENT_QUARTERLY_CUP_ID, return_exceptions=True
+                MetaculusApi.CURRENT_METACULUS_CUP_ID, return_exceptions=True
             )
         )
     elif run_mode == "test_questions":
@@ -382,6 +418,7 @@ if __name__ == "__main__":
             "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
             "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
             "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
+            "https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/",  # Number of US Labor Strikes Due to AI in 2029 - Discrete
         ]
         template_bot.skip_previously_forecasted_questions = False
         questions = [

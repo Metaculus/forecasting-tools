@@ -2,15 +2,15 @@ import logging
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.questions import MetaculusQuestion
-from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
-    Q1TemplateBot2025,
+from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
+    Q2TemplateBot2025,
 )
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 
 logger = logging.getLogger(__name__)
 
 
-class MainBot(Q1TemplateBot2025):
+class MainBot(Q2TemplateBot2025):
     """
     The verified highest accuracy bot available.
     """
