@@ -40,16 +40,19 @@ async def configure_and_run_bot(
             "+" in mode
         ), "Metaculus cup mode must be in the format 'token+tournament_id'"
         token = mode.split("+")[0]
-        chosen_tournament = MetaculusApi.CURRENT_METACULUS_CUP_ID
+        chosen_tournaments = [MetaculusApi.CURRENT_METACULUS_CUP_ID]
         skip_previously_forecasted_questions = False
     elif "+" in mode:
         parts = mode.split("+")
         assert len(parts) == 2
         token = parts[0]
-        chosen_tournament = parts[1]
+        chosen_tournaments = [parts[1]]
         skip_previously_forecasted_questions = False
     else:
-        chosen_tournament = MetaculusApi.CURRENT_AI_COMPETITION_ID
+        chosen_tournaments = [
+            MetaculusApi.CURRENT_AI_COMPETITION_ID,
+            MetaculusApi.CURRENT_MINIBENCH_ID,
+        ]
         skip_previously_forecasted_questions = True
         token = mode
 
@@ -61,11 +64,14 @@ async def configure_and_run_bot(
         return bot
     else:
         logger.info(f"LLMs for bot are: {bot.make_llm_dict()}")
-        reports = await bot.forecast_on_tournament(
-            chosen_tournament, return_exceptions=True
-        )
-        bot.log_report_summary(reports)
-        return reports
+        all_reports = []
+        for tournament in chosen_tournaments:
+            reports = await bot.forecast_on_tournament(
+                tournament, return_exceptions=True
+            )
+            all_reports.extend(reports)
+        bot.log_report_summary(all_reports)
+        return all_reports
 
 
 async def get_all_bots() -> list[ForecastBot]:

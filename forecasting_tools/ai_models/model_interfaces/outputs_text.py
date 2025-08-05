@@ -108,7 +108,7 @@ class OutputsText(AiModel, ABC):
                 f"Response in triple backticks was: ```{cleaned_response}```. Input was: ```{input}```"
             )
             raise ValueError(
-                f"Error transforming response to type {normal_complex_or_pydantic_type}: {e}. Full response in error log. "
+                f"Error transforming response to type {normal_complex_or_pydantic_type}: {e}. Full response in warning log. "
                 f"Response in triple backticks was: ```{cleaned_response[:500]}...```. Input was: ```{input[:500]}...```"
             )
         if not validate_complex_type(
