@@ -53,10 +53,6 @@ class TestGetSpecificQuestions:
         )
         assert isinstance(question, NumericQuestion)
         assert question.id_of_post == 14333
-        assert question.lower_bound == 0
-        assert question.upper_bound == 200
-        assert question.nominal_lower_bound == 0
-        assert question.nominal_upper_bound == 200
         assert not question.open_lower_bound
         assert question.open_upper_bound
         assert question.cdf_size == 201
@@ -65,6 +61,10 @@ class TestGetSpecificQuestions:
         assert question.get_question_type() == "numeric"
         assert question.question_type == "numeric"
         assert_basic_question_attributes_not_none(question, question.id_of_post)
+        assert question.lower_bound == 0
+        assert question.upper_bound == 200
+        assert question.nominal_lower_bound == 0
+        assert question.nominal_upper_bound == 200
 
     def test_get_discrete_question_from_id(self) -> None:
         question = MetaculusApi.get_question_by_url(
@@ -72,16 +72,17 @@ class TestGetSpecificQuestions:
         )
         assert isinstance(question, DiscreteQuestion)
         assert question.id_of_post == 38880
-        assert question.lower_bound == -0.5
-        assert question.upper_bound == 7.5
-        assert question.nominal_lower_bound == 0
-        assert question.nominal_upper_bound == 7
         assert question.cdf_size == 9
         assert question.unit_of_measure == "strikes"
         assert not question.open_lower_bound
         assert question.open_upper_bound
         assert question.get_question_type() == "discrete"
         assert question.get_api_type_name() == "discrete"
+        assert_basic_question_attributes_not_none(question, question.id_of_post)
+        assert question.lower_bound == -0.5
+        assert question.upper_bound == 7.5
+        assert question.nominal_lower_bound == 0
+        assert question.nominal_upper_bound == 7
 
     def test_get_date_question_type_from_id(self) -> None:
         question_id = DataOrganizer.get_example_post_id_for_question_type(DateQuestion)
@@ -173,8 +174,12 @@ class TestGetSpecificQuestions:
         )
         assert isinstance(questions, list)
         assert len(questions) == 2
-        high_risk_question = questions[0]
-        critical_risk_question = questions[1]
+        high_risk_question = [
+            question for question in questions if "High" in question.question_text
+        ][0]
+        critical_risk_question = [
+            question for question in questions if "Critical" in question.question_text
+        ][0]
 
         assert high_risk_question.scheduled_resolution_time == datetime(2036, 3, 1, 0)
         assert critical_risk_question.scheduled_resolution_time == datetime(
