@@ -103,8 +103,8 @@ async def structure_output(
         allowed_invoke_tries_for_failed_output=allowed_tries,
     )
 
-    LOG_STRUCTURE_OUTPUT = os.getenv("LOG_STRUCTURE_OUTPUT")
-    if LOG_STRUCTURE_OUTPUT and LOG_STRUCTURE_OUTPUT.lower() == "true":
+    SAVE_STRUCTURE_OUTPUT = os.getenv("SAVE_STRUCTURE_OUTPUT")
+    if SAVE_STRUCTURE_OUTPUT and SAVE_STRUCTURE_OUTPUT.lower() == "true":
         file_name = "structure_output_examples.jsonl"
         result_as_json = ""
         if isinstance(result, BaseModel):
