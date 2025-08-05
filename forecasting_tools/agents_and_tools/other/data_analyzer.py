@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class AvailableFile(BaseModel):
     file_name: str
-    file_id: str
+    file_id: str  # ID from OpenAI
 
 
 class DataAnalyzer:

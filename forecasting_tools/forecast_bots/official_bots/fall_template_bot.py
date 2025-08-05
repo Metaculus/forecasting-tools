@@ -381,14 +381,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mode",
         type=str,
-        choices=["tournament", "metaculus_cup", "test_questions"],
+        choices=["tournament", "minibench", "metaculus_cup", "test_questions"],
         default="tournament",
         help="Specify the run mode (default: tournament)",
     )
     args = parser.parse_args()
-    run_mode: Literal["tournament", "metaculus_cup", "test_questions"] = args.mode
+    run_mode: Literal["tournament", "minibench", "metaculus_cup", "test_questions"] = (
+        args.mode
+    )
     assert run_mode in [
         "tournament",
+        "minibench",
         "metaculus_cup",
         "test_questions",
     ], "Invalid run mode"
@@ -417,6 +420,12 @@ if __name__ == "__main__":
         forecast_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True
+            )
+        )
+    elif run_mode == "minibench":
+        forecast_reports = asyncio.run(
+            template_bot.forecast_on_tournament(
+                MetaculusApi.CURRENT_MINIBENCH_ID, return_exceptions=True
             )
         )
     elif run_mode == "metaculus_cup":

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "forecasting-tools"
-version = "0.2.53"
+version = "0.2.54"
 description = "AI forecasting and research tools to help humans reason about and forecast the future"
 authors = ["Benjamin Wilson <mokoresearch@gmail.com>"]
 license = "MIT"
@@ -23,7 +23,7 @@ tiktoken = ">=0.8.0,<0.10.0"
 aiofiles = "^24.1.0"
 aiohttp = "^3.9.3"
 aiolimiter = "^1.1.0"
-asyncio = "^3.4.3"
+asyncio = "^4.0.0"
 nest-asyncio = "^1.5.8"
 requests = "^2.32.3"
 pydantic = "^2.9.2"
@@ -46,7 +46,7 @@ asknews = ">=0.9.1,<0.12.0"
 openai-agents = "0.0.17"
 pytest-asyncio = "^1.0.0"
 unidecode = "^1.4.0"
-hyperbrowser = "0.48.0"
+hyperbrowser = "^0.53.0"
 pendulum = "^3.1.0"
 
 [tool.poetry.group.dev.dependencies]
