@@ -101,6 +101,13 @@ def test_saving_and_loading_question() -> None:
 async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
     # This tournament has all questions end in 2 years,
     # and has at least one of every question type (binary, numeric, multiple choice, discrete, date)
-    bot.publish_reports_to_metaculus = True
-    reports = await bot.forecast_on_tournament("ai-2027", return_exceptions=True)
-    bot.log_report_summary(reports, raise_errors=True)
+    original_publish_status = bot.publish_reports_to_metaculus
+    try:
+        bot.publish_reports_to_metaculus = True
+        reports = await bot.forecast_on_tournament("ai-2027", return_exceptions=True)
+        bot.log_report_summary(reports, raise_errors=True)
+        assert len(reports) == 19, "Expected 19 reports"
+    except Exception as e:
+        pytest.fail(f"Forecasting on ai-2027 tournament failed: {e}")
+    finally:
+        bot.publish_reports_to_metaculus = original_publish_status

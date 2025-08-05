@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import statistics
 from typing import Sequence
 
@@ -10,6 +11,8 @@ from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import BinaryQuestion
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
 
+logger = logging.getLogger(__name__)
+
 
 class BinaryPrediction(BaseModel):
     prediction_in_decimal: float
@@ -17,11 +20,18 @@ class BinaryPrediction(BaseModel):
     @field_validator("prediction_in_decimal")
     @classmethod
     def validate_prediction_range(cls, value: float) -> float:
+        # Adjust the prediction when 0 or 1 since AI making this model sometimes gives 0 or 1.
         if 0.001 <= value <= 0.999:
             return value
         elif 0 <= value < 0.001:
+            logger.warning(
+                f"Prediction is less than 0.001, adjusting to 0.001. Value: {value}"
+            )
             return 0.001
         elif 0.999 < value <= 1:
+            logger.warning(
+                f"Prediction is greater than 0.999, adjusting to 0.999. Value: {value}"
+            )
             return 0.999
         else:
             raise ValueError("Prediction must be between 0 and 1")
@@ -31,7 +41,7 @@ class BinaryReport(ForecastReport):
     question: BinaryQuestion
     prediction: float = Field(
         validation_alias=AliasChoices("prediction_in_decimal", "prediction")
-    )  # It was a poor design decision to not make oreductuib a BaseModel originally, but keeping it a float for backwards compatibility
+    )  # It was a poor design decision to not make prediction a BaseModel originally, but keeping it a float for backwards compatibility
 
     @field_validator("prediction")
     def validate_prediction(cls: BinaryReport, v: float) -> float:
