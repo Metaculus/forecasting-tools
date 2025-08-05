@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 
 import numpy as np
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import DiscreteQuestion, NumericQuestion
@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 class Percentile(BaseModel):
-    value: float
-    percentile: float
-
-    @field_validator("percentile")
-    def validate_percentile_range(cls: Percentile, percentile: float) -> float:
-        if not 0 <= percentile <= 1:
-            raise ValueError("Percentile must be between 0 and 1")
-        return percentile
+    value: float = Field(
+        description="The number matching the percentile (e.g. '90% of people are age 60 or younger' translates to '60')",
+    )
+    percentile: float = Field(
+        ge=0,
+        le=1,
+        description="A number between 0 and 1 (e.g. '90% of people are age 60 or younger' translates to '0.9')",
+    )
 
 
 class NumericDistribution(BaseModel):

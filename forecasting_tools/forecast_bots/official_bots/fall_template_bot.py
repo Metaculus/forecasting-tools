@@ -46,11 +46,14 @@ class FallTemplateBot2025(ForecastBot):
         - Submit prediction (if publish_reports_to_metaculus is True)
     - Return a list of ForecastReport objects
 
-    Only the research and forecast functions need to be implemented in ForecastBot subclasses, though you may want to override other ones.
+    Only the research and forecast functions need to be implemented in ForecastBot subclasses,
+    though you may want to override other ones.
+    In this example, you can change the prompts to be whatever you want since,
+    structure_output uses an LLMto intelligently reformat the output into the needed structure.
 
     You can experiment with what models work best with your bot by using the `llms` parameter when initializing the bot.
     You can initialize the bot with any number of models. For example,
-    ```
+    ```python
     my_bot = MyBot(
         ...
         llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
@@ -67,7 +70,7 @@ class FallTemplateBot2025(ForecastBot):
     ```
 
     Then you can access the model in custom functions like this:
-    ```
+    ```python
     research_strategy = self.get_llm("researcher", "model_name"
     if research_strategy == "asknews/deep-research/low":
         ...
@@ -78,7 +81,7 @@ class FallTemplateBot2025(ForecastBot):
     ```
 
     If you end up having trouble with rate limits and want to try a more sophisticated rate limiter try:
-    ```
+    ```python
     from forecasting_tools import RefreshingBucketRateLimiter
     rate_limiter = RefreshingBucketRateLimiter(
         capacity=2,
@@ -241,10 +244,20 @@ class FallTemplateBot2025(ForecastBot):
             Option_N: Probability_N
             """
         )
+        parsing_instructions = clean_indents(
+            f"""
+            Make sure that all option names are one of the following:
+            {question.options}
+            The text you are parsing may prepend these options with some variation of "Option" which you should remove if not part of the option names I just gave you.
+            """
+        )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         predicted_option_list: PredictedOptionList = await structure_output(
-            reasoning, PredictedOptionList, model=self.get_llm("parser", "llm")
+            text_to_structure=reasoning,
+            output_type=PredictedOptionList,
+            model=self.get_llm("parser", "llm"),
+            additional_instructions=parsing_instructions,
         )
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}"

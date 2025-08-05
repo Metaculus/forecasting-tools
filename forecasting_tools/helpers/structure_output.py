@@ -9,12 +9,13 @@ T = TypeVar("T")
 
 
 async def structure_output(
-    output: str,
+    text_to_structure: str,
     output_type: type[T],
     model: GeneralLlm | str = "openrouter/openai/gpt-4.1-mini",
     allowed_tries: int = 3,
+    additional_instructions: str | None = None,
 ) -> T:
-    if not output:
+    if not text_to_structure:
         raise ValueError("Output is empty")
     # Initialize with empty instructions
     pydantic_instructions = ""
@@ -48,29 +49,34 @@ async def structure_output(
     type_not_found = "<<REQUESTED TYPE WAS NOT FOUND IN TEXT>>"
     prompt = clean_indents(
         f"""
-        You are a secretary helping to convert text into structured data.
+        You are a data analyst helping to convert text into structured data.
         You will receive text in between a bunch of <><><><><><><><><><><><> (each with 'start' and 'end' tags)
         Please convert the text to the following python parsable type:
         {output_type}
 
-        When you give your answer, give no reasoning. Just output the final type w/o any other words.
-        If the type requires fields (e.g. dict or pydantic type):
-        - Please return a JSON object (i.e. a dict)
-        - Only fill in fields that are explicitly given and required in the text
-        - Do not guess the fields
-        - Do not fill in fields that are not explicitly given and required in the text
+        General instructions:
+        - When you give your answer, give no reasoning. Just output the final type w/o any other words.
+        - If the type requires fields (e.g. dict or pydantic type):
+            - Please return a JSON object (i.e. a dict)
+            - Only fill in fields that are explicitly given in the text
+            - Do not guess the fields
+            - Do not fill in fields that are not explicitly given in the text
         - Do not summarize any of the text. Only give direct quotes (with only slight formatting changes)
         - If the text is completely unrelated to the requested type please just say "{type_not_found}"
-        - DO NOT exclude URLs if URLs are provided with the intended answer please keep the URLs. Copy all them exactly as they are shown in the text.
+        - If 'final answers' are mentioned, please prioritize using them to fill your structured response (i.e. avoid using intermediary steps)
+        - Do not exclude any misc information that might be difficult to copy (assuming its part of the intended answer)
+            - For example, include full URLs if they are provided with the intended answer. Copy all them exactly as they are shown in the text. Do not skip them.
 
-        If 'final answers' are mentioned, please prioritize using them to fill your structured response (i.e. avoid using intermediary steps)
+        {"Additional instructions from the your manager:" if additional_instructions else ""}
+        {additional_instructions if additional_instructions else ""}
+
         Here is the text:
 
         <><><><><><><><><><><> START TEXT <><><><><><><><><><><>
 
 
 
-        {output}
+        {text_to_structure}
 
 
 
@@ -83,7 +89,7 @@ async def structure_output(
         {pydantic_instructions}
 
 
-        Please return an answer in the format given to you, and remember to keep URLs in text if they are included!
+        Please return an answer in the format given to you, and remember to keep URLs in text if they are included as part of the intended answer!
         """
     ).strip()
 

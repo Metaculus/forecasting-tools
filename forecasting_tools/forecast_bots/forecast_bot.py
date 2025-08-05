@@ -882,6 +882,10 @@ class ForecastBot(ABC):
             )
         elif os.getenv("EXA_API_KEY"):
             researcher = f"smart-searcher/{main_default_llm.model}"
+        elif os.getenv("OPENAI_API_KEY"):
+            researcher = GeneralLlm(
+                model="openai/gpt-4o-search-preview", temperature=0.1
+            )
         else:
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
 

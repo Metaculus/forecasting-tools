@@ -105,16 +105,19 @@ class MultipleChoiceReport(ForecastReport):
             current_option_names = {
                 option.option_name for option in option_list.predicted_options
             }
-            assert current_option_names == set(
-                first_list_option_names
-            ), "All predictions must have the same option names"
-            assert len(option_list.predicted_options) == len(
-                first_list_option_names
-            ), "All predictions must have the same number of options"
+            if current_option_names != set(first_list_option_names):
+                raise ValueError(
+                    f"All predictions must have the same option names, but {current_option_names} != {first_list_option_names}"
+                )
+            if len(option_list.predicted_options) != len(first_list_option_names):
+                raise ValueError(
+                    f"All predictions must have the same number of options, but {len(option_list.predicted_options)} != {len(first_list_option_names)}"
+                )
             for option in option_list.predicted_options:
-                assert (
-                    0 <= option.probability <= 1
-                ), "Predictions must be between 0 and 1"
+                if not 0 <= option.probability <= 1:
+                    raise ValueError(
+                        f"{option.option_name} has a probability of {option.probability}, which is not between 0 and 1"
+                    )
 
         new_predicted_options: list[PredictedOption] = []
         for current_option_name in first_list_option_names:
