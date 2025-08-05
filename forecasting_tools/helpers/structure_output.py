@@ -1,9 +1,11 @@
+import os
 from typing import TypeVar, get_args, get_origin
 
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.util.file_manipulation import add_to_jsonl_file
 
 T = TypeVar("T")
 
@@ -100,5 +102,28 @@ async def structure_output(
         output_type,
         allowed_invoke_tries_for_failed_output=allowed_tries,
     )
+
+    LOG_STRUCTURE_OUTPUT = os.getenv("LOG_STRUCTURE_OUTPUT")
+    if LOG_STRUCTURE_OUTPUT and LOG_STRUCTURE_OUTPUT.lower() == "true":
+        file_name = "structure_output_examples.jsonl"
+        result_as_json = ""
+        if isinstance(result, BaseModel):
+            result_as_json = result.model_dump()
+        elif isinstance(result, list):
+            result_as_json = [item.model_dump() for item in result]
+        else:
+            result_as_json = result
+
+        add_to_jsonl_file(
+            file_name,
+            [
+                {
+                    "text_to_structure": text_to_structure,
+                    "output_type": output_type.__name__,
+                    "additional_instructions": additional_instructions,
+                    "result": result_as_json,
+                }
+            ],
+        )
 
     return result

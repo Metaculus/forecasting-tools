@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 class Percentile(BaseModel):
-    value: float = Field(
-        description="The number matching the percentile (e.g. '90% of people are age 60 or younger' translates to '60')",
-    )
     percentile: float = Field(
         ge=0,
         le=1,
         description="A number between 0 and 1 (e.g. '90% of people are age 60 or younger' translates to '0.9')",
+    )
+    value: float = Field(
+        description="The number matching the percentile (e.g. '90% of people are age 60 or younger' translates to '60')",
     )
 
 

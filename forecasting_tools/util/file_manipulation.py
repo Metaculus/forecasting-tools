@@ -73,9 +73,11 @@ def write_json_file(file_path_in_package: str, input: list[dict]) -> None:
 
 
 @skip_if_file_writing_not_allowed
-def add_to_jsonl_file(file_path_in_package: str, input: list[dict]) -> None:
+def add_to_jsonl_file(file_path_in_package: str, input: list[dict] | dict) -> None:
     if not file_path_in_package.endswith(".jsonl"):
         raise ValueError("File path must end with .jsonl")
+    if isinstance(input, dict):
+        input = [input]
     json_strings = [json.dumps(item) for item in input]
     jsonl_string = "\n".join(json_strings) + "\n"
     create_or_append_to_file(file_path_in_package, jsonl_string)
