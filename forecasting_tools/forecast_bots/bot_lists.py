@@ -6,6 +6,9 @@ from forecasting_tools.forecast_bots.experiments.q2t_w_decomposition import (
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.main_bot import MainBot
+from forecasting_tools.forecast_bots.official_bots.fall_template_bot import (
+    FallTemplateBot2025,
+)
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025,
 )
@@ -34,6 +37,7 @@ def get_all_important_bot_classes() -> list[type[ForecastBot]]:
         Q1TemplateBot2025,
         Q4TemplateBot2024,
         Q3TemplateBot2024,
+        FallTemplateBot2025,
         Q1VeritasBot,
         Q4VeritasBot,
         UniformProbabilityBot,

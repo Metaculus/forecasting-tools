@@ -105,7 +105,9 @@ class ForecastBot(ABC):
         for purpose, llm in self._llm_config_defaults().items():
             if purpose not in self._llms:
                 logger.warning(
-                    f"User forgot to set an llm for purpose: '{purpose}'. Using default llm: '{llm.model if isinstance(llm, GeneralLlm) else llm}'"
+                    f"User forgot to set an llm for purpose: '{purpose}'. Using default llm: "
+                    f"'{llm.model if isinstance(llm, GeneralLlm) else llm}'. You can configure defaults by overriding "
+                    f"{self._llm_config_defaults.__name__}"
                 )
                 self._llms[purpose] = llm
 

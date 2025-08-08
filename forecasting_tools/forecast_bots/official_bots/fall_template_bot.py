@@ -29,8 +29,8 @@ class FallTemplateBot2025(ForecastBot):
     """
     This is a copy of the template bot for Fall 2025 Metaculus AI Tournament.
     This bot is what is used by Metaculus in our benchmark, but is also provided as a template for new bot makers.
-    This template is "use at your own risk", and though we have covered most test cases
-    in forecasting-tools it is worth double checking key components locally.
+    This template is given as-is, and though we have covered most test cases
+    in forecasting-tools it may be worth double checking key components locally.
 
     Main changes since Q2:
     - An LLM now parses the final forecast output (rather than programmatic parsing)
@@ -54,6 +54,10 @@ class FallTemplateBot2025(ForecastBot):
     In this example, you can change the prompts to be whatever you want since,
     structure_output uses an LLMto intelligently reformat the output into the needed structure.
 
+    By default (i.e. 'tournament' mode), when you run this script, it will forecast on any open questions for the
+    MiniBench and Seasonal AIB tournaments. If you want to forecast on only one or the other, you can remove one
+    of them from the 'tournament' mode code at the bottom of the file.
+
     You can experiment with what models work best with your bot by using the `llms` parameter when initializing the bot.
     You can initialize the bot with any number of models. For example,
     ```python
@@ -61,13 +65,14 @@ class FallTemplateBot2025(ForecastBot):
         ...
         llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
             "default": GeneralLlm(
-                model="metaculus/anthropic/claude-3-5-sonnet-20241022", # or "openrouter/openai/gpt-4o-mini", "openai/gpt-4o", etc (see docs for litellm)
+                model="openrouter/openai/gpt-4o", # "anthropic/claude-3-5-sonnet-20241022", etc (see docs for litellm)
                 temperature=0.3,
                 timeout=40,
                 allowed_tries=2,
             ),
             "summarizer": "openai/gpt-4o-mini",
             "researcher": "asknews/deep-research/low",
+            "parser": "openai/gpt-4o-mini",
         },
     )
     ```
@@ -381,17 +386,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mode",
         type=str,
-        choices=["tournament", "minibench", "metaculus_cup", "test_questions"],
+        choices=["tournament", "metaculus_cup", "test_questions"],
         default="tournament",
         help="Specify the run mode (default: tournament)",
     )
     args = parser.parse_args()
-    run_mode: Literal["tournament", "minibench", "metaculus_cup", "test_questions"] = (
-        args.mode
-    )
+    run_mode: Literal["tournament", "metaculus_cup", "test_questions"] = args.mode
     assert run_mode in [
         "tournament",
-        "minibench",
         "metaculus_cup",
         "test_questions",
     ], "Invalid run mode"
@@ -405,7 +407,7 @@ if __name__ == "__main__":
         skip_previously_forecasted_questions=True,
         # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
         #     "default": GeneralLlm(
-        #         model="metaculus/anthropic/claude-3-5-sonnet-20241022", # or "openrouter/openai/gpt-4o-mini", "openai/gpt-4o", etc (see docs for litellm)
+        #         model="openrouter/openai/gpt-4o", # "anthropic/claude-3-5-sonnet-20241022", etc (see docs for litellm)
         #         temperature=0.3,
         #         timeout=40,
         #         allowed_tries=2,
@@ -417,17 +419,17 @@ if __name__ == "__main__":
     )
 
     if run_mode == "tournament":
-        forecast_reports = asyncio.run(
+        seasonal_tournament_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True
             )
         )
-    elif run_mode == "minibench":
-        forecast_reports = asyncio.run(
+        minibench_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 MetaculusApi.CURRENT_MINIBENCH_ID, return_exceptions=True
             )
         )
+        forecast_reports = seasonal_tournament_reports + minibench_reports
     elif run_mode == "metaculus_cup":
         # The Metaculus cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564 or AI_2027_TOURNAMENT_ID = "ai-2027"
         # The Metaculus cup may not be initialized near the beginning of a season (i.e. January, May, September)
