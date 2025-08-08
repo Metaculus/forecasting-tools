@@ -213,16 +213,16 @@ jobs:
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
-  bot_gemini_2_5_flash_preview:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_GEMINI_2_5_FLASH_PREVIEW_TOKEN'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_FLASH_PREVIEW_TOKEN }}
-      INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+  # bot_gemini_2_5_flash_preview:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_GEMINI_2_5_FLASH_PREVIEW_TOKEN'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_FLASH_PREVIEW_TOKEN }}
+  #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+  #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
   bot_o1_high:
     uses: ./.github/workflows/run-bot-launcher.yaml

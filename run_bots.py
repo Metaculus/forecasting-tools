@@ -336,16 +336,16 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 ),
             ),
         },
-        # "METAC_GEMINI_2_5_FLASH_PREVIEW_TOKEN": {
-        #     "estimated_cost_per_question": 0.03,
-        #     "bot": create_bot(
-        #         GeneralLlm(
-        #             model="gemini/gemini-2.5-flash-preview-04-17",
-        #             temperature=default_temperature,
-        #             timeout=gemini_default_timeout,
-        #         ),
-        #     ),
-        # },
+        "METAC_GEMINI_2_5_FLASH_PREVIEW_TOKEN": {
+            "estimated_cost_per_question": 0.03,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="gemini/gemini-2.5-flash-preview-04-17",
+                    temperature=default_temperature,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+        },
         "METAC_O1_HIGH_TOKEN": {
             "estimated_cost_per_question": 1.18,
             "bot": create_bot(
