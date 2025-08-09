@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "forecasting-tools"
-version = "0.2.54"
+version = "0.2.55"
 description = "AI forecasting and research tools to help humans reason about and forecast the future"
 authors = ["Benjamin Wilson <mokoresearch@gmail.com>"]
 license = "MIT"
@@ -24,7 +24,7 @@ tiktoken = ">=0.8.0,<0.10.0"
 aiofiles = "^24.1.0"
 aiohttp = "^3.9.3"
 aiolimiter = "^1.1.0"
-asyncio = "^4.0.0"
+asyncio = ">=3.0.0,<5.0.0"
 nest-asyncio = "^1.5.8"
 requests = "^2.32.3"
 pydantic = "^2.9.2"
@@ -49,6 +49,7 @@ unidecode = "^1.4.0"
 hyperbrowser = "^0.53.0"
 pendulum = "^3.1.0"
 openai-agents = {extras = ["litellm"], version = "^0.2.0"}
+backoff = "^2.2.1" # Backoff is used to repress a litellm logging error (so litellm['proxy'] doesn't need to be installed)
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.0.1"
