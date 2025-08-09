@@ -2981,14 +2981,14 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.99.5"
+version = "1.98.0"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "openai-1.99.5-py3-none-any.whl", hash = "sha256:4e870f9501b7c36132e2be13313ce3c4d6915a837e7a299c483aab6a6d4412e9"},
-    {file = "openai-1.99.5.tar.gz", hash = "sha256:aa97ac3326cac7949c5e4ac0274c454c1d19c939760107ae0d3948fc26a924ca"},
+    {file = "openai-1.98.0-py3-none-any.whl", hash = "sha256:b99b794ef92196829120e2df37647722104772d2a74d08305df9ced5f26eae34"},
+    {file = "openai-1.98.0.tar.gz", hash = "sha256:3ee0fcc50ae95267fd22bd1ad095ba5402098f3df2162592e68109999f685427"},
 ]
 
 [package.dependencies]
@@ -3021,6 +3021,7 @@ files = [
 
 [package.dependencies]
 griffe = ">=1.5.6,<2"
+litellm = {version = ">=1.67.4.post1,<2", optional = true, markers = "extra == \"litellm\""}
 mcp = {version = ">=1.11.0,<2", markers = "python_version >= \"3.10\""}
 openai = ">=1.97.1,<2"
 pydantic = ">=2.10,<3"
@@ -6077,4 +6078,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "00ba78c139be9ed3313acb6b0c3884a82b74a8878325bf9c61bb43eedcdd92d9"
+content-hash = "d46af968c99ab506baeb35a189fe2cde073717410dba596326c2d873bbc95a66"

@@ -59,7 +59,10 @@ class NoOpContextManager:
 
 def _current_trace_exists() -> bool:
     try:
-        current_trace = GLOBAL_TRACE_PROVIDER.get_current_trace()
+        if GLOBAL_TRACE_PROVIDER is not None:
+            current_trace = GLOBAL_TRACE_PROVIDER.get_current_trace()
+        else:
+            raise ValueError("GLOBAL_TRACE_PROVIDER is not set")
     except Exception as e:
         logger.warning(f"Error getting current trace: {e}")
         current_trace = None
