@@ -904,9 +904,7 @@ class ForecastBot(ABC):
                 model="anthropic/claude-3-5-sonnet-20241022", temperature=0.3
             )
         elif os.getenv("METACULUS_TOKEN"):
-            parser = GeneralLlm(
-                model="metaculus/gpt-4o-search-preview", temperature=0.3
-            )
+            parser = GeneralLlm(model="metaculus/gpt-4o-mini", temperature=0.3)
         else:
             parser = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
 

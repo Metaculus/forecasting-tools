@@ -9,11 +9,13 @@ from forecasting_tools.util.file_manipulation import add_to_jsonl_file
 
 T = TypeVar("T")
 
+DEFAULT_STRUCTURE_OUTPUT_MODEL = "openrouter/openai/gpt-4.1-mini"
+
 
 async def structure_output(
     text_to_structure: str,
     output_type: type[T],
-    model: GeneralLlm | str = "openrouter/openai/gpt-4.1-mini",
+    model: GeneralLlm | str = DEFAULT_STRUCTURE_OUTPUT_MODEL,
     allowed_tries: int = 3,
     additional_instructions: str | None = None,
 ) -> T:

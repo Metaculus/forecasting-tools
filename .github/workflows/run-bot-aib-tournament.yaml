@@ -152,6 +152,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_o3:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -162,7 +163,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   bot_o4_mini_high:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
@@ -172,7 +173,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   bot_o4_mini:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
@@ -182,6 +183,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_4_1:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -192,6 +194,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_4_1_mini:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -202,6 +205,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_4_1_nano:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -212,6 +216,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   # bot_gemini_2_5_flash_preview:
   #   uses: ./.github/workflows/run-bot-launcher.yaml
@@ -233,6 +238,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_o1:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -243,6 +249,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_o1_mini:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -253,6 +260,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_o3_mini_high:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -263,6 +271,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_o3_mini:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -273,6 +282,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_gpt4o:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -283,6 +293,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_gpt4o_mini:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -293,6 +304,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_gpt3_5_turbo:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -303,6 +315,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_claude_3_7_sonnet_latest_thinking:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -313,6 +326,7 @@ jobs:
       INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_claude_3_7_sonnet_latest:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -323,6 +337,7 @@ jobs:
       INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_claude_3_5_sonnet_latest:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -333,6 +348,7 @@ jobs:
       INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_claude_3_5_sonnet_20240620:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -343,6 +359,7 @@ jobs:
       INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_gemini_2_5_pro_preview:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -436,3 +453,4 @@ jobs:
       INPUT_METACULUS_TOKEN: ${{ secrets.METAC_UNIFORM_PROBABILITY_BOT_TOKEN }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}

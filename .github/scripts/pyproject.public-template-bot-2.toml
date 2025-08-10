@@ -16,9 +16,12 @@ openai = "^1.57.4"
 python-dotenv = "^1.0.1"
 forecasting-tools = "^0.2.54"
 
-
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
+pytest = "^8.3.2"
+pytest-xdist = "^3.3.1"
+pytest-mock = "^3.14.0"
+pytest-asyncio = ">=0.25.0,<2.0.0"
 
 [build-system]
 requires = ["poetry-core"]
