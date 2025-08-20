@@ -18,6 +18,12 @@ from forecasting_tools.agents_and_tools.deprecated.question_generator import (
 from forecasting_tools.agents_and_tools.other.data_analyzer import (
     DataAnalyzer as DataAnalyzer,
 )
+from forecasting_tools.agents_and_tools.question_generators.question_decomposer import (
+    QuestionDecomposer as QuestionDecomposer,
+)
+from forecasting_tools.agents_and_tools.question_generators.question_operationalizer import (
+    QuestionOperationalizer as QuestionOperationalizer,
+)
 from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator as TopicGenerator,
 )

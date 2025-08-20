@@ -15,6 +15,11 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent"
 ]
+packages = [{include = "forecasting_tools"}]
+include = [
+    "forecasting_tools/**/*.json",
+    "forecasting_tools/**/*.jsonl",
+]
 
 # openai = "1.97.1"
 [tool.poetry.dependencies]

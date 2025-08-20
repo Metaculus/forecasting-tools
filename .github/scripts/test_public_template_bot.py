@@ -11,6 +11,7 @@ from forecasting_tools import (
     ForecastBot,
     MetaculusApi,
     MetaculusQuestion,
+    QuestionOperationalizer,
     TemplateBot,
 )
 from forecasting_tools.forecast_bots.bot_lists import get_all_bots_for_doing_cheap_tests
@@ -111,3 +112,10 @@ async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
         pytest.fail(f"Forecasting on ai-2027 tournament failed: {e}")
     finally:
         bot.publish_reports_to_metaculus = original_publish_status
+
+
+def test_package_resource_loading() -> None:
+    operationalizer = QuestionOperationalizer()
+    assert (
+        len(operationalizer.example_full_questions) > 3
+    ), f"Expected at least 3 example full questions, got {operationalizer.example_full_questions}"
