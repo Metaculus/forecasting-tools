@@ -4,6 +4,7 @@ import textwrap
 import pytest
 
 from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
+from code_tests.utilities_for_tests.misc_utils import replace_tzinfo_in_string
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.markdown_tree import MarkdownTree
@@ -27,7 +28,9 @@ def test_metaculus_report_is_jsonable() -> None:
         assert report.prediction == report_2.prediction
         assert report.question.id_of_post == report_2.question.id_of_post
         assert report.question.state == report_2.question.state
-        assert str(report) == str(report_2)
+        assert replace_tzinfo_in_string(str(report)) == replace_tzinfo_in_string(
+            str(report_2)
+        )
 
     os.remove(temp_writing_path)
 

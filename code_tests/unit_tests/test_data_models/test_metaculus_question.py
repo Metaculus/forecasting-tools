@@ -1,6 +1,7 @@
 import logging
 import os
 
+from code_tests.utilities_for_tests.misc_utils import replace_tzinfo_in_string
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import (
     DateQuestion,
@@ -34,21 +35,9 @@ def test_metaculus_question_is_jsonable() -> None:
             f"\nQuestion 1 string: {str(question)}\nQuestion 2 string: {str(question_2)}"
         )
 
-        def replace_tzinfo(s: str) -> str:
-            updated_s = (
-                s.replace("datetime.timezone.utc", "")
-                .replace("TZInfo(UTC)", "")
-                .replace("pendulum.timezone('UTC')", "")
-                .replace("Timezone('UTC')", "")
-                .replace("TzInfo(UTC)", "")
-                .replace("Timezone('Etc/UTC')", "")
-                .replace("datetime.datetime", "")
-                .replace("datetime", "")
-                .replace("DateTime", "")
-            )
-            return updated_s
-
-        assert replace_tzinfo(str(question)) == replace_tzinfo(str(question_2))
+        assert replace_tzinfo_in_string(str(question)) == replace_tzinfo_in_string(
+            str(question_2)
+        )
 
     _assert_correct_number_of_questions(questions_2)
     os.remove(temp_writing_path)
