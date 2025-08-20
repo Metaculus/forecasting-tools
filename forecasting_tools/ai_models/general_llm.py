@@ -10,6 +10,8 @@ import litellm
 import nest_asyncio
 import typeguard
 from litellm import acompletion, model_cost
+from litellm.files.main import ModelResponse
+from litellm.types.utils import Choices, Usage
 from litellm.utils import token_counter
 from openai import AsyncOpenAI
 
@@ -243,17 +245,16 @@ class GeneralLlm(
             messages=self.model_input_to_message(prompt),
             **self.litellm_kwargs,
         )
-        # from litellm.files.main import ModelResponse
-        # from litellm.types.utils import Choices, Usage
-        # assert isinstance(response, ModelResponse)
+
+        assert isinstance(response, ModelResponse)
         choices = response.choices  # type: ignore
-        # choices = typeguard.check_type(choices, list[Choices])
+        choices = typeguard.check_type(choices, list[Choices])
         answer = choices[0].message.content  # type: ignore
         assert isinstance(
             answer, str
         ), f"Answer is not a string and is of type: {type(answer)}. Answer: {answer}"
         usage = response.usage  # type: ignore
-        # assert isinstance(usage, Usage)
+        assert isinstance(usage, Usage)
         prompt_tokens = usage.prompt_tokens
         completion_tokens = usage.completion_tokens
         total_tokens = usage.total_tokens

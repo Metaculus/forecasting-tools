@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from forecasting_tools.agents_and_tools.research.find_a_dataset import DatasetFinder
@@ -9,6 +11,8 @@ from forecasting_tools.ai_models.agent_wrappers import (
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.front_end.app_pages.chat_page import ChatPage
+
+logger = logging.getLogger(__name__)
 
 
 def get_tool_tests() -> list[tuple[str, AgentTool]]:
@@ -47,6 +51,8 @@ async def test_chat_app_function_tools(name: str, function_tool: AgentTool) -> N
     )
     result = await AgentRunner.run(agent, "Please test the tool")
     final_answer = result.final_output
+    logger.info(f"Full result: {result}")
+    logger.info(f"Raw responses: {result.raw_responses}")
     if "<TOOL SUCCESSFULLY TESTED>" in final_answer:
         assert True  # NOSONAR
     elif "<TOOL FAILED TEST>" in final_answer:

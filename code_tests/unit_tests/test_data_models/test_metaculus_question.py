@@ -27,13 +27,8 @@ def test_metaculus_question_is_jsonable() -> None:
         assert question.id_of_post == question_2.id_of_post
         assert question.state == question_2.state
 
-        assert question.date_accessed.tzinfo is not None
-        if question.open_time is not None:
-            assert question.open_time.tzinfo is not None
-        if question.close_time is not None:
-            assert question.close_time.tzinfo is not None
-        if question.scheduled_resolution_time is not None:
-            assert question.scheduled_resolution_time.tzinfo is not None
+        _assert_tzinfo_is_not_none(question)
+        _assert_tzinfo_is_not_none(question_2)
 
         logger.info(
             f"\nQuestion 1 string: {str(question)}\nQuestion 2 string: {str(question_2)}"
@@ -41,11 +36,15 @@ def test_metaculus_question_is_jsonable() -> None:
 
         def replace_tzinfo(s: str) -> str:
             updated_s = (
-                s.replace("tzinfo=datetime.timezone.utc", "")
-                .replace("tzinfo=TZInfo(UTC)", "")
-                .replace("tzinfo=pendulum.timezone('UTC')", "")
+                s.replace("datetime.timezone.utc", "")
+                .replace("TZInfo(UTC)", "")
+                .replace("pendulum.timezone('UTC')", "")
                 .replace("Timezone('UTC')", "")
                 .replace("TzInfo(UTC)", "")
+                .replace("Timezone('Etc/UTC')", "")
+                .replace("datetime.datetime", "")
+                .replace("datetime", "")
+                .replace("DateTime", "")
             )
             return updated_s
 
@@ -53,6 +52,16 @@ def test_metaculus_question_is_jsonable() -> None:
 
     _assert_correct_number_of_questions(questions_2)
     os.remove(temp_writing_path)
+
+
+def _assert_tzinfo_is_not_none(question: MetaculusQuestion) -> None:
+    assert question.date_accessed.tzinfo is not None
+    if question.open_time is not None:
+        assert question.open_time.tzinfo is not None
+    if question.close_time is not None:
+        assert question.close_time.tzinfo is not None
+    if question.scheduled_resolution_time is not None:
+        assert question.scheduled_resolution_time.tzinfo is not None
 
 
 def _assert_correct_number_of_questions(questions: list[MetaculusQuestion]) -> None:

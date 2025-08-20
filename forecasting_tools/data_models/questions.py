@@ -223,7 +223,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
                     parsed_datetime = pendulum.parse(self.resolution_string)
                     assert isinstance(parsed_datetime, datetime)
                     return parsed_datetime
-                except ValueError:
+                except Exception:
                     return self.resolution_string
 
     def get_question_type(
