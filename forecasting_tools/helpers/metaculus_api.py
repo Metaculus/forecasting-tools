@@ -72,6 +72,9 @@ class ApiFilter(BaseModel):
     community_prediction_exists: bool | None = None
     cp_reveal_time_gt: datetime | None = None
     cp_reveal_time_lt: datetime | None = None
+    order_by: str = (
+        "-published_time"  # Alternatives include things like "-weekly_movement" + is asc, - is desc
+    )
 
     @model_validator(mode="after")
     def add_timezone_to_dates(self) -> ApiFilter:
@@ -340,12 +343,12 @@ class MetaculusApi:
     ) -> list[BinaryQuestion]:
         logger.info(f"Retrieving {num_of_questions_to_return} benchmark questions")
         date_into_future = (
-            datetime.now() + timedelta(days=days_to_resolve_in)
+            pendulum.now() + timedelta(days=days_to_resolve_in)
             if days_to_resolve_in
             else None
         )
         date_into_past = (
-            datetime.now() - timedelta(days=max_days_since_opening)
+            pendulum.now() - timedelta(days=max_days_since_opening)
             if max_days_since_opening
             else None
         )
@@ -641,7 +644,7 @@ class MetaculusApi:
         url_params: dict[str, Any] = {
             "limit": cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST,
             "offset": offset,
-            "order_by": "-published_at",
+            "order_by": api_filter.order_by,
             "with_cp": "true",
         }
 

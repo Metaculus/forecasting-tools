@@ -484,9 +484,9 @@ class TestPostEndpoint:
         ), "Questions should not be the same (randomly sampled)"
 
 
-# @pytest.mark.skip(
-#     reason="Reducing the number of calls to metaculus api due to rate limiting"
-# )
+@pytest.mark.skip(
+    reason="Reducing the number of calls to metaculus api due to rate limiting"
+)
 class TestApiFilter:
     @pytest.mark.parametrize(
         "api_filter, num_questions, randomly_sample",

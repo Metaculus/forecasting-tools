@@ -71,7 +71,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     open_time: datetime | None = (
         None  # Time the question was able to be forecasted on by individuals
     )
-    date_accessed: datetime = Field(default_factory=datetime.now)
+    date_accessed: datetime = Field(default_factory=pendulum.now)
     already_forecasted: bool = False
     tournament_slugs: list[str] = Field(default_factory=list)
     default_project_id: int | None = None
@@ -176,7 +176,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
         )
 
     def give_question_details_as_markdown(self) -> str:
-        today_string = datetime.now().strftime("%Y-%m-%d")
+        today_string = pendulum.now().strftime("%Y-%m-%d")
         question_details = textwrap.dedent(
             f"""
             The main question is:
@@ -220,7 +220,9 @@ class MetaculusQuestion(BaseModel, Jsonable):
             except ValueError:
                 try:
                     # Try parsing as ISO 8601 with timezone
-                    return datetime.fromisoformat(self.resolution_string)
+                    parsed_datetime = pendulum.parse(self.resolution_string)
+                    assert isinstance(parsed_datetime, datetime)
+                    return parsed_datetime
                 except ValueError:
                     return self.resolution_string
 

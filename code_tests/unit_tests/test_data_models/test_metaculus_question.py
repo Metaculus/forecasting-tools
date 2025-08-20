@@ -1,3 +1,4 @@
+import logging
 import os
 
 from forecasting_tools.data_models.data_organizer import DataOrganizer
@@ -7,6 +8,8 @@ from forecasting_tools.data_models.questions import (
     MetaculusQuestion,
     NumericQuestion,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def test_metaculus_question_is_jsonable() -> None:
@@ -23,7 +26,6 @@ def test_metaculus_question_is_jsonable() -> None:
         assert question.question_text == question_2.question_text
         assert question.id_of_post == question_2.id_of_post
         assert question.state == question_2.state
-        assert str(question) == str(question_2)
 
         assert question.date_accessed.tzinfo is not None
         if question.open_time is not None:
@@ -32,6 +34,22 @@ def test_metaculus_question_is_jsonable() -> None:
             assert question.close_time.tzinfo is not None
         if question.scheduled_resolution_time is not None:
             assert question.scheduled_resolution_time.tzinfo is not None
+
+        logger.info(
+            f"\nQuestion 1 string: {str(question)}\nQuestion 2 string: {str(question_2)}"
+        )
+
+        def replace_tzinfo(s: str) -> str:
+            updated_s = (
+                s.replace("tzinfo=datetime.timezone.utc", "")
+                .replace("tzinfo=TZInfo(UTC)", "")
+                .replace("tzinfo=pendulum.timezone('UTC')", "")
+                .replace("Timezone('UTC')", "")
+                .replace("TzInfo(UTC)", "")
+            )
+            return updated_s
+
+        assert replace_tzinfo(str(question)) == replace_tzinfo(str(question_2))
 
     _assert_correct_number_of_questions(questions_2)
     os.remove(temp_writing_path)
