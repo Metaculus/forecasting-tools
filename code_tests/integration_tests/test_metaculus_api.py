@@ -194,6 +194,7 @@ class TestGetSpecificQuestions:
         assert critical_risk_question.close_time == datetime(
             2041, 1, 1, 0, tzinfo=timezone.utc
         )
+        assert set(high_risk_question.sub_question_ids) == {38105, 38106}
 
     def test_question_weight(self) -> None:
         question = MetaculusApi.get_question_by_post_id(

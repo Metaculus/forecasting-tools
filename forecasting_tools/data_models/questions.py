@@ -82,6 +82,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     group_question_option: str | None = (
         None  # For group questions like "How many people will die of coronovirus in the following periouds" it would be "September 2024", "All of 2025", etc
     )
+    sub_question_ids: list[int] = Field(default_factory=list)
     api_json: dict = Field(
         description=(
             "The API JSON response used to create the question. "

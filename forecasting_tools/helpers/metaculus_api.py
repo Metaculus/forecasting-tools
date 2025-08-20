@@ -473,6 +473,7 @@ class MetaculusApi:
         group_json: dict = post_json_from_api["group_of_questions"]
         questions: list[MetaculusQuestion] = []
         question_jsons: list[dict] = group_json["questions"]
+        question_ids: list[int] = [q["id"] for q in question_jsons]
         for question_json in question_jsons:
             # Reformat the json to make it look like a normal post
             new_question_json = copy.deepcopy(question_json)
@@ -484,6 +485,7 @@ class MetaculusApi:
             new_post_json["question"] = new_question_json
 
             question_obj = cls._non_group_post_json_to_question(new_post_json)
+            question_obj.sub_question_ids = question_ids.copy()
             questions.append(question_obj)
         return questions
 
