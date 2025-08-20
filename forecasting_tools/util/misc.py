@@ -2,15 +2,18 @@ import json
 import logging
 import re
 import urllib.parse
+from datetime import datetime
 from typing import Any, TypeVar, cast
 
 import aiohttp
+import pendulum
 import requests
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import validate_complex_type
 
 T = TypeVar("T")
+B = TypeVar("B", bound=BaseModel)
 
 logger = logging.getLogger(__name__)
 
@@ -104,3 +107,17 @@ def get_schema_of_base_model(model_class: type[BaseModel]) -> str:
         del reduced_schema["type"]
     schema_str = json.dumps(reduced_schema)
     return schema_str
+
+
+def add_timezone_to_dates_in_base_model(base_model: B) -> B:
+    for field_name in type(base_model).model_fields.keys():
+        value = getattr(base_model, field_name)
+        if isinstance(value, datetime):
+            if value is None:
+                date = None
+            elif value.tzinfo is None:
+                date = value.replace(tzinfo=pendulum.timezone("UTC"))
+            else:
+                date = value
+            setattr(base_model, field_name, date)
+    return base_model

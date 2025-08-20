@@ -25,6 +25,14 @@ def test_metaculus_question_is_jsonable() -> None:
         assert question.state == question_2.state
         assert str(question) == str(question_2)
 
+        assert question.date_accessed.tzinfo is not None
+        if question.open_time is not None:
+            assert question.open_time.tzinfo is not None
+        if question.close_time is not None:
+            assert question.close_time.tzinfo is not None
+        if question.scheduled_resolution_time is not None:
+            assert question.scheduled_resolution_time.tzinfo is not None
+
     _assert_correct_number_of_questions(questions_2)
     os.remove(temp_writing_path)
 

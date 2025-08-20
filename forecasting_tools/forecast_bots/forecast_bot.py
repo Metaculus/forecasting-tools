@@ -880,7 +880,7 @@ class ForecastBot(ABC):
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
         elif os.getenv("OPENROUTER_API_KEY"):
             researcher = GeneralLlm(
-                model="openrouter/openai/gpt-4.1:online", temperature=0.1
+                model="openrouter/openai/gpt-4o-search-preview", temperature=0.1
             )
         elif os.getenv("EXA_API_KEY"):
             researcher = f"smart-searcher/{main_default_llm.model}"

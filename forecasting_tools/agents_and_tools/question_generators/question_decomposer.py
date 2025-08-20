@@ -79,7 +79,7 @@ class QuestionDecomposer:
 
 
             # Question requireemnts
-            - The question hold shed light on the topic and have high VOI (Value of Information)
+            - The question should shed light on the topic and have high VOI (Value of Information)
             - The question can be forecast and will be resolvable with public information
                 - Good: "Will SpaceX launch a rocket on May 2nd 2023?"
                 - Bad: "Will Elon mention his intention to launch a rocket on May 2nd 2023 in a private meeting?"

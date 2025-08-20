@@ -86,7 +86,7 @@ class NumericDistribution(BaseModel):
         zero_point = self.zero_point
         cdf_size = self.cdf_size or 201
 
-        # Convert to dict so I don't have to rewrite this whole function
+        # Convert to dict so we don't have to rewrite this function
         percentile_values: dict[float, float] = {
             percentile.percentile * 100: percentile.value for percentile in percentiles
         }

@@ -6,10 +6,12 @@ from datetime import datetime
 from enum import Enum
 from typing import Literal
 
+import pendulum
 import typeguard
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
 from forecasting_tools.util.jsonable import Jsonable
+from forecasting_tools.util.misc import add_timezone_to_dates_in_base_model
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +59,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     resolution_criteria: str | None = None
     fine_print: str | None = None
     background_info: str | None = None
-    unit_of_measure: str | None = None  # TODO: Move this field to continuous questions
+    unit_of_measure: str | None = None  # TODO: Move this field to numeric questions
     close_time: datetime | None = (
         None  # Time that the question was closed to new forecasts
     )
@@ -91,6 +93,10 @@ class MetaculusQuestion(BaseModel, Jsonable):
     custom_metadata: dict = Field(
         default_factory=dict
     )  # Additional metadata not tracked above or through the Metaculus API
+
+    @model_validator(mode="after")
+    def add_timezone_to_dates(self) -> MetaculusQuestion:
+        return add_timezone_to_dates_in_base_model(self)
 
     @classmethod
     def from_metaculus_api_json(cls, post_api_json: dict) -> MetaculusQuestion:
@@ -156,23 +162,12 @@ class MetaculusQuestion(BaseModel, Jsonable):
         if date_value is None:
             return None
 
-        if isinstance(date_value, float):
-            return datetime.fromtimestamp(date_value)
+        if isinstance(date_value, float) or isinstance(date_value, int):
+            return pendulum.from_timestamp(date_value)
 
-        date_formats = [
-            "%Y-%m-%dT%H:%M:%S.%fZ",
-            "%Y-%m-%dT%H:%M:%SZ",
-            "%Y-%m-%d",
-        ]
-
-        assert isinstance(date_value, str)
-        for date_format in date_formats:
-            try:
-                return datetime.strptime(date_value, date_format)
-            except ValueError:
-                continue
-
-        raise ValueError(f"Unable to parse date: {date_value}")
+        parsed = pendulum.parse(date_value)
+        assert isinstance(parsed, datetime)
+        return parsed
 
     @classmethod
     def get_api_type_name(cls) -> QuestionBasicType:

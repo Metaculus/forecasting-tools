@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "forecasting-tools"
-version = "0.2.55"
+version = "0.2.56"
 description = "AI forecasting and research tools to help humans reason about and forecast the future"
 authors = ["Benjamin Wilson <mokoresearch@gmail.com>"]
 license = "MIT"
@@ -20,7 +20,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.11"
 openai = ">=1.51.0,<1.99.0"
-tiktoken = ">=0.8.0,<0.10.0"
+tiktoken = ">=0.8.0,<0.12.0"
 aiofiles = "^24.1.0"
 aiohttp = "^3.9.3"
 aiolimiter = "^1.1.0"

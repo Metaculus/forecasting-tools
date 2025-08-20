@@ -1,6 +1,7 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
+import pendulum
 import pytest
 import typeguard
 
@@ -89,8 +90,8 @@ class TestGetSpecificQuestions:
         question = MetaculusApi.get_question_by_post_id(question_id)
         assert isinstance(question, DateQuestion)
         assert question_id == question.id_of_post
-        assert question.lower_bound == datetime(1902, 12, 31)
-        assert question.upper_bound == datetime(2084, 12, 31)
+        assert question.lower_bound == datetime(1902, 12, 31, tzinfo=timezone.utc)
+        assert question.upper_bound == datetime(2084, 12, 31, tzinfo=timezone.utc)
         assert not question.open_lower_bound
         assert question.open_upper_bound
         assert question.question_weight == 1.0
@@ -155,7 +156,7 @@ class TestGetSpecificQuestions:
                 "an alliance changes member parties, it will be considered the same alliance for the purposes of this question"
                 in question.fine_print
             )
-            assert question.close_time == datetime(2026, 10, 27, 4)
+            assert question.close_time == datetime(2026, 10, 27, 4, tzinfo=timezone.utc)
             assert isinstance(question.group_question_option, str)
             assert_basic_question_attributes_not_none(question, question.id_of_post)
 
@@ -181,12 +182,18 @@ class TestGetSpecificQuestions:
             question for question in questions if "Critical" in question.question_text
         ][0]
 
-        assert high_risk_question.scheduled_resolution_time == datetime(2036, 3, 1, 0)
-        assert critical_risk_question.scheduled_resolution_time == datetime(
-            2041, 3, 1, 0
+        assert high_risk_question.scheduled_resolution_time == datetime(
+            2036, 3, 1, 0, tzinfo=timezone.utc
         )
-        assert high_risk_question.close_time == datetime(2036, 1, 1, 0)
-        assert critical_risk_question.close_time == datetime(2041, 1, 1, 0)
+        assert critical_risk_question.scheduled_resolution_time == datetime(
+            2041, 3, 1, 0, tzinfo=timezone.utc
+        )
+        assert high_risk_question.close_time == datetime(
+            2036, 1, 1, 0, tzinfo=timezone.utc
+        )
+        assert critical_risk_question.close_time == datetime(
+            2041, 1, 1, 0, tzinfo=timezone.utc
+        )
 
     def test_question_weight(self) -> None:
         question = MetaculusApi.get_question_by_post_id(
@@ -453,7 +460,7 @@ class TestPostEndpoint:
             assert isinstance(
                 question, BinaryQuestion
             ), f"Question {question.id_of_post} is not a BinaryQuestion"
-            one_year_earlier = datetime.now() - timedelta(days=365)
+            one_year_earlier = pendulum.now().subtract(days=365)
             assert (
                 question.open_time > one_year_earlier
             ), f"Question {question.id_of_post} opened at {question.open_time}, expected after {one_year_earlier}"
@@ -477,9 +484,9 @@ class TestPostEndpoint:
         ), "Questions should not be the same (randomly sampled)"
 
 
-@pytest.mark.skip(
-    reason="Reducing the number of calls to metaculus api due to rate limiting"
-)
+# @pytest.mark.skip(
+#     reason="Reducing the number of calls to metaculus api due to rate limiting"
+# )
 class TestApiFilter:
     @pytest.mark.parametrize(
         "api_filter, num_questions, randomly_sample",
@@ -730,7 +737,7 @@ def assert_basic_question_attributes_not_none(
         question.id_of_question is not None
     ), f"ID of question is None for post ID {post_id}"
     assert question.id_of_post is not None, f"ID of post is None for post ID {post_id}"
-    assert question.date_accessed > datetime.now() - timedelta(
+    assert question.date_accessed > pendulum.now().subtract(
         days=1
     ), f"Date accessed is not in the past for post ID {post_id}"
     assert isinstance(
