@@ -485,7 +485,7 @@ class MetaculusApi:
             new_post_json["question"] = new_question_json
 
             question_obj = cls._non_group_post_json_to_question(new_post_json)
-            question_obj.sub_question_ids = question_ids.copy()
+            question_obj.question_ids_of_group = question_ids.copy()
             questions.append(question_obj)
         return questions
 

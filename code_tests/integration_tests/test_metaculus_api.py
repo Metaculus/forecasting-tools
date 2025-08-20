@@ -46,6 +46,7 @@ class TestGetSpecificQuestions:
         assert question.typed_resolution is None
         assert question.get_question_type() == "binary"
         assert question.question_type == "binary"
+        assert question.question_ids_of_group is None
         assert_basic_question_attributes_not_none(question, question.id_of_post)
 
     def test_get_numeric_question_type_from_id(self) -> None:
@@ -194,7 +195,7 @@ class TestGetSpecificQuestions:
         assert critical_risk_question.close_time == datetime(
             2041, 1, 1, 0, tzinfo=timezone.utc
         )
-        assert set(high_risk_question.sub_question_ids) == {38105, 38106}
+        assert set(high_risk_question.question_ids_of_group) == {38105, 38106}
 
     def test_question_weight(self) -> None:
         question = MetaculusApi.get_question_by_post_id(
