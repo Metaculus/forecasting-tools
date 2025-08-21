@@ -98,7 +98,7 @@ class DataOrganizer:
         from forecasting_tools.helpers.metaculus_api import MetaculusApi
 
         assert issubclass(question_type, MetaculusQuestion)
-        question_id = DataOrganizer.get_example_post_id_for_question_type(question_type)
+        question_id = cls.get_example_post_id_for_question_type(question_type)
         question = MetaculusApi.get_question_by_post_id(question_id)
         assert isinstance(question, question_type)
         return question

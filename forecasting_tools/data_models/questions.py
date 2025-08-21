@@ -256,10 +256,7 @@ class BinaryQuestion(MetaculusQuestion):
         return resolution
 
     @classmethod
-    def from_metaculus_api_json(
-        cls,
-        api_json: dict,
-    ) -> BinaryQuestion:
+    def from_metaculus_api_json(cls, api_json: dict) -> BinaryQuestion:
         normal_metaculus_question = super().from_metaculus_api_json(api_json)
         try:
             q2_center_community_prediction = api_json["question"]["aggregations"]["recency_weighted"]["latest"]["centers"]  # type: ignore
@@ -406,10 +403,7 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
         return resolution
 
     @classmethod
-    def from_metaculus_api_json(
-        cls,
-        api_json: dict,
-    ) -> NumericQuestion:
+    def from_metaculus_api_json(cls, api_json: dict) -> NumericQuestion:
         normal_metaculus_question = super().from_metaculus_api_json(api_json)
         (
             open_upper_bound,
