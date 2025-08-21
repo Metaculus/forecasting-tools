@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import MultipleChoiceQuestion
-from forecasting_tools.helpers.metaculus_api import MetaculusApi
 
 
 class PredictedOption(BaseModel):
@@ -27,6 +26,8 @@ class MultipleChoiceReport(ForecastReport):
         raise NotImplementedError("Not implemented")
 
     async def publish_report_to_metaculus(self) -> None:
+        from forecasting_tools.helpers.metaculus_api import MetaculusApi
+
         if self.question.id_of_question is None:
             raise ValueError("Question ID is None")
         options_with_probabilities = {

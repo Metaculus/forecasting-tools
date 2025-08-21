@@ -2,7 +2,7 @@ from typing import Literal, Self
 
 from pydantic import BaseModel
 
-from forecasting_tools.data_models.questions import BinaryQuestion, MetaculusQuestion
+from forecasting_tools.data_models.questions import MetaculusQuestion
 
 DirectionsType = Literal["positive", "negative"]
 
@@ -23,6 +23,10 @@ class CoherenceLink(BaseModel):
 
     @classmethod
     def from_metaculus_api_json(cls, api_json: dict) -> Self:
+        from forecasting_tools.data_models.data_organizer import DataOrganizer
+
+        question1: dict = api_json["question1"]
+        question2: dict = api_json["question2"]
         return cls(
             question1_id=api_json["question1_id"],
             question2_id=api_json["question2_id"],
@@ -30,10 +34,6 @@ class CoherenceLink(BaseModel):
             strength=api_json["strength"],
             type=api_json["type"],
             id=api_json["id"],
-            question1=BinaryQuestion.from_metaculus_api_json(
-                api_json["question1"], is_question_json=True
-            ),
-            question2=BinaryQuestion.from_metaculus_api_json(
-                api_json["question2"], is_question_json=True
-            ),
+            question1=DataOrganizer.get_question_from_question_json(question1),
+            question2=DataOrganizer.get_question_from_question_json(question2),
         )

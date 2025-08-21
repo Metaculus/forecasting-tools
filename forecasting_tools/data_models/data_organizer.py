@@ -18,7 +18,6 @@ from forecasting_tools.data_models.questions import (
     MultipleChoiceQuestion,
     NumericQuestion,
 )
-from forecasting_tools.helpers.metaculus_api import MetaculusApi
 from forecasting_tools.util import file_manipulation
 
 
@@ -83,8 +82,10 @@ class DataOrganizer:
     def get_live_example_question_of_type(
         cls, question_type: type[MetaculusQuestion]
     ) -> MetaculusQuestion:
+        from forecasting_tools.helpers.metaculus_api import MetaculusApi
+
         assert issubclass(question_type, MetaculusQuestion)
-        question_id = cls.get_example_post_id_for_question_type(question_type)
+        question_id = DataOrganizer.get_example_post_id_for_question_type(question_type)
         question = MetaculusApi.get_question_by_post_id(question_id)
         assert isinstance(question, question_type)
         return question
@@ -114,6 +115,29 @@ class DataOrganizer:
         questions = cls._load_objects_from_json(jsons, cls.get_all_question_types())  # type: ignore
         questions = typeguard.check_type(questions, list[MetaculusQuestion])
         return questions
+
+    @classmethod
+    def get_question_from_post_json(cls, post_json: dict) -> MetaculusQuestion:
+        assert "question" in post_json, "Question key not found in API JSON"
+        question_type_string = post_json["question"]["type"]  # type: ignore
+        if question_type_string == BinaryQuestion.get_api_type_name():
+            question_type = BinaryQuestion
+        elif question_type_string == NumericQuestion.get_api_type_name():
+            question_type = NumericQuestion
+        elif question_type_string == MultipleChoiceQuestion.get_api_type_name():
+            question_type = MultipleChoiceQuestion
+        elif question_type_string == DateQuestion.get_api_type_name():
+            question_type = DateQuestion
+        else:
+            raise ValueError(f"Unknown question type: {question_type_string}")
+        question = question_type.from_metaculus_api_json(post_json)
+        return question
+
+    @classmethod
+    def get_question_from_question_json(cls, question_json: dict) -> MetaculusQuestion:
+        return cls.get_question_from_post_json(
+            {"id": question_json["post_id"], "question": question_json}
+        )
 
     @classmethod
     def save_reports_to_file_path(

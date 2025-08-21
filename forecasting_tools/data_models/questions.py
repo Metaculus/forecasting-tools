@@ -90,15 +90,11 @@ class MetaculusQuestion(BaseModel, Jsonable):
     )
 
     @classmethod
-    def from_metaculus_api_json(
-        cls, post_api_json: dict, is_question_json: bool = False
-    ) -> MetaculusQuestion:
+    def from_metaculus_api_json(cls, post_api_json: dict) -> MetaculusQuestion:
         post_id = post_api_json["id"]
         logger.debug(f"Processing Post ID {post_id}")
 
-        question_json: dict = (
-            post_api_json["question"] if not is_question_json else post_api_json
-        )
+        question_json: dict = post_api_json["question"]
         json_state = question_json["status"]
         question_state = QuestionState(json_state)
 
@@ -258,11 +254,10 @@ class BinaryQuestion(MetaculusQuestion):
 
     @classmethod
     def from_metaculus_api_json(
-        cls, api_json: dict, is_question_json: bool = False
+        cls,
+        api_json: dict,
     ) -> BinaryQuestion:
-        normal_metaculus_question = super().from_metaculus_api_json(
-            api_json, is_question_json
-        )
+        normal_metaculus_question = super().from_metaculus_api_json(api_json)
         try:
             q2_center_community_prediction = api_json["question"]["aggregations"]["recency_weighted"]["latest"]["centers"]  # type: ignore
             assert len(q2_center_community_prediction) == 1
@@ -334,12 +329,8 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
         return resolution
 
     @classmethod
-    def from_metaculus_api_json(
-        cls, api_json: dict, is_question_json: bool = False
-    ) -> DateQuestion:
-        normal_metaculus_question = super().from_metaculus_api_json(
-            api_json, is_question_json
-        )
+    def from_metaculus_api_json(cls, api_json: dict) -> DateQuestion:
+        normal_metaculus_question = super().from_metaculus_api_json(api_json)
         (
             open_upper_bound,
             open_lower_bound,
@@ -384,11 +375,10 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
 
     @classmethod
     def from_metaculus_api_json(
-        cls, api_json: dict, is_question_json: bool = False
+        cls,
+        api_json: dict,
     ) -> NumericQuestion:
-        normal_metaculus_question = super().from_metaculus_api_json(
-            api_json, is_question_json
-        )
+        normal_metaculus_question = super().from_metaculus_api_json(api_json)
         (
             open_upper_bound,
             open_lower_bound,
@@ -440,12 +430,8 @@ class MultipleChoiceQuestion(MetaculusQuestion):
         return resolution
 
     @classmethod
-    def from_metaculus_api_json(
-        cls, api_json: dict, is_question_json: bool = False
-    ) -> MultipleChoiceQuestion:
-        normal_metaculus_question = super().from_metaculus_api_json(
-            api_json, is_question_json
-        )
+    def from_metaculus_api_json(cls, api_json: dict) -> MultipleChoiceQuestion:
+        normal_metaculus_question = super().from_metaculus_api_json(api_json)
         return MultipleChoiceQuestion(
             options=api_json["question"]["options"],
             option_is_instance_of=api_json["question"]["group_variable"],

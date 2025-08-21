@@ -8,7 +8,6 @@ from pydantic import AliasChoices, Field, field_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import BinaryQuestion
-from forecasting_tools.helpers.metaculus_api import MetaculusApi
 
 
 class BinaryReport(ForecastReport):
@@ -24,6 +23,8 @@ class BinaryReport(ForecastReport):
         return v
 
     async def publish_report_to_metaculus(self) -> None:
+        from forecasting_tools.helpers.metaculus_api import MetaculusApi
+
         if self.question.id_of_question is None:
             raise ValueError("Question ID is None")
         if self.question.id_of_post is None:

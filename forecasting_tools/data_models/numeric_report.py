@@ -7,7 +7,6 @@ from pydantic import BaseModel, field_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import NumericQuestion
-from forecasting_tools.helpers.metaculus_api import MetaculusApi
 
 logger = logging.getLogger(__name__)
 
@@ -270,6 +269,8 @@ class NumericReport(ForecastReport):
         return readable
 
     async def publish_report_to_metaculus(self) -> None:
+        from forecasting_tools.helpers.metaculus_api import MetaculusApi
+
         if self.question.id_of_question is None:
             raise ValueError("Question ID is None")
         cdf_probabilities = [
