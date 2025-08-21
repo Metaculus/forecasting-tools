@@ -1,4 +1,4 @@
-from forecasting_tools import MetaculusApi
+from forecasting_tools.helpers.metaculus_api import MetaculusApi
 
 
 def test_coherence_links_api():
