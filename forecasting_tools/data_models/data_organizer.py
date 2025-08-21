@@ -137,6 +137,8 @@ class DataOrganizer:
             question_type = BinaryQuestion
         elif question_type_string == NumericQuestion.get_api_type_name():
             question_type = NumericQuestion
+        elif question_type_string == DiscreteQuestion.get_api_type_name():
+            question_type = DiscreteQuestion
         elif question_type_string == MultipleChoiceQuestion.get_api_type_name():
             question_type = MultipleChoiceQuestion
         elif question_type_string == DateQuestion.get_api_type_name():
