@@ -4,7 +4,7 @@ import logging
 import textwrap
 from datetime import datetime
 from enum import Enum
-from typing import Literal
+from typing import Literal, Self
 
 import typeguard
 from pydantic import AliasChoices, BaseModel, Field, model_validator
@@ -90,11 +90,15 @@ class MetaculusQuestion(BaseModel, Jsonable):
     )
 
     @classmethod
-    def from_metaculus_api_json(cls, post_api_json: dict) -> MetaculusQuestion:
+    def from_metaculus_api_json(
+        cls, post_api_json: dict, is_question_json: bool = False
+    ) -> MetaculusQuestion:
         post_id = post_api_json["id"]
         logger.debug(f"Processing Post ID {post_id}")
 
-        question_json: dict = post_api_json["question"]
+        question_json: dict = (
+            post_api_json["question"] if not is_question_json else post_api_json
+        )
         json_state = question_json["status"]
         question_state = QuestionState(json_state)
 
@@ -125,8 +129,8 @@ class MetaculusQuestion(BaseModel, Jsonable):
             resolution_criteria=question_json.get("resolution_criteria", None),
             unit_of_measure=question_json.get("unit", None),
             page_url=f"https://www.metaculus.com/questions/{post_id}",
-            num_forecasters=post_api_json["nr_forecasters"],
-            num_predictions=post_api_json["forecasts_count"],
+            num_forecasters=post_api_json.get("nr_forecasters", None),
+            num_predictions=post_api_json.get("forecasts_count", None),
             close_time=cls._parse_api_date(question_json.get("scheduled_close_time")),
             actual_resolution_time=cls._parse_api_date(
                 question_json.get("actual_resolve_time")
@@ -139,7 +143,11 @@ class MetaculusQuestion(BaseModel, Jsonable):
             open_time=cls._parse_api_date(question_json.get("open_time")),
             already_forecasted=is_forecasted,
             tournament_slugs=tournament_slugs,
-            default_project_id=post_api_json["projects"]["default_project"]["id"],
+            default_project_id=(
+                post_api_json["projects"]["default_project"]["id"]
+                if "projects" in post_api_json
+                else None
+            ),
             includes_bots_in_aggregates=question_json["include_bots_in_aggregates"],
             question_weight=question_json["question_weight"],
             resolution_string=question_json.get("resolution"),
@@ -249,8 +257,12 @@ class BinaryQuestion(MetaculusQuestion):
         return resolution
 
     @classmethod
-    def from_metaculus_api_json(cls, api_json: dict) -> BinaryQuestion:
-        normal_metaculus_question = super().from_metaculus_api_json(api_json)
+    def from_metaculus_api_json(
+        cls, api_json: dict, is_question_json: bool = False
+    ) -> BinaryQuestion:
+        normal_metaculus_question = super().from_metaculus_api_json(
+            api_json, is_question_json
+        )
         try:
             q2_center_community_prediction = api_json["question"]["aggregations"]["recency_weighted"]["latest"]["centers"]  # type: ignore
             assert len(q2_center_community_prediction) == 1
@@ -322,8 +334,12 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
         return resolution
 
     @classmethod
-    def from_metaculus_api_json(cls, api_json: dict) -> DateQuestion:
-        normal_metaculus_question = super().from_metaculus_api_json(api_json)
+    def from_metaculus_api_json(
+        cls, api_json: dict, is_question_json: bool = False
+    ) -> DateQuestion:
+        normal_metaculus_question = super().from_metaculus_api_json(
+            api_json, is_question_json
+        )
         (
             open_upper_bound,
             open_lower_bound,
@@ -367,8 +383,12 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
         return resolution
 
     @classmethod
-    def from_metaculus_api_json(cls, api_json: dict) -> NumericQuestion:
-        normal_metaculus_question = super().from_metaculus_api_json(api_json)
+    def from_metaculus_api_json(
+        cls, api_json: dict, is_question_json: bool = False
+    ) -> NumericQuestion:
+        normal_metaculus_question = super().from_metaculus_api_json(
+            api_json, is_question_json
+        )
         (
             open_upper_bound,
             open_lower_bound,
@@ -420,8 +440,12 @@ class MultipleChoiceQuestion(MetaculusQuestion):
         return resolution
 
     @classmethod
-    def from_metaculus_api_json(cls, api_json: dict) -> MultipleChoiceQuestion:
-        normal_metaculus_question = super().from_metaculus_api_json(api_json)
+    def from_metaculus_api_json(
+        cls, api_json: dict, is_question_json: bool = False
+    ) -> MultipleChoiceQuestion:
+        normal_metaculus_question = super().from_metaculus_api_json(
+            api_json, is_question_json
+        )
         return MultipleChoiceQuestion(
             options=api_json["question"]["options"],
             option_is_instance_of=api_json["question"]["group_variable"],
@@ -439,3 +463,38 @@ class MultipleChoiceQuestion(MetaculusQuestion):
             + f"\n\nThe final options you can choose are:\n {self.options}"
         )
         return final_details.strip()
+
+
+DirectionsType = Literal["positive", "negative"]
+
+StrengthsType = Literal["low", "medium", "high"]
+
+LinkTypesType = Literal["causal"]
+
+
+class CoherenceLink(BaseModel):
+    question1_id: int
+    question1: MetaculusQuestion
+    question2_id: int
+    question2: MetaculusQuestion
+    direction: DirectionsType
+    strength: StrengthsType
+    type: LinkTypesType
+    id: int
+
+    @classmethod
+    def from_metaculus_api_json(cls, api_json: dict) -> Self:
+        return cls(
+            question1_id=api_json["question1_id"],
+            question2_id=api_json["question2_id"],
+            direction=api_json["direction"],
+            strength=api_json["strength"],
+            type=api_json["type"],
+            id=api_json["id"],
+            question1=BinaryQuestion.from_metaculus_api_json(
+                api_json["question1"], is_question_json=True
+            ),
+            question2=BinaryQuestion.from_metaculus_api_json(
+                api_json["question2"], is_question_json=True
+            ),
+        )

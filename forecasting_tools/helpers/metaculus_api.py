@@ -10,7 +10,7 @@ import random
 import re
 import time
 from datetime import datetime, timedelta
-from typing import Any, Callable, Literal, TypeVar, overload
+from typing import Any, Callable, List, Literal, TypeVar, overload
 
 import requests
 import typeguard
@@ -18,6 +18,7 @@ from pydantic import BaseModel
 
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
+    CoherenceLink,
     DateQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
@@ -114,6 +115,51 @@ class MetaculusApi:
             **cls._get_auth_headers(),  # type: ignore
         )
         logger.info(f"Posted comment on post {post_id}")
+        raise_for_status_with_additional_info(response)
+
+    @classmethod
+    def post_question_link(
+        cls,
+        question1_id: int,
+        question2_id: int,
+        direction: str,
+        strength: str,
+        link_type: str,
+    ):
+        response = requests.post(
+            f"{cls.API_BASE_URL}/coherence/links/create/",
+            json={
+                "question1_id": question1_id,
+                "question2_id": question2_id,
+                "direction": direction,
+                "strength": strength,
+                "type": link_type,
+            },
+            **cls._get_auth_headers(),  # type: ignore
+        )
+        logger.info(f"Posted question link between {question1_id} and {question2_id}")
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)
+        return content["id"]
+
+    @classmethod
+    def get_links_for_question(cls, question_id: int) -> List[CoherenceLink]:
+        response = requests.get(
+            f"{cls.API_BASE_URL}/coherence/links/{question_id}",
+            **cls._get_auth_headers(),  # type: ignore
+        )
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)["data"]
+        links = [CoherenceLink.from_metaculus_api_json(link) for link in content]
+        return links
+
+    @classmethod
+    def delete_question_link(cls, link_id: int):
+        response = requests.delete(
+            f"{cls.API_BASE_URL}/coherence/links/{link_id}/delete",
+            **cls._get_auth_headers(),  # type: ignore
+        )
+        logger.info(f"Deleted question link with id {link_id}")
         raise_for_status_with_additional_info(response)
 
     @classmethod
