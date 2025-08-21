@@ -123,7 +123,7 @@ class MetaculusApi:
         direction: str,
         strength: str,
         link_type: str,
-    ):
+    ) -> int:
         response = requests.post(
             f"{cls.API_BASE_URL}/coherence/links/create/",
             json={
