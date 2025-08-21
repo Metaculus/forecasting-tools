@@ -146,8 +146,8 @@ class MetaculusApi:
         cls, question_id: int, prediction_in_decimal: float
     ) -> None:
         logger.info(f"Posting prediction on question {question_id}")
-        if prediction_in_decimal < 0.01 or prediction_in_decimal > 0.99:
-            raise ValueError("Prediction value must be between 0.001 and 0.99")
+        if prediction_in_decimal < 0.001 or prediction_in_decimal > 0.999:
+            raise ValueError("Prediction value must be between 0.001 and 0.999")
         payload = {
             "probability_yes": prediction_in_decimal,
         }
