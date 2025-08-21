@@ -6,6 +6,7 @@ import random
 from datetime import datetime, timedelta, timezone
 
 import typeguard
+import typing_extensions
 
 from forecasting_tools.agents_and_tools.question_generators.generated_question import (
     GeneratedQuestion,
@@ -25,6 +26,10 @@ from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
 logger = logging.getLogger(__name__)
 
 
+@typing_extensions.deprecated(
+    "QuestionGenerator has been replaced with QuestionDecomposer and QuestionOperationalizer",
+    category=None,
+)
 class QuestionGenerator:
     """
     Question writing guidelines:

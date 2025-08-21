@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "metac-bot-template"
+version = "0.1.0"
+description = ""
+authors = ["Vasile Popescu <elisescu@elisescu.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+python-decouple = "^3.8"
+requests = "^2.32.3"
+asknews = "^0.11.2"
+numpy = "^2.3.0"
+openai = "^1.57.4"
+python-dotenv = "^1.0.1"
+forecasting-tools = "^0.2.54"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
+pytest = "^8.3.2"
+pytest-xdist = "^3.3.1"
+pytest-mock = "^3.14.0"
+pytest-asyncio = ">=0.25.0,<2.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

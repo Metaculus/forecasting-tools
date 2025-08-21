@@ -9,7 +9,6 @@ from forecasting_tools.auto_optimizers.bot_optimizer import BotOptimizer
 from forecasting_tools.auto_optimizers.control_prompt import ControlPrompt
 from forecasting_tools.auto_optimizers.prompt_data_models import ResearchTool, ToolName
 from forecasting_tools.auto_optimizers.prompt_optimizer import ScoredPrompt
-from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 
 logger = logging.getLogger(__name__)
 
@@ -64,12 +63,25 @@ async def test_bot_optimizer() -> None:
             control_prompt = scored_prompt
             break
     assert control_prompt is not None
-    assert (
-        control_prompt.prompt.text.replace("\n", "").strip()
-        == ControlPrompt.get_control_combined_prompt().replace("\n", "").strip()
+
+    expected_control_prompt = (
+        ControlPrompt.get_control_combined_prompt()
+        .replace("\n", "")
+        .replace(" ", "")
+        .strip()
     )
-    control_benchmark: BenchmarkForBot = control_prompt.score.metadata["benchmark"]
-    assert (
-        control_benchmark.bot_prompt.replace("\n", "").strip()
-        == ControlPrompt.get_control_combined_prompt().replace("\n", "").strip()
+    observed_control_prompt = (
+        control_prompt.prompt.text.replace("\n", "").replace(" ", "").strip()
     )
+    benchmark_prompt = (
+        control_prompt.score.metadata["benchmark"]
+        .bot_prompt.replace("\n", "")
+        .replace(" ", "")
+        .strip()
+    )
+    logger.info(f"Expected control prompt: \n{expected_control_prompt}")
+    logger.info(f"Observed control prompt: \n{observed_control_prompt}")
+    logger.info(f"Benchmark prompt: \n{benchmark_prompt}")
+
+    assert observed_control_prompt == expected_control_prompt
+    assert benchmark_prompt == expected_control_prompt

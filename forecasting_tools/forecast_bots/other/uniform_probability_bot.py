@@ -79,14 +79,7 @@ class UniformProbabilityBot(ForecastBot):
             ),
         ]
 
-        distribution = NumericDistribution(
-            declared_percentiles=percentiles,
-            open_upper_bound=question.open_upper_bound,
-            open_lower_bound=question.open_lower_bound,
-            upper_bound=question.upper_bound,
-            lower_bound=question.lower_bound,
-            zero_point=question.zero_point,
-        )
+        distribution = NumericDistribution.from_question(percentiles, question)
 
         return ReasonedPrediction(
             prediction_value=distribution,

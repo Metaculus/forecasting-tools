@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import time
 from typing import Any
 
@@ -16,6 +17,7 @@ from agents import (
 from agents import function_tool as ft
 from agents import generation_span, trace
 from agents.extensions.models.litellm_model import LitellmModel
+from agents.run import RunConfig
 from agents.stream_events import StreamEvent
 from agents.tracing.setup import GLOBAL_TRACE_PROVIDER
 from agents.tracing.span_data import CustomSpanData, GenerationSpanData
@@ -59,16 +61,29 @@ class NoOpContextManager:
 
 def _current_trace_exists() -> bool:
     try:
-        current_trace = GLOBAL_TRACE_PROVIDER.get_current_trace()
+        if GLOBAL_TRACE_PROVIDER is not None:
+            current_trace = GLOBAL_TRACE_PROVIDER.get_current_trace()
+        else:
+            raise ValueError("GLOBAL_TRACE_PROVIDER is not set")
     except Exception as e:
         logger.warning(f"Error getting current trace: {e}")
         current_trace = None
     return current_trace is not None
 
 
+def _disable_tracing_based_if_not_configured() -> None:
+    if not os.getenv("OPENAI_API_KEY") and not os.getenv(
+        "OPENAI_AGENTS_DISABLE_TRACING"
+    ):
+        disable_value = "1"
+        os.environ["OPENAI_AGENTS_DISABLE_TRACING"] = disable_value
+        RunConfig.tracing_disabled = True
+
+
 def general_trace_or_span(
     name: str, data: dict[str, Any] | None = None, **kwargs
 ) -> Span[CustomSpanData] | Trace:
+    _disable_tracing_based_if_not_configured()
     if _current_trace_exists():
         return custom_span(name, data, **kwargs)
     else:
@@ -76,6 +91,7 @@ def general_trace_or_span(
 
 
 def track_generation(*args, **kwargs) -> Span[GenerationSpanData]:
+    _disable_tracing_based_if_not_configured()
     if _current_trace_exists():
         return generation_span(*args, **kwargs)
     else:

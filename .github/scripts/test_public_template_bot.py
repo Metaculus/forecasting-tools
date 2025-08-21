@@ -4,12 +4,17 @@ import json
 import os
 import urllib.request
 
+import pytest
+
 from forecasting_tools import (
     DataOrganizer,
+    ForecastBot,
     MetaculusApi,
     MetaculusQuestion,
+    QuestionOperationalizer,
     TemplateBot,
 )
+from forecasting_tools.forecast_bots.bot_lists import get_all_bots_for_doing_cheap_tests
 
 
 def test_example_questions_forecasted_saved_and_loaded() -> None:
@@ -88,3 +93,29 @@ def test_saving_and_loading_question() -> None:
     assert question.id_of_question == loaded_question.id_of_question
     assert question.page_url == loaded_question.page_url
     os.remove("test_question.json")
+
+
+@pytest.mark.parametrize(
+    "bot",
+    get_all_bots_for_doing_cheap_tests(),
+)
+async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
+    # This tournament has all questions end in 2 years,
+    # and has at least one of every question type (binary, numeric, multiple choice, discrete, date)
+    original_publish_status = bot.publish_reports_to_metaculus
+    try:
+        bot.publish_reports_to_metaculus = True
+        reports = await bot.forecast_on_tournament("ai-2027", return_exceptions=True)
+        bot.log_report_summary(reports, raise_errors=True)
+        assert len(reports) == 15, "Expected 15 reports"
+    except Exception as e:
+        pytest.fail(f"Forecasting on ai-2027 tournament failed: {e}")
+    finally:
+        bot.publish_reports_to_metaculus = original_publish_status
+
+
+def test_package_resource_loading() -> None:
+    operationalizer = QuestionOperationalizer()
+    assert (
+        len(operationalizer.example_full_questions) > 3
+    ), f"Expected at least 3 example full questions, got {operationalizer.example_full_questions}"

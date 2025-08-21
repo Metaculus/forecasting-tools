@@ -4,8 +4,6 @@ import copy
 import logging
 from enum import Enum
 
-from pydantic import BaseModel, field_validator
-
 from forecasting_tools.ai_models.agent_wrappers import (
     AgentRunner,
     AgentSdkLlm,
@@ -21,6 +19,7 @@ from forecasting_tools.auto_optimizers.question_plus_research import (
     QuestionPlusResearch,
     ResearchType,
 )
+from forecasting_tools.data_models.binary_report import BinaryPrediction
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
@@ -35,22 +34,6 @@ from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.helpers.structure_output import structure_output
 
 logger = logging.getLogger(__name__)
-
-
-class BinaryPrediction(BaseModel):
-    prediction_in_decimal: float
-
-    @field_validator("prediction_in_decimal")
-    @classmethod
-    def validate_prediction_range(cls, value: float) -> float:
-        if 0.001 <= value <= 0.999:
-            return value
-        elif 0 <= value < 0.001:
-            return 0.001
-        elif 0.999 < value <= 1:
-            return 0.999
-        else:
-            raise ValueError("Prediction must be between 0 and 1")
 
 
 class ToolUsageTracker:

@@ -1,6 +1,7 @@
 import csv
 import datetime as dat
 import functools
+import importlib.resources
 import json
 import os
 from pathlib import Path
@@ -12,6 +13,22 @@ from PIL import Image
 def normalize_package_path(path_in_package: str | Path) -> str:
     if isinstance(path_in_package, Path):
         path_in_package = str(path_in_package)
+
+    # Check if this is a package resource path (starts with forecasting_tools/)
+    if path_in_package.startswith("forecasting_tools/"):
+        try:
+            # Extract the relative path within the package
+            relative_path = path_in_package.replace("forecasting_tools/", "", 1)
+
+            # Use importlib.resources to get the file path
+            with importlib.resources.files("forecasting_tools") as package_root:
+                file_path = package_root / relative_path
+                if file_path.exists():
+                    return str(file_path)
+        except Exception:
+            # Fall back to original behavior if importlib.resources fails
+            pass
+
     return path_in_package
 
 
@@ -73,9 +90,11 @@ def write_json_file(file_path_in_package: str, input: list[dict]) -> None:
 
 
 @skip_if_file_writing_not_allowed
-def add_to_jsonl_file(file_path_in_package: str, input: list[dict]) -> None:
+def add_to_jsonl_file(file_path_in_package: str, input: list[dict] | dict) -> None:
     if not file_path_in_package.endswith(".jsonl"):
         raise ValueError("File path must end with .jsonl")
+    if isinstance(input, dict):
+        input = [input]
     json_strings = [json.dumps(item) for item in input]
     jsonl_string = "\n".join(json_strings) + "\n"
     create_or_append_to_file(file_path_in_package, jsonl_string)

@@ -245,10 +245,11 @@ class GeneralLlm(
             messages=self.model_input_to_message(prompt),
             **self.litellm_kwargs,
         )
+
         assert isinstance(response, ModelResponse)
-        choices = response.choices
+        choices = response.choices  # type: ignore
         choices = typeguard.check_type(choices, list[Choices])
-        answer = choices[0].message.content
+        answer = choices[0].message.content  # type: ignore
         assert isinstance(
             answer, str
         ), f"Answer is not a string and is of type: {type(answer)}. Answer: {answer}"

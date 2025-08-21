@@ -12,9 +12,10 @@ import time
 from datetime import datetime, timedelta
 from typing import Any, Callable, List, Literal, TypeVar, overload
 
+import pendulum
 import requests
 import typeguard
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from forecasting_tools.data_models.coherence_link import CoherenceLink
 from forecasting_tools.data_models.data_organizer import DataOrganizer
@@ -23,11 +24,15 @@ from forecasting_tools.data_models.questions import (
     MetaculusQuestion,
     QuestionBasicType,
 )
-from forecasting_tools.util.misc import raise_for_status_with_additional_info
+from forecasting_tools.util.misc import (
+    add_timezone_to_dates_in_base_model,
+    raise_for_status_with_additional_info,
+)
 
 logger = logging.getLogger(__name__)
 
 Q = TypeVar("Q", bound=MetaculusQuestion)
+T = TypeVar("T", bound=BaseModel)
 GroupQuestionMode = Literal["exclude", "unpack_subquestions"]
 """
 If group_question_mode is "exclude", then group questions will be removed from the list of questions.
@@ -48,6 +53,7 @@ class ApiFilter(BaseModel):
         "numeric",
         "multiple_choice",
         "date",
+        "discrete",
     ]
     group_question_mode: GroupQuestionMode = "exclude"
     allowed_statuses: list[QuestionStateAsString] | None = None
@@ -64,6 +70,13 @@ class ApiFilter(BaseModel):
     community_prediction_exists: bool | None = None
     cp_reveal_time_gt: datetime | None = None
     cp_reveal_time_lt: datetime | None = None
+    order_by: str = (
+        "-published_time"  # Alternatives include things like "-weekly_movement" + is asc, - is desc
+    )
+
+    @model_validator(mode="after")
+    def add_timezone_to_dates(self) -> ApiFilter:
+        return add_timezone_to_dates_in_base_model(self)
 
 
 class MetaculusApi:
@@ -71,7 +84,7 @@ class MetaculusApi:
     Documentation for the API can be found at https://www.metaculus.com/api/
     """
 
-    # NOTE: The tourament slug can be used for ID as well (e.g. "aibq2" or "quarterly-cup")
+    # NOTE: The tourament slug can be used for ID as well (e.g. "aibq2" or "quarterly-cup" instead of 32721 or 32630)
     AI_WARMUP_TOURNAMENT_ID = (
         3294  # https://www.metaculus.com/tournament/ai-benchmarking-warmup/
     )
@@ -79,6 +92,7 @@ class MetaculusApi:
     AI_COMPETITION_ID_Q4 = 32506  # https://www.metaculus.com/tournament/aibq4/
     AI_COMPETITION_ID_Q1 = 32627  # https://www.metaculus.com/tournament/aibq1/
     AI_COMPETITION_ID_Q2 = 32721  # https://www.metaculus.com/tournament/aibq2/
+    AIB_FALL_2025_ID = 32813  # https://www.metaculus.com/tournament/fall-aib-2025/
     PRO_COMPARISON_TOURNAMENT_Q1 = 32631
     PRO_COMPARISON_TOURNAMENT_Q2 = (
         32761  # https://www.metaculus.com/tournament/pro-benchmark-q22025
@@ -87,10 +101,14 @@ class MetaculusApi:
     Q3_2024_QUARTERLY_CUP = 3366
     Q4_2024_QUARTERLY_CUP = 3672
     Q1_2025_QUARTERLY_CUP = 32630
-    CURRENT_QUARTERLY_CUP_ID = "metaculus-cup"  # Consider this parameter deprecated since quarterly cup is no longer active
     METACULUS_CUP_2025_1_ID = 32726
+    AI_2027_TOURNAMENT_ID = "ai-2027"
+
+    CURRENT_QUARTERLY_CUP_ID = "metaculus-cup"  # Consider this parameter deprecated since quarterly cup is no longer active
     CURRENT_METACULUS_CUP_ID = "metaculus-cup"
-    CURRENT_AI_COMPETITION_ID = AI_COMPETITION_ID_Q2
+    CURRENT_AI_COMPETITION_ID = AIB_FALL_2025_ID
+    CURRENT_MINIBENCH_ID = "minibench"
+
     TEST_QUESTION_URLS = [
         "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
         "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
@@ -101,14 +119,20 @@ class MetaculusApi:
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
 
     @classmethod
-    def post_question_comment(cls, post_id: int, comment_text: str) -> None:
+    def post_question_comment(
+        cls,
+        post_id: int,
+        comment_text: str,
+        is_private: bool = True,
+        included_forecast: bool = True,
+    ) -> None:
         response = requests.post(
             f"{cls.API_BASE_URL}/comments/create/",
             json={
                 "on_post": post_id,
                 "text": comment_text,
-                "is_private": True,
-                "included_forecast": True,
+                "is_private": is_private,
+                "included_forecast": included_forecast,
             },
             **cls._get_auth_headers(),  # type: ignore
         )
@@ -165,8 +189,8 @@ class MetaculusApi:
         cls, question_id: int, prediction_in_decimal: float
     ) -> None:
         logger.info(f"Posting prediction on question {question_id}")
-        if prediction_in_decimal < 0.01 or prediction_in_decimal > 0.99:
-            raise ValueError("Prediction value must be between 0.001 and 0.99")
+        if prediction_in_decimal < 0.001 or prediction_in_decimal > 0.999:
+            raise ValueError("Prediction value must be between 0.001 and 0.999")
         payload = {
             "probability_yes": prediction_in_decimal,
         }
@@ -182,8 +206,6 @@ class MetaculusApi:
         In this case we use the cdf.
         """
         logger.info(f"Posting prediction on question {question_id}")
-        if len(cdf_values) != 201:
-            raise ValueError("CDF must contain exactly 201 values")
         if not all(0 <= x <= 1 for x in cdf_values):
             raise ValueError("All CDF values must be between 0 and 1")
         if not all(a <= b for a, b in zip(cdf_values, cdf_values[1:])):
@@ -364,12 +386,12 @@ class MetaculusApi:
     ) -> list[BinaryQuestion]:
         logger.info(f"Retrieving {num_of_questions_to_return} benchmark questions")
         date_into_future = (
-            datetime.now() + timedelta(days=days_to_resolve_in)
+            pendulum.now() + timedelta(days=days_to_resolve_in)
             if days_to_resolve_in
             else None
         )
         date_into_past = (
-            datetime.now() - timedelta(days=max_days_since_opening)
+            pendulum.now() - timedelta(days=max_days_since_opening)
             if max_days_since_opening
             else None
         )
@@ -494,6 +516,7 @@ class MetaculusApi:
         group_json: dict = post_json_from_api["group_of_questions"]
         questions: list[MetaculusQuestion] = []
         question_jsons: list[dict] = group_json["questions"]
+        question_ids: list[int] = [q["id"] for q in question_jsons]
         for question_json in question_jsons:
             # Reformat the json to make it look like a normal post
             new_question_json = copy.deepcopy(question_json)
@@ -505,6 +528,7 @@ class MetaculusApi:
             new_post_json["question"] = new_question_json
 
             question_obj = DataOrganizer.get_question_from_post_json(new_post_json)
+            question_obj.question_ids_of_group = question_ids.copy()
             questions.append(question_obj)
         return questions
 
@@ -646,7 +670,7 @@ class MetaculusApi:
         url_params: dict[str, Any] = {
             "limit": cls.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST,
             "offset": offset,
-            "order_by": "-published_at",
+            "order_by": api_filter.order_by,
             "with_cp": "true",
         }
 
@@ -807,6 +831,11 @@ class MetaculusApi:
         date_gt: datetime | None,
         date_lt: datetime | None,
     ) -> list[Q]:
+        if date_gt and date_gt.tzinfo is None:
+            date_gt = date_gt.replace(tzinfo=pendulum.timezone("UTC"))
+        if date_lt and date_lt.tzinfo is None:
+            date_lt = date_lt.replace(tzinfo=pendulum.timezone("UTC"))
+
         filtered_questions: list[Q] = []
         for question in questions:
             question_date = date_field_getter(question)

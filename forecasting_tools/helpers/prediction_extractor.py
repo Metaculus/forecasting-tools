@@ -244,14 +244,7 @@ class PredictionExtractor:
             raise ValueError(
                 f"Couldn't extract numeric distribution from response. The text was: {text}"
             )
-        return NumericDistribution(
-            declared_percentiles=final_percentiles,
-            open_upper_bound=question.open_upper_bound,
-            open_lower_bound=question.open_lower_bound,
-            upper_bound=question.upper_bound,
-            lower_bound=question.lower_bound,
-            zero_point=question.zero_point,
-        )
+        return NumericDistribution.from_question(final_percentiles, question)
 
     @staticmethod
     def _get_percentile_lines(text: str) -> list[str]:

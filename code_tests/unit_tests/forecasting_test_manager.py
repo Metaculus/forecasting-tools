@@ -28,7 +28,7 @@ class ForecastingTestManager:
     TOURNAMENT_SAFE_TO_PULL_AND_PUSH_TO = MetaculusApi.AI_WARMUP_TOURNAMENT_ID
     TOURNAMENT_WITH_MIXTURE_OF_OPEN_AND_NOT_OPEN = MetaculusApi.CURRENT_METACULUS_CUP_ID
     TOURNAMENT_WITH_MIX_OF_QUESTION_TYPES = MetaculusApi.CURRENT_METACULUS_CUP_ID
-    TOURN_WITH_OPENNESS_AND_TYPE_VARIATIONS = MetaculusApi.CURRENT_METACULUS_CUP_ID
+    TOURN_WITH_OPENNESS_AND_TYPE_VARIATIONS = MetaculusApi.AI_2027_TOURNAMENT_ID
 
     @classmethod
     def get_fake_binary_question(
@@ -190,14 +190,7 @@ class MockBot(ForecastBot):
             Percentile(value=question.upper_bound or 100, percentile=0.9),
         ]
 
-        mock_distribution = NumericDistribution(
-            declared_percentiles=percentiles,
-            open_upper_bound=question.open_upper_bound,
-            open_lower_bound=question.open_lower_bound,
-            upper_bound=question.upper_bound,
-            lower_bound=question.lower_bound,
-            zero_point=question.zero_point,
-        )
+        mock_distribution = NumericDistribution.from_question(percentiles, question)
 
         return ReasonedPrediction(
             prediction_value=mock_distribution,

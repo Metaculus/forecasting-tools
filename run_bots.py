@@ -14,13 +14,12 @@ import dotenv
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
-from forecasting_tools.forecast_bots.official_bots.q2_template_bot import (
-    Q2TemplateBot2025,
-)
 from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
     UniformProbabilityBot,
 )
+from forecasting_tools.forecast_bots.template_bot import TemplateBot
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.helpers.structure_output import DEFAULT_STRUCTURE_OUTPUT_MODEL
 
 logger = logging.getLogger(__name__)
 dotenv.load_dotenv()
@@ -40,16 +39,19 @@ async def configure_and_run_bot(
             "+" in mode
         ), "Metaculus cup mode must be in the format 'token+tournament_id'"
         token = mode.split("+")[0]
-        chosen_tournament = MetaculusApi.CURRENT_METACULUS_CUP_ID
+        chosen_tournaments = [MetaculusApi.CURRENT_METACULUS_CUP_ID]
         skip_previously_forecasted_questions = False
     elif "+" in mode:
         parts = mode.split("+")
         assert len(parts) == 2
         token = parts[0]
-        chosen_tournament = parts[1]
+        chosen_tournaments = [parts[1]]
         skip_previously_forecasted_questions = False
     else:
-        chosen_tournament = MetaculusApi.CURRENT_AI_COMPETITION_ID
+        chosen_tournaments = [
+            MetaculusApi.CURRENT_AI_COMPETITION_ID,
+            MetaculusApi.CURRENT_MINIBENCH_ID,
+        ]
         skip_previously_forecasted_questions = True
         token = mode
 
@@ -61,11 +63,14 @@ async def configure_and_run_bot(
         return bot
     else:
         logger.info(f"LLMs for bot are: {bot.make_llm_dict()}")
-        reports = await bot.forecast_on_tournament(
-            chosen_tournament, return_exceptions=True
-        )
-        bot.log_report_summary(reports)
-        return reports
+        all_reports = []
+        for tournament in chosen_tournaments:
+            reports = await bot.forecast_on_tournament(
+                tournament, return_exceptions=True
+            )
+            all_reports.extend(reports)
+        bot.log_report_summary(all_reports)
+        return all_reports
 
 
 async def get_all_bots() -> list[ForecastBot]:
@@ -81,7 +86,7 @@ def create_bot(
     researcher: str | GeneralLlm = "asknews/news-summaries",
     predictions_per_research_report: int = 5,
 ) -> ForecastBot:
-    default_bot = Q2TemplateBot2025(
+    default_bot = TemplateBot(
         research_reports_per_question=1,
         predictions_per_research_report=predictions_per_research_report,
         use_research_summary_to_forecast=default_for_using_summary,
@@ -89,8 +94,9 @@ def create_bot(
         skip_previously_forecasted_questions=default_for_skipping_questions,
         llms={
             "default": llm,
-            "summarizer": "gpt-4o-mini",
+            "summarizer": "openrouter/openai/gpt-4.1-mini",
             "researcher": researcher,
+            "parser": DEFAULT_STRUCTURE_OUTPUT_MODEL,
         },
     )
     return default_bot

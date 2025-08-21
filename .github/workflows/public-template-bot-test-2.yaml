@@ -1,4 +1,4 @@
-name: Test public template bot usage V1
+name: Test public template bot usage V2
 
 on:
   workflow_dispatch:
@@ -30,7 +30,7 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
       - name: Copy template pyproject.toml
-        run: cp .github/scripts/pyproject.public-template-bot.toml pyproject.toml
+        run: cp .github/scripts/pyproject.public-template-bot-2.toml pyproject.toml
       - name: Generate lock file
         run: poetry lock
       - name: Install dependencies

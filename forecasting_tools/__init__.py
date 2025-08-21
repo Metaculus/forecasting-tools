@@ -15,8 +15,20 @@ from forecasting_tools.agents_and_tools.base_rates.niche_list_researcher import 
 from forecasting_tools.agents_and_tools.deprecated.question_generator import (
     QuestionGenerator as QuestionGenerator,
 )
+from forecasting_tools.agents_and_tools.other.data_analyzer import (
+    DataAnalyzer as DataAnalyzer,
+)
+from forecasting_tools.agents_and_tools.question_generators.question_decomposer import (
+    QuestionDecomposer as QuestionDecomposer,
+)
+from forecasting_tools.agents_and_tools.question_generators.question_operationalizer import (
+    QuestionOperationalizer as QuestionOperationalizer,
+)
 from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
     TopicGenerator as TopicGenerator,
+)
+from forecasting_tools.agents_and_tools.research.computer_use import (
+    ComputerUse as ComputerUse,
 )
 from forecasting_tools.agents_and_tools.research.key_factors_researcher import (
     KeyFactorsResearcher as KeyFactorsResearcher,
@@ -52,6 +64,9 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm as GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager as MonetaryCostManager,
 )
+from forecasting_tools.ai_models.resource_managers.refreshing_bucket_rate_limiter import (
+    RefreshingBucketRateLimiter as RefreshingBucketRateLimiter,
+)
 from forecasting_tools.auto_optimizers.bot_optimizer import BotOptimizer as BotOptimizer
 from forecasting_tools.cp_benchmarking.benchmark_displayer import (
     run_benchmark_streamlit_page as run_benchmark_streamlit_page,
@@ -60,6 +75,9 @@ from forecasting_tools.cp_benchmarking.benchmark_for_bot import (
     BenchmarkForBot as BenchmarkForBot,
 )
 from forecasting_tools.cp_benchmarking.benchmarker import Benchmarker as Benchmarker
+from forecasting_tools.data_models.binary_report import (
+    BinaryPrediction as BinaryPrediction,
+)
 from forecasting_tools.data_models.binary_report import BinaryReport as BinaryReport
 from forecasting_tools.data_models.coherence_link import CoherenceLink as CoherenceLink
 from forecasting_tools.data_models.data_organizer import DataOrganizer as DataOrganizer
@@ -82,7 +100,10 @@ from forecasting_tools.data_models.numeric_report import (
     NumericDistribution as NumericDistribution,
 )
 from forecasting_tools.data_models.numeric_report import NumericReport as NumericReport
+from forecasting_tools.data_models.numeric_report import Percentile as Percentile
 from forecasting_tools.data_models.questions import BinaryQuestion as BinaryQuestion
+from forecasting_tools.data_models.questions import DateQuestion as DateQuestion
+from forecasting_tools.data_models.questions import DiscreteQuestion as DiscreteQuestion
 from forecasting_tools.data_models.questions import (
     MetaculusQuestion as MetaculusQuestion,
 )
@@ -94,6 +115,9 @@ from forecasting_tools.data_models.questions import QuestionState as QuestionSta
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot as ForecastBot
 from forecasting_tools.forecast_bots.forecast_bot import Notepad as Notepad
 from forecasting_tools.forecast_bots.main_bot import MainBot as MainBot
+from forecasting_tools.forecast_bots.official_bots.fall_template_bot import (
+    FallTemplateBot2025 as FallTemplateBot2025,
+)
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025 as Q1TemplateBot2025,
 )
@@ -117,6 +141,9 @@ from forecasting_tools.helpers.metaculus_api import ApiFilter as ApiFilter
 from forecasting_tools.helpers.metaculus_api import MetaculusApi as MetaculusApi
 from forecasting_tools.helpers.prediction_extractor import (
     PredictionExtractor as PredictionExtractor,
+)
+from forecasting_tools.helpers.structure_output import (
+    structure_output as structure_output,
 )
 
 nest_asyncio.apply()

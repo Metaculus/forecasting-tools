@@ -105,7 +105,9 @@ class ForecastBot(ABC):
         for purpose, llm in self._llm_config_defaults().items():
             if purpose not in self._llms:
                 logger.warning(
-                    f"User forgot to set an llm for purpose: '{purpose}'. Using default llm: '{llm.model if isinstance(llm, GeneralLlm) else llm}'"
+                    f"User forgot to set an llm for purpose: '{purpose}'. Using default llm: "
+                    f"'{llm.model if isinstance(llm, GeneralLlm) else llm}'. You can configure defaults by overriding "
+                    f"{self._llm_config_defaults.__name__}"
                 )
                 self._llms[purpose] = llm
 
@@ -145,6 +147,21 @@ class ForecastBot(ABC):
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
         questions = MetaculusApi.get_all_open_questions_from_tournament(tournament_id)
+        supported_question_types = [
+            NumericQuestion,
+            MultipleChoiceQuestion,
+            BinaryQuestion,
+        ]
+        supported_questions = [
+            question
+            for question in questions
+            if isinstance(question, tuple(supported_question_types))
+        ]
+        if len(supported_questions) != len(questions):
+            logger.warning(
+                f"Skipping {len(questions) - len(supported_questions)} questions that are not supported (probably date questions)"
+            )
+        questions = supported_questions
         return await self.forecast_questions(questions, return_exceptions)
 
     @overload
@@ -844,6 +861,14 @@ class ForecastBot(ABC):
 
         if os.getenv("OPENAI_API_KEY"):
             summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+        elif os.getenv("OPENROUTER_API_KEY"):
+            summarizer = GeneralLlm(
+                model="openrouter/openai/gpt-4o-mini", temperature=0.3
+            )
+        elif os.getenv("ANTHROPIC_API_KEY"):
+            summarizer = GeneralLlm(
+                model="anthropic/claude-3-5-sonnet-20241022", temperature=0.3
+            )
         elif os.getenv("METACULUS_TOKEN"):
             summarizer = GeneralLlm(model="metaculus/gpt-4o-mini", temperature=0.3)
         else:
@@ -855,15 +880,37 @@ class ForecastBot(ABC):
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
         elif os.getenv("OPENROUTER_API_KEY"):
             researcher = GeneralLlm(
-                model="openrouter/perplexity/sonar-reasoning", temperature=0.1
+                model="openrouter/openai/gpt-4o-search-preview", temperature=0.1
             )
         elif os.getenv("EXA_API_KEY"):
             researcher = f"smart-searcher/{main_default_llm.model}"
+        elif os.getenv("OPENAI_API_KEY"):
+            researcher = GeneralLlm(
+                model="openai/gpt-4o-search-preview", temperature=0.1
+            )
+        elif os.getenv("METACULUS_TOKEN"):
+            researcher = GeneralLlm(
+                model="metaculus/gpt-4o-search-preview", temperature=0.1
+            )
         else:
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
+
+        if os.getenv("OPENAI_API_KEY"):
+            parser = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+        elif os.getenv("OPENROUTER_API_KEY"):
+            parser = GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.3)
+        elif os.getenv("ANTHROPIC_API_KEY"):
+            parser = GeneralLlm(
+                model="anthropic/claude-3-5-sonnet-20241022", temperature=0.3
+            )
+        elif os.getenv("METACULUS_TOKEN"):
+            parser = GeneralLlm(model="metaculus/gpt-4o-mini", temperature=0.3)
+        else:
+            parser = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
 
         return {
             "default": main_default_llm,
             "summarizer": summarizer,
             "researcher": researcher,
+            "parser": parser,
         }

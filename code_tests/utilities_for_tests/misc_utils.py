@@ -14,3 +14,18 @@ def determine_percent_correct(actual: list[Any], expected: list[Any]) -> float:
     percent_correct: float = number_of_correct / len(actual)
 
     return percent_correct
+
+
+def replace_tzinfo_in_string(string: str) -> str:
+    updated_s = (
+        string.replace("datetime.timezone.utc", "")
+        .replace("TZInfo(UTC)", "")
+        .replace("pendulum.timezone('UTC')", "")
+        .replace("Timezone('UTC')", "")
+        .replace("TzInfo(UTC)", "")
+        .replace("Timezone('Etc/UTC')", "")
+        .replace("datetime.datetime", "")
+        .replace("datetime", "")
+        .replace("DateTime", "")
+    )
+    return updated_s

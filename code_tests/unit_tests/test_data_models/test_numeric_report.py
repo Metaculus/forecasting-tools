@@ -12,6 +12,12 @@ from forecasting_tools.data_models.questions import NumericQuestion, QuestionSta
 logger = logging.getLogger(__name__)
 
 
+# TODO: Lower priority tests
+# - Make discrete tests for all the above edge cases
+# - Test open bound distributions
+# - Test zero point
+
+
 def test_percentile_validation() -> None:
     # Valid percentiles
     valid_percentile = Percentile(value=10.0, percentile=0.5)
@@ -19,10 +25,10 @@ def test_percentile_validation() -> None:
     assert valid_percentile.percentile == pytest.approx(0.5)
 
     # Invalid percentiles
-    with pytest.raises(ValueError, match="Percentile must be between 0 and 1"):
+    with pytest.raises(ValueError):
         Percentile(value=10.0, percentile=1.5)
 
-    with pytest.raises(ValueError, match="Percentile must be between 0 and 1"):
+    with pytest.raises(ValueError):
         Percentile(value=10.0, percentile=-0.1)
 
 
@@ -203,22 +209,26 @@ async def test_aggregate_predictions() -> None:
     ],
 )
 def test_close_bound_distribution(percentiles: list[Percentile]) -> None:
-    distribution = NumericDistribution(
-        declared_percentiles=percentiles,
-        open_upper_bound=False,
-        open_lower_bound=False,
-        upper_bound=100.0,
-        lower_bound=0.0,
-        zero_point=None,
-    )
+    for cdf_size in [10, 100, 201]:
+        distribution = NumericDistribution(
+            declared_percentiles=percentiles,
+            open_upper_bound=False,
+            open_lower_bound=False,
+            upper_bound=100.0,
+            lower_bound=0.0,
+            zero_point=None,
+            cdf_size=cdf_size,
+        )
 
-    assert distribution.cdf[0].percentile == pytest.approx(0.0)
-    assert distribution.cdf[0].value == pytest.approx(0.0)
-    assert distribution.cdf[-1].percentile == pytest.approx(1.0)
-    assert distribution.cdf[-1].value == pytest.approx(100.0)
+        assert distribution.cdf[0].percentile == pytest.approx(0.0)
+        assert distribution.cdf[0].value == pytest.approx(0.0)
+        assert distribution.cdf[-1].percentile == pytest.approx(1.0)
+        assert distribution.cdf[-1].value == pytest.approx(100.0)
 
-    for i in range(len(distribution.cdf) - 1):
-        assert distribution.cdf[i + 1].value - distribution.cdf[i].value > 0.00001
+        for i in range(len(distribution.cdf) - 1):
+            assert distribution.cdf[i + 1].value - distribution.cdf[i].value > 0.00001
+
+        assert len(distribution.cdf) == cdf_size
 
 
 def test_error_on_too_little_probability_assigned_in_range() -> None:

@@ -13,6 +13,7 @@ from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.bot_lists import (
     get_all_bot_question_type_pairs_for_cheap_tests,
+    get_all_bots_for_doing_cheap_tests,
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
@@ -51,6 +52,27 @@ async def test_predicts_test_question(
 
     updated_question = MetaculusApi.get_question_by_post_id(question.id_of_post)
     assert updated_question.already_forecasted
+
+
+@pytest.mark.parametrize(
+    "bot",
+    get_all_bots_for_doing_cheap_tests(),
+)
+async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
+    # This tournament has all questions end in 2 years,
+    # and has at least one of every question type (binary, numeric, multiple choice, discrete, date)
+    original_publish_status = bot.publish_reports_to_metaculus
+    try:
+        bot.publish_reports_to_metaculus = True
+        reports = await bot.forecast_on_tournament("ai-2027")
+        bot.log_report_summary(reports)
+
+        assert len(reports) == 15, "Expected 19 reports"
+
+    except Exception as e:
+        pytest.fail(f"Forecasting on ai-2027 tournament failed: {e}")
+    finally:
+        bot.publish_reports_to_metaculus = original_publish_status
 
 
 async def test_collects_reports_on_open_questions(mocker: Mock) -> None:
