@@ -61,6 +61,7 @@ from forecasting_tools.cp_benchmarking.benchmark_for_bot import (
 )
 from forecasting_tools.cp_benchmarking.benchmarker import Benchmarker as Benchmarker
 from forecasting_tools.data_models.binary_report import BinaryReport as BinaryReport
+from forecasting_tools.data_models.coherence_link import CoherenceLink as CoherenceLink
 from forecasting_tools.data_models.data_organizer import DataOrganizer as DataOrganizer
 from forecasting_tools.data_models.forecast_report import (
     ForecastReport as ForecastReport,
@@ -82,7 +83,6 @@ from forecasting_tools.data_models.numeric_report import (
 )
 from forecasting_tools.data_models.numeric_report import NumericReport as NumericReport
 from forecasting_tools.data_models.questions import BinaryQuestion as BinaryQuestion
-from forecasting_tools.data_models.questions import CoherenceLink as CoherenceLink
 from forecasting_tools.data_models.questions import (
     MetaculusQuestion as MetaculusQuestion,
 )

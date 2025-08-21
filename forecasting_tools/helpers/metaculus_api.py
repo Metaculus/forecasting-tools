@@ -16,9 +16,9 @@ import requests
 import typeguard
 from pydantic import BaseModel
 
+from forecasting_tools.data_models.coherence_link import CoherenceLink
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
-    CoherenceLink,
     DateQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
