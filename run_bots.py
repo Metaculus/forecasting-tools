@@ -7,13 +7,16 @@ It is run by workflows in the .github/workflows directory.
 import argparse
 import asyncio
 import logging
-from typing import Any
+from typing import Any, Literal
 
 import dotenv
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
+from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
+    GPT41OptimizedBot,
+)
 from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
     UniformProbabilityBot,
 )
@@ -87,8 +90,14 @@ def create_bot(
     llm: GeneralLlm,
     researcher: str | GeneralLlm = "asknews/news-summaries",
     predictions_per_research_report: int = 5,
+    bot_type: Literal["template", "gpt_4_1_optimized"] = "template",
 ) -> ForecastBot:
-    default_bot = TemplateBot(
+    if bot_type == "template":
+        bot_class = TemplateBot
+    elif bot_type == "gpt_4_1_optimized":
+        bot_class = GPT41OptimizedBot
+
+    default_bot = bot_class(
         research_reports_per_question=1,
         predictions_per_research_report=predictions_per_research_report,
         use_research_summary_to_forecast=default_for_using_summary,
@@ -260,7 +269,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_KIMI_K2": kimi_k2_basic_bot,
-        "METAC_KIMI_K2_VARIANCE_TEST": kimi_k2_basic_bot,
+        # "METAC_KIMI_K2_VARIANCE_TEST": kimi_k2_basic_bot, # The name of the bot in Metaculus is weird, and this just isn't needed much
         "METAC_DEEPSEEK_R1_VARIANCE_TEST": deepseek_r1_bot,  # See METAC_DEEPSEEK_R1_TOKEN below
         "METAC_GPT_OSS_120B": {
             "estimated_cost_per_question": None,
@@ -363,11 +372,23 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         ### Specialized Bots
         "METAC_GPT_4_1_OPTIMIZED_PROMPT": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/openai/gpt-4.1-mini",
+                    temperature=default_temperature,
+                ),
+                bot_type="gpt_4_1_optimized",
+            ),
         },
         "METAC_GPT_4_1_NANO_OPTIMIZED_PROMPT": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/openai/gpt-4.1-nano",
+                    temperature=default_temperature,
+                ),
+                bot_type="gpt_4_1_optimized",
+            ),
         },
         # "METAC_GROK_4_TOOLS": {
         #     "estimated_cost_per_question": None,
@@ -417,6 +438,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 ),
                 researcher=GeneralLlm(model="exa/exa-pro"),
             ),
+            "discontinued": True,
         },
         "METAC_DEEPSEEK_R1_SONAR_PRO": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -500,6 +522,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 default_deepseek_research_bot_llm,
                 researcher="smart-searcher/openrouter/deepseek/deepseek-r1",
             ),
+            "discontinued": True,
         },
         "METAC_DEEPSEEK_R1_ASK_EXA_PRO": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -507,6 +530,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 default_deepseek_research_bot_llm,
                 researcher=GeneralLlm(model="exa/exa-pro"),
             ),
+            "discontinued": True,
         },
         "METAC_DEEPSEEK_R1_DEEPNEWS": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -584,7 +608,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": 0.03,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gemini/gemini-2.5-flash-preview-04-17",
+                    model="openrouter/google/gemini-2.5-flash",  # NOTE: This was updated from "gemini/gemini-2.5-flash-preview-04-17" in Fall 2025
                     temperature=default_temperature,
                     timeout=gemini_default_timeout,
                 ),
@@ -599,6 +623,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     reasoning_effort="high",
                 ),
             ),
+            "discontinued": True,
         },
         "METAC_O1_TOKEN": {
             "estimated_cost_per_question": 1.15,
@@ -618,6 +643,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
+            "discontinued": True,
         },
         "METAC_O3_MINI_HIGH_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_cost,
@@ -628,6 +654,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     reasoning_effort="high",
                 ),
             ),
+            "discontinued": True,
         },
         "METAC_O3_MINI_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_cost,
@@ -638,6 +665,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     reasoning_effort="medium",
                 ),
             ),
+            "discontinued": True,
         },
         "METAC_GPT_4O_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_cost,
@@ -680,6 +708,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     timeout=160,
                 ),
             ),
+            "discontinued": True,
         },
         "METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost,
@@ -689,6 +718,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
+            "discontinued": True,
         },
         "METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost,
@@ -698,6 +728,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
+            "discontinued": True,
         },
         "METAC_CLAUDE_3_5_SONNET_20240620_TOKEN": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost,
@@ -707,12 +738,13 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
+            "discontinued": True,
         },
         "METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN": {
             "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
             "bot": create_bot(
                 GeneralLlm(
-                    model=gemini_2_5_pro_preview,
+                    model=gemini_2_5_pro_preview,  # NOTE: Switched from preview to regular pro mid Q2
                     temperature=default_temperature,
                     timeout=gemini_default_timeout,
                 ),
@@ -726,6 +758,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
+            "discontinued": True,
         },
         "METAC_LLAMA_4_MAVERICK_17B_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
