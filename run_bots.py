@@ -32,7 +32,7 @@ default_for_using_summary = False
 
 async def configure_and_run_bot(
     mode: str, return_bot__dont_run: bool = False
-) -> ForecastBot | list[ForecastReport | BaseException]:
+) -> ForecastBot | None | list[ForecastReport | BaseException]:
 
     if "metaculus-cup" in mode:
         assert (
@@ -56,12 +56,14 @@ async def configure_and_run_bot(
         token = mode
 
     bot = get_default_bot_dict()[token]["bot"]
-    assert isinstance(bot, ForecastBot)
-    bot.skip_previously_forecasted_questions = skip_previously_forecasted_questions
+    if bot is not None:
+        assert isinstance(bot, ForecastBot)
+        bot.skip_previously_forecasted_questions = skip_previously_forecasted_questions
 
     if return_bot__dont_run:
         return bot
     else:
+        assert isinstance(bot, ForecastBot)
         logger.info(f"LLMs for bot are: {bot.make_llm_dict()}")
         all_reports = []
         for tournament in chosen_tournaments:
@@ -103,6 +105,10 @@ def create_bot(
 
 
 def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
+    """
+    Useful Links:
+    OpenRouter reasoning control settings: https://openrouter.ai/docs/use-cases/reasoning-tokens#controlling-reasoning-tokens
+    """
     default_temperature = 0.3
 
     # NOTE: Anything that uses the "roughly" cost value (other than the original model the variable matches to)
@@ -137,77 +143,161 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         temperature=default_temperature,
     )
 
+    kimi_k2_basic_bot = {
+        "estimated_cost_per_question": None,
+        "bot": create_bot(
+            GeneralLlm(
+                model="openrouter/moonshotai/kimi-k2",
+                temperature=default_temperature,
+            ),
+        ),
+    }
+    deepseek_r1_bot = {
+        "estimated_cost_per_question": 0.039,
+        "bot": create_bot(
+            GeneralLlm(
+                model="openrouter/deepseek/deepseek-r1",
+                temperature=default_temperature,
+            ),
+        ),
+    }
+    deepseek_v3_1_bot = {
+        "estimated_cost_per_question": None,
+        "bot": create_bot(
+            GeneralLlm(
+                model="openrouter/deepseek/deepseek-chat-v3.1",
+                temperature=default_temperature,
+            ),
+        ),
+    }
+
     mode_base_bot_mapping = {
         ############################ Bots started in Fall 2025 ############################
         ### Regular Bots
         "METAC_GPT_5_HIGH": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openai/gpt-5",
+                    reasoning_effort="high",
+                    temperature=default_temperature,
+                ),
+            ),
         },
         "METAC_GPT_5": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openai/gpt-5",
+                    temperature=default_temperature,
+                ),
+            ),
         },
         "METAC_GPT_5_MINI": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openai/gpt-5-mini",
+                    temperature=default_temperature,
+                ),
+            ),
         },
         "METAC_GPT_5_NANO": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openai/gpt-5-nano",
+                    temperature=default_temperature,
+                ),
+            ),
         },
         "METAC_CLAUDE_4_SONNET_HIGH_16K": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="anthropic/claude-sonnet-4-0",
+                    temperature=default_temperature,
+                    thinking={
+                        "type": "enabled",
+                        "budget_tokens": 16000,
+                    },
+                    max_tokens=40000,
+                    timeout=160,
+                ),
+            ),
         },
         "METAC_CLAUDE_4_SONNET": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="anthropic/claude-sonnet-4-0",
+                    temperature=default_temperature,
+                ),
+            ),
         },
         "METAC_CLAUDE_4_1_OPUS_HIGH_16K": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="anthropic/claude-opus-4-1",
+                    temperature=default_temperature,
+                    thinking={
+                        "type": "enabled",
+                        "budget_tokens": 16000,
+                    },
+                    max_tokens=40000,
+                    timeout=160,
+                ),
+            ),
         },
         "METAC_GROK_4": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="xai/grok-4-latest",
+                    temperature=default_temperature,
+                ),
+            ),
         },
-        "METAC_KIMI_K2": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_KIMI_K2_VARIANCE_TEST": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_DEEPSEEK_R1_VARIANCE_TEST": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
+        "METAC_KIMI_K2": kimi_k2_basic_bot,
+        "METAC_KIMI_K2_VARIANCE_TEST": kimi_k2_basic_bot,
+        "METAC_DEEPSEEK_R1_VARIANCE_TEST": deepseek_r1_bot,  # See METAC_DEEPSEEK_R1_TOKEN below
         "METAC_GPT_OSS_120B": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/openai/gpt-oss-120b",
+                    temperature=default_temperature,
+                ),
+            ),
         },
         "METAC_ZAI_GLM_4_5": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/z-ai/glm-4.5",
+                    temperature=default_temperature,
+                    reasoning={
+                        "enabled": True,
+                    },
+                ),
+            ),
         },
         "METAC_DEEPSEEK_V3_1_REASONING": {
             "estimated_cost_per_question": None,
-            "bot": None,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/deepseek/deepseek-chat-v3.1",
+                    temperature=default_temperature,
+                    reasoning={
+                        "enabled": True,
+                    },
+                ),
+            ),
         },
-        "METAC_DEEPSEEK_V3_1": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_1": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_2": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
+        "METAC_DEEPSEEK_V3_1": deepseek_v3_1_bot,
+        "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_1": deepseek_v3_1_bot,
+        "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_2": deepseek_v3_1_bot,
         ### Research Bots
         "METAC_O4_MINI_DEEP_RESEARCH": {
             "estimated_cost_per_question": None,
@@ -654,15 +744,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 ),
             ),
         },
-        "METAC_DEEPSEEK_R1_TOKEN": {
-            "estimated_cost_per_question": 0.039,
-            "bot": create_bot(
-                GeneralLlm(
-                    model="openrouter/deepseek/deepseek-r1",
-                    temperature=default_temperature,
-                ),
-            ),
-        },
+        "METAC_DEEPSEEK_R1_TOKEN": deepseek_r1_bot,
         "METAC_DEEPSEEK_V3_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
             "bot": create_bot(
@@ -701,6 +783,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         },
     }
 
+    # Run basic validation/sanity checks on the bots
     modes = list(mode_base_bot_mapping.keys())
     bots: list[ForecastBot] = [mode_base_bot_mapping[key]["bot"] for key in modes]
     for mode, bot in zip(modes, bots):
