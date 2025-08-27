@@ -138,6 +138,159 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     )
 
     mode_base_bot_mapping = {
+        ############################ Bots started in Fall 2025 ############################
+        ### Regular Bots
+        "METAC_GPT_5_HIGH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GPT_5": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GPT_5_MINI": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GPT_5_NANO": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_CLAUDE_4_SONNET_HIGH_16K": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_CLAUDE_4_SONNET": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_CLAUDE_4_1_OPUS_HIGH_16K": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GROK_4": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_KIMI_K2": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_KIMI_K2_VARIANCE_TEST": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_R1_VARIANCE_TEST": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GPT_OSS_120B": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_ZAI_GLM_4_5": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_V3_1_REASONING": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_V3_1": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_1": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_2": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        ### Research Bots
+        "METAC_O4_MINI_DEEP_RESEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_O3_DEEP_RESEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_SONAR_DEEP_RESEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_EXA_RESEARCH_PRO": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GEMINI_2_5_PRO_GROUNDING": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_ASKNEWS_DEEPNEWS": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GPT_5_SEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GROK_4_LIVE_SEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_SONNET_4_SEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_R1_PLUS_EXA_ONLINE": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_R1_SONNET_4_SEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_R1_XAI_LIVESEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_DEEPSEEK_R1_NO_RESEARCH": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        ### Specialized Bots
+        "METAC_GPT_4_1_OPTIMIZED_PROMPT": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GPT_4_1_NANO_OPTIMIZED_PROMPT": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GROK_4_TOOLS": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_GPT_5_HIGH_TOOLS": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        "METAC_SONNET_4_HIGH_TOOLS": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },
+        ############################ Bots started in Q2 2025 ############################
         "METAC_GEMINI_2_5_PRO_GEMINI_2_5_PRO_GROUNDING": {
             "estimated_cost_per_question": 0.16,
             "bot": create_bot(

@@ -21,7 +21,7 @@
 		"vscode": {
 			"extensions": [
 				"anysphere.remote-containers", // This is cursor specific dev container extension. There is a vscode specific one we might want to try to support. I'm not sure if this also supports normal vscode.
-				"ms-python.python",
+				"ms-python.python", // Do we want anysphere.cursorpyright instead?
 				"ms-python.vscode-pylance",
 				"ms-python.isort",
 				"ms-python.debugpy",

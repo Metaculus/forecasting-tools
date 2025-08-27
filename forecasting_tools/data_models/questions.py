@@ -72,7 +72,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
         None  # Time the question was able to be forecasted on by individuals
     )
     date_accessed: datetime = Field(default_factory=pendulum.now)
-    already_forecasted: bool = False
+    already_forecasted: bool | None = None
     tournament_slugs: list[str] = Field(default_factory=list)
     default_project_id: int | None = None
     includes_bots_in_aggregates: bool | None = None
@@ -122,6 +122,10 @@ class MetaculusQuestion(BaseModel, Jsonable):
         except KeyError:
             tournament_slugs = []
 
+        group_question_option = question_json.get("label", None)
+        if group_question_option is not None and group_question_option.strip() == "":
+            group_question_option = None
+
         question = MetaculusQuestion(
             # NOTE: Reminder - When adding new fields, consider if group questions
             #       need to be parsed differently (i.e. if the field information is part of the post_json)
@@ -157,7 +161,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             includes_bots_in_aggregates=question_json["include_bots_in_aggregates"],
             question_weight=question_json["question_weight"],
             resolution_string=question_json.get("resolution"),
-            group_question_option=question_json.get("label"),
+            group_question_option=group_question_option,
             api_json=post_api_json,
         )
         return question
