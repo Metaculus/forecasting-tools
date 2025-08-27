@@ -374,7 +374,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": None,
             "bot": create_bot(
                 GeneralLlm(
-                    model="openrouter/openai/gpt-4.1-mini",
+                    model="openai/gpt-4.1-mini",
                     temperature=default_temperature,
                 ),
                 bot_type="gpt_4_1_optimized",
@@ -384,7 +384,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": None,
             "bot": create_bot(
                 GeneralLlm(
-                    model="openrouter/openai/gpt-4.1-nano",
+                    model="openai/gpt-4.1-nano",
                     temperature=default_temperature,
                 ),
                 bot_type="gpt_4_1_optimized",
