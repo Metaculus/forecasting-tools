@@ -298,47 +298,48 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         "METAC_DEEPSEEK_V3_1": deepseek_v3_1_bot,
         "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_1": deepseek_v3_1_bot,
         "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_2": deepseek_v3_1_bot,
-        ### Research Bots
-        "METAC_O4_MINI_DEEP_RESEARCH": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_O3_DEEP_RESEARCH": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_SONAR_DEEP_RESEARCH": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_EXA_RESEARCH_PRO": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_GEMINI_2_5_PRO_GROUNDING": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_ASKNEWS_DEEPNEWS": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_GPT_5_SEARCH": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_GROK_4_LIVE_SEARCH": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_SONNET_4_SEARCH": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
+        ### Research-Only Bots
+        # "METAC_O4_MINI_DEEP_RESEARCH": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_O3_DEEP_RESEARCH": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_SONAR_DEEP_RESEARCH": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_EXA_RESEARCH_PRO": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_GEMINI_2_5_PRO_GROUNDING": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_ASKNEWS_DEEPNEWS": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_GPT_5_SEARCH": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_GROK_4_LIVE_SEARCH": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_SONNET_4_SEARCH": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        ### DeepSeek Research Bots
         "METAC_DEEPSEEK_R1_PLUS_EXA_ONLINE": {
             "estimated_cost_per_question": None,
             "bot": None,
@@ -368,18 +369,18 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": None,
             "bot": None,
         },
-        "METAC_GROK_4_TOOLS": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_GPT_5_HIGH_TOOLS": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
-        "METAC_SONNET_4_HIGH_TOOLS": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },
+        # "METAC_GROK_4_TOOLS": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_GPT_5_HIGH_TOOLS": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
+        # "METAC_SONNET_4_HIGH_TOOLS": {
+        #     "estimated_cost_per_question": None,
+        #     "bot": None,
+        # },
         ############################ Bots started in Q2 2025 ############################
         "METAC_GEMINI_2_5_PRO_GEMINI_2_5_PRO_GROUNDING": {
             "estimated_cost_per_question": 0.16,
