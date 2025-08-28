@@ -2,14 +2,12 @@ import asyncio
 import logging
 from datetime import datetime
 
-from forecasting_tools.data_models.binary_report import BinaryPrediction
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.questions import BinaryQuestion, MetaculusQuestion
 from forecasting_tools.forecast_bots.official_bots.fall_template_bot import (
     FallTemplateBot2025,
 )
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
-from forecasting_tools.helpers.structure_output import structure_output
 
 logger = logging.getLogger(__name__)
 
@@ -37,17 +35,7 @@ class GPT41OptimizedBot(FallTemplateBot2025):
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
         prompt = create_binary_prompt(question, research)
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
-        logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
-        binary_prediction: BinaryPrediction = await structure_output(
-            reasoning, BinaryPrediction, model=self.get_llm("parser", "llm")
-        )
-        decimal_pred = max(0.01, min(0.99, binary_prediction.prediction_in_decimal))
-
-        logger.info(
-            f"Forecasted URL {question.page_url} with prediction: {decimal_pred}"
-        )
-        return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
+        return await self._binary_prompt_to_forecast(question, prompt)
 
 
 def create_binary_prompt(question: BinaryQuestion, research: str) -> str:

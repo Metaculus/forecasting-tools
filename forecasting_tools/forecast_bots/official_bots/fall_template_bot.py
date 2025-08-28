@@ -200,6 +200,12 @@ class FallTemplateBot2025(ForecastBot):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
+
+        return await self._binary_prompt_to_forecast(question, prompt)
+
+    async def _binary_prompt_to_forecast(
+        self, question: BinaryQuestion, prompt: str
+    ) -> ReasonedPrediction[float]:
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         binary_prediction: BinaryPrediction = await structure_output(
@@ -252,6 +258,11 @@ class FallTemplateBot2025(ForecastBot):
             Option_N: Probability_N
             """
         )
+        return await self._multiple_choice_prompt_to_forecast(question, prompt)
+
+    async def _multiple_choice_prompt_to_forecast(
+        self, question: MultipleChoiceQuestion, prompt: str
+    ) -> ReasonedPrediction[PredictedOptionList]:
         parsing_instructions = clean_indents(
             f"""
             Make sure that all option names are one of the following:
@@ -330,6 +341,11 @@ class FallTemplateBot2025(ForecastBot):
             "
             """
         )
+        return await self._numeric_prompt_to_forecast(question, prompt)
+
+    async def _numeric_prompt_to_forecast(
+        self, question: NumericQuestion, prompt: str
+    ) -> ReasonedPrediction[NumericDistribution]:
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         percentile_list: list[Percentile] = await structure_output(

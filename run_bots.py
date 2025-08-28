@@ -14,6 +14,9 @@ import dotenv
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
+from forecasting_tools.forecast_bots.official_bots.fall_research_only_bot import (
+    FallResearchOnlyBot2025,
+)
 from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
     GPT41OptimizedBot,
 )
@@ -31,6 +34,7 @@ dotenv.load_dotenv()
 default_for_skipping_questions = True
 default_for_publish_to_metaculus = True
 default_for_using_summary = False
+default_only_research_num_forecasts = 3
 
 
 async def configure_and_run_bot(
@@ -89,9 +93,27 @@ async def get_all_bots() -> list[ForecastBot]:
 def create_bot(
     llm: GeneralLlm,
     researcher: str | GeneralLlm = "asknews/news-summaries",
-    predictions_per_research_report: int = 5,
-    bot_type: Literal["template", "gpt_4_1_optimized"] = "template",
+    predictions_per_research_report: int | None = None,
+    bot_type: Literal["template", "gpt_4_1_optimized", "research_only"] = "template",
 ) -> ForecastBot:
+    default_summarizer = "openrouter/openai/gpt-4.1-mini"
+
+    if bot_type == "research_only":
+        return FallResearchOnlyBot2025(
+            research_reports_per_question=1,
+            predictions_per_research_report=predictions_per_research_report
+            or default_only_research_num_forecasts,
+            use_research_summary_to_forecast=default_for_using_summary,
+            publish_reports_to_metaculus=default_for_publish_to_metaculus,
+            skip_previously_forecasted_questions=default_for_skipping_questions,
+            llms={
+                "default": llm,
+                "summarizer": default_summarizer,
+                "researcher": "no_research",
+                "parser": DEFAULT_STRUCTURE_OUTPUT_MODEL,
+            },
+        )
+
     if bot_type == "template":
         bot_class = TemplateBot
     elif bot_type == "gpt_4_1_optimized":
@@ -99,13 +121,13 @@ def create_bot(
 
     default_bot = bot_class(
         research_reports_per_question=1,
-        predictions_per_research_report=predictions_per_research_report,
+        predictions_per_research_report=predictions_per_research_report or 5,
         use_research_summary_to_forecast=default_for_using_summary,
         publish_reports_to_metaculus=default_for_publish_to_metaculus,
         skip_previously_forecasted_questions=default_for_skipping_questions,
         llms={
             "default": llm,
-            "summarizer": "openrouter/openai/gpt-4.1-mini",
+            "summarizer": default_summarizer,
             "researcher": researcher,
             "parser": DEFAULT_STRUCTURE_OUTPUT_MODEL,
         },
@@ -122,14 +144,21 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
 
     # NOTE: Anything that uses the "roughly" cost value (other than the original model the variable matches to)
     # is estimated value and was not measured directly. These estimates were derived from Litellm's pricing functionality.
+    # Also, a lot of pricing is probably outdated.
     roughly_gpt_4o_cost = 0.05
     roughly_gpt_4o_mini_cost = 0.005
     roughly_sonnet_3_5_cost = 0.10
     roughly_gemini_2_5_pro_preview_cost = 0.30  # TODO: Double check this
     roughly_deepseek_r1_cost = 0.039
-    guess_at_deepseek_plus_search = roughly_deepseek_r1_cost + 0.015
+    guess_at_search_cost = 0.015
+    guess_at__research_only_bot__search_costs = (
+        guess_at_search_cost * default_only_research_num_forecasts
+    )
+    guess_at_deepseek_plus_search = roughly_deepseek_r1_cost + guess_at_search_cost
+    guess_at_gpt_5_cost = roughly_sonnet_3_5_cost / 1.5
+    guess_at_deepseek_v3_1_cost = roughly_deepseek_r1_cost / 2
 
-    gemini_2_5_pro_preview = "openrouter/google/gemini-2.5-pro-preview"  # "gemini/gemini-2.5-pro-preview-03-25"
+    gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_default_timeout = 120
     default_perplexity_settings: dict = {
         "web_search_options": {"search_context_size": "high"},
@@ -137,7 +166,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     }
     flex_price_settings: dict = {"service_tier": "flex"}
     gemini_grounding_llm = GeneralLlm(
-        model=gemini_2_5_pro_preview,
+        model=gemini_2_5_pro,
         generationConfig={
             "thinkingConfig": {
                 "thinkingBudget": 0,
@@ -152,9 +181,34 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         model="openrouter/deepseek/deepseek-r1",
         temperature=default_temperature,
     )
+    grok_4_search_llm = GeneralLlm(
+        model="xai/grok-4-latest",
+        search_parameters={"mode": "auto"},
+    )  # https://docs.x.ai/docs/guides/live-search
+    sonnet_4_search_llm = GeneralLlm(
+        model="anthropic/claude-sonnet-4-0",
+        tools=[
+            {
+                "type": "web_search_20250305",
+                "name": "web_search",
+                "max_uses": 5,
+            }
+        ],
+    )  # https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/web-search-tool
+    deepseek_r1_exa_online_llm = GeneralLlm(
+        model="openrouter/deepseek/deepseek-r1:online",
+    )
+    o4_mini_deep_research_llm = GeneralLlm(
+        model="openai/o4-mini-deep-research",
+    )
+    gpt_5_with_search = GeneralLlm(
+        model="openai/gpt-5",
+        tools=[{"type": "web_search"}],
+        **flex_price_settings,
+    )
 
     kimi_k2_basic_bot = {
-        "estimated_cost_per_question": None,
+        "estimated_cost_per_question": roughly_deepseek_r1_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="openrouter/moonshotai/kimi-k2",
@@ -163,7 +217,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         ),
     }
     deepseek_r1_bot = {
-        "estimated_cost_per_question": 0.039,
+        "estimated_cost_per_question": roughly_deepseek_r1_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="openrouter/deepseek/deepseek-r1",
@@ -172,7 +226,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         ),
     }
     deepseek_v3_1_bot = {
-        "estimated_cost_per_question": None,
+        "estimated_cost_per_question": guess_at_deepseek_v3_1_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="openrouter/deepseek/deepseek-chat-v3.1",
@@ -185,9 +239,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         ############################ Bots started in Fall 2025 ############################
         ### Regular Bots
         "METAC_GPT_5_HIGH": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_gpt_5_cost * 1.2,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="openai/gpt-5",
                     reasoning_effort="high",
                     temperature=default_temperature,
@@ -196,9 +250,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GPT_5": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_gpt_5_cost,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="openai/gpt-5",
                     temperature=default_temperature,
                     **flex_price_settings,
@@ -206,9 +260,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GPT_5_MINI": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="openai/gpt-5-mini",
                     temperature=default_temperature,
                     **flex_price_settings,
@@ -216,18 +270,18 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GPT_5_NANO": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="openai/gpt-5-nano",
                     temperature=default_temperature,
                 ),
             ),
         },
         "METAC_CLAUDE_4_SONNET_HIGH_16K": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost * 1.2,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="anthropic/claude-sonnet-4-0",
                     temperature=default_temperature,
                     thinking={
@@ -240,18 +294,18 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_CLAUDE_4_SONNET": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="anthropic/claude-sonnet-4-0",
                     temperature=default_temperature,
                 ),
             ),
         },
         "METAC_CLAUDE_4_1_OPUS_HIGH_16K": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost * 5 * 1.2,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="anthropic/claude-opus-4-1",
                     temperature=default_temperature,
                     thinking={
@@ -264,9 +318,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GROK_4": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="xai/grok-4-latest",
                     temperature=default_temperature,
                 ),
@@ -276,18 +330,18 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         # "METAC_KIMI_K2_VARIANCE_TEST": kimi_k2_basic_bot, # The name of the bot in Metaculus is weird, and this just isn't needed much
         "METAC_DEEPSEEK_R1_VARIANCE_TEST": deepseek_r1_bot,  # See METAC_DEEPSEEK_R1_TOKEN below
         "METAC_GPT_OSS_120B": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="openrouter/openai/gpt-oss-120b",
                     temperature=default_temperature,
                 ),
             ),
         },
         "METAC_ZAI_GLM_4_5": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="openrouter/z-ai/glm-4.5",
                     temperature=default_temperature,
                     reasoning={
@@ -297,9 +351,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_V3_1_REASONING": {
-            "estimated_cost_per_question": None,
+            "estimated_cost_per_question": guess_at_deepseek_v3_1_cost * 1.2,
             "bot": create_bot(
-                GeneralLlm(
+                llm=GeneralLlm(
                     model="openrouter/deepseek/deepseek-chat-v3.1",
                     temperature=default_temperature,
                     reasoning={
@@ -312,96 +366,125 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_1": deepseek_v3_1_bot,
         "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_2": deepseek_v3_1_bot,
         ### Research-Only Bots
-        # "METAC_O4_MINI_DEEP_RESEARCH": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
-        # "METAC_O3_DEEP_RESEARCH": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
-        # "METAC_SONAR_DEEP_RESEARCH": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
-        # "METAC_EXA_RESEARCH_PRO": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
-        # "METAC_GEMINI_2_5_PRO_GROUNDING": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
+        "METAC_O4_MINI_DEEP_RESEARCH": {
+            "estimated_cost_per_question": guess_at_gpt_5_cost
+            + guess_at__research_only_bot__search_costs * 5,
+            "bot": create_bot(
+                llm=o4_mini_deep_research_llm,
+                bot_type="research_only",
+            ),
+        },
+        "METAC_O3_DEEP_RESEARCH": {
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost * 3
+            + guess_at__research_only_bot__search_costs * 5,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/o3-deep-research",
+                    temperature=default_temperature,
+                ),
+                bot_type="research_only",
+            ),
+            "discontinued": True,
+        },
+        "METAC_SONAR_DEEP_RESEARCH": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost
+            + guess_at__research_only_bot__search_costs,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="perplexity/sonar-deep-research",
+                    **default_perplexity_settings,
+                ),
+                bot_type="research_only",
+            ),
+        },
+        "METAC_EXA_RESEARCH_PRO": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost
+            + guess_at__research_only_bot__search_costs,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="exa/exa-research-pro",
+                    temperature=default_temperature,
+                ),
+                bot_type="research_only",
+            ),
+        },
+        "METAC_GEMINI_2_5_PRO_GROUNDING": {
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost
+            + guess_at__research_only_bot__search_costs,
+            "bot": create_bot(
+                gemini_grounding_llm,
+                bot_type="research_only",
+            ),
+        },
         # "METAC_ASKNEWS_DEEPNEWS": {
         #     "estimated_cost_per_question": None,
         #     "bot": None,
         # },
-        # "METAC_GPT_5_SEARCH": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
-        # "METAC_GROK_4_LIVE_SEARCH": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
-        # "METAC_SONNET_4_SEARCH": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
-        # "METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
+        "METAC_GPT_5_SEARCH": {
+            "estimated_cost_per_question": guess_at_gpt_5_cost
+            + guess_at__research_only_bot__search_costs,
+            "bot": create_bot(
+                llm=gpt_5_with_search,
+                bot_type="research_only",
+            ),
+        },
+        "METAC_GROK_4_LIVE_SEARCH": {
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost
+            + guess_at__research_only_bot__search_costs,
+            "bot": create_bot(
+                llm=grok_4_search_llm,
+                bot_type="research_only",
+            ),
+        },
+        "METAC_SONNET_4_SEARCH": {
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost
+            + guess_at__research_only_bot__search_costs,
+            "bot": create_bot(
+                llm=sonnet_4_search_llm,
+                bot_type="research_only",
+            ),
+        },
+        "METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost
+            + guess_at__research_only_bot__search_costs,
+            "bot": create_bot(
+                llm=deepseek_r1_exa_online_llm,
+                bot_type="research_only",
+            ),
+        },
         ### DeepSeek Research Bots
         "METAC_DEEPSEEK_R1_PLUS_EXA_ONLINE": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
-                default_deepseek_research_bot_llm,
-                researcher=GeneralLlm(
-                    model="openrouter/deepseek/deepseek-r1:online",
-                ),
+                llm=default_deepseek_research_bot_llm,
+                researcher=deepseek_r1_exa_online_llm,
             ),
         },
         "METAC_DEEPSEEK_R1_SONNET_4_SEARCH": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
-                default_deepseek_research_bot_llm,
-                researcher=GeneralLlm(
-                    model="anthropic/claude-sonnet-4-0",
-                    tools=[
-                        {
-                            "type": "web_search_20250305",
-                            "name": "web_search",
-                            "max_uses": 5,
-                        }
-                    ],
-                ),  # https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/web-search-tool
+                llm=default_deepseek_research_bot_llm,
+                researcher=sonnet_4_search_llm,
             ),
         },
         "METAC_DEEPSEEK_R1_XAI_LIVESEARCH": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
-                default_deepseek_research_bot_llm,
-                researcher=GeneralLlm(
-                    model="xai/grok-4-latest",
-                    search_parameters={"mode": "auto"},
-                ),  # https://docs.x.ai/docs/guides/live-search
+                llm=default_deepseek_research_bot_llm,
+                researcher=grok_4_search_llm,
             ),
         },
         "METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
-                default_deepseek_research_bot_llm,
-                researcher=GeneralLlm(
-                    model="openai/o4-mini-deep-research",
-                    temperature=default_temperature,
-                ),
+                llm=default_deepseek_research_bot_llm,
+                researcher=o4_mini_deep_research_llm,
             ),
         },
         "METAC_DEEPSEEK_R1_NO_RESEARCH": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
-                default_deepseek_research_bot_llm,
+                llm=default_deepseek_research_bot_llm,
                 researcher="no_research",
             ),
         },
@@ -443,7 +526,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": 0.16,
             "bot": create_bot(
                 GeneralLlm(
-                    model=gemini_2_5_pro_preview,
+                    model=gemini_2_5_pro,
                     temperature=default_temperature,
                     timeout=gemini_default_timeout,
                 ),
@@ -454,7 +537,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
             "bot": create_bot(
                 GeneralLlm(
-                    model=gemini_2_5_pro_preview,
+                    model=gemini_2_5_pro,
                     temperature=default_temperature,
                     timeout=gemini_default_timeout,
                 ),
@@ -468,7 +551,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
             "bot": create_bot(
                 GeneralLlm(
-                    model=gemini_2_5_pro_preview,
+                    model=gemini_2_5_pro,
                     temperature=default_temperature,
                     timeout=gemini_default_timeout,
                 ),
@@ -784,7 +867,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
             "bot": create_bot(
                 GeneralLlm(
-                    model=gemini_2_5_pro_preview,  # NOTE: Switched from preview to regular pro mid Q2
+                    model=gemini_2_5_pro,  # NOTE: Switched from preview to regular pro mid Q2
                     temperature=default_temperature,
                     timeout=gemini_default_timeout,
                 ),
