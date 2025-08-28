@@ -157,7 +157,7 @@ class FallTemplateBot2025(ForecastBot):
                     use_advanced_filters=False,
                 )
                 research = await searcher.invoke(prompt)
-            elif not researcher or researcher == "None":
+            elif not researcher or researcher == "None" or researcher == "no_research":
                 research = ""
             else:
                 research = await self.get_llm("researcher", "llm").invoke(prompt)

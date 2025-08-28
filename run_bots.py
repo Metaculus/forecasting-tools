@@ -131,10 +131,11 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
 
     gemini_2_5_pro_preview = "openrouter/google/gemini-2.5-pro-preview"  # "gemini/gemini-2.5-pro-preview-03-25"
     gemini_default_timeout = 120
-    default_perplexity_settings = {
+    default_perplexity_settings: dict = {
         "web_search_options": {"search_context_size": "high"},
         "reasoning_effort": "high",
     }
+    flex_price_settings: dict = {"service_tier": "flex"}
     gemini_grounding_llm = GeneralLlm(
         model=gemini_2_5_pro_preview,
         generationConfig={
@@ -190,6 +191,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     model="openai/gpt-5",
                     reasoning_effort="high",
                     temperature=default_temperature,
+                    **flex_price_settings,
                 ),
             ),
         },
@@ -199,6 +201,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 GeneralLlm(
                     model="openai/gpt-5",
                     temperature=default_temperature,
+                    **flex_price_settings,
                 ),
             ),
         },
@@ -208,6 +211,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 GeneralLlm(
                     model="openai/gpt-5-mini",
                     temperature=default_temperature,
+                    **flex_price_settings,
                 ),
             ),
         },
@@ -350,24 +354,56 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         # },
         ### DeepSeek Research Bots
         "METAC_DEEPSEEK_R1_PLUS_EXA_ONLINE": {
-            "estimated_cost_per_question": None,
-            "bot": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(
+                    model="openrouter/deepseek/deepseek-r1:online",
+                ),
+            ),
         },
         "METAC_DEEPSEEK_R1_SONNET_4_SEARCH": {
-            "estimated_cost_per_question": None,
-            "bot": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(
+                    model="anthropic/claude-sonnet-4-0",
+                    tools=[
+                        {
+                            "type": "web_search_20250305",
+                            "name": "web_search",
+                            "max_uses": 5,
+                        }
+                    ],
+                ),  # https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/web-search-tool
+            ),
         },
         "METAC_DEEPSEEK_R1_XAI_LIVESEARCH": {
-            "estimated_cost_per_question": None,
-            "bot": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(
+                    model="xai/grok-4-latest",
+                    search_parameters={"mode": "auto"},
+                ),  # https://docs.x.ai/docs/guides/live-search
+            ),
         },
         "METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH": {
-            "estimated_cost_per_question": None,
-            "bot": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher=GeneralLlm(
+                    model="openai/o4-mini-deep-research",
+                    temperature=default_temperature,
+                ),
+            ),
         },
         "METAC_DEEPSEEK_R1_NO_RESEARCH": {
-            "estimated_cost_per_question": None,
-            "bot": None,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search,
+            "bot": create_bot(
+                default_deepseek_research_bot_llm,
+                researcher="no_research",
+            ),
         },
         ### Specialized Bots
         "METAC_GPT_4_1_OPTIMIZED_PROMPT": {
@@ -547,6 +583,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     temperature=1,
                     reasoning_effort="high",
                     timeout=300,
+                    **flex_price_settings,
                 ),
             ),
         },
@@ -557,6 +594,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     model="o3",
                     temperature=1,
                     reasoning_effort="medium",
+                    **flex_price_settings,
                 ),
             ),
         },
@@ -567,6 +605,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     model="o4-mini",
                     temperature=1,
                     reasoning_effort="high",
+                    **flex_price_settings,
                 ),
             ),
         },
@@ -577,6 +616,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     model="o4-mini",
                     temperature=1,
                     reasoning_effort="medium",
+                    **flex_price_settings,
                 ),
             ),
         },

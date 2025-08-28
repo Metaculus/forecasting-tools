@@ -95,7 +95,10 @@ class AskNewsSearcher:
         self,
         query: str,
         sources: list[str] | None = None,
-        model: Literal["deepseek", "claude-3-7-sonnet-latest", "o3-mini"] = "deepseek",
+        model: (
+            Literal["deepseek", "deepseek-basic", "claude-3-7-sonnet-latest", "o3-mini"]
+            | str
+        ) = "deepseek-basic",
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
     ) -> str:
@@ -120,7 +123,10 @@ class AskNewsSearcher:
         self,
         query: str,
         sources: list[str] | None = None,
-        model: Literal["deepseek", "claude-3-7-sonnet-latest", "o3-mini"] = "deepseek",
+        model: (
+            Literal["deepseek", "deepseek-basic", "claude-3-7-sonnet-latest", "o3-mini"]
+            | str
+        ) = "deepseek-basic",
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
     ) -> CreateDeepNewsResponse:
