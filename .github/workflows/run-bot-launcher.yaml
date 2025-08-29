@@ -55,14 +55,14 @@ jobs:
         run: sleep 30
 
       - name: Retry install poetry as needed
-        uses: snok/install-poetry@v1
+        uses: abatilo/actions-poetry@v4
         id: retryInstallPoetry
         continue-on-error: true
         if: steps.installPoetry.outcome == 'failure'
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+        # with:
+        #   virtualenvs-create: true
+        #   virtualenvs-in-project: true
+        #   installer-parallel: true
         timeout-minutes: 2
 
       - name: Final retry install poetry as needed
@@ -71,7 +71,7 @@ jobs:
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
-          installer-parallel: true
+          # installer-parallel: true
         timeout-minutes: 2
 
       - name: Load cached venv

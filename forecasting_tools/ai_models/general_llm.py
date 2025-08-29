@@ -72,7 +72,7 @@ class GeneralLlm(
             "timeout": 120,
         },
         "grok-4": {
-            "timeout": 120,
+            "timeout": 240,
         },
         "claude-3-5-sonnet": {
             "timeout": 40,

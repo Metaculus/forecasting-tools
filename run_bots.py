@@ -178,7 +178,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "type": "enabled",
             "budget_tokens": 16000,
         },
-        "max_tokens": 40000,
+        "max_tokens": 32000,
         "timeout": 160,
     }
 
