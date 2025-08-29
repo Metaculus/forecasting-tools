@@ -62,6 +62,11 @@ async def configure_and_run_bot(
         skip_previously_forecasted_questions = True
         token = mode
 
+    is_discontinued = get_default_bot_dict()[token].get("discontinued", False)
+    if is_discontinued:
+        logger.warning(f"Bot {token} is discontinued, skipping")
+        return None
+
     bot = get_default_bot_dict()[token]["bot"]
     if bot is not None:
         assert isinstance(bot, ForecastBot)
@@ -416,10 +421,10 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 bot_type="research_only",
             ),
         },
-        # "METAC_ASKNEWS_DEEPNEWS": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
+        "METAC_ASKNEWS_DEEPNEWS": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },  # Don't have time to implement this, but this is a env variable that exists
         "METAC_GPT_5_SEARCH": {
             "estimated_cost_per_question": guess_at_gpt_5_cost
             + guess_at__research_only_bot__search_costs,
@@ -509,18 +514,18 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 bot_type="gpt_4_1_optimized",
             ),
         },
-        # "METAC_GROK_4_TOOLS": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
-        # "METAC_GPT_5_HIGH_TOOLS": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
-        # "METAC_SONNET_4_HIGH_TOOLS": {
-        #     "estimated_cost_per_question": None,
-        #     "bot": None,
-        # },
+        "METAC_GROK_4_TOOLS": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },  # Don't have time to implement this, but this is a env variable that exists
+        "METAC_GPT_5_HIGH_TOOLS": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },  # Don't have time to implement this, but this is a env variable that exists
+        "METAC_SONNET_4_HIGH_TOOLS": {
+            "estimated_cost_per_question": None,
+            "bot": None,
+        },  # Don't have time to implement this, but this is a env variable that exists
         ############################ Bots started in Q2 2025 ############################
         "METAC_GEMINI_2_5_PRO_GEMINI_2_5_PRO_GROUNDING": {
             "estimated_cost_per_question": 0.16,

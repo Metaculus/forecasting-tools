@@ -41,11 +41,23 @@ jobs:
           python-version: "3.11"
 
       - name: Install poetry
+        id: installPoetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
+        timeout-minutes: 1
+        continue-on-error: true
+
+      - name: Retry install poetry as needed
+        uses: snok/install-poetry@v1
+        if: steps.installPoetry.outcome == 'failure'
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+        timeout-minutes: 1
 
       - name: Load cached venv
         id: cached-poetry-dependencies
