@@ -20,6 +20,7 @@ from forecasting_tools.data_models.questions import (
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.helpers.prediction_extractor import PredictionExtractor
 from forecasting_tools.helpers.structure_output import structure_output
 
 logger = logging.getLogger(__name__)
@@ -204,13 +205,24 @@ class FallTemplateBot2025(ForecastBot):
         return await self._binary_prompt_to_forecast(question, prompt)
 
     async def _binary_prompt_to_forecast(
-        self, question: BinaryQuestion, prompt: str
+        self,
+        question: BinaryQuestion,
+        prompt: str,
+        disable_redundant_extraction: bool = False,
     ) -> ReasonedPrediction[float]:
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         binary_prediction: BinaryPrediction = await structure_output(
             reasoning, BinaryPrediction, model=self.get_llm("parser", "llm")
         )
+        if not disable_redundant_extraction:
+            redundant_extraction = PredictionExtractor.extract_last_percentage_value(
+                reasoning
+            )
+            assert (
+                abs(redundant_extraction - binary_prediction.prediction_in_decimal)
+                < 0.001
+            ), f"Redundant extraction {redundant_extraction} does not match binary prediction {binary_prediction.prediction_in_decimal}"
         decimal_pred = max(0.01, min(0.99, binary_prediction.prediction_in_decimal))
 
         logger.info(
@@ -278,6 +290,30 @@ class FallTemplateBot2025(ForecastBot):
             model=self.get_llm("parser", "llm"),
             additional_instructions=parsing_instructions,
         )
+        redundant_extraction = (
+            PredictionExtractor.extract_option_list_with_percentage_afterwards(
+                reasoning, question.options
+            )
+        )
+        for redundant_prediction in redundant_extraction.predicted_options:
+            matching_original_option = next(
+                (
+                    option
+                    for option in predicted_option_list.predicted_options
+                    if option.option_name == redundant_prediction.option_name
+                ),
+            )
+            assert (
+                matching_original_option is not None
+            ), f"Matching original option not found for {redundant_prediction.option_name}"
+            assert (
+                abs(
+                    redundant_prediction.probability
+                    - matching_original_option.probability
+                )
+                < 0.001
+            ), f"Redundant extraction {redundant_prediction.probability} does not match original option {matching_original_option.probability} for option {redundant_prediction.option_name}"
+
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}"
         )
@@ -351,6 +387,25 @@ class FallTemplateBot2025(ForecastBot):
         percentile_list: list[Percentile] = await structure_output(
             reasoning, list[Percentile], model=self.get_llm("parser", "llm")
         )
+        redundant_extraction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+            reasoning, question
+        )
+        for redundant_percentile in redundant_extraction.declared_percentiles:
+            matching_original_percentile = next(
+                (
+                    percentile
+                    for percentile in percentile_list
+                    if abs(percentile.percentile - redundant_percentile.percentile)
+                    < 0.001
+                ),
+            )
+            assert (
+                matching_original_percentile is not None
+            ), f"Matching original percentile not found for {redundant_percentile.percentile}"
+            assert (
+                abs(redundant_percentile.value - matching_original_percentile.value)
+                < 0.001
+            ), f"Redundant extraction {redundant_percentile.value} does not match original percentile {matching_original_percentile.value} for percentile {redundant_percentile.percentile}"
         prediction = NumericDistribution.from_question(percentile_list, question)
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}"

@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
@@ -25,10 +26,10 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
         5  # Set this to whatever works for your search-provider/ai-model rate limits
     )
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
-    _research_prompt = clean_indents(
+    _instructions = clean_indents(
         """
         To run the forecast:
-        1. Remember and consider the principles that are often helpful when trying to forecast well
+        1. Remember and consider using the principles associated with good forecasting
         2. Make a research plan
         3. Conduct the research (iterate as needed)
         4. Write down the main facts from the research you conducted that you will consider in your forecast
@@ -37,12 +38,14 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
         """
     )
 
+    @classmethod
+    def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm | None]:
+        config_dict = super()._llm_config_defaults()
+        if "researcher" in config_dict:
+            config_dict.pop("researcher")
+        return config_dict
+
     async def run_research(self, question: MetaculusQuestion) -> str:
-        researcher = self.get_llm("researcher")
-        if not (
-            researcher == "no_research" or researcher == "None" or researcher == None
-        ):
-            raise ValueError("Research only bot does not use a researcher")
         return "No separate research phase used. Research phase is combined with the forecast"
 
     async def _run_forecast_on_binary(
@@ -65,12 +68,7 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
 
             Today is {datetime.now().strftime("%Y-%m-%d")}.
 
-            Before answering you write:
-            (a) {self._research_prompt}
-            (b) The time left until the outcome to the question is known.
-            (c) The status quo outcome if nothing changed.
-            (d) A brief description of a scenario that results in a No outcome.
-            (e) A brief description of a scenario that results in a Yes outcome.
+            {self._instructions}
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
@@ -106,11 +104,7 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
 
             Today is {datetime.now().strftime("%Y-%m-%d")}.
 
-            Before answering you write:
-            (a) {self._research_prompt}
-            (b) The time left until the outcome to the question is known.
-            (c) The status quo outcome if nothing changed.
-            (d) A description of an scenario that results in an unexpected outcome.
+            {self._instructions}
 
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
 
@@ -158,14 +152,7 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
             - Never use scientific notation.
             - Always start with a smaller number (more negative if negative) and then increase from there
 
-            Before answering you write:
-            (a) {self._research_prompt}
-            (b) The time left until the outcome to the question is known.
-            (c) The outcome if nothing changed.
-            (d) The outcome if the current trend continued.
-            (e) The expectations of experts and markets.
-            (f) A brief description of an unexpected scenario that results in a low outcome.
-            (g) A brief description of an unexpected scenario that results in a high outcome.
+            {self._instructions}
 
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
 

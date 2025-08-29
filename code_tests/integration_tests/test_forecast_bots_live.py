@@ -147,6 +147,7 @@ async def test_works_with_configured_llm() -> None:
         "smart-searcher/gpt-4o-mini",
         "",
         "non-existent-llm",
+        "no_research",
     ],
 )
 async def test_research(research_llm: GeneralLlm | str) -> None:
@@ -158,7 +159,7 @@ async def test_research(research_llm: GeneralLlm | str) -> None:
             await bot.run_research(question)
     else:
         research = await bot.run_research(question)
-        if not research_llm:
+        if not research_llm or research_llm == "no_research":
             research = ""
         else:
             assert len(research) > 0, "Expected research to return a non-empty string"

@@ -312,7 +312,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_CLAUDE_4_1_OPUS_HIGH_16K": {
-            "estimated_cost_per_question": roughly_sonnet_3_5_cost * 5 * 1.2,
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost
+            * 5
+            * 1.2,  # 5x the cost, plus 1.2x for the high thinking budget
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="anthropic/claude-opus-4-1",
@@ -425,7 +427,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         "METAC_ASKNEWS_DEEPNEWS": {
             "estimated_cost_per_question": None,
             "bot": None,
-        },  # Don't have time to implement this, but this is a env variable that exists
+        },  # Don't have time to implement this (doesn't integrate with GeneralLlm), but DeepNews is a env variable that exists
         "METAC_GPT_5_SEARCH": {
             "estimated_cost_per_question": guess_at_gpt_5_cost
             + guess_at__research_only_bot__search_costs,
@@ -799,7 +801,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_4o_cost,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gpt-4o",
+                    model="gpt-4o-2024-08-06",  # NOTE: This bot used to be just "gpt-4o" in q2 2025 and before so changed between the 3 versions as the API Updated
                     temperature=default_temperature,
                 ),
             ),

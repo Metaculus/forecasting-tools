@@ -12,6 +12,7 @@ concurrency:
 
 # Daily job to run the forecast bot
 jobs:
+  # NOTE: don't remove any of the open source models, since these are the best option for a long term baseline (other models get deprecated)
 
   #################################### Fall 2025 new bots ####################################
 
@@ -404,14 +405,14 @@ jobs:
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
-  bot_only_sonar_reasoning_pro:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_ONLY_SONAR_REASONING_PRO'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_ONLY_SONAR_REASONING_PRO }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+  # bot_only_sonar_reasoning_pro:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_ONLY_SONAR_REASONING_PRO'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_ONLY_SONAR_REASONING_PRO }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
   bot_deepseek_r1_gpt_4o_search_preview:
     uses: ./.github/workflows/run-bot-launcher.yaml

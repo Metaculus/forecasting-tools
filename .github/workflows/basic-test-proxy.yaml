@@ -3,7 +3,7 @@ name: Test Proxy Basic
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *" # runs every 30 minutes
+    - cron: "*/59 * * * *" # runs roughly every hour
 
 
 # Daily job to run the forecast bot

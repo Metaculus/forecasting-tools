@@ -115,8 +115,14 @@ from forecasting_tools.data_models.questions import QuestionState as QuestionSta
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot as ForecastBot
 from forecasting_tools.forecast_bots.forecast_bot import Notepad as Notepad
 from forecasting_tools.forecast_bots.main_bot import MainBot as MainBot
+from forecasting_tools.forecast_bots.official_bots.fall_research_only_bot import (
+    FallResearchOnlyBot2025 as FallResearchOnlyBot2025,
+)
 from forecasting_tools.forecast_bots.official_bots.fall_template_bot import (
     FallTemplateBot2025 as FallTemplateBot2025,
+)
+from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
+    GPT41OptimizedBot as GPT41OptimizedBot,
 )
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025 as Q1TemplateBot2025,
@@ -132,6 +138,9 @@ from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
 )
 from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
     UniformProbabilityBot as UniformProbabilityBot,
+)
+from forecasting_tools.forecast_bots.template_bot import (
+    ResearchOnlyBot as ResearchOnlyBot,
 )
 from forecasting_tools.forecast_bots.template_bot import TemplateBot as TemplateBot
 from forecasting_tools.helpers.asknews_searcher import (
