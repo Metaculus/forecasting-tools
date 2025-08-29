@@ -130,23 +130,13 @@ class FallTemplateBot2025(ForecastBot):
 
             if isinstance(researcher, GeneralLlm):
                 research = await researcher.invoke(prompt)
-            elif researcher == "asknews/news-summaries":
-                research = await AskNewsSearcher().get_formatted_news_async(
-                    question.question_text
-                )
-            elif researcher == "asknews/deep-research/medium-depth":
-                research = await AskNewsSearcher().get_formatted_deep_research(
-                    question.question_text,
-                    sources=["asknews", "google"],
-                    search_depth=2,
-                    max_depth=4,
-                )
-            elif researcher == "asknews/deep-research/high-depth":
-                research = await AskNewsSearcher().get_formatted_deep_research(
-                    question.question_text,
-                    sources=["asknews", "google"],
-                    search_depth=4,
-                    max_depth=6,
+            elif (
+                researcher == "asknews/news-summaries"
+                or researcher == "asknews/deep-research/medium-depth"
+                or researcher == "asknews/deep-research/high-depth"
+            ):
+                research = await AskNewsSearcher().call_preconfigured_version(
+                    researcher, prompt
                 )
             elif researcher.startswith("smart-searcher"):
                 model_name = researcher.removeprefix("smart-searcher/")

@@ -156,6 +156,10 @@ class GeneralLlmInstancesToTest:
                 GeneralLlm(model="exa/exa"),
                 self._get_cheap_user_message(),
             ),
+            ModelTest(
+                GeneralLlm(model="asknews/news-summaries"),
+                self._get_cheap_user_message(),
+            ),
         ]
 
     def all_tests_with_names(self) -> list[tuple[str, ModelTest]]:

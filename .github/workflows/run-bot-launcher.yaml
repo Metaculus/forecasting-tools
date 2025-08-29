@@ -50,6 +50,10 @@ jobs:
         timeout-minutes: 2
         continue-on-error: true
 
+      - name: Sleep for 30 seconds
+        if: steps.installPoetry.outcome == 'failure'
+        run: sleep 30
+
       - name: Retry install poetry as needed
         uses: snok/install-poetry@v1
         id: retryInstallPoetry

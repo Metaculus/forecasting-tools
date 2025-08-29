@@ -30,6 +30,7 @@ from forecasting_tools.ai_models.model_tracker import ModelTracker
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     LitellmCostTracker,
 )
+from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.util.misc import fill_in_citations
 
 nest_asyncio.apply()
@@ -51,6 +52,7 @@ class GeneralLlm(
     """
 
     _defaults: dict[str, Any] = {
+        # The lowest matching model substring is used as default (default 60s timeout)
         "gpt-4o": {
             "timeout": 40,
         },
@@ -65,6 +67,12 @@ class GeneralLlm(
         },
         "o4": {
             "timeout": 80,
+        },
+        "gpt-5": {
+            "timeout": 120,
+        },
+        "grok-4": {
+            "timeout": 120,
         },
         "claude-3-5-sonnet": {
             "timeout": 40,
@@ -154,8 +162,10 @@ class GeneralLlm(
         exa_prefix = "exa/"
         openai_prefix = "openai/"
         anthropic_prefix = "anthropic/"
+        asknews_prefix = "asknews/"
         self._use_metaculus_proxy = model.startswith(metaculus_prefix)
         self._use_exa = model.startswith(exa_prefix)
+        self._use_asknews = model.startswith(asknews_prefix)
         prefixes_in_operational_order = [
             metaculus_prefix,
             exa_prefix,
@@ -247,6 +257,8 @@ class GeneralLlm(
 
         if self._use_exa:
             return await self._call_exa_model(prompt)
+        if self._use_asknews:
+            return await self._call_asknews(prompt)
 
         litellm.drop_params = True
 
@@ -302,6 +314,21 @@ class GeneralLlm(
 
         return response
 
+    async def _call_asknews(self, prompt: ModelInputType) -> TextTokenCostResponse:
+        assert isinstance(prompt, str), "Prompt must be a string for asknews"
+        research = await AskNewsSearcher().call_preconfigured_version(
+            self.model, prompt
+        )
+        # TODO: Add token tracking for AskNews DeepNews
+        return TextTokenCostResponse(
+            data=research,
+            prompt_tokens_used=0,
+            completion_tokens_used=0,
+            total_tokens_used=0,
+            model=self.model,
+            cost=0,
+        )
+
     async def _call_exa_model(self, prompt: ModelInputType) -> TextTokenCostResponse:
         # TODO: Move this back to ussing the exa or OpenAI sdk.
         # I thought that a direct call might reveal the costDollars field but it didn't
@@ -341,10 +368,16 @@ class GeneralLlm(
 
         usage = completion.usage
         if usage is None:
-            raise ValueError("Usage is None for exa model")
-        prompt_tokens = usage.prompt_tokens
-        completion_tokens = usage.completion_tokens
-        total_tokens = usage.total_tokens
+            prompt_tokens = 0
+            completion_tokens = 0
+            total_tokens = 0
+            logger.warning(
+                f"Usage is None for exa model {self.model}. Setting token counts to 0."
+            )
+        else:
+            prompt_tokens = usage.prompt_tokens
+            completion_tokens = usage.completion_tokens
+            total_tokens = usage.total_tokens
 
         # TODO: API claims that there is completion["costDollars"], but I can't find it
         # Additionally we will need to log this separately to monetary cost manager (since litellm uses callbacks)

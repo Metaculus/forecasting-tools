@@ -163,13 +163,25 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     guess_at_gpt_5_cost = roughly_sonnet_3_5_cost / 1.5
     guess_at_deepseek_v3_1_cost = roughly_deepseek_r1_cost / 2
 
+    sonnet_4_name = "anthropic/claude-sonnet-4-20250514"
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_default_timeout = 120
+
     default_perplexity_settings: dict = {
         "web_search_options": {"search_context_size": "high"},
         "reasoning_effort": "high",
     }
     flex_price_settings: dict = {"service_tier": "flex"}
+    claude_thinking_settings: dict = {
+        "temperature": 1,
+        "thinking": {
+            "type": "enabled",
+            "budget_tokens": 16000,
+        },
+        "max_tokens": 40000,
+        "timeout": 160,
+    }
+
     gemini_grounding_llm = GeneralLlm(
         model=gemini_2_5_pro,
         generationConfig={
@@ -191,7 +203,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         search_parameters={"mode": "auto"},
     )  # https://docs.x.ai/docs/guides/live-search
     sonnet_4_search_llm = GeneralLlm(
-        model="anthropic/claude-sonnet-4-0",
+        model=sonnet_4_name,
         tools=[
             {
                 "type": "web_search_20250305",
@@ -199,6 +211,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 "max_uses": 5,
             }
         ],
+        **claude_thinking_settings,
     )  # https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/web-search-tool
     deepseek_r1_exa_online_llm = GeneralLlm(
         model="openrouter/deepseek/deepseek-r1:online",
@@ -291,14 +304,8 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": roughly_sonnet_3_5_cost * 1.2,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="anthropic/claude-sonnet-4-0",
-                    temperature=default_temperature,
-                    thinking={
-                        "type": "enabled",
-                        "budget_tokens": 16000,
-                    },
-                    max_tokens=40000,
-                    timeout=160,
+                    model=sonnet_4_name,
+                    **claude_thinking_settings,
                 ),
             ),
         },
@@ -306,7 +313,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": roughly_sonnet_3_5_cost,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="anthropic/claude-sonnet-4-0",
+                    model=sonnet_4_name,
                     temperature=default_temperature,
                 ),
             ),
@@ -318,13 +325,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="anthropic/claude-opus-4-1",
-                    temperature=default_temperature,
-                    thinking={
-                        "type": "enabled",
-                        "budget_tokens": 16000,
-                    },
-                    max_tokens=40000,
-                    timeout=160,
+                    **claude_thinking_settings,
                 ),
             ),
         },
@@ -425,9 +426,15 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_ASKNEWS_DEEPNEWS": {
-            "estimated_cost_per_question": None,
-            "bot": None,
-        },  # Don't have time to implement this (doesn't integrate with GeneralLlm), but DeepNews is a env variable that exists
+            "estimated_cost_per_question": 0,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="asknews/deep-research/high-depth",
+                    temperature=default_temperature,
+                ),
+                bot_type="research_only",
+            ),
+        },
         "METAC_GPT_5_SEARCH": {
             "estimated_cost_per_question": guess_at_gpt_5_cost
             + guess_at__research_only_bot__search_costs,

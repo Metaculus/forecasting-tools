@@ -91,6 +91,27 @@ class AskNewsSearcher:
 
         return formatted_articles
 
+    async def call_preconfigured_version(self, preset: str, prompt: str) -> str:
+        if "asknews/news-summaries" in preset:
+            research = await self.get_formatted_news_async(prompt)
+        elif "asknews/deep-research/medium-depth" in preset:
+            research = await self.get_formatted_deep_research(
+                prompt,
+                sources=["asknews", "google"],
+                search_depth=2,
+                max_depth=4,
+            )
+        elif "asknews/deep-research/high-depth" in preset:
+            research = await self.get_formatted_deep_research(
+                prompt,
+                sources=["asknews", "google"],
+                search_depth=4,
+                max_depth=6,
+            )
+        else:
+            raise ValueError(f"Preset {preset} not found")
+        return research
+
     async def get_formatted_deep_research(
         self,
         query: str,

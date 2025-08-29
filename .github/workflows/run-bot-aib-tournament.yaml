@@ -59,6 +59,7 @@ jobs:
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_claude_4_sonnet_high_16k:
     uses: ./.github/workflows/run-bot-launcher.yaml
