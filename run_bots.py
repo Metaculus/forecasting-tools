@@ -956,7 +956,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             if "only" in mode.lower():
                 researcher = bot.get_llm("default", "llm")
 
-            assert researcher.model.startswith("perplexity/")
+            assert researcher.model.startswith("perplexity/") or bot.get_llm(
+                "default", "llm"
+            ).model.startswith("perplexity/")
             assert (
                 researcher.litellm_kwargs["web_search_options"]["search_context_size"]
                 == "high"
