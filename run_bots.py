@@ -956,14 +956,22 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             if "only" in mode.lower():
                 researcher = bot.get_llm("default", "llm")
 
-            assert researcher.model.startswith("perplexity/") or bot.get_llm(
-                "default", "llm"
-            ).model.startswith("perplexity/")
-            assert (
-                researcher.litellm_kwargs["web_search_options"]["search_context_size"]
-                == "high"
+            researcher_is_perplexity = researcher.model.startswith("perplexity/")
+            forecaster_is_perplexity = bot.get_llm("default", "llm").model.startswith(
+                "perplexity/"
             )
-            assert researcher.litellm_kwargs["reasoning_effort"] == "high"
+
+            assert researcher_is_perplexity or forecaster_is_perplexity
+            if researcher_is_perplexity:
+                assert (
+                    researcher.litellm_kwargs["web_search_options"][
+                        "search_context_size"
+                    ]
+                    == "high"
+                ), f"Researcher {researcher.model} is perplexity but does not have high search context size for {mode}"
+                assert (
+                    researcher.litellm_kwargs["reasoning_effort"] == "high"
+                ), f"Researcher {researcher.model} is not set to high reasoning effort for {mode}"
         elif "grounding" in mode.lower():
             researcher = bot.get_llm("researcher", "llm")
             assert researcher.model.startswith(
