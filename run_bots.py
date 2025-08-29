@@ -974,13 +974,20 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 ), f"Researcher {researcher.model} is not set to high reasoning effort for {mode}"
         elif "grounding" in mode.lower():
             researcher = bot.get_llm("researcher", "llm")
-            assert researcher.model.startswith(
+            forecaster = bot.get_llm("default", "llm")
+            researcher_is_google = researcher.model.startswith(
                 "gemini/"
             ) or researcher.model.startswith("openrouter/google/")
-            assert len(researcher.litellm_kwargs["tools"]) == 1
+            forecaster_is_google = forecaster.model.startswith("openrouter/google/")
+            assert researcher_is_google or forecaster_is_google
+            if researcher_is_google:
+                assert len(researcher.litellm_kwargs["tools"]) == 1
         elif "deepseek" in mode.lower():
             researcher = bot.get_llm("default", "llm")
-            assert researcher.model.startswith("openrouter/deepseek/")
+            forecaster = bot.get_llm("default", "llm")
+            researcher_is_deepseek = researcher.model.startswith("openrouter/deepseek/")
+            forecaster_is_deepseek = forecaster.model.startswith("openrouter/deepseek/")
+            assert researcher_is_deepseek or forecaster_is_deepseek
 
     return mode_base_bot_mapping
 
