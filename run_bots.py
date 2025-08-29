@@ -206,6 +206,10 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     o4_mini_deep_research_llm = GeneralLlm(
         model="openai/o4-mini-deep-research",
     )
+    sonar_deep_research_llm = GeneralLlm(
+        model="perplexity/sonar-deep-research",
+        **default_perplexity_settings,
+    )
     gpt_5_with_search = GeneralLlm(
         model="openai/gpt-5",
         tools=[{"type": "web_search"}],
@@ -332,7 +336,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_KIMI_K2": kimi_k2_basic_bot,
-        # "METAC_KIMI_K2_VARIANCE_TEST": kimi_k2_basic_bot, # The name of the bot in Metaculus is weird, and this just isn't needed much
+        "METAC_KIMI_K2_VARIANCE_TEST": kimi_k2_basic_bot,
         "METAC_DEEPSEEK_R1_VARIANCE_TEST": deepseek_r1_bot,  # See METAC_DEEPSEEK_R1_TOKEN below
         "METAC_GPT_OSS_120B": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
@@ -395,10 +399,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": roughly_deepseek_r1_cost
             + guess_at__research_only_bot__search_costs,
             "bot": create_bot(
-                llm=GeneralLlm(
-                    model="perplexity/sonar-deep-research",
-                    **default_perplexity_settings,
-                ),
+                llm=sonar_deep_research_llm,
                 bot_type="research_only",
             ),
         },
@@ -588,10 +589,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
-                researcher=GeneralLlm(
-                    model="perplexity/sonar-deep-research",
-                    **default_perplexity_settings,
-                ),
+                researcher=sonar_deep_research_llm,
             ),
         },
         "METAC_DEEPSEEK_R1_SONAR_REASONING_PRO": {
@@ -652,7 +650,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
             "bot": create_bot(
                 default_deepseek_research_bot_llm,
-                researcher=GeneralLlm(model="exa/exa-pro"),
+                researcher=GeneralLlm(
+                    model="exa/exa"
+                ),  # Used to be "exa-pro" till this got deprecated
             ),
             "discontinued": True,
         },

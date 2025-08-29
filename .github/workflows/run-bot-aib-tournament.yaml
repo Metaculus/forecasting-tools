@@ -88,6 +88,7 @@ jobs:
       INPUT_METACULUS_TOKEN: ${{ secrets.METAC_KIMI_K2 }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
+  # The name of the bot in Metaculus is weird, and this just isn't needed much
   # bot_kimi_k2_variance_test:
   #   uses: ./.github/workflows/run-bot-launcher.yaml
   #   with:
@@ -439,14 +440,14 @@ jobs:
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
 
-  # bot_deepseek_r1_ask_exa_pro:
-  #   uses: ./.github/workflows/run-bot-launcher.yaml
-  #   with:
-  #     bot_name: 'METAC_DEEPSEEK_R1_ASK_EXA_PRO'
-  #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_ASK_EXA_PRO }}
-  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-  #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+  bot_deepseek_r1_ask_exa_pro:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_DEEPSEEK_R1_ASK_EXA_PRO'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_ASK_EXA_PRO }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
 
   bot_deepseek_r1_deepnews:
     uses: ./.github/workflows/run-bot-launcher.yaml

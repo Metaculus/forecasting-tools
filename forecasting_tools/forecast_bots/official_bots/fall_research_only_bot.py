@@ -30,7 +30,7 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
         To run the forecast:
         1. Remember and consider the principles that are often helpful when trying to forecast well
         2. Make a research plan
-        3. Conduct the research
+        3. Conduct the research (iterate as needed)
         4. Write down the main facts from the research you conducted that you will consider in your forecast
         5. Write down your rationale for the forecast
         6. Write down your forecast in accordance with the format requested of you

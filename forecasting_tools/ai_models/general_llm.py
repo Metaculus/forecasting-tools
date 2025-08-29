@@ -82,6 +82,15 @@ class GeneralLlm(
             "timeout": 60
             * 60,  # Can take 30min+ at times according to Perplexity https://docs.perplexity.ai/models/model-cards#search-models:~:text=models%20may%20take-,30%2B%20minutes,-to%20process%20and
         },
+        "exa/exa-deep-research": {
+            "timeout": 1200,
+        },
+        "o4-mini-deep-research": {
+            "timeout": 1200,
+        },
+        "o3-deep-research": {
+            "timeout": 1200,
+        },
     }
 
     def __init__(
