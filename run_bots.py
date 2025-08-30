@@ -218,6 +218,12 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     )
     o4_mini_deep_research_llm = GeneralLlm(
         model="openai/o4-mini-deep-research",
+        responses_api=True,
+        temperature=None,
+        tools=[
+            {"type": "web_search"},
+            # {"type": "code_interpreter", "container": {"type": "auto", "file_ids": []}}, # TODO: Consider adding code interpreter
+        ],
     )
     sonar_deep_research_llm = GeneralLlm(
         model="perplexity/sonar-deep-research",
@@ -225,7 +231,12 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
     )
     gpt_5_with_search = GeneralLlm(
         model="openai/gpt-5",
-        tools=[{"type": "web_search"}],
+        responses_api=True,
+        temperature=None,
+        tools=[
+            {"type": "web_search"},
+            # {"type": "code_interpreter", "container": {"type": "auto", "file_ids": []}}, # TODO: Consider adding code interpreter
+        ],
         **flex_price_settings,
     )
 
