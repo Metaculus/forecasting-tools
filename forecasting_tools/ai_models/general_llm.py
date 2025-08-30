@@ -333,6 +333,7 @@ class GeneralLlm(
     def _normalize_response(
         self, raw_response: ResponsesAPIResponse, model_response: ModelResponse
     ) -> ModelResponse:
+        # Credit to: https://github.com/JLWard429/ai-script-inventory-/blob/80edc2cbf6495705e986ebc22484367b5d43aa7e/ai_tools/handler.py#L176
         if raw_response.error is not None:
             raise ValueError(f"Error in response: {raw_response.error}")
 
