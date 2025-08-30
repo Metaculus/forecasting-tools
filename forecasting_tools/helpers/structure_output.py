@@ -96,6 +96,9 @@ async def structure_output(
         Please return an answer in the format given to you, and remember to keep URLs in text if they are included as part of the intended answer!
         """
     ).strip()
+    # Edge cases that this prompt only mostly handles (in the end these will error out):
+    # - When a binary forecast is asked for, but the response refuses to give one (e.g. because its too uncertain) then the forecast is set to "null" despite that not being an allowed value
+    # - When a numeric forecast is requested, but the response only gives a single number (not a range of percentiles) then it will give a single percentile of {percentile: 0, value: number}
 
     llm = GeneralLlm.to_llm(model)
 

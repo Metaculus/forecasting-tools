@@ -136,7 +136,7 @@ from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
 from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
     Q4TemplateBot2024 as Q4TemplateBot2024,
 )
-from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
+from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot as UniformProbabilityBot,
 )
 from forecasting_tools.forecast_bots.template_bot import (

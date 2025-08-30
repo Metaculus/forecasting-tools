@@ -64,6 +64,8 @@ class NumericDistribution(BaseModel):
                 raise ValueError("Percentiles must be in strictly increasing order")
             if percentiles[i].value > percentiles[i + 1].value:
                 raise ValueError("Values must be in strictly increasing order")
+        if len(percentiles) < 2:
+            raise ValueError("NumericDistribution must have at least 2 percentiles")
         return percentiles
 
     @property

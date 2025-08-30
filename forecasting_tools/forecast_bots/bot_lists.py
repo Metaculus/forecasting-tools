@@ -1,9 +1,11 @@
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.forecast_bots.experiments.q1_veritas_bot import Q1VeritasBot
 from forecasting_tools.forecast_bots.experiments.q2t_w_decomposition import (
     Q2TemplateBotWithDecompositionV1,
     Q2TemplateBotWithDecompositionV2,
 )
+from forecasting_tools.forecast_bots.experiments.q4_veritas_bot import Q4VeritasBot
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.main_bot import MainBot
 from forecasting_tools.forecast_bots.official_bots.fall_research_only_bot import (
@@ -27,9 +29,7 @@ from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
 from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
     Q4TemplateBot2024,
 )
-from forecasting_tools.forecast_bots.other.q1_veritas_bot import Q1VeritasBot
-from forecasting_tools.forecast_bots.other.q4_veritas_bot import Q4VeritasBot
-from forecasting_tools.forecast_bots.other.uniform_probability_bot import (
+from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot,
 )
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
