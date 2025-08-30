@@ -112,26 +112,26 @@ class GeneralLlmInstancesToTest:
                 GeneralLlm(model="metaculus/gpt-4o"),
                 self._get_cheap_user_message(),
             ),
-            ModelTest(
-                GeneralLlm(model="metaculus/claude-3-5-sonnet-20241022"),
-                self._get_cheap_user_message(),
-            ),
-            ModelTest(
-                GeneralLlm(model="metaculus/claude-3-7-sonnet-latest"),
-                self._get_cheap_vision_message_data(),
-            ),
-            ModelTest(
-                GeneralLlm(
-                    model="metaculus/claude-3-7-sonnet-latest",
-                    thinking={
-                        "type": "enabled",
-                        "budget_tokens": 16000,
-                    },
-                    max_tokens=20000,
-                    temperature=1,
-                ),
-                self._get_cheap_user_message(),
-            ),
+            # ModelTest(
+            #     GeneralLlm(model="metaculus/claude-3-5-sonnet-20241022"),
+            #     self._get_cheap_user_message(),
+            # ),
+            # ModelTest(
+            #     GeneralLlm(model="metaculus/claude-3-7-sonnet-latest"),
+            #     self._get_cheap_vision_message_data(),
+            # ),
+            # ModelTest(
+            #     GeneralLlm(
+            #         model="metaculus/claude-3-7-sonnet-latest",
+            #         thinking={
+            #             "type": "enabled",
+            #             "budget_tokens": 16000,
+            #         },
+            #         max_tokens=20000,
+            #         temperature=1,
+            #     ),
+            #     self._get_cheap_user_message(),
+            # ),
             ModelTest(
                 GeneralLlm(model="claude-3-5-sonnet-20241022"),
                 self._get_cheap_user_message(),
@@ -159,6 +159,15 @@ class GeneralLlmInstancesToTest:
             ModelTest(
                 GeneralLlm(model="asknews/news-summaries"),
                 self._get_cheap_user_message(),
+            ),
+            ModelTest(
+                GeneralLlm(
+                    model="openai/gpt-5",
+                    responses_api=True,
+                    tools=[{"type": "web_search"}],
+                    reasoning_effort="minimal",
+                ),
+                "What is the latest News on the Middle East? Do a single very quick search. Go as fast as you can. I just want headlines.",
             ),
         ]
 

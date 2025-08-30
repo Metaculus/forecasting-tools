@@ -9,11 +9,17 @@ from typing import Any, Literal
 import litellm
 import nest_asyncio
 import typeguard
-from litellm import acompletion, model_cost
+from litellm import ResponsesAPIResponse, acompletion, aresponses, model_cost
 from litellm.files.main import ModelResponse
-from litellm.types.utils import Choices, Usage
+from litellm.responses.utils import ResponseAPILoggingUtils
+from litellm.types.utils import Choices, Message, Usage
 from litellm.utils import token_counter
-from openai import AsyncOpenAI
+from openai import OpenAI
+from openai.types.responses import (
+    ResponseFunctionToolCall,
+    ResponseOutputMessage,
+    ResponseReasoningItem,
+)
 
 from forecasting_tools.ai_models.agent_wrappers import track_generation
 from forecasting_tools.ai_models.ai_utils.openai_utils import (
@@ -104,8 +110,9 @@ class GeneralLlm(
     def __init__(
         self,
         model: str,
+        responses_api: bool = False,
         allowed_tries: int = RetryableModel._DEFAULT_ALLOWED_TRIES,
-        temperature: float | int | None = 0,
+        temperature: float | int | None = None,
         timeout: float | int | None = None,
         pass_through_unknown_kwargs: bool = True,
         populate_citations: bool = True,
@@ -156,6 +163,7 @@ class GeneralLlm(
         )
         super().__init__(allowed_tries=allowed_tries)
         self.model = model
+        self.responses_api = responses_api
         self.populate_citations = populate_citations
 
         metaculus_prefix = "metaculus/"
@@ -262,15 +270,23 @@ class GeneralLlm(
 
         litellm.drop_params = True
 
-        response = await acompletion(
-            messages=self.model_input_to_message(prompt),
-            **self.litellm_kwargs,
-        )
+        if self.responses_api:
+            original_response = await aresponses(
+                input=self.model_input_to_message(prompt),  # type: ignore # NOTE: This might only accept the last message in the list?
+                **self.litellm_kwargs,
+            )
+            assert isinstance(original_response, ResponsesAPIResponse)
+            response = self._normalize_response(original_response, ModelResponse())
+        else:
+            response = await acompletion(
+                messages=self.model_input_to_message(prompt),
+                **self.litellm_kwargs,
+            )
 
         assert isinstance(response, ModelResponse)
-        choices = response.choices  # type: ignore
+        choices = response.choices
         choices = typeguard.check_type(choices, list[Choices])
-        answer = choices[0].message.content  # type: ignore
+        answer = choices[0].message.content
         assert isinstance(
             answer, str
         ), f"Answer is not a string and is of type: {type(answer)}. Answer: {answer}"
@@ -314,6 +330,76 @@ class GeneralLlm(
 
         return response
 
+    def _normalize_response(
+        self, raw_response: ResponsesAPIResponse, model_response: ModelResponse
+    ) -> ModelResponse:
+        if raw_response.error is not None:
+            raise ValueError(f"Error in response: {raw_response.error}")
+
+        choices: list[Choices] = []
+        index = 0
+        for item in raw_response.output:
+            if isinstance(item, ResponseReasoningItem):
+                pass  # ignore for now.
+            elif isinstance(item, ResponseOutputMessage):
+                for content in item.content:
+                    response_text = getattr(content, "text", "")
+                    msg = Message(
+                        role=item.role, content=response_text if response_text else ""
+                    )
+
+                    choices.append(
+                        Choices(message=msg, finish_reason="stop", index=index)
+                    )
+                    index += 1
+            elif isinstance(item, ResponseFunctionToolCall):
+                msg = Message(
+                    content=None,
+                    tool_calls=[
+                        {
+                            "id": item.call_id,
+                            "function": {
+                                "name": item.name,
+                                "arguments": item.arguments,
+                            },
+                            "type": "function",
+                        }
+                    ],
+                )
+
+                choices.append(
+                    Choices(message=msg, finish_reason="tool_calls", index=index)
+                )
+                index += 1
+            else:
+                pass  # don't fail request if item in list is not supported
+
+        if len(choices) == 0:
+            if (
+                raw_response.incomplete_details is not None
+                and raw_response.incomplete_details.reason is not None
+            ):
+                raise ValueError(
+                    f"{self.model} unable to complete request: {raw_response.incomplete_details.reason}"
+                )
+            else:
+                raise ValueError(
+                    f"Unknown items in responses API response: {raw_response.output}"
+                )
+
+        setattr(model_response, "choices", choices)
+
+        model_response.model = self.model
+
+        setattr(
+            model_response,
+            "usage",
+            ResponseAPILoggingUtils._transform_response_api_usage_to_chat_usage(
+                raw_response.usage
+            ),
+        )
+        return model_response
+
     async def _call_asknews(self, prompt: ModelInputType) -> TextTokenCostResponse:
         assert isinstance(prompt, str), "Prompt must be a string for asknews"
         research = await AskNewsSearcher().call_preconfigured_version(
@@ -349,35 +435,54 @@ class GeneralLlm(
         temperature = self.litellm_kwargs.get("temperature")
         extra_headers = self.litellm_kwargs.get("extra_headers")
 
-        async with AsyncOpenAI(
+        # TODO: make this Async
+        # async with AsyncOpenAI(
+        #     base_url="https://api.exa.ai",
+        #     api_key=api_key,
+        # ) as client:
+
+        #     completion: AsyncStream = await client.chat.completions.create(
+        #         model=self._litellm_model,
+        #         messages=self.model_input_to_message(prompt),  # type: ignore
+        #         temperature=temperature,
+        #         timeout=timeout,
+        #         extra_headers=extra_headers,
+        #         stream=True,
+        #     )
+
+        #     response_text: str = ""
+        #     async for chunk in completion:
+        #         if chunk.choices and chunk.choices[0].delta.content:
+        #             response_text += chunk.choices[0].delta.content
+
+        client = OpenAI(
             base_url="https://api.exa.ai",
             api_key=api_key,
-        ) as client:
+        )
 
-            completion = await client.chat.completions.create(
-                model=self._litellm_model,
-                messages=self.model_input_to_message(prompt),  # type: ignore
-                temperature=temperature,
-                timeout=timeout,
-                extra_headers=extra_headers,
-            )
+        completion = client.chat.completions.create(
+            model=self._litellm_model,
+            messages=self.model_input_to_message(prompt),  # type: ignore
+            temperature=temperature,
+            timeout=timeout,
+            extra_headers=extra_headers,
+            stream=False,
+        )
 
-        response_text = completion.choices[0].message.content
-        if response_text is None:
-            raise ValueError("Response text is None for exa model")
+        response_text: str = ""
+        for chunk in completion:
+            if chunk.choices and chunk.choices[0].delta.content:
+                response_text += chunk.choices[0].delta.content
 
-        usage = completion.usage
-        if usage is None:
-            prompt_tokens = 0
-            completion_tokens = 0
-            total_tokens = 0
-            logger.warning(
-                f"Usage is None for exa model {self.model}. Setting token counts to 0."
-            )
-        else:
-            prompt_tokens = usage.prompt_tokens
-            completion_tokens = usage.completion_tokens
-            total_tokens = usage.total_tokens
+        if not response_text:
+            raise ValueError("Response text is None or empty for exa model")
+
+        prompt_tokens = 0
+        completion_tokens = 0
+        total_tokens = 0
+        logger.warning(
+            f"Not tracking usage for {self.model}. Setting token counts to 0."
+        )
 
         # TODO: API claims that there is completion["costDollars"], but I can't find it
         # Additionally we will need to log this separately to monetary cost manager (since litellm uses callbacks)
@@ -529,6 +634,7 @@ class GeneralLlm(
 
     @classmethod
     def grounded_model(cls, model: str, temperature: float = 0) -> GeneralLlm:
+        # Meant for google
         grounding_llm = GeneralLlm(
             model=model,
             temperature=temperature,
@@ -553,6 +659,7 @@ class GeneralLlm(
         max_tokens: int = 40000,
         timeout: float = 160,
     ) -> GeneralLlm:
+        # Meant for anthropic
         thinking_budget_llm = GeneralLlm(
             model=model,
             temperature=temperature,
@@ -572,6 +679,7 @@ class GeneralLlm(
         temperature: float = 0,
         search_context_size: Literal["high", "medium", "low"] = "high",
     ) -> GeneralLlm:
+        # Meant for perplexity
         search_model = GeneralLlm(
             model=model,
             temperature=temperature,
