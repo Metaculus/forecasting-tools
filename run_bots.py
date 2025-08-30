@@ -58,6 +58,7 @@ async def configure_and_run_bot(
         chosen_tournaments = [
             MetaculusApi.CURRENT_AI_COMPETITION_ID,
             MetaculusApi.CURRENT_MINIBENCH_ID,
+            MetaculusApi.AI_2027_TOURNAMENT_ID,
         ]
         skip_previously_forecasted_questions = True
         token = mode
