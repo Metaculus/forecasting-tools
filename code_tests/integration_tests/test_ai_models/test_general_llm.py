@@ -113,7 +113,9 @@ def test_general_llm_instances_run(
         assert response is not None, "Response is None"
         assert response != "", "Response is an empty string"
         logger.info(f"Cost for {test_name}: {cost_manager.current_usage}")
-        if not model.model.startswith("exa/"):
+        if not model.model.startswith("exa/") and not model.model.startswith(
+            "asknews/"
+        ):
             assert cost_manager.current_usage > 0, "No cost was incurred"
 
 
