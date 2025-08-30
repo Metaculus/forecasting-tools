@@ -315,6 +315,7 @@ class GeneralLlm(
             citations = response.model_extra.get("citations")
             citations = typeguard.check_type(citations, list[str])
             answer = fill_in_citations(citations, answer, use_citation_brackets=False)
+            # TODO: Add citation support for Gemini - https://ai.google.dev/gemini-api/docs/google-search#attributing_sources_with_inline_citations
 
         await asyncio.sleep(
             0.00001

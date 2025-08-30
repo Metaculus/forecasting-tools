@@ -29,10 +29,9 @@ async def test_formatted_deep_research() -> None:
         pytest.skip("ASKNEWS_CLIENT_ID or ASKNEWS_SECRET is not set")
     logger.debug("Testing AskNews connection")
     start_time = time.time()
-    news = await AskNewsSearcher().get_formatted_deep_research(
+    news = await AskNewsSearcher().call_preconfigured_version(
+        "asknews/deep-research/low-depth/o3-mini",
         "Will the US stock market crash in 2025?",
-        search_depth=1,
-        max_depth=1,
     )
     end_time = time.time()
     logger.info(f"Time taken: {end_time - start_time} seconds")

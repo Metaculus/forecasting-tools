@@ -25,6 +25,7 @@ except ImportError:
 class AskNewsSearcher:
     _default_search_depth = 2
     _default_max_depth = 2
+    _default_model = "deepseek-basic"
 
     def __init__(
         self,
@@ -94,19 +95,38 @@ class AskNewsSearcher:
     async def call_preconfigured_version(self, preset: str, prompt: str) -> str:
         if "asknews/news-summaries" in preset:
             research = await self.get_formatted_news_async(prompt)
+
+        if "deep-research" not in preset:
+            raise ValueError(f"Preset {preset} not found")
+        parts_of_preset = preset.split("/")
+        try:
+            model_name = parts_of_preset[3]
+        except IndexError:
+            model_name = "deepseek-basic"
+
+        if "asknews/deep-research/low-depth" in preset:
+            research = await self.get_formatted_deep_research(
+                prompt,
+                sources=["asknews", "google", "x", "wiki"],
+                search_depth=1,
+                max_depth=1,
+                model=model_name,
+            )
         elif "asknews/deep-research/medium-depth" in preset:
             research = await self.get_formatted_deep_research(
                 prompt,
-                sources=["asknews", "google"],
+                sources=["asknews", "google", "x", "wiki"],
                 search_depth=2,
                 max_depth=4,
+                model=model_name,
             )
         elif "asknews/deep-research/high-depth" in preset:
             research = await self.get_formatted_deep_research(
                 prompt,
-                sources=["asknews", "google"],
+                sources=["asknews", "google", "x", "wiki"],
                 search_depth=4,
                 max_depth=6,
+                model=model_name,
             )
         else:
             raise ValueError(f"Preset {preset} not found")
@@ -119,7 +139,7 @@ class AskNewsSearcher:
         model: (
             Literal["deepseek", "deepseek-basic", "claude-3-7-sonnet-latest", "o3-mini"]
             | str
-        ) = "deepseek-basic",
+        ) = _default_model,
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
     ) -> str:
@@ -147,7 +167,7 @@ class AskNewsSearcher:
         model: (
             Literal["deepseek", "deepseek-basic", "claude-3-7-sonnet-latest", "o3-mini"]
             | str
-        ) = "deepseek-basic",
+        ) = _default_model,
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
     ) -> CreateDeepNewsResponse:
