@@ -29,11 +29,11 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
     _instructions = clean_indents(
         """
         To run the forecast:
-        1. Remember and consider using the principles associated with good forecasting
+        1. Consider what principles associated with good forecasting you could use (base rates, bias identification, premortems, simulations, etc)
         2. Make a research plan
         3. Conduct the research (iterate as needed)
         4. Write down the main facts from the research you conducted that you will consider in your forecast
-        5. Write down your rationale for the forecast
+        5. Do any analysis you need to do, and then write down your rationale for the forecast
         6. Write down your forecast in accordance with the format requested of you
         """
     )
@@ -43,6 +43,8 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
         config_dict = super()._llm_config_defaults()
         if "researcher" in config_dict:
             config_dict.pop("researcher")
+        if "summarizer" in config_dict:
+            config_dict["summarizer"] = None
         return config_dict
 
     async def run_research(self, question: MetaculusQuestion) -> str:

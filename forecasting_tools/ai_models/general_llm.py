@@ -14,7 +14,7 @@ from litellm.files.main import ModelResponse
 from litellm.responses.utils import ResponseAPILoggingUtils
 from litellm.types.utils import Choices, Message, Usage
 from litellm.utils import token_counter
-from openai import OpenAI
+from openai import AsyncOpenAI
 from openai.types.responses import (
     ResponseFunctionToolCall,
     ResponseOutputMessage,
@@ -277,6 +277,7 @@ class GeneralLlm(
             )
             assert isinstance(original_response, ResponsesAPIResponse)
             response = self._normalize_response(original_response, ModelResponse())
+            # Simpler method might be just grabbing last message in choices `response.output[-1].content[0].text`
         else:
             response = await acompletion(
                 messages=self.model_input_to_message(prompt),
@@ -341,7 +342,7 @@ class GeneralLlm(
         index = 0
         for item in raw_response.output:
             if isinstance(item, ResponseReasoningItem):
-                pass  # ignore for now.
+                pass  # TODO: Add reasoning as part of messages (or final response)
             elif isinstance(item, ResponseOutputMessage):
                 for content in item.content:
                     response_text = getattr(content, "text", "")
@@ -436,54 +437,29 @@ class GeneralLlm(
         temperature = self.litellm_kwargs.get("temperature")
         extra_headers = self.litellm_kwargs.get("extra_headers")
 
-        # TODO: make this Async
-        # async with AsyncOpenAI(
-        #     base_url="https://api.exa.ai",
-        #     api_key=api_key,
-        # ) as client:
-
-        #     completion: AsyncStream = await client.chat.completions.create(
-        #         model=self._litellm_model,
-        #         messages=self.model_input_to_message(prompt),  # type: ignore
-        #         temperature=temperature,
-        #         timeout=timeout,
-        #         extra_headers=extra_headers,
-        #         stream=True,
-        #     )
-
-        #     response_text: str = ""
-        #     async for chunk in completion:
-        #         if chunk.choices and chunk.choices[0].delta.content:
-        #             response_text += chunk.choices[0].delta.content
-
-        client = OpenAI(
+        async with AsyncOpenAI(
             base_url="https://api.exa.ai",
             api_key=api_key,
-        )
+        ) as client:
 
-        completion = client.chat.completions.create(
-            model=self._litellm_model,
-            messages=self.model_input_to_message(prompt),  # type: ignore
-            temperature=temperature,
-            timeout=timeout,
-            extra_headers=extra_headers,
-            stream=False,
-        )
+            completion = await client.chat.completions.create(
+                model=self._litellm_model,
+                messages=self.model_input_to_message(prompt),  # type: ignore
+                temperature=temperature,
+                timeout=timeout,
+                extra_headers=extra_headers,
+            )
 
-        response_text: str = ""
-        for chunk in completion:
-            if chunk.choices and chunk.choices[0].delta.content:
-                response_text += chunk.choices[0].delta.content
+        response_text = completion.choices[0].message.content
+        if response_text is None:
+            raise ValueError("Response text is None for exa model")
 
-        if not response_text:
-            raise ValueError("Response text is None or empty for exa model")
-
-        prompt_tokens = 0
-        completion_tokens = 0
-        total_tokens = 0
-        logger.warning(
-            f"Not tracking usage for {self.model}. Setting token counts to 0."
-        )
+        usage = completion.usage
+        if usage is None:
+            raise ValueError("Usage is None for exa model")
+        prompt_tokens = usage.prompt_tokens
+        completion_tokens = usage.completion_tokens
+        total_tokens = usage.total_tokens
 
         # TODO: API claims that there is completion["costDollars"], but I can't find it
         # Additionally we will need to log this separately to monetary cost manager (since litellm uses callbacks)

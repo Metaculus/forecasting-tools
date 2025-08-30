@@ -113,10 +113,11 @@ def create_bot(
             skip_previously_forecasted_questions=default_for_skipping_questions,
             llms={
                 "default": llm,
-                "summarizer": default_summarizer,
+                "summarizer": None,
                 "researcher": "no_research",
                 "parser": DEFAULT_STRUCTURE_OUTPUT_MODEL,
             },
+            enable_summarize_research=False,
         )
 
     if bot_type == "template":
@@ -208,7 +209,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             {
                 "type": "web_search_20250305",
                 "name": "web_search",
-                "max_uses": 5,
+                "max_uses": 10,
             }
         ],
         **claude_thinking_settings,

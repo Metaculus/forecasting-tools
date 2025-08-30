@@ -25,23 +25,23 @@ class SimpleQuestion(BaseModel, Jsonable):
     question_type: Literal["binary", "numeric", "multiple_choice"] = "binary"
     options: list[str] = Field(
         default_factory=list,
-        description="Options for multiple choice question. Empty if numeric or binary",
+        description="Options are for multiple choice question. Empty if numeric or binary. Must be defined for multiple choice questions.",
     )
     open_upper_bound: bool | None = Field(
         default=None,
-        description="Whether there can be a value higher than upper bound. Only used for numeric questions.",
+        description="Open upper bound defines whether there can be a value higher than upper bound. Must be defined for numeric questions and None for other question types.",
     )
     open_lower_bound: bool | None = Field(
         default=None,
-        description="Whether there can be a value lower than lower bound. Only used for numeric questions.",
+        description="Open lower bound defines whether there can be a value lower than lower bound. Must be defined for numeric questions and None for other question types.",
     )
     max_value: float | None = Field(
         default=None,
-        description="The max value that the answer to the question can be. Only used for numeric questions.",
+        description="Max value defines the largest reasonable value that the answer to the question can be. Must be defined for numeric questions and None for other question types.",
     )
     min_value: float | None = Field(
         default=None,
-        description="The min value that the answer to the question can be. Only used for numeric questions.",
+        description="Min value defines the smallest reasonable value that the answer to the question can be. Must be defined for numeric questions and None for other question types.",
     )
 
     @classmethod

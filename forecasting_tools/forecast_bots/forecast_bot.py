@@ -515,6 +515,26 @@ class ForecastBot(ABC):
         final_cost: float,
         time_spent_in_minutes: float,
     ) -> str:
+        return self._create_comment(
+            question,
+            research_prediction_collections,
+            aggregated_prediction,
+            final_cost,
+            time_spent_in_minutes,
+        )  # Avoiding removing unified explanation function in case people have overridden it locally
+
+    def _create_comment(
+        self,
+        question: MetaculusQuestion,
+        research_prediction_collections: list[ResearchWithPredictions],
+        aggregated_prediction: PredictionTypes,
+        final_cost: float,
+        time_spent_in_minutes: float,
+    ) -> str:
+        """
+        Creates the forecast report string that will be assigned to 'explanation' in the ForecastReport
+        This is used as a comment in the Metaculus API
+        """
         report_type = DataOrganizer.get_report_type_for_question_type(type(question))
 
         all_summaries = []
@@ -540,8 +560,9 @@ class ForecastBot(ABC):
             # SUMMARY
             *Question*: {question.question_text}
             *Final Prediction*: {report_type.make_readable_prediction(aggregated_prediction)}
-            *Total Cost*: ${round(final_cost,4)}
+            *Total Cost*: ${round(final_cost,4)} (estimated)
             *Time Spent*: {round(time_spent_in_minutes, 2)} minutes
+            *LLMs*: {self.make_llm_dict()}
 
             {combined_summaries}
 

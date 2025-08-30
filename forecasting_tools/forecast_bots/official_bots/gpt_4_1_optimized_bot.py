@@ -36,7 +36,7 @@ class GPT41OptimizedBot(FallTemplateBot2025):
     ) -> ReasonedPrediction[float]:
         prompt = create_binary_prompt(question, research)
         return await self._binary_prompt_to_forecast(
-            question, prompt, disable_redundant_extraction=True
+            question, prompt, double_check_extraction=False
         )
 
 

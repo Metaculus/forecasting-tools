@@ -224,14 +224,14 @@ jobs:
       INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-  bot_exa_research_pro:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_EXA_RESEARCH_PRO'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_EXA_RESEARCH_PRO }}
-      INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  # bot_exa_research_pro:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_EXA_RESEARCH_PRO'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_EXA_RESEARCH_PRO }}
+  #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_gemini_2_5_pro_grounding:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -315,14 +315,14 @@ jobs:
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
 
-  bot_deepseek_r1_o4_mini_deep_research:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  # bot_deepseek_r1_o4_mini_deep_research:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
   bot_deepseek_r1_no_research:
     uses: ./.github/workflows/run-bot-launcher.yaml
