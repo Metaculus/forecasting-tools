@@ -3,10 +3,7 @@ import logging
 
 import pytest
 
-from code_tests.unit_tests.test_ai_models.models_to_test import (
-    GeneralLlmInstancesToTest,
-    ModelTest,
-)
+from code_tests.unit_tests.test_ai_models.models_to_test import LLMTestData, ModelTest
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -15,9 +12,96 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize(
-    "test_name, test", GeneralLlmInstancesToTest().all_tests_with_names()
-)
+def _all_tests() -> list[ModelTest]:
+    test_data = LLMTestData()
+    return [
+        ModelTest(GeneralLlm(model="gpt-4o"), test_data.get_cheap_user_message()),
+        ModelTest(
+            GeneralLlm(model="gpt-4o"),
+            test_data.get_cheap_vision_message_data(),
+        ),
+        ModelTest(
+            GeneralLlm(model="openai/gpt-4o"),
+            [{"role": "user", "content": test_data.get_cheap_user_message()}],
+        ),
+        ModelTest(
+            GeneralLlm(model="o3-mini", reasoning_effort="low"),
+            test_data.get_cheap_user_message(),
+        ),
+        ModelTest(
+            GeneralLlm(model="metaculus/gpt-4o"),
+            test_data.get_cheap_user_message(),
+        ),
+        # ModelTest(
+        #     GeneralLlm(model="metaculus/claude-3-5-sonnet-20241022"),
+        #     self._get_cheap_user_message(),
+        # ),
+        # ModelTest(
+        #     GeneralLlm(model="metaculus/claude-3-7-sonnet-latest"),
+        #     self._get_cheap_vision_message_data(),
+        # ),
+        # ModelTest(
+        #     GeneralLlm(
+        #         model="metaculus/claude-3-7-sonnet-latest",
+        #         thinking={
+        #             "type": "enabled",
+        #             "budget_tokens": 16000,
+        #         },
+        #         max_tokens=20000,
+        #         temperature=1,
+        #     ),
+        #     self._get_cheap_user_message(),
+        # ),
+        ModelTest(
+            GeneralLlm(model="claude-3-5-sonnet-20241022"),
+            test_data.get_cheap_user_message(),
+        ),
+        ModelTest(
+            GeneralLlm(model="claude-3-5-sonnet-20241022"),
+            test_data.get_cheap_vision_message_data(),
+        ),
+        ModelTest(
+            GeneralLlm(model="perplexity/sonar-pro"),
+            test_data.get_cheap_user_message(),
+        ),
+        ModelTest(
+            GeneralLlm(model="openrouter/openai/gpt-4o"),
+            test_data.get_cheap_user_message(),
+        ),
+        ModelTest(
+            GeneralLlm(model="exa/exa-pro"),
+            test_data.get_cheap_user_message(),
+        ),
+        ModelTest(
+            GeneralLlm(model="exa/exa"),
+            test_data.get_cheap_user_message(),
+        ),
+        ModelTest(
+            GeneralLlm(model="asknews/news-summaries"),
+            test_data.get_cheap_user_message(),
+        ),
+        ModelTest(
+            GeneralLlm(
+                model="openai/gpt-5",
+                responses_api=True,
+                tools=[{"type": "web_search"}],
+                reasoning_effort="minimal",
+            ),
+            "What is the latest News on the Middle East? Do a single very quick search. Go as fast as you can. I just want headlines.",
+        ),
+    ]
+
+
+def all_tests_with_names() -> list[tuple[str, ModelTest]]:
+    tests = _all_tests()
+    pairs = []
+    for test in tests:
+        input_type = type(test.model_input)
+        pairs.append((f"{test.llm.model}-{input_type.__name__}", test))
+    return pairs
+
+
+@pytest.mark.parametrize("test_name, test", all_tests_with_names())
 def test_general_llm_instances_run(
     test_name: str,
     test: ModelTest,

@@ -22,6 +22,7 @@ include = [
 ]
 
 # openai = "1.97.1"
+# litellm = "^1.59.1"
 [tool.poetry.dependencies]
 python = "^3.11"
 openai = ">=1.51.0,<2.0.0"

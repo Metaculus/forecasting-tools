@@ -81,100 +81,14 @@ class ModelTest:
         self.model_input = model_input
 
 
-class GeneralLlmInstancesToTest:
+class LLMTestData:
     SMALL_BASE_64_IMAGE = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
     CHEAP_VISION_MESSAGE_DATA = VisionMessageData(
         prompt="Hi", b64_image=SMALL_BASE_64_IMAGE, image_resolution="low"
     )
 
-    def _get_cheap_user_message(self) -> str:
+    def get_cheap_user_message(self) -> str:
         return "Hi"
 
-    def _get_cheap_vision_message_data(self) -> VisionMessageData:
+    def get_cheap_vision_message_data(self) -> VisionMessageData:
         return self.CHEAP_VISION_MESSAGE_DATA
-
-    def _all_tests(self) -> list[ModelTest]:
-        return [
-            ModelTest(GeneralLlm(model="gpt-4o"), self._get_cheap_user_message()),
-            ModelTest(
-                GeneralLlm(model="gpt-4o"),
-                self._get_cheap_vision_message_data(),
-            ),
-            ModelTest(
-                GeneralLlm(model="openai/gpt-4o"),
-                [{"role": "user", "content": self._get_cheap_user_message()}],
-            ),
-            ModelTest(
-                GeneralLlm(model="o3-mini", reasoning_effort="low"),
-                self._get_cheap_user_message(),
-            ),
-            ModelTest(
-                GeneralLlm(model="metaculus/gpt-4o"),
-                self._get_cheap_user_message(),
-            ),
-            # ModelTest(
-            #     GeneralLlm(model="metaculus/claude-3-5-sonnet-20241022"),
-            #     self._get_cheap_user_message(),
-            # ),
-            # ModelTest(
-            #     GeneralLlm(model="metaculus/claude-3-7-sonnet-latest"),
-            #     self._get_cheap_vision_message_data(),
-            # ),
-            # ModelTest(
-            #     GeneralLlm(
-            #         model="metaculus/claude-3-7-sonnet-latest",
-            #         thinking={
-            #             "type": "enabled",
-            #             "budget_tokens": 16000,
-            #         },
-            #         max_tokens=20000,
-            #         temperature=1,
-            #     ),
-            #     self._get_cheap_user_message(),
-            # ),
-            ModelTest(
-                GeneralLlm(model="claude-3-5-sonnet-20241022"),
-                self._get_cheap_user_message(),
-            ),
-            ModelTest(
-                GeneralLlm(model="claude-3-5-sonnet-20241022"),
-                self._get_cheap_vision_message_data(),
-            ),
-            ModelTest(
-                GeneralLlm(model="perplexity/sonar-pro"),
-                self._get_cheap_user_message(),
-            ),
-            ModelTest(
-                GeneralLlm(model="openrouter/openai/gpt-4o"),
-                self._get_cheap_user_message(),
-            ),
-            ModelTest(
-                GeneralLlm(model="exa/exa-pro"),
-                self._get_cheap_user_message(),
-            ),
-            ModelTest(
-                GeneralLlm(model="exa/exa"),
-                self._get_cheap_user_message(),
-            ),
-            ModelTest(
-                GeneralLlm(model="asknews/news-summaries"),
-                self._get_cheap_user_message(),
-            ),
-            ModelTest(
-                GeneralLlm(
-                    model="openai/gpt-5",
-                    responses_api=True,
-                    tools=[{"type": "web_search"}],
-                    reasoning_effort="minimal",
-                ),
-                "What is the latest News on the Middle East? Do a single very quick search. Go as fast as you can. I just want headlines.",
-            ),
-        ]
-
-    def all_tests_with_names(self) -> list[tuple[str, ModelTest]]:
-        tests = self._all_tests()
-        pairs = []
-        for test in tests:
-            input_type = type(test.model_input)
-            pairs.append((f"{test.llm.model}-{input_type.__name__}", test))
-        return pairs
