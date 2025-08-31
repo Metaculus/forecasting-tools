@@ -79,6 +79,7 @@ class ForecastBot(ABC):
         ) = None,  # Default LLMs are used if llms is set to None
         enable_summarize_research: bool = True,
         parameters_to_exclude_from_config_dict: list[str] | None = None,
+        extra_metadata_in_explanation: bool = True,
     ) -> None:
         assert (
             research_reports_per_question > 0
@@ -98,6 +99,7 @@ class ForecastBot(ABC):
             parameters_to_exclude_from_config_dict or []
         )
         self.enable_summarize_research = enable_summarize_research
+        self.extra_metadata_in_explanation = extra_metadata_in_explanation
         self._note_pads: list[Notepad] = []
         self._note_pad_lock = asyncio.Lock()
         self._llms = llms or self._llm_config_defaults()
@@ -555,14 +557,18 @@ class ForecastBot(ABC):
         combined_summaries = "\n".join(all_summaries)
         combined_research_reports = "\n".join(all_core_research)
         combined_rationales = "\n".join(all_forecaster_rationales)
+        time_spent_in_minutes_formatted = f"{round(time_spent_in_minutes, 2)} minutes"
+        cost_formatted = f"${round(final_cost,4)} (estimated)"
+        disabled_metadata_formatted = "extra_metadata_in_explanation is disabled"
         full_explanation_without_summary = clean_indents(
             f"""
             # SUMMARY
             *Question*: {question.question_text}
             *Final Prediction*: {report_type.make_readable_prediction(aggregated_prediction)}
-            *Total Cost*: ${round(final_cost,4)} (estimated)
-            *Time Spent*: {round(time_spent_in_minutes, 2)} minutes
-            *LLMs*: {self.make_llm_dict()}
+            *Total Cost*: {cost_formatted if self.extra_metadata_in_explanation else disabled_metadata_formatted}
+            *Time Spent*: {time_spent_in_minutes_formatted if self.extra_metadata_in_explanation else disabled_metadata_formatted}
+            *LLMs*: {self.make_llm_dict() if self.extra_metadata_in_explanation else disabled_metadata_formatted}
+            *Bot Name*: {self.__class__.__name__ if self.extra_metadata_in_explanation else disabled_metadata_formatted}
 
             {combined_summaries}
 
@@ -620,14 +626,24 @@ class ForecastBot(ABC):
         return final_content
 
     def _format_forecaster_rationales(
-        self, report_number: int, collection: ResearchWithPredictions
+        self, report_number: int, researched_predictions: ResearchWithPredictions
     ) -> str:
         rationales = []
-        for j, forecast in enumerate(collection.predictions):
+        for j, forecast in enumerate(researched_predictions.predictions):
+            sections = MarkdownTree.turn_markdown_into_report_sections(
+                forecast.reasoning
+            )
+            try:
+                modified_content = MarkdownTree.report_sections_to_markdown(sections, 3)
+            except Exception as e:
+                logger.error(f"Error formatting research report: {e}")
+                modified_content = MarkdownTree.report_sections_to_markdown(
+                    sections, None
+                ).replace("#", "[Hashtag]")
             new_rationale = clean_indents(
                 f"""
                 ## R{report_number}: Forecaster {j + 1} Reasoning
-                {forecast.reasoning}
+                {modified_content}
                 """
             )
             rationales.append(new_rationale)
@@ -758,8 +774,12 @@ class ForecastBot(ABC):
         )
         average_cost = total_cost / len(valid_reports) if valid_reports else 0
         full_summary += "\nStats for passing reports:\n"
-        full_summary += f"Total cost estimated: ${total_cost:.5f}\n"
-        full_summary += f"Average cost per question: ${average_cost:.5f}\n"
+        full_summary += (
+            f"Total cost estimated: ${total_cost:.5f} (estimated via litellm)\n"
+        )
+        full_summary += (
+            f"Average cost per question: ${average_cost:.5f} (estimated via litellm)\n"
+        )
         full_summary += (
             f"Average time spent per question: {average_minutes:.4f} minutes\n"
         )

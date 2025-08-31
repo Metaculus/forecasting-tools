@@ -198,7 +198,7 @@ class FallTemplateBot2025(ForecastBot):
         self,
         question: BinaryQuestion,
         prompt: str,
-        double_check_extraction: bool = True,
+        double_check_extraction: bool = False,
     ) -> ReasonedPrediction[float]:
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
@@ -266,7 +266,7 @@ class FallTemplateBot2025(ForecastBot):
         self,
         question: MultipleChoiceQuestion,
         prompt: str,
-        double_check_extraction: bool = True,
+        double_check_extraction: bool = False,
     ) -> ReasonedPrediction[PredictedOptionList]:
         parsing_instructions = clean_indents(
             f"""
@@ -296,6 +296,7 @@ class FallTemplateBot2025(ForecastBot):
                         for option in predicted_option_list.predicted_options
                         if option.option_name == redundant_prediction.option_name
                     ),
+                    None,
                 )
                 assert (
                     matching_original_option is not None
@@ -377,17 +378,33 @@ class FallTemplateBot2025(ForecastBot):
         self,
         question: NumericQuestion,
         prompt: str,
-        double_check_extraction: bool = True,
+        double_check_extraction: bool = False,
     ) -> ReasonedPrediction[NumericDistribution]:
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
+        parsing_instructions = clean_indents(
+            f"""
+            The text given to you is trying to give a forecast distribution for a numeric question.
+            - This text is trying to answer the numeric question: "{question.question_text}".
+            - When parsing the text, please make sure to give the values (the ones assigned to percentiles) in terms of the correct units.
+            - The units for the forecast are: {question.unit_of_measure}
+            - Your work will be shown publicly with these units stated verbatim after the numbers your parse.
+            - As an example, someone else guessed that the answer will be between {question.lower_bound} {question.unit_of_measure} and {question.upper_bound} {question.unit_of_measure}.
+            - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
+            - Turn any values that are in scientific notation into regular numbers.
+            """
+        )
         percentile_list: list[Percentile] = await structure_output(
-            reasoning, list[Percentile], model=self.get_llm("parser", "llm")
+            reasoning,
+            list[Percentile],
+            model=self.get_llm("parser", "llm"),
+            additional_instructions=parsing_instructions,
         )
-        redundant_extraction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-            reasoning, question
-        )
+
         if double_check_extraction:
+            redundant_extraction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+                reasoning, question
+            )
             for redundant_percentile in redundant_extraction.declared_percentiles:
                 matching_original_percentile = next(
                     (
@@ -396,6 +413,7 @@ class FallTemplateBot2025(ForecastBot):
                         if abs(percentile.percentile - redundant_percentile.percentile)
                         < 0.001
                     ),
+                    None,
                 )
                 assert (
                     matching_original_percentile is not None

@@ -29,7 +29,7 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
     _instructions = clean_indents(
         """
         To run the forecast:
-        1. Consider what principles associated with good forecasting you could use (base rates, bias identification, premortems, simulations, etc)
+        1. Consider what principles associated with good forecasting you plan to use in this situation, if any (e.g. base rates, bias identification, premortems, simulations, scope sensitivity, aggregation, etc)
         2. Make a research plan
         3. Conduct the research (iterate as needed)
         4. Write down the main facts from the research you conducted that you will consider in your forecast

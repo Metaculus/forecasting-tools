@@ -58,7 +58,6 @@ async def configure_and_run_bot(
         chosen_tournaments = [
             MetaculusApi.CURRENT_AI_COMPETITION_ID,
             MetaculusApi.CURRENT_MINIBENCH_ID,
-            MetaculusApi.AI_2027_TOURNAMENT_ID,
         ]
         skip_previously_forecasted_questions = True
         token = mode
@@ -119,12 +118,15 @@ def create_bot(
                 "parser": DEFAULT_STRUCTURE_OUTPUT_MODEL,
             },
             enable_summarize_research=False,
+            extra_metadata_in_explanation=True,
         )
 
     if bot_type == "template":
         bot_class = TemplateBot
     elif bot_type == "gpt_4_1_optimized":
         bot_class = GPT41OptimizedBot
+    else:
+        raise ValueError(f"Invalid bot type: {bot_type}")
 
     default_bot = bot_class(
         research_reports_per_question=1,
@@ -138,6 +140,7 @@ def create_bot(
             "researcher": researcher,
             "parser": DEFAULT_STRUCTURE_OUTPUT_MODEL,
         },
+        extra_metadata_in_explanation=True,
     )
     return default_bot
 
@@ -148,7 +151,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
 
     Anything that uses the "roughly" cost value (other than the original model the variable matches to)
     is estimated value and was not measured directly. These estimates were derived from Litellm's pricing functionality.
-    Also, a lot of pricing is probably outdated.
+    Also, a lot of pricing is probably outdated. Unless otherwise stated, costs are "cost per question".
 
     Useful Links:
     OpenRouter reasoning control settings: https://openrouter.ai/docs/use-cases/reasoning-tokens#controlling-reasoning-tokens
@@ -165,8 +168,9 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         guess_at_search_cost * default_num_forecasts_for_research_only_bot
     )
     guess_at_deepseek_plus_search = roughly_deepseek_r1_cost + guess_at_search_cost
-    guess_at_gpt_5_cost = roughly_sonnet_3_5_cost / 1.5
     guess_at_deepseek_v3_1_cost = roughly_deepseek_r1_cost / 2
+    roughly_one_call_to_grok_4_llm = 0.084
+    roughly_sonar_deep_research_cost_per_call = 1.35399 / 3
 
     sonnet_4_name = "anthropic/claude-sonnet-4-20250514"
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
@@ -278,7 +282,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         ############################ Bots started in Fall 2025 ############################
         ### Regular Bots
         "METAC_GPT_5_HIGH": {
-            "estimated_cost_per_question": guess_at_gpt_5_cost * 1.2,
+            "estimated_cost_per_question": 0.37868,
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="openai/gpt-5",
@@ -289,7 +293,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GPT_5": {
-            "estimated_cost_per_question": guess_at_gpt_5_cost,
+            "estimated_cost_per_question": 0.19971,
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="openai/gpt-5",
@@ -318,7 +322,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_CLAUDE_4_SONNET_HIGH_16K": {
-            "estimated_cost_per_question": roughly_sonnet_3_5_cost * 1.2,
+            "estimated_cost_per_question": 0.33980,
             "bot": create_bot(
                 llm=GeneralLlm(
                     model=sonnet_4_name,
@@ -327,7 +331,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_CLAUDE_4_SONNET": {
-            "estimated_cost_per_question": roughly_sonnet_3_5_cost,
+            "estimated_cost_per_question": 0.25190,
             "bot": create_bot(
                 llm=GeneralLlm(
                     model=sonnet_4_name,
@@ -336,9 +340,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_CLAUDE_4_1_OPUS_HIGH_16K": {
-            "estimated_cost_per_question": roughly_sonnet_3_5_cost
-            * 5
-            * 1.2,  # 5x the cost, plus 1.2x for the high thinking budget
+            "estimated_cost_per_question": 1.56,
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="anthropic/claude-opus-4-1",
@@ -347,7 +349,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GROK_4": {
-            "estimated_cost_per_question": roughly_sonnet_3_5_cost,
+            "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_llm,
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="xai/grok-4-latest",
@@ -396,8 +398,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         "METAC_DEEPSEEK_V3_1_VARIANCE_TEST_2": deepseek_v3_1_bot,
         ### Research-Only Bots
         "METAC_O4_MINI_DEEP_RESEARCH": {
-            "estimated_cost_per_question": guess_at_gpt_5_cost
-            + guess_at__research_only_bot__search_costs * 5,
+            "estimated_cost_per_question": 1.5,  # Top down calculation was 1.5, while bottom up was 0.64674
             "bot": create_bot(
                 llm=o4_mini_deep_research_llm,
                 bot_type="research_only",
@@ -416,8 +417,8 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             "discontinued": True,
         },
         "METAC_SONAR_DEEP_RESEARCH": {
-            "estimated_cost_per_question": roughly_deepseek_r1_cost
-            + guess_at__research_only_bot__search_costs,
+            "estimated_cost_per_question": 3
+            * roughly_sonar_deep_research_cost_per_call,
             "bot": create_bot(
                 llm=sonar_deep_research_llm,
                 bot_type="research_only",
@@ -453,24 +454,21 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_GPT_5_SEARCH": {
-            "estimated_cost_per_question": guess_at_gpt_5_cost
-            + guess_at__research_only_bot__search_costs,
+            "estimated_cost_per_question": 1.17,
             "bot": create_bot(
                 llm=gpt_5_with_search,
                 bot_type="research_only",
             ),
         },
         "METAC_GROK_4_LIVE_SEARCH": {
-            "estimated_cost_per_question": roughly_sonnet_3_5_cost
-            + guess_at__research_only_bot__search_costs,
+            "estimated_cost_per_question": 3 * roughly_one_call_to_grok_4_llm,
             "bot": create_bot(
                 llm=grok_4_search_llm,
                 bot_type="research_only",
             ),
         },
         "METAC_SONNET_4_SEARCH": {
-            "estimated_cost_per_question": roughly_sonnet_3_5_cost
-            + guess_at__research_only_bot__search_costs,
+            "estimated_cost_per_question": 1.53366,
             "bot": create_bot(
                 llm=sonnet_4_search_llm,
                 bot_type="research_only",
@@ -500,14 +498,15 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_R1_XAI_LIVESEARCH": {
-            "estimated_cost_per_question": guess_at_deepseek_plus_search,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search
+            + roughly_one_call_to_grok_4_llm,
             "bot": create_bot(
                 llm=default_research_comparison_forecast_llm,
                 researcher=grok_4_search_llm,
             ),
         },
         "METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH": {
-            "estimated_cost_per_question": guess_at_deepseek_plus_search,
+            "estimated_cost_per_question": roughly_deepseek_r1_cost + 1.5 / 3,
             "bot": create_bot(
                 llm=default_research_comparison_forecast_llm,
                 researcher=o4_mini_deep_research_llm,
@@ -522,7 +521,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
         },
         ### Specialized Bots
         "METAC_GPT_4_1_OPTIMIZED_PROMPT": {
-            "estimated_cost_per_question": roughly_gpt_4o_cost,
+            "estimated_cost_per_question": 0.13871,
             "bot": create_bot(
                 GeneralLlm(
                     model="openai/gpt-4.1",
@@ -613,7 +612,8 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_DEEPSEEK_R1_SONAR_DEEP_RESEARCH": {
-            "estimated_cost_per_question": guess_at_deepseek_plus_search,
+            "estimated_cost_per_question": guess_at_deepseek_plus_search
+            + roughly_sonar_deep_research_cost_per_call,
             "bot": create_bot(
                 default_research_comparison_forecast_llm,
                 researcher=sonar_deep_research_llm,
@@ -689,7 +689,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_O3_HIGH_TOKEN": {
-            "estimated_cost_per_question": 0.7,
+            "estimated_cost_per_question": 0.16,
             "bot": create_bot(
                 GeneralLlm(
                     model="o3",
@@ -701,7 +701,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             ),
         },
         "METAC_O3_TOKEN": {
-            "estimated_cost_per_question": 0.5,
+            "estimated_cost_per_question": 0.16 * 0.8,
             "bot": create_bot(
                 GeneralLlm(
                     model="o3",
@@ -999,7 +999,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             if researcher_is_google:
                 assert len(researcher.litellm_kwargs["tools"]) == 1
         elif "deepseek" in mode.lower():
-            researcher = bot.get_llm("default", "llm")
+            researcher = bot.get_llm("researcher", "llm")
             forecaster = bot.get_llm("default", "llm")
             researcher_is_deepseek = researcher.model.startswith("openrouter/deepseek/")
             forecaster_is_deepseek = forecaster.model.startswith("openrouter/deepseek/")

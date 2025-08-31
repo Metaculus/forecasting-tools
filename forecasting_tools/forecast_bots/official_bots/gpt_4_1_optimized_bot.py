@@ -23,7 +23,7 @@ class GPT41OptimizedBot(FallTemplateBot2025):
             research = ""
             researcher = self.get_llm("researcher")
             if researcher != "asknews/news-summaries":
-                raise ValueError(
+                logger.warning(
                     "This bot was optimized on AskNews search, using other search providers may result in lower performance"
                 )
             research = await AskNewsSearcher().get_formatted_news_async(
@@ -47,6 +47,7 @@ def create_binary_prompt(question: BinaryQuestion, research: str) -> str:
     fine_print = question.fine_print
     today = datetime.now().strftime("%Y-%m-%d")
 
+    # NOTE: the research (and other) fields are intentionally included twice since this is how Gemini designed the prompt when the automated prompt optimization iterations were run.
     return f"""
 **Question to Forecast:**
 {question_text}

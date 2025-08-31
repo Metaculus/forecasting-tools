@@ -197,14 +197,14 @@ jobs:
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
   ### Research only bots
-  bot_o4_mini_deep_research:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_O4_MINI_DEEP_RESEARCH'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O4_MINI_DEEP_RESEARCH }}
-      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  # bot_o4_mini_deep_research:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_O4_MINI_DEEP_RESEARCH'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O4_MINI_DEEP_RESEARCH }}
+  #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   # bot_o3_deep_research:
   #   uses: ./.github/workflows/run-bot-launcher.yaml

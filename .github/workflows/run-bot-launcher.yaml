@@ -54,6 +54,7 @@ jobs:
         if: steps.installPoetry.outcome == 'failure'
         run: sleep 30
 
+      # Reinstall steps are here because the snok install doesn't work ~1/43 times on average
       - name: Retry install poetry as needed
         uses: abatilo/actions-poetry@v4
         id: retryInstallPoetry

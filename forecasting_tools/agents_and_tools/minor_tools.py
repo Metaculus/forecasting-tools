@@ -124,10 +124,10 @@ def create_tool_for_forecasting_bot(
 
     description = clean_indents(
         f"""
-        Forecast a question and get back probabilities for "yes/no", "options", or a number in a range
+        Forecast a question and get back a report that contains probabilities for "yes/no", "options", or a number in a range
 
         The input is a SimpleQuestion json object (binary, numeric, or multiple choice question).
-        If you have a MetaculusQuestion, there should be a MetaculusQuestion field for every field in the SimpleQuestion.
+        If you have a MetaculusQuestion, there should be a MetaculusQuestion field for every field in the SimpleQuestion. Please populate these 1 for 1.
 
         Here is the structure of the SimpleQuestion:
         ```
