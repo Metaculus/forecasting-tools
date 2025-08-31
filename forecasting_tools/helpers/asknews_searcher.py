@@ -94,7 +94,7 @@ class AskNewsSearcher:
 
     async def call_preconfigured_version(self, preset: str, prompt: str) -> str:
         if "asknews/news-summaries" in preset:
-            research = await self.get_formatted_news_async(prompt)
+            return await self.get_formatted_news_async(prompt)
 
         if "deep-research" not in preset:
             raise ValueError(f"Preset {preset} not found")

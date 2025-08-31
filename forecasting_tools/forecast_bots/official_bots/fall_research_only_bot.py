@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class FallResearchOnlyBot2025(FallTemplateBot2025):
 
     _max_concurrent_questions = (
-        5  # Set this to whatever works for your search-provider/ai-model rate limits
+        3  # Set this to whatever works for your search-provider/ai-model rate limits
     )
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
     _instructions = clean_indents(
@@ -77,8 +77,8 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-
-        return await self._binary_prompt_to_forecast(question, prompt)
+        async with self._concurrency_limiter:
+            return await self._binary_prompt_to_forecast(question, prompt)
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -117,7 +117,8 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
             Option_N: Probability_N
             """
         )
-        return await self._multiple_choice_prompt_to_forecast(question, prompt)
+        async with self._concurrency_limiter:
+            return await self._multiple_choice_prompt_to_forecast(question, prompt)
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
@@ -169,4 +170,5 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
             "
             """
         )
-        return await self._numeric_prompt_to_forecast(question, prompt)
+        async with self._concurrency_limiter:
+            return await self._numeric_prompt_to_forecast(question, prompt)

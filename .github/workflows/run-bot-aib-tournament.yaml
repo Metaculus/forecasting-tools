@@ -504,15 +504,15 @@ jobs:
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
 
-  bot_deepseek_r1_deepnews:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_DEEPSEEK_R1_DEEPNEWS'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_DEEPNEWS }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+  # bot_deepseek_r1_deepnews:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_DEEPSEEK_R1_DEEPNEWS'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_DEEPNEWS }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+  #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
   ### Classic bots
   bot_o3_high:
