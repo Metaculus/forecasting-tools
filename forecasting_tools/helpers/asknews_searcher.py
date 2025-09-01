@@ -23,9 +23,11 @@ except ImportError:
 
 
 class AskNewsSearcher:
-    _default_search_depth = 2
-    _default_max_depth = 2
+    _default_search_depth = 1
+    _default_max_depth = 1
     _default_model = "deepseek-basic"
+    _default_sources = ["asknews"]
+    _default_rate_limit = 12
 
     def __init__(
         self,
@@ -59,6 +61,8 @@ class AskNewsSearcher:
                 return_type="both",
                 strategy="latest news",  # enforces looking at the latest news only
             )
+
+            await asyncio.sleep(self._default_rate_limit)  # free tier AskNews has a ratelimit of 1 call per 10 seconds
 
             # get context from the "historical" database that contains a news archive going back to 2023
             historical_response = await ask.news.search_news(
@@ -107,7 +111,7 @@ class AskNewsSearcher:
         if "asknews/deep-research/low-depth" in preset:
             research = await self.get_formatted_deep_research(
                 prompt,
-                sources=["asknews", "google", "x", "wiki"],
+                sources=self._default_sources,
                 search_depth=1,
                 max_depth=1,
                 model=model_name,
@@ -116,6 +120,7 @@ class AskNewsSearcher:
             research = await self.get_formatted_deep_research(
                 prompt,
                 sources=["asknews", "google", "x", "wiki"],
+                filter_params={"premium": True},
                 search_depth=2,
                 max_depth=4,
                 model=model_name,
@@ -124,6 +129,7 @@ class AskNewsSearcher:
             research = await self.get_formatted_deep_research(
                 prompt,
                 sources=["asknews", "google", "x", "wiki"],
+                filter_params={"premium": True},
                 search_depth=4,
                 max_depth=6,
                 model=model_name,
@@ -142,9 +148,10 @@ class AskNewsSearcher:
         ) = _default_model,
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
+        filter_params: dict[str, bool] | None = None,
     ) -> str:
         response = await self.run_deep_research(
-            query, sources, model, search_depth, max_depth
+            query, sources, model, search_depth, max_depth, filter_params
         )
         text = response.choices[0].message.content
 
@@ -170,6 +177,7 @@ class AskNewsSearcher:
         ) = _default_model,
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
+        filter_params: dict[str, bool] | None = None,
     ) -> CreateDeepNewsResponse:
         try:
             from asknews_sdk.dto.deepnews import CreateDeepNewsResponse
@@ -191,6 +199,7 @@ class AskNewsSearcher:
                 return_sources=False,
                 model=model,
                 inline_citations="numbered",
+                filter_params=filter_params
             )
             if not isinstance(response, CreateDeepNewsResponse):
                 raise ValueError("Response is not a CreateDeepNewsResponse")
