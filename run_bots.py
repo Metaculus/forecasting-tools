@@ -288,6 +288,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                     model="openai/gpt-5",
                     reasoning_effort="high",
                     temperature=default_temperature,
+                    timeout=240,
                     **flex_price_settings,
                 ),
             ),
