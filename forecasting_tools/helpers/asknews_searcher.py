@@ -62,7 +62,9 @@ class AskNewsSearcher:
                 strategy="latest news",  # enforces looking at the latest news only
             )
 
-            await asyncio.sleep(self._default_rate_limit)  # free tier AskNews has a ratelimit of 1 call per 10 seconds
+            await asyncio.sleep(
+                self._default_rate_limit
+            )  # free tier AskNews has a ratelimit of 1 call per 10 seconds
 
             # get context from the "historical" database that contains a news archive going back to 2023
             historical_response = await ask.news.search_news(
@@ -199,7 +201,7 @@ class AskNewsSearcher:
                 return_sources=False,
                 model=model,
                 inline_citations="numbered",
-                filter_params=filter_params
+                filter_params=filter_params,
             )
             if not isinstance(response, CreateDeepNewsResponse):
                 raise ValueError("Response is not a CreateDeepNewsResponse")
