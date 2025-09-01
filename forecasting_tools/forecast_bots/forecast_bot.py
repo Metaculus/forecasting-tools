@@ -79,7 +79,7 @@ class ForecastBot(ABC):
         ) = None,  # Default LLMs are used if llms is set to None
         enable_summarize_research: bool = True,
         parameters_to_exclude_from_config_dict: list[str] | None = None,
-        extra_metadata_in_explanation: bool = True,
+        extra_metadata_in_explanation: bool = False,
     ) -> None:
         assert (
             research_reports_per_question > 0
