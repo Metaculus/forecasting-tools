@@ -215,14 +215,14 @@ jobs:
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-  bot_sonar_deep_research:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_SONAR_DEEP_RESEARCH'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_SONAR_DEEP_RESEARCH }}
-      INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  # bot_sonar_deep_research:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_SONAR_DEEP_RESEARCH'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_SONAR_DEEP_RESEARCH }}
+  #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   # bot_exa_research_pro:
   #   uses: ./.github/workflows/run-bot-launcher.yaml
@@ -252,14 +252,14 @@ jobs:
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-  bot_gpt_5_search:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_GPT_5_SEARCH'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_SEARCH }}
-      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  # bot_gpt_5_search:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_GPT_5_SEARCH'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_SEARCH }}
+  #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_grok_4_live_search:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -270,14 +270,14 @@ jobs:
       INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-  bot_sonnet_4_search:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_SONNET_4_SEARCH'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_SONNET_4_SEARCH }}
-      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  # bot_sonnet_4_search:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_SONNET_4_SEARCH'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_SONNET_4_SEARCH }}
+  #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_deepseek_r1_exa_online_research_only:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -297,14 +297,14 @@ jobs:
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
 
-  bot_deepseek_r1_sonnet_4_search:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_DEEPSEEK_R1_SONNET_4_SEARCH'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONNET_4_SEARCH }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  # bot_deepseek_r1_sonnet_4_search:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_DEEPSEEK_R1_SONNET_4_SEARCH'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONNET_4_SEARCH }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
   bot_deepseek_r1_xai_livesearch:
     uses: ./.github/workflows/run-bot-launcher.yaml
@@ -432,14 +432,14 @@ jobs:
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
-  bot_deepseek_r1_sonar_deep_research:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_DEEPSEEK_R1_SONAR_DEEP_RESEARCH'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_DEEP_RESEARCH }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+  # bot_deepseek_r1_sonar_deep_research:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_DEEPSEEK_R1_SONAR_DEEP_RESEARCH'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_DEEP_RESEARCH }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
   bot_deepseek_r1_sonar_reasoning_pro:
     uses: ./.github/workflows/run-bot-launcher.yaml
