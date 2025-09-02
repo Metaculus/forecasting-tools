@@ -299,7 +299,7 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openai/gpt-5",
                     temperature=default_temperature,
-                    timeout=15 * 60
+                    timeout=15 * 60,
                     **flex_price_settings,
                 ),
             ),
