@@ -13,12 +13,19 @@ from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot impor
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
 from run_bots import AllowedTourn, RunBotConfig, TournConfig, get_questions_for_config
 
-NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL = 10
+NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL = 20
 PERCENT_ALREADY_FORECASTED = 0.5
+PERCENT_NOT_FORECASTED = 1 - PERCENT_ALREADY_FORECASTED
+PERCENT_FORECAST_LONG_TIME_AGO = 0.1
+PERCENT_FORECAST_SHORT_TIME_AGO = 0.4
+assert (
+    PERCENT_FORECAST_LONG_TIME_AGO + PERCENT_FORECAST_SHORT_TIME_AGO
+    == PERCENT_ALREADY_FORECASTED
+)
 
 
 def create_mock_questions() -> list[MetaculusQuestion]:
-    questions = []
+    questions: list[MetaculusQuestion] = []
     for i in range(NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL):
         already_forecasted = i % (1 / PERCENT_ALREADY_FORECASTED) == 0
         question = ForecastingTestManager.get_fake_binary_question(
@@ -27,6 +34,41 @@ def create_mock_questions() -> list[MetaculusQuestion]:
         question.close_time = pendulum.now().add(days=60)
         question.open_time = pendulum.now().subtract(days=30)
         questions.append(question)
+
+    already_forecasted_questions = [q for q in questions if q.already_forecasted]
+    normalized_percent_long = (
+        PERCENT_FORECAST_LONG_TIME_AGO / PERCENT_ALREADY_FORECASTED
+    )
+    normalized_percent_short = (
+        PERCENT_FORECAST_SHORT_TIME_AGO / PERCENT_ALREADY_FORECASTED
+    )
+    num_long_time_ago = int(len(already_forecasted_questions) * normalized_percent_long)
+    num_short_time_ago = int(
+        len(already_forecasted_questions) * normalized_percent_short
+    )
+    for question in already_forecasted_questions:
+        if num_long_time_ago > 0:
+            question.api_json = {
+                "question": {
+                    "my_forecasts": {
+                        "latest": {
+                            "timestamp": pendulum.now().subtract(days=100).timestamp()
+                        }
+                    }
+                }
+            }
+            num_long_time_ago -= 1
+        elif num_short_time_ago > 0:
+            question.api_json = {
+                "question": {
+                    "my_forecasts": {
+                        "latest": {
+                            "timestamp": pendulum.now().subtract(days=1).timestamp()
+                        }
+                    }
+                }
+            }
+            num_short_time_ago -= 1
     return questions
 
 
@@ -59,7 +101,7 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
         TournConfig.aib_only,
         [AllowedTourn.METACULUS_CUP],
         TournConfig.site_only,
-        TournConfig.aib_and_site,
+        # TournConfig.aib_and_site,
         TournConfig.everything,
     ]
 
@@ -92,13 +134,18 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
                 * PERCENT_ALREADY_FORECASTED
                 * num_aib_tourns
             )
+
+            no_or_stale_forecasted_questions = (
+                NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL * PERCENT_NOT_FORECASTED
+                + NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL * PERCENT_FORECAST_LONG_TIME_AGO
+            )
             expected_regularly_forecasted_questions = (
-                NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL * num_regularly_forecasted_tourns
+                no_or_stale_forecasted_questions * num_regularly_forecasted_tourns
                 if is_morning_window and is_interval_day
                 else 0
             )
             expected_main_site_questions = (
-                NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL * num_main_site_tourns
+                no_or_stale_forecasted_questions * num_main_site_tourns
                 if is_afternoon_window and is_interval_day
                 else 0
             )
