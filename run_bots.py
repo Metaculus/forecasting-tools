@@ -8,10 +8,11 @@ import argparse
 import asyncio
 import logging
 from enum import Enum
-from typing import Any, Literal
+from typing import Literal
 
 import dotenv
 import pendulum
+from pydantic import BaseModel
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
@@ -28,67 +29,17 @@ from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot impor
 )
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
 from forecasting_tools.helpers.metaculus_api import ApiFilter, MetaculusApi
-from forecasting_tools.helpers.structure_output import DEFAULT_STRUCTURE_OUTPUT_MODEL
 
 logger = logging.getLogger(__name__)
 dotenv.load_dotenv()
 
 
-default_for_skipping_questions = True
+default_for_skipping_questions = False
 default_for_publish_to_metaculus = True
 default_for_using_summary = False
 default_num_forecasts_for_research_only_bot = 3
 MAIN_SITE_MONTHS_AHEAD_TO_CHECK = 4
-
-
-async def configure_and_run_bot(
-    mode: str, return_bot__dont_run: bool = False
-) -> ForecastBot | None | list[ForecastReport | BaseException]:
-
-    if "metaculus-cup" in mode:
-        assert (
-            "+" in mode
-        ), "Metaculus cup mode must be in the format 'token+tournament_id'"
-        token = mode.split("+")[0]
-        chosen_tournaments = [MetaculusApi.CURRENT_METACULUS_CUP_ID]
-        skip_previously_forecasted_questions = False
-    elif "+" in mode:
-        parts = mode.split("+")
-        assert len(parts) == 2
-        token = parts[0]
-        chosen_tournaments = [parts[1]]
-        skip_previously_forecasted_questions = False
-    else:
-        chosen_tournaments = [
-            MetaculusApi.CURRENT_AI_COMPETITION_ID,
-            MetaculusApi.CURRENT_MINIBENCH_ID,
-        ]
-        skip_previously_forecasted_questions = True
-        token = mode
-
-    is_discontinued = get_default_bot_dict()[token].get("discontinued", False)
-    if is_discontinued:
-        logger.warning(f"Bot {token} is discontinued, skipping")
-        return None
-
-    bot = get_default_bot_dict()[token]["bot"]
-    if bot is not None:
-        assert isinstance(bot, ForecastBot)
-        bot.skip_previously_forecasted_questions = skip_previously_forecasted_questions
-
-    if return_bot__dont_run:
-        return bot
-    else:
-        assert isinstance(bot, ForecastBot)
-        logger.info(f"LLMs for bot are: {bot.make_llm_dict()}")
-        all_reports = []
-        for tournament in chosen_tournaments:
-            reports = await bot.forecast_on_tournament(
-                tournament, return_exceptions=True
-            )
-            all_reports.extend(reports)
-        bot.log_report_summary(all_reports)
-        return all_reports
+structure_output_model = "openrouter/openai/gpt-4.1"
 
 
 class AllowedTourn(Enum):
@@ -103,7 +54,8 @@ class AllowedTourn(Enum):
 class TournConfig:
     everything = [t for t in AllowedTourn]
     aib_only = [AllowedTourn.MAIN_AIB, AllowedTourn.MINIBENCH]
-    aib_and_site = aib_only.copy() + [AllowedTourn.MAIN_SITE]
+    site_only = [AllowedTourn.MAIN_SITE]
+    aib_and_site = aib_only.copy() + site_only.copy()
     every_x_days_tourns = [AllowedTourn.METACULUS_CUP, AllowedTourn.MARKET_PULSE]
     experimental = []
     none = []
@@ -112,8 +64,41 @@ class TournConfig:
     forecasts_per_main_site_question = 5
 
 
-async def get_questions_for_mode(mode: str) -> list[MetaculusQuestion]:
-    allowed_tournaments = list(set(get_default_bot_dict()[mode]["tournaments"]))
+class RunBotConfig(BaseModel):
+    mode: str
+    bot: ForecastBot
+    estimated_cost_per_question: float
+    allowed_tourns: list[AllowedTourn]
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
+async def configure_and_run_bot(
+    mode: str,
+) -> list[ForecastReport | BaseException]:
+    bot_config = get_default_bot_dict()[mode]
+    questions = await get_questions_for_config(bot_config)
+    bot = bot_config.bot
+
+    assert isinstance(
+        bot, ForecastBot
+    ), f"Bot {mode} is not a ForecastBot, it is a {type(bot)}"
+    logger.info(f"LLMs for bot are: {bot.make_llm_dict()}")
+    all_reports = []
+    batch_size = 10
+    batches = [
+        questions[i : i + batch_size] for i in range(0, len(questions), batch_size)
+    ]
+    for batch in batches:
+        reports = await bot.forecast_questions(batch, return_exceptions=True)
+        all_reports.extend(reports)
+    bot.log_report_summary(all_reports)
+    return all_reports
+
+
+async def get_questions_for_config(bot_config: RunBotConfig) -> list[MetaculusQuestion]:
+    mode = bot_config.mode
+    allowed_tournaments = list(set(bot_config.allowed_tourns))
     aib_tourns = [t for t in allowed_tournaments if t in TournConfig.aib_only]
     regularly_forecast_tourns = [
         t for t in allowed_tournaments if t in TournConfig.every_x_days_tourns
@@ -127,72 +112,93 @@ async def get_questions_for_mode(mode: str) -> list[MetaculusQuestion]:
 
     is_interval_day = pendulum.now().day % TournConfig.regular_forecast_interval == 0
     window_length_hrs = 3
-    is_morning_window = 8 <= pendulum.now(tz="MT").hour < 8 + window_length_hrs
-    is_afternoon_window = 12 <= pendulum.now(tz="MT").hour < 12 + window_length_hrs
+    US_morning_hour = 8
+    US_afternoon_hour = 12
+    UTC_morning_hour = US_morning_hour + 7
+    UTC_afternoon_hour = US_afternoon_hour + 7
+    is_morning_window = (
+        UTC_morning_hour <= pendulum.now().hour < UTC_morning_hour + window_length_hrs
+    )
+    is_afternoon_window = (
+        UTC_afternoon_hour
+        <= pendulum.now().hour
+        < UTC_afternoon_hour + window_length_hrs
+    )
 
     questions = []
     for tournament in aib_tourns:
-        questions.extend(
-            MetaculusApi.get_all_open_questions_from_tournament(tournament)
-        )
+        questions.extend(_get_aib_questions(tournament))
 
     for tournament in regularly_forecast_tourns:
-        if not is_interval_day and not is_morning_window:
-            continue
-
-        tournament_questions = MetaculusApi.get_all_open_questions_from_tournament(
-            tournament
-        )
-        for question in tournament_questions:
-            last_forecast_time = question.timestamp_of_my_last_forecast
-            should_forecast = (
-                last_forecast_time is None
-                or last_forecast_time
-                < pendulum.now().subtract(days=TournConfig.regular_forecast_interval)
-            )
-            if should_forecast:
-                questions.append(question)
+        if is_interval_day and is_morning_window:
+            questions.extend(_get_questions_for_regular_forecasting(tournament))
 
     if runs_on_main_site and is_interval_day and is_afternoon_window:
-        target_months_from_now = pendulum.now().add(
-            days=30 * MAIN_SITE_MONTHS_AHEAD_TO_CHECK
-        )
-        main_site_questions = await MetaculusApi.get_questions_matching_filter(
-            ApiFilter(
-                is_in_main_feed=True,
-                allowed_statuses=["open"],
-                group_question_mode="unpack_subquestions",
-                scheduled_resolve_time_lt=target_months_from_now,
-            ),
-            num_questions=10_000,  # big enough to attempt to get everything available
-            error_if_question_target_missed=False,
-        )
-        for question in main_site_questions:
-            last_forecast_time = question.timestamp_of_my_last_forecast
-            assert question.close_time is not None
-            assert question.open_time is not None
-            open_lifetime = (
-                question.close_time - question.open_time
-            )  # Choose close time over scheduled resolution time so we can actually it the 5 forecasts in the open window
-            lifetime_fraction = (
-                open_lifetime / TournConfig.forecasts_per_main_site_question
-            )
-            should_forecast = (
-                last_forecast_time is None
-                or last_forecast_time < question.close_time - lifetime_fraction
-            )
-            if should_forecast:
-                questions.append(question)
-
+        main_site_questions = await _get_questions_for_main_site()
+        questions.extend(main_site_questions)
     return questions
 
 
-async def get_all_bots() -> list[ForecastBot]:
-    bots = []
-    keys = list(get_default_bot_dict().keys())
-    for key in keys:
-        bots.append(await configure_and_run_bot(key, return_bot__dont_run=True))
-    return bots
+def _get_aib_questions(tournament: AllowedTourn) -> list[MetaculusQuestion]:
+    aib_questions = MetaculusApi.get_all_open_questions_from_tournament(
+        tournament.value
+    )
+    filtered_questions = []
+    for question in aib_questions:
+        if not question.already_forecasted:
+            filtered_questions.append(question)
+    return filtered_questions
+
+
+def _get_questions_for_regular_forecasting(
+    tournament: AllowedTourn,
+) -> list[MetaculusQuestion]:
+    tournament_questions = MetaculusApi.get_all_open_questions_from_tournament(
+        tournament.value
+    )
+    filtered_questions = []
+    for question in tournament_questions:
+        last_forecast_time = question.timestamp_of_my_last_forecast
+        should_forecast = (
+            last_forecast_time is None
+            or last_forecast_time
+            < pendulum.now().subtract(days=TournConfig.regular_forecast_interval)
+        )
+        if should_forecast:
+            filtered_questions.append(question)
+    return filtered_questions
+
+
+async def _get_questions_for_main_site() -> list[MetaculusQuestion]:
+    target_months_from_now = pendulum.now().add(
+        days=30 * MAIN_SITE_MONTHS_AHEAD_TO_CHECK
+    )
+    main_site_questions = await MetaculusApi.get_questions_matching_filter(
+        ApiFilter(
+            is_in_main_feed=True,
+            allowed_statuses=["open"],
+            group_question_mode="unpack_subquestions",
+            scheduled_resolve_time_lt=target_months_from_now,
+        ),
+        num_questions=10_000,  # big enough to attempt to get everything available
+        error_if_question_target_missed=False,
+    )
+    filtered_questions = []
+    for question in main_site_questions:
+        last_forecast_time = question.timestamp_of_my_last_forecast
+        assert question.close_time is not None
+        assert question.open_time is not None
+        open_lifetime = (
+            question.close_time - question.open_time
+        )  # Choose close time over scheduled resolution time so we can actually it the 5 forecasts in the open window
+        lifetime_fraction = open_lifetime / TournConfig.forecasts_per_main_site_question
+        should_forecast = (
+            last_forecast_time is None
+            or last_forecast_time < pendulum.now() - lifetime_fraction
+        )
+        if should_forecast:
+            filtered_questions.append(question)
+    return filtered_questions
 
 
 def create_bot(
@@ -215,7 +221,7 @@ def create_bot(
                 "default": llm,
                 "summarizer": None,
                 "researcher": "no_research",
-                "parser": DEFAULT_STRUCTURE_OUTPUT_MODEL,
+                "parser": structure_output_model,
             },
             enable_summarize_research=False,
             extra_metadata_in_explanation=True,
@@ -238,14 +244,14 @@ def create_bot(
             "default": llm,
             "summarizer": default_summarizer,
             "researcher": researcher,
-            "parser": DEFAULT_STRUCTURE_OUTPUT_MODEL,
+            "parser": structure_output_model,
         },
         extra_metadata_in_explanation=True,
     )
     return default_bot
 
 
-def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
+def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     """
     Each entry in the dict has a key which is the environment variable set in the project secrets, and also used in the Workflows that run the bots.
 
@@ -1197,7 +1203,11 @@ def get_default_bot_dict() -> dict[str, Any]:  # NOSONAR
             forecaster_is_deepseek = forecaster.model.startswith("openrouter/deepseek/")
             assert researcher_is_deepseek or forecaster_is_deepseek
 
-    return mode_base_bot_mapping
+    mode_to_bot_config = {
+        mode: RunBotConfig(**{**bot_config, "mode": mode})
+        for mode, bot_config in mode_base_bot_mapping.items()
+    }
+    return mode_to_bot_config
 
 
 if __name__ == "__main__":

@@ -12,13 +12,9 @@ from forecasting_tools.auto_optimizers.question_plus_research import (
 from forecasting_tools.cp_benchmarking.benchmarker import Benchmarker
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.util.custom_logger import CustomLogger
-from run_bots import configure_and_run_bot, get_all_bots
+from run_bots import get_default_bot_dict
 
 logger = logging.getLogger(__name__)
-
-
-def get_all_tournament_bots() -> list[ForecastBot]:
-    return asyncio.run(get_all_bots())
 
 
 def get_chosen_q2_bots() -> list[ForecastBot]:
@@ -31,12 +27,7 @@ def get_chosen_q2_bots() -> list[ForecastBot]:
         # "METAC_O3_HIGH_TOKEN",  # o3-high
     ]
 
-    bots = []
-    for bot_name in chosen_bot_names:
-        bot = asyncio.run(configure_and_run_bot(bot_name, return_bot__dont_run=True))
-        assert isinstance(bot, ForecastBot)
-        bots.append(bot)
-
+    bots = [get_default_bot_dict()[bot_name].bot for bot_name in chosen_bot_names]
     return bots
 
 

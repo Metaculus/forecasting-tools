@@ -35,10 +35,12 @@ class ForecastingTestManager:
         cls,
         community_prediction: float | None = 0.7,
         question_text: str = "Will TikTok be banned in the US?",
+        already_forecasted: bool | None = None,
     ) -> BinaryQuestion:
         question = BinaryQuestion(
             question_text=question_text,
             community_prediction_at_access_time=community_prediction,
+            already_forecasted=already_forecasted,
         )
         return question
 
