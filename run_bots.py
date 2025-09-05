@@ -94,7 +94,7 @@ async def configure_and_run_bot(
         reports = await bot.forecast_questions(batch, return_exceptions=True)
         all_reports.extend(reports)
 
-    for i, question_report in enumerate(zip(questions, reports)):
+    for i, question_report in enumerate(zip(questions, all_reports)):
         question, report = question_report
         if isinstance(report, BaseException) and "TimeoutError" in str(report):
             new_report = await bot.forecast_question(question, return_exceptions=True)
