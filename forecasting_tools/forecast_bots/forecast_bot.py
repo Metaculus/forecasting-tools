@@ -784,8 +784,9 @@ class ForecastBot(ABC):
             f"Average time spent per question: {average_minutes:.4f} minutes\n"
         )
         full_summary += (
-            "Note: LLM costs are calculated via litellm, and models or search tools not supported by litellm will not be tracked. "
-            "Reports may have run concurrently meaning time averages may seem higher than they actually are\n"
+            "Note: LLM costs are calculated via litellm, and models or search tools "
+            "not supported by litellm will not be tracked. "
+            "\n"
         )
         full_summary += "-" * 100 + "\n\n\n"
         logger.info(full_summary)

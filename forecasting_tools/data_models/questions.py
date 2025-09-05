@@ -247,6 +247,27 @@ class MetaculusQuestion(BaseModel, Jsonable):
         assert question_type == self.get_api_type_name()
         return question_type
 
+    @property
+    def timestamp_of_my_last_forecast(self) -> datetime | None:
+        try:
+            time_stamp: float = self.api_json["question"]["my_forecasts"]["latest"][
+                "timestamp"
+            ]
+            return pendulum.from_timestamp(time_stamp)
+        except KeyError:
+            return None
+
+    @property
+    def is_in_main_feed(self) -> bool | None:
+        try:
+            if self.api_json is None or len(self.api_json.keys()) == 0:
+                return True
+            visibility = self.api_json["projects"]["default_project"]["visibility"]
+            is_in_main_feed = visibility == "normal"
+            return is_in_main_feed
+        except KeyError:
+            return None
+
 
 class BinaryQuestion(MetaculusQuestion):
     question_type: Literal["binary"] = "binary"

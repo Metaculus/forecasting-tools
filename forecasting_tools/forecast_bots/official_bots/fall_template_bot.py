@@ -216,7 +216,7 @@ class FallTemplateBot2025(ForecastBot):
         decimal_pred = max(0.01, min(0.99, binary_prediction.prediction_in_decimal))
 
         logger.info(
-            f"Forecasted URL {question.page_url} with prediction: {decimal_pred}"
+            f"Forecasted URL {question.page_url} with prediction: {decimal_pred}."
         )
         return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
 
@@ -310,7 +310,7 @@ class FallTemplateBot2025(ForecastBot):
                 ), f"Redundant extraction {redundant_prediction.probability} does not match original option {matching_original_option.probability} for option {redundant_prediction.option_name}"
 
         logger.info(
-            f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}"
+            f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}."
         )
         return ReasonedPrediction(
             prediction_value=predicted_option_list, reasoning=reasoning
@@ -424,7 +424,7 @@ class FallTemplateBot2025(ForecastBot):
                 ), f"Redundant extraction {redundant_percentile.value} does not match original percentile {matching_original_percentile.value} for percentile {redundant_percentile.percentile}"
         prediction = NumericDistribution.from_question(percentile_list, question)
         logger.info(
-            f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}"
+            f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}."
         )
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 

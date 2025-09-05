@@ -73,6 +73,7 @@ class ApiFilter(BaseModel):
     order_by: str = (
         "-published_time"  # Alternatives include things like "-weekly_movement" + is asc, - is desc
     )
+    is_in_main_feed: bool | None = None
 
     @model_validator(mode="after")
     def add_timezone_to_dates(self) -> ApiFilter:
@@ -103,6 +104,7 @@ class MetaculusApi:
     Q1_2025_QUARTERLY_CUP = 32630
     METACULUS_CUP_2025_1_ID = 32726
     AI_2027_TOURNAMENT_ID = "ai-2027"
+    # MAIN_FEED = 144 # site_main
 
     CURRENT_QUARTERLY_CUP_ID = "metaculus-cup"  # Consider this parameter deprecated since quarterly cup is no longer active
     CURRENT_METACULUS_CUP_ID = "metaculus-cup"
@@ -716,6 +718,12 @@ class MetaculusApi:
         cls, input_questions: list[MetaculusQuestion], api_filter: ApiFilter
     ) -> list[MetaculusQuestion]:
         questions = copy.deepcopy(input_questions)
+
+        if api_filter.is_in_main_feed is not None:
+            questions = cls._filter_questions_by_is_in_main_feed(
+                questions, api_filter.is_in_main_feed
+            )
+
         if api_filter.allowed_types:
             questions = cls._filter_questions_by_type(
                 questions, api_filter.allowed_types
@@ -770,6 +778,16 @@ class MetaculusApi:
             )
 
         return questions
+
+    @classmethod
+    def _filter_questions_by_is_in_main_feed(
+        cls, questions: list[Q], is_in_main_feed: bool
+    ) -> list[Q]:
+        return [
+            question
+            for question in questions
+            if question.is_in_main_feed == is_in_main_feed
+        ]
 
     @classmethod
     def _filter_questions_by_type(

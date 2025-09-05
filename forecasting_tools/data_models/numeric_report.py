@@ -278,7 +278,7 @@ class NumericReport(ForecastReport):
         )
         readable = "Probability distribution:\n"
         for percentile in representative_percentiles:
-            readable += f"- {percentile.percentile:.2%} chance of value below {round(percentile.value,4)}\n"
+            readable += f"- {percentile.percentile:.2%} chance of value below {round(percentile.value,6)}\n"
         return readable
 
     async def publish_report_to_metaculus(self) -> None:

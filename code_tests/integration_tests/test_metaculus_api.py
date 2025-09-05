@@ -48,6 +48,7 @@ class TestGetSpecificQuestions:
         assert question.get_question_type() == "binary"
         assert question.question_type == "binary"
         assert question.question_ids_of_group is None
+        assert question.is_in_main_feed is True
         assert_basic_question_attributes_not_none(question, question.id_of_post)
 
     def test_get_numeric_question_type_from_id(self) -> None:
@@ -209,6 +210,17 @@ class TestGetSpecificQuestions:
             "https://www.metaculus.com/questions/19741"
         )
         assert question.tournament_slugs == ["quarterly-cup-2024q1"]
+
+    def test_non_main_feed_question(self) -> None:
+        url = "https://www.metaculus.com/c/nathanpmyoung/31138/ai-lab-nationalization-2030/"
+        questions = MetaculusApi.get_question_by_url(
+            url, group_question_mode="unpack_subquestions"
+        )
+        assert isinstance(questions, list)
+        for question in questions:
+            assert question.is_in_main_feed is False
+            assert question.id_of_post is not None
+            assert_basic_question_attributes_not_none(question, question.id_of_post)
 
     def test_binary_resolved_question(self) -> None:
         question = MetaculusApi.get_question_by_post_id(
@@ -762,6 +774,9 @@ def assert_basic_question_attributes_not_none(
     assert (
         question.get_question_type() is not None
     ), f"Question type is None for post ID {post_id}"
+    assert isinstance(
+        question.is_in_main_feed, bool
+    ), f"Is in main feed is not a boolean for post ID {post_id}"
     if question.question_ids_of_group is not None:
         assert isinstance(question.question_ids_of_group, list)
         assert all(isinstance(q_id, int) for q_id in question.question_ids_of_group)
@@ -772,6 +787,11 @@ def assert_questions_match_filter(  # NOSONAR
     questions: list[MetaculusQuestion], filter: ApiFilter
 ) -> None:
     for question in questions:
+        if filter.is_in_main_feed is not None:
+            assert (
+                question.is_in_main_feed == filter.is_in_main_feed
+            ), f"Question {question.id_of_post} is in main feed {question.is_in_main_feed}, expected {filter.is_in_main_feed}"
+
         if filter.num_forecasters_gte is not None:
             assert (
                 question.num_forecasters is not None
