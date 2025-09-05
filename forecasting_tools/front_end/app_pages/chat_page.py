@@ -66,6 +66,9 @@ DEFAULT_MODEL: str = (
 )
 MODEL_CHOICES: list[str] = [
     DEFAULT_MODEL,
+    "openai/gpt-5",
+    "openrouter/x-ai/grok-4",
+    "openrouter/anthropic/claude-opus-4.1",
     "openrouter/anthropic/claude-sonnet-4",
     "openai/o3",
     "openai/o4-mini",
@@ -311,7 +314,7 @@ class ChatPage(AppPage):
         if "chat_files" not in st.session_state.keys():
             st.session_state.chat_files = []
         session_files: list[HostedFile] = st.session_state.chat_files
-        with st.sidebar.expander("📁 Uploaded Files", expanded=True):
+        with st.sidebar.expander("📁 Uploaded Files", expanded=False):
             debug_mode = st.session_state.get("debug_mode", False)
             for i, file in enumerate(session_files):
                 st.write(f"File {i+1}: `{file.file_name}`")

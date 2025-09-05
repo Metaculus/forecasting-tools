@@ -52,7 +52,7 @@ def create_mock_questions() -> list[MetaculusQuestion]:
                 "question": {
                     "my_forecasts": {
                         "latest": {
-                            "timestamp": pendulum.now().subtract(days=100).timestamp()
+                            "timestamp": pendulum.now().subtract(days=20).timestamp()
                         }
                     }
                 }

@@ -9,10 +9,41 @@ from forecasting_tools.util.file_manipulation import add_to_jsonl_file
 
 T = TypeVar("T")
 
-DEFAULT_STRUCTURE_OUTPUT_MODEL = "openrouter/openai/gpt-4.1-mini"
+DEFAULT_STRUCTURE_OUTPUT_MODEL = GeneralLlm(
+    "openrouter/openai/gpt-4.1-mini", temperature=0.5
+)
 
 
 async def structure_output(
+    text_to_structure: str,
+    output_type: type[T],
+    num_samples: int = 2,
+    model: GeneralLlm | str = DEFAULT_STRUCTURE_OUTPUT_MODEL,
+    allowed_tries: int = 3,
+    additional_instructions: str | None = None,
+) -> T:
+    if num_samples < 1:
+        raise ValueError("Number of samples must be at least 1")
+    samples = []
+    for _ in range(num_samples):
+        sample = await _structure_output_single_sample(
+            text_to_structure,
+            output_type,
+            model,
+            allowed_tries,
+            additional_instructions,
+        )
+        samples.append(sample)
+    first_sample = samples[0]
+    for i, sample in enumerate(samples):
+        if sample != first_sample:
+            raise ValueError(
+                f"Sampled outputs are not the same:\nFirst Sample:\n{first_sample}\n\nSample {i + 1}:\n{sample}"
+            )
+    return first_sample
+
+
+async def _structure_output_single_sample(
     text_to_structure: str,
     output_type: type[T],
     model: GeneralLlm | str = DEFAULT_STRUCTURE_OUTPUT_MODEL,

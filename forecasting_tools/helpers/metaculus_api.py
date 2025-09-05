@@ -73,7 +73,9 @@ class ApiFilter(BaseModel):
     order_by: str = (
         "-published_time"  # Alternatives include things like "-weekly_movement" + is asc, - is desc
     )
-    is_in_main_feed: bool | None = None
+    is_in_main_feed: bool | None = (
+        None  # TODO (Sep 5, 2025): Instead of checking if default project visibility is normal, add the url parameter "for_main_feed=true"
+    )
 
     @model_validator(mode="after")
     def add_timezone_to_dates(self) -> ApiFilter:

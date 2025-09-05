@@ -29,6 +29,7 @@ from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot impor
 )
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
 from forecasting_tools.helpers.metaculus_api import ApiFilter, MetaculusApi
+from forecasting_tools.helpers.structure_output import DEFAULT_STRUCTURE_OUTPUT_MODEL
 
 logger = logging.getLogger(__name__)
 dotenv.load_dotenv()
@@ -39,7 +40,7 @@ default_for_publish_to_metaculus = True
 default_for_using_summary = False
 default_num_forecasts_for_research_only_bot = 3
 MAIN_SITE_MONTHS_AHEAD_TO_CHECK = 4
-structure_output_model = "openrouter/openai/gpt-4.1"
+structure_output_model = DEFAULT_STRUCTURE_OUTPUT_MODEL
 
 
 class AllowedTourn(Enum):
@@ -92,7 +93,15 @@ async def configure_and_run_bot(
     for batch in batches:
         reports = await bot.forecast_questions(batch, return_exceptions=True)
         all_reports.extend(reports)
+
+    for i, question_report in enumerate(zip(questions, reports)):
+        question, report = question_report
+        if isinstance(report, BaseException) and "TimeoutError" in str(report):
+            new_report = await bot.forecast_question(question, return_exceptions=True)
+            all_reports[i] = new_report
+
     bot.log_report_summary(all_reports)
+
     return all_reports
 
 

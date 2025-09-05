@@ -774,18 +774,14 @@ class ForecastBot(ABC):
         )
         average_cost = total_cost / len(valid_reports) if valid_reports else 0
         full_summary += "\nStats for passing reports:\n"
-        full_summary += (
-            f"Total cost estimated: ${total_cost:.5f} (estimated via litellm)\n"
-        )
-        full_summary += (
-            f"Average cost per question: ${average_cost:.5f} (estimated via litellm)\n"
-        )
+        full_summary += f"Total cost estimated: ${total_cost:.5f}\n"
+        full_summary += f"Average cost per question: ${average_cost:.5f}\n"
         full_summary += (
             f"Average time spent per question: {average_minutes:.4f} minutes\n"
         )
         full_summary += (
             "Note: LLM costs are calculated via litellm, and models or search tools "
-            "not supported by litellm will not be tracked. "
+            "not supported by litellm will not be tracked. See what is supported here: https://models.litellm.ai/. "
             "\n"
         )
         full_summary += "-" * 100 + "\n\n\n"
