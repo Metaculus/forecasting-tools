@@ -12,7 +12,7 @@ from typing import Literal
 
 import dotenv
 import pendulum
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
@@ -67,9 +67,9 @@ class TournConfig:
 
 class RunBotConfig(BaseModel):
     mode: str
-    bot: ForecastBot
-    estimated_cost_per_question: float
-    allowed_tourns: list[AllowedTourn]
+    bot: ForecastBot | None
+    estimated_cost_per_question: float | None
+    allowed_tourns: list[AllowedTourn] = Field(default_factory=list)
 
     model_config = {"arbitrary_types_allowed": True}
 
