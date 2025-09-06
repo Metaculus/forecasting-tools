@@ -38,7 +38,7 @@ jobs:
       - name: Run template bot test
         run: poetry run pytest .github/scripts/test_public_template_bot.py
         env:
-          METACULUS_TOKEN: ${{ secrets.METAC_GPT_4O_TOKEN }}
+          METACULUS_TOKEN: ${{ secrets.METAC_TEST_BOT }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
