@@ -26,8 +26,11 @@ assert (
 
 def create_mock_questions() -> list[MetaculusQuestion]:
     questions: list[MetaculusQuestion] = []
+    num_to_make_already_forecasted = int(
+        NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL * PERCENT_ALREADY_FORECASTED
+    )
     for i in range(NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL):
-        already_forecasted = i % (1 / PERCENT_ALREADY_FORECASTED) == 0
+        already_forecasted = i < num_to_make_already_forecasted
         question = ForecastingTestManager.get_fake_binary_question(
             already_forecasted=already_forecasted
         )
