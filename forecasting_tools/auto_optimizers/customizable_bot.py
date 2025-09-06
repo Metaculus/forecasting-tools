@@ -294,7 +294,7 @@ class CustomizableBot(ForecastBot):
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
 
         binary_prediction: BinaryPrediction = await structure_output(
-            reasoning, BinaryPrediction
+            reasoning, BinaryPrediction, num_validation_samples=2
         )
         prediction = binary_prediction.prediction_in_decimal
 

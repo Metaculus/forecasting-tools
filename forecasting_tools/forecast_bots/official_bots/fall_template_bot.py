@@ -105,6 +105,7 @@ class FallTemplateBot2025(ForecastBot):
         1  # Set this to whatever works for your search-provider/ai-model rate limits
     )
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
+    _structure_output_validation_samples = 2
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
@@ -203,7 +204,10 @@ class FallTemplateBot2025(ForecastBot):
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         binary_prediction: BinaryPrediction = await structure_output(
-            reasoning, BinaryPrediction, model=self.get_llm("parser", "llm")
+            reasoning,
+            BinaryPrediction,
+            model=self.get_llm("parser", "llm"),
+            num_validation_samples=self._structure_output_validation_samples,
         )
         if double_check_extraction:
             redundant_extraction = PredictionExtractor.extract_last_percentage_value(
@@ -281,6 +285,7 @@ class FallTemplateBot2025(ForecastBot):
             text_to_structure=reasoning,
             output_type=PredictedOptionList,
             model=self.get_llm("parser", "llm"),
+            num_validation_samples=self._structure_output_validation_samples,
             additional_instructions=parsing_instructions,
         )
         if double_check_extraction:
@@ -400,6 +405,7 @@ class FallTemplateBot2025(ForecastBot):
             list[Percentile],
             model=self.get_llm("parser", "llm"),
             additional_instructions=parsing_instructions,
+            num_validation_samples=self._structure_output_validation_samples,
         )
 
         if double_check_extraction:

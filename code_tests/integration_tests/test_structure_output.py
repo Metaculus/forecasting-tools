@@ -36,13 +36,13 @@ NUMERIC_FORECAST_1 = """
 (f) An unexpected scenario that results in a high outcome (smaller cuts or net increase)
 - A bipartisan compromise that shields or restores key education programs (Title I, IDEA, Pell-like supports) and strips other areas of larger cuts, or a CBO re-score that shifts baseline assumptions, resulting in far smaller net reductions or even a net increase in education outlays over the decade. Administrative changes, unintended consequences, or political derailments could also tilt the score toward smaller cuts than currently anticipated.
 
-Final answer (all figures in billions of dollars, 10-year horizon)
-Percentile 10: -520
-Percentile 20: -430
-Percentile 40: -360
-Percentile 60: -320
-Percentile 80: -290
-Percentile 90: -250
+Final answer
+Percentile 10: -520,000,000,000
+Percentile 20: -430,000,000,000
+Percentile 40: -360,000,000,000
+Percentile 60: -320,000,000,000
+Percentile 80: -290,000,000,000
+Percentile 90: -250,000,000,000
 """
 
 PARSING_INSTRUCTIONS_1 = """
@@ -52,6 +52,7 @@ The text given to you is trying to give a forecast distribution for a numeric qu
 - The units for the forecast are: B $
 - Your work will be shown publicly with these units stated verbatim after the numbers your parse.
 - As an example, someone else guessed that the answer will be between -520 B $ and -250 B $.
+- If the answer doesn't give the answer in the correct units, you should parse it in the right units. For instance if the answer gives numbers as $500,000,000 and units are "B $" then you should parse the answer as 0.5 (since $500,000,000 is $0.5 billion).
 - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
 - Turn any values that are in scientific notation into regular numbers.
 """
@@ -117,6 +118,9 @@ async def test_structure_output_parametrized(
     output: str, parsing_instructions: str | None, output_type: type, expected: Any
 ) -> None:
     result = await structure_output(
-        output, output_type, additional_instructions=parsing_instructions
+        output,
+        output_type,
+        additional_instructions=parsing_instructions,
+        num_validation_samples=2,
     )
     assert result == expected

@@ -58,7 +58,7 @@ def get_all_bots_for_doing_cheap_tests() -> list[ForecastBot]:
     return [
         TemplateBot(),
         FallResearchOnlyBot2025(),
-        GPT41OptimizedBot(),
+        GPT41OptimizedBot(llms={"default": "openrouter/openai/gpt-4.1-nano"}),
         UniformProbabilityBot(),
     ]
 

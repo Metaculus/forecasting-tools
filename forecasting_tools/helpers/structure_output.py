@@ -17,15 +17,15 @@ DEFAULT_STRUCTURE_OUTPUT_MODEL = GeneralLlm(
 async def structure_output(
     text_to_structure: str,
     output_type: type[T],
-    num_samples: int = 2,
     model: GeneralLlm | str = DEFAULT_STRUCTURE_OUTPUT_MODEL,
-    allowed_tries: int = 3,
+    num_validation_samples: int = 1,
+    allowed_tries: int = 3,  # Allowed tries per sample
     additional_instructions: str | None = None,
 ) -> T:
-    if num_samples < 1:
+    if num_validation_samples < 1:
         raise ValueError("Number of samples must be at least 1")
     samples = []
-    for _ in range(num_samples):
+    for _ in range(num_validation_samples):
         sample = await _structure_output_single_sample(
             text_to_structure,
             output_type,
