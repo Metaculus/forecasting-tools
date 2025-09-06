@@ -61,8 +61,9 @@ class TournConfig:
     experimental = []
     none = []
 
-    regular_forecast_interval = 3
-    forecasts_per_main_site_question = 5
+    regular_forecast_interval_days: int = 3
+    min_main_site_forecast_interval_days: int = 7
+    forecasts_per_main_site_question: int = 5
 
 
 class RunBotConfig(BaseModel):
@@ -119,7 +120,9 @@ async def get_questions_for_config(bot_config: RunBotConfig) -> list[MetaculusQu
         suffix = mode_parts[1]
         assert suffix in [t.value for t in allowed_tournaments]
 
-    is_interval_day = pendulum.now().day % TournConfig.regular_forecast_interval == 0
+    is_interval_day = (
+        pendulum.now().day % TournConfig.regular_forecast_interval_days == 0
+    )
     window_length_hrs = 3
     US_morning_hour = 8
     US_afternoon_hour = 12
@@ -171,7 +174,7 @@ def _get_questions_for_regular_forecasting(
         should_forecast = (
             last_forecast_time is None
             or last_forecast_time
-            < pendulum.now().subtract(days=TournConfig.regular_forecast_interval)
+            < pendulum.now().subtract(days=TournConfig.regular_forecast_interval_days)
         )
         if should_forecast:
             filtered_questions.append(question)
@@ -200,10 +203,15 @@ async def _get_questions_for_main_site() -> list[MetaculusQuestion]:
         open_lifetime = (
             question.close_time - question.open_time
         )  # Choose close time over scheduled resolution time so we can actually it the 5 forecasts in the open window
-        lifetime_fraction = open_lifetime / TournConfig.forecasts_per_main_site_question
+        forecast_every_x_days = round(
+            max(
+                (open_lifetime / TournConfig.forecasts_per_main_site_question).days,
+                TournConfig.min_main_site_forecast_interval_days,
+            )
+        )
         should_forecast = (
             last_forecast_time is None
-            or last_forecast_time < pendulum.now() - lifetime_fraction
+            or last_forecast_time < pendulum.now().subtract(days=forecast_every_x_days)
         )
         if should_forecast:
             filtered_questions.append(question)
