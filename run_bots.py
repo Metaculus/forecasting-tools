@@ -12,7 +12,7 @@ from typing import Literal
 
 import dotenv
 import pendulum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
@@ -70,7 +70,7 @@ class RunBotConfig(BaseModel):
     mode: str
     bot: ForecastBot | None
     estimated_cost_per_question: float | None
-    allowed_tourns: list[AllowedTourn] = Field(default_factory=list)
+    tournaments: list[AllowedTourn]
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -108,7 +108,7 @@ async def configure_and_run_bot(
 
 async def get_questions_for_config(bot_config: RunBotConfig) -> list[MetaculusQuestion]:
     mode = bot_config.mode
-    allowed_tournaments = list(set(bot_config.allowed_tourns))
+    allowed_tournaments = list(set(bot_config.tournaments))
     aib_tourns = [t for t in allowed_tournaments if t in TournConfig.aib_only]
     regularly_forecast_tourns = [
         t for t in allowed_tournaments if t in TournConfig.every_x_days_tourns
@@ -709,6 +709,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 bot_type="gpt_4_1_optimized",
             ),
+            "tournaments": TournConfig.aib_only,
         },
         "METAC_GROK_4_TOOLS": {
             "estimated_cost_per_question": None,

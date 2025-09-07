@@ -188,7 +188,7 @@ async def test_basic_get_questions(
                 mode="mock",
                 bot=UniformProbabilityBot(),
                 estimated_cost_per_question=0.00,
-                allowed_tourns=allowed_tourns,
+                tournaments=allowed_tourns,
             )
         )
         assert len(questions) == expected_num_questions
