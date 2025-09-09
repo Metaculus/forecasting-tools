@@ -104,14 +104,16 @@ class MetaculusApi:
     Q3_2024_QUARTERLY_CUP = 3366
     Q4_2024_QUARTERLY_CUP = 3672
     Q1_2025_QUARTERLY_CUP = 32630
-    METACULUS_CUP_2025_1_ID = 32726
+    METACULUS_CUP_2025_1_ID = 32726  # Summer cup 2025
+    METACULUS_CUP_FALL_2025_ID = "metaculus-cup-fall-2025"
     AI_2027_TOURNAMENT_ID = "ai-2027"
     # MAIN_FEED = 144 # site_main
 
-    CURRENT_QUARTERLY_CUP_ID = "metaculus-cup"  # Consider this parameter deprecated since quarterly cup is no longer active
-    CURRENT_METACULUS_CUP_ID = "metaculus-cup"
+    CURRENT_METACULUS_CUP_ID = "metaculus-cup-fall-2025"
+    CURRENT_QUARTERLY_CUP_ID = CURRENT_METACULUS_CUP_ID  # Consider this parameter deprecated since quarterly cup is no longer active
     CURRENT_AI_COMPETITION_ID = AIB_FALL_2025_ID
     CURRENT_MINIBENCH_ID = "minibench"
+    CURRENT_MARKET_PULSE_ID = "market-pulse-25q3"
 
     TEST_QUESTION_URLS = [
         "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary

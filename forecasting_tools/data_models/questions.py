@@ -254,7 +254,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
                 "timestamp"
             ]
             return pendulum.from_timestamp(time_stamp)
-        except KeyError:
+        except Exception:
             return None
 
     @property
@@ -265,7 +265,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             visibility = self.api_json["projects"]["default_project"]["visibility"]
             is_in_main_feed = visibility == "normal"
             return is_in_main_feed
-        except KeyError:
+        except Exception:
             return None
 
 

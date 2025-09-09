@@ -44,11 +44,11 @@ structure_output_model = DEFAULT_STRUCTURE_OUTPUT_MODEL
 
 
 class AllowedTourn(Enum):
-    MINIBENCH = "minibench"
-    MAIN_AIB = "fall-aib-2025"
+    MINIBENCH = MetaculusApi.CURRENT_MINIBENCH_ID
+    MAIN_AIB = MetaculusApi.CURRENT_AI_COMPETITION_ID
     MAIN_SITE = "main-site"
-    METACULUS_CUP = "metaculus-cup"
-    MARKET_PULSE = "market-pulse-25q3"
+    METACULUS_CUP = MetaculusApi.CURRENT_METACULUS_CUP_ID
+    MARKET_PULSE = MetaculusApi.CURRENT_MARKET_PULSE_ID
     # When representing a tournament, these should be valid slugs
 
 
