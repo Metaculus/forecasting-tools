@@ -135,10 +135,10 @@ class HarmfulQuestionIdentifier:
             - "What is the probability of options A, B, and C working to enable creating bioweapon X?"
 
             ### Self-fulfilling/defeating ("Yes" label)
-            - Individually/Small Community: If it is predicted that there is a 5% chance that the next intervention someone tries will successfully overcome an additiction, they won't try it (even if trying 10 interventions might work)
+            - Individually/Small Community: If it is predicted that there is a 5% chance that the next intervention someone tries will successfully overcome an addiction, they won't try it (even if trying 10 interventions might work)
             - Society: If it is predicted that there will be a toilet paper shortage during an emergency like Covid (and the prediction is trusted), everyone will go buy toilet paper, which will cause the shortage. If this prediction is not made, the toilet paper shortage will not happen.
 
-            Some of the self-fulfilling/defeating examples would be a "strongly yes" if the person, community, or society trusts AI predictions a lot. Strong lack of trust reduces the risk of self-fulfilling. Default to assuming people are trust the forecast as much as they would trust a random news report.
+            Some of the self-fulfilling/defeating examples would be a "strongly yes" if the person, community, or society trusts AI predictions a lot. Strong lack of trust reduces the risk of self-fulfilling. Default to assuming people trust the forecast as much as they would trust a random news report.
 
             ### Reframing questions
             *Example 1*
@@ -205,7 +205,7 @@ class HarmfulQuestionIdentifier:
 
         Args:
             question_text: The question to analyze for self-fulfilling prophecies and info hazards
-            other_question_info: Any other information about specific aspects of the question including background information, research, resolution crietia, who is asking the question, and why they are asking the question
+            other_question_info: Any other information about specific aspects of the question including background information, research, resolution criteria, who is asking the question, and why they are asking the question
             additional_context: Any extra context or special instructions
         """
         result = asyncio.run(

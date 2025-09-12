@@ -112,6 +112,10 @@ async def configure_and_run_bot(
 async def get_questions_for_config(
     bot_config: RunBotConfig, max_questions: int
 ) -> list[MetaculusQuestion]:
+    if max_questions > MAX_QUESTIONS_PER_RUN or max_questions < 1:
+        raise ValueError(
+            f"Max questions per run is {MAX_QUESTIONS_PER_RUN} and max questions ({max_questions}) must be between 1 and {MAX_QUESTIONS_PER_RUN}"
+        )
     mode = bot_config.mode
     allowed_tournaments = list(set(bot_config.tournaments))
     aib_tourns = [t for t in allowed_tournaments if t in TournConfig.aib_only]
