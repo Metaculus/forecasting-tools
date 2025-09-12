@@ -338,7 +338,7 @@ class TestPostEndpoint:
         assert len(questions) > 0
         assert all(question.state == QuestionState.OPEN for question in questions)
 
-        quarterly_cup_slug = "metaculus-cup"
+        quarterly_cup_slug = MetaculusApi.CURRENT_METACULUS_CUP_ID
         questions = MetaculusApi.get_all_open_questions_from_tournament(
             quarterly_cup_slug
         )

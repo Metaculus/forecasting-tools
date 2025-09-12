@@ -11,6 +11,7 @@ from forecasting_tools.ai_models.agent_wrappers import (
 )
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.front_end.app_pages.chat_page import ChatPage
+from forecasting_tools.helpers.metaculus_api import MetaculusApi
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ def get_tool_tests() -> list[tuple[str, AgentTool]]:
 @pytest.mark.parametrize("name, function_tool", get_tool_tests())
 async def test_chat_app_function_tools(name: str, function_tool: AgentTool) -> None:
     instructions = clean_indents(
-        """
+        f"""
         You are a software engineer testing a piece of code.
         You are being given a tool you have access to.
         Please make up some inputs to the tool, and then run the tool with the inputs.
@@ -35,7 +36,7 @@ async def test_chat_app_function_tools(name: str, function_tool: AgentTool) -> N
         If there are errors, or the results indicate that the tool does something very different than expected say: "<TOOL FAILED TEST>" and then state the error/output verbatim then explain why the output is not right.
 
         Here is what to do for some specific tools:
-        - For metaculus question tools, use the question ID 37328 and tournament slug "metaculus-cup"
+        - For metaculus question tools, use the question ID 37328 and tournament slug '{MetaculusApi.CURRENT_METACULUS_CUP_ID}'
         - For data analyzer tool, use the file ID "file-KCPeaFiP8Szp7PnhXVPFH5" and file name "bot_forecasts_q1.csv" and ask for number of binary questions
         - For computer use tool, ask it to download a csv from https://fred.stlouisfed.org/series/GDP and make sure it returns to you a download link and a OpenAI File ID.
         """
