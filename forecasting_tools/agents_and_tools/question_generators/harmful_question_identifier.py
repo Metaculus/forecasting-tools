@@ -10,7 +10,7 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.helpers.structure_output import structure_output
 
 
-class HazardRating(Enum):
+class HarmRating(Enum):
     NO = "No"
     KINDA_YES = "Kinda Yes"
     YES = "Yes"
@@ -18,21 +18,21 @@ class HazardRating(Enum):
 
     @property
     def passes_threshold(self) -> bool:
-        return self in [HazardRating.YES, HazardRating.STRONGLY_YES]
+        return self in [HarmRating.YES, HarmRating.STRONGLY_YES]
 
 
-class InfoHazardIdentification(BaseModel):
+class HarmfulQuestionIdentification(BaseModel):
     original_question: str
-    is_harmful: HazardRating
-    self_fulfilling_or_defeating_for_individual: HazardRating
-    self_fulfilling_or_defeating_for_society: HazardRating
+    is_directly_harmful: HarmRating
+    self_fulfilling_or_defeating_for_individual: HarmRating
+    self_fulfilling_or_defeating_for_society: HarmRating
     alternative_questions: list[str]
     reasoning: str
 
     @property
     def is_hazard(self) -> bool:
         if (
-            self.is_harmful.passes_threshold
+            self.is_directly_harmful.passes_threshold
             or self.self_fulfilling_or_defeating_for_individual.passes_threshold
             or self.self_fulfilling_or_defeating_for_society.passes_threshold
         ):
@@ -47,7 +47,7 @@ class InfoHazardIdentification(BaseModel):
         return clean_indents(
             f"""
             ## Question: {self.original_question}
-            - **Is Harmful**: {self.is_harmful.value}
+            - **Is directly Harmful**: {self.is_directly_harmful.value}
             - **Self-fulfilling/defeating for individual**: {self.self_fulfilling_or_defeating_for_individual.value}
             - **Self-fulfilling/defeating for society**: {self.self_fulfilling_or_defeating_for_society.value}
 
@@ -60,30 +60,31 @@ class InfoHazardIdentification(BaseModel):
         )
 
 
-class InfoHazardIdentifier:
+class HarmfulQuestionIdentifier:
     def __init__(
         self,
         model: str | GeneralLlm = "openrouter/perplexity/sonar-reasoning-pro",
     ) -> None:
         self.model: GeneralLlm = GeneralLlm.to_llm(model)
 
-    async def identify_info_hazard(
+    async def identify(
         self,
         question_text: str,
         other_question_info: str | None = None,
         additional_context: str | None = None,
-    ) -> InfoHazardIdentification:
+    ) -> HarmfulQuestionIdentification:
+        # TODO: Make the prompting here focused more on self-fulfilling prophecies (not "info-hazard") and make sure that results still are good.
         input_prompt = clean_indents(
             f"""
             # Instructions
-            You are an info hazard identifier for forecasting questions and whether they should be posted on platforms like Metaculus, Polymarket, or similar. Your job is to analyze the provided question and context, and determine if there are any information hazards present and explain why or why not.
+            You are an self-fulfilling prophecy and info hazard identifier for forecasting questions and whether they should be posted on platforms like Metaculus, Polymarket, or similar. Your job is to analyze the provided question and context, and determine if there are any self-fulfilling prophecies or information hazards present and explain why or why not.
 
-            You will check 3 different types of info hazards:
+            You will check 3 different types of harmful aspects:
             1. Dangerous information
             2. Self-fulfilling/defeating information on the individual level
             3. Self-fulfilling/defeating information on the society level
 
-            For each you will identify if the hazard is:
+            For each you will identify if the harmful aspect is:
             - No
             - Kinda Yes
             - Yes
@@ -91,10 +92,12 @@ class InfoHazardIdentifier:
 
             The vast majority of the questions will fall into the No or Yes category. Save Strongly Yes for rare cases.
 
-            Finally you will provide an alternative way to ask the question that would not result in an info hazard.
+            Finally you will provide an alternative way to ask the question that would not result in an self-fulfilling prophecy or info hazard.
 
-            ## What is an info hazard?
-            Information hazards are risks posed by the spread of factual information that could lead to harmful outcomes if they reach certain actors or audiences. These range from technical vulnerabilities that could compromise systems, to extreme cases such as information about how to build a bioweapon. Questions should also seek to avoid harmful self-fulfilling or self-negating effects, where the aggregate forecast could itself influence whether the event in question occurs. Information hazards and circular effects are often difficult to assess and can vary substantially in the level of risk posed.
+            ## What is a harmful question?
+            - Questions should seek to avoid harmful self-fulfilling or self-negating effects, where the aggregate forecast could itself influence whether the event in question occurs.
+            - Information hazards are risks posed by the spread of factual information that could lead to harmful outcomes if they reach certain actors or audiences. These range from technical vulnerabilities that could compromise systems, to extreme cases such as information about how to build a bioweapon.
+            Information hazards and circular effects are often difficult to assess and can vary substantially in the level of risk posed.
 
             ## Steps
             1. Forecast the question by giving the following information:
@@ -186,27 +189,27 @@ class InfoHazardIdentifier:
 
         final_output = await self.model.invoke(input_prompt)
         hazard_identification = await structure_output(
-            final_output, InfoHazardIdentification
+            final_output, HarmfulQuestionIdentification
         )
         return hazard_identification
 
     @agent_tool
     @staticmethod
-    def info_hazard_identifier_tool(
+    def harmful_question_identifier_tool(
         question_text: str,
         other_question_info: str | None = None,
         additional_context: str | None = None,
     ) -> str:
         """
-        Identify information hazards in a question and its context.
+        Identify self-fulfilling prophecies and harmful information in a question and its context.
 
         Args:
-            question_text: The question to analyze for info hazards
-            other_question_info: Any other information about the question including background information, research, resolution crietia, who is asking the question, and why they are asking the question
+            question_text: The question to analyze for self-fulfilling prophecies and info hazards
+            other_question_info: Any other information about specific aspects of the question including background information, research, resolution crietia, who is asking the question, and why they are asking the question
             additional_context: Any extra context or special instructions
         """
         result = asyncio.run(
-            InfoHazardIdentifier().identify_info_hazard(
+            HarmfulQuestionIdentifier().identify(
                 question_text,
                 other_question_info,
                 additional_context,

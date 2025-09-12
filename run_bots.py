@@ -41,6 +41,7 @@ default_for_using_summary = False
 default_num_forecasts_for_research_only_bot = 3
 MAIN_SITE_MONTHS_AHEAD_TO_CHECK = 4
 structure_output_model = DEFAULT_STRUCTURE_OUTPUT_MODEL
+MAX_QUESTIONS_PER_RUN = 25
 
 
 class AllowedTourn(Enum):
@@ -79,7 +80,9 @@ async def configure_and_run_bot(
     mode: str,
 ) -> list[ForecastReport | BaseException]:
     bot_config = get_default_bot_dict()[mode]
-    questions = await get_questions_for_config(bot_config)
+    questions = await get_questions_for_config(
+        bot_config, max_questions=MAX_QUESTIONS_PER_RUN
+    )
     bot = bot_config.bot
 
     assert isinstance(
@@ -106,7 +109,9 @@ async def configure_and_run_bot(
     return all_reports
 
 
-async def get_questions_for_config(bot_config: RunBotConfig) -> list[MetaculusQuestion]:
+async def get_questions_for_config(
+    bot_config: RunBotConfig, max_questions: int
+) -> list[MetaculusQuestion]:
     mode = bot_config.mode
     allowed_tournaments = list(set(bot_config.tournaments))
     aib_tourns = [t for t in allowed_tournaments if t in TournConfig.aib_only]
@@ -148,7 +153,10 @@ async def get_questions_for_config(bot_config: RunBotConfig) -> list[MetaculusQu
     if runs_on_main_site and is_interval_day and is_afternoon_window:
         main_site_questions = await _get_questions_for_main_site()
         questions.extend(main_site_questions)
-    return questions
+
+    return questions[
+        :max_questions
+    ]  # Note that the order questions are prioritized matter.
 
 
 def _get_aib_questions(tournament: AllowedTourn) -> list[MetaculusQuestion]:

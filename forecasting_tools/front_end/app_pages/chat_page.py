@@ -23,8 +23,8 @@ from forecasting_tools.agents_and_tools.other.hosted_file import (
     FileToUpload,
     HostedFile,
 )
-from forecasting_tools.agents_and_tools.question_generators.info_hazard_identifier import (
-    InfoHazardIdentifier,
+from forecasting_tools.agents_and_tools.question_generators.harmful_question_identifier import (
+    HarmfulQuestionIdentifier,
 )
 from forecasting_tools.agents_and_tools.question_generators.question_decomposer import (
     QuestionDecomposer,
@@ -150,7 +150,7 @@ class ChatPage(AppPage):
             grab_open_questions_from_tournament,
             TopicGenerator.get_headlines_on_random_company_tool,
             perplexity_quick_search_high_context,
-            InfoHazardIdentifier.info_hazard_identifier_tool,
+            HarmfulQuestionIdentifier.harmful_question_identifier_tool,
             DataAnalyzer.data_analysis_tool,
             ComputerUse.computer_use_tool,
             DatasetFinder.find_a_dataset_tool,
