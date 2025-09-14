@@ -144,7 +144,7 @@ async def get_questions_for_config(
         < UTC_afternoon_hour + window_length_hrs
     )
 
-    questions = []
+    questions: list[MetaculusQuestion] = []
     for tournament in aib_tourns:
         questions.extend(_get_aib_questions(tournament))
 
@@ -155,6 +155,10 @@ async def get_questions_for_config(
     if runs_on_main_site and is_interval_day and is_afternoon_window:
         main_site_questions = await _get_questions_for_main_site()
         questions.extend(main_site_questions)
+
+    assert len(set([q.id_of_question for q in questions])) == len(
+        questions
+    ), "Questions have duplicate IDs"
 
     return questions[
         :max_questions
@@ -621,7 +625,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.aib_only,
         },
         "METAC_GPT_5_SEARCH": {
             "estimated_cost_per_question": 1.17,
