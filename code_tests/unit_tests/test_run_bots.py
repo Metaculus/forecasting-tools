@@ -86,7 +86,7 @@ def mock_metaculus_api_call(
 
 
 def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
-    morning_hour = 15
+    morning_hour = 11
     afternoon_hour = 19
     night_hour = 22
     dates = [
@@ -123,7 +123,7 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
                 == len(config)
             ), "Did not account for all tourns in config"
 
-            window_length_hrs = 3
+            window_length_hrs = 7
             is_morning_window = (
                 morning_hour <= date.hour < morning_hour + window_length_hrs
             )

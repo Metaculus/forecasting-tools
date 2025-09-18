@@ -1,3 +1,4 @@
+import random
 import textwrap
 from datetime import datetime
 from typing import TypeVar
@@ -42,6 +43,8 @@ class ForecastingTestManager:
             community_prediction_at_access_time=community_prediction,
             already_forecasted=already_forecasted,
         )
+        question.id_of_post = random.randint(1, 9999)
+        question.id_of_question = random.randint(1, 9999)
         return question
 
     @staticmethod
