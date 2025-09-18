@@ -16,7 +16,7 @@ from pydantic import BaseModel
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.data_models.questions import DateQuestion, MetaculusQuestion
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.fall_research_only_bot import (
     FallResearchOnlyBot2025,
@@ -156,7 +156,9 @@ async def get_questions_for_config(
         main_site_questions = await _get_questions_for_main_site()
         questions.extend(main_site_questions)
 
-    return questions[
+    non_date_questions = [q for q in questions if not isinstance(q, DateQuestion)]
+
+    return non_date_questions[
         :max_questions
     ]  # Note that the order questions are prioritized matter.
 
