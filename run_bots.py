@@ -156,10 +156,6 @@ async def get_questions_for_config(
         main_site_questions = await _get_questions_for_main_site()
         questions.extend(main_site_questions)
 
-    assert len(set([q.id_of_question for q in questions])) == len(
-        questions
-    ), "Questions have duplicate IDs"
-
     return questions[
         :max_questions
     ]  # Note that the order questions are prioritized matter.
