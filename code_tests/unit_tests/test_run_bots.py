@@ -103,7 +103,7 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
     configs = [
         TournConfig.aib_only,
         [AllowedTourn.METACULUS_CUP],
-        TournConfig.site_only,
+        TournConfig.main_site_tourns,
         # TournConfig.aib_and_site,
         TournConfig.everything,
     ]
@@ -116,7 +116,7 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
                 set([t for t in config if t in TournConfig.every_x_days_tourns])
             )
             num_main_site_tourns = len(
-                set([t for t in config if t in TournConfig.site_only])
+                set([t for t in config if t in TournConfig.main_site_tourns])
             )
             assert (
                 num_aib_tourns + num_regularly_forecasted_tourns + num_main_site_tourns

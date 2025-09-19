@@ -39,9 +39,7 @@ default_for_skipping_questions = False
 default_for_publish_to_metaculus = True
 default_for_using_summary = False
 default_num_forecasts_for_research_only_bot = 3
-MAIN_SITE_MONTHS_AHEAD_TO_CHECK = 4
 structure_output_model = DEFAULT_STRUCTURE_OUTPUT_MODEL
-MAX_QUESTIONS_PER_RUN = 25
 
 
 class AllowedTourn(Enum):
@@ -50,15 +48,20 @@ class AllowedTourn(Enum):
     MAIN_SITE = "main-site"
     METACULUS_CUP = MetaculusApi.CURRENT_METACULUS_CUP_ID
     MARKET_PULSE = MetaculusApi.CURRENT_MARKET_PULSE_ID
+    GULF_BREEZE = 32810  # https://www.metaculus.com/tournament/GB/
     # When representing a tournament, these should be valid slugs
 
 
 class TournConfig:
     everything = [t for t in AllowedTourn]
     aib_only = [AllowedTourn.MAIN_AIB, AllowedTourn.MINIBENCH]
-    site_only = [AllowedTourn.MAIN_SITE]
-    aib_and_site = aib_only.copy() + site_only.copy()
-    every_x_days_tourns = [AllowedTourn.METACULUS_CUP, AllowedTourn.MARKET_PULSE]
+    main_site_tourns = [
+        AllowedTourn.MAIN_SITE,
+        AllowedTourn.GULF_BREEZE,
+        AllowedTourn.MARKET_PULSE,
+    ]
+    aib_and_site = aib_only.copy() + main_site_tourns.copy()
+    every_x_days_tourns = [AllowedTourn.METACULUS_CUP]
     experimental = []
     none = []
 
@@ -77,11 +80,11 @@ class RunBotConfig(BaseModel):
 
 
 async def configure_and_run_bot(
-    mode: str,
+    mode: str, max_questions_for_run: int = 25
 ) -> list[ForecastReport | BaseException]:
     bot_config = get_default_bot_dict()[mode]
     questions = await get_questions_for_config(
-        bot_config, max_questions=MAX_QUESTIONS_PER_RUN
+        bot_config, max_questions=max_questions_for_run
     )
     bot = bot_config.bot
 
@@ -120,7 +123,9 @@ async def get_questions_for_config(
     regularly_forecast_tourns = [
         t for t in allowed_tournaments if t in TournConfig.every_x_days_tourns
     ]
-    runs_on_main_site = AllowedTourn.MAIN_SITE in allowed_tournaments
+    main_site_tourns = [
+        t for t in allowed_tournaments if t in TournConfig.main_site_tourns
+    ]
 
     mode_parts = mode.split("+")
     if len(mode_parts) > 1:
@@ -144,16 +149,18 @@ async def get_questions_for_config(
         < UTC_afternoon_hour + window_length_hrs
     )
 
+    should_forecast_on_main_site = is_interval_day and is_afternoon_window
+    should_forecast_on__every_x_days__questions = is_interval_day and is_morning_window
+
     questions: list[MetaculusQuestion] = []
     for tournament in aib_tourns:
         questions.extend(_get_aib_questions(tournament))
 
-    for tournament in regularly_forecast_tourns:
-        if is_interval_day and is_morning_window:
-            questions.extend(_get_questions_for_regular_forecasting(tournament))
+    if should_forecast_on__every_x_days__questions:
+        questions.extend(_get__every_x_days__questions(regularly_forecast_tourns))
 
-    if runs_on_main_site and is_interval_day and is_afternoon_window:
-        main_site_questions = await _get_questions_for_main_site()
+    if should_forecast_on_main_site:
+        main_site_questions = await _get_questions_for_main_site(main_site_tourns)
         questions.extend(main_site_questions)
 
     non_date_questions = [q for q in questions if not isinstance(q, DateQuestion)]
@@ -174,12 +181,15 @@ def _get_aib_questions(tournament: AllowedTourn) -> list[MetaculusQuestion]:
     return filtered_questions
 
 
-def _get_questions_for_regular_forecasting(
-    tournament: AllowedTourn,
+def _get__every_x_days__questions(
+    tournaments: list[AllowedTourn],
 ) -> list[MetaculusQuestion]:
-    tournament_questions = MetaculusApi.get_all_open_questions_from_tournament(
-        tournament.value
-    )
+    tournament_questions: list[MetaculusQuestion] = []
+    for tournament in tournaments:
+        tournament_questions += MetaculusApi.get_all_open_questions_from_tournament(
+            tournament.value
+        )
+
     filtered_questions = []
     for question in tournament_questions:
         last_forecast_time = question.timestamp_of_my_last_forecast
@@ -193,22 +203,32 @@ def _get_questions_for_regular_forecasting(
     return filtered_questions
 
 
-async def _get_questions_for_main_site() -> list[MetaculusQuestion]:
-    target_months_from_now = pendulum.now().add(
-        days=30 * MAIN_SITE_MONTHS_AHEAD_TO_CHECK
-    )
-    main_site_questions = await MetaculusApi.get_questions_matching_filter(
-        ApiFilter(
-            is_in_main_feed=True,
-            allowed_statuses=["open"],
+async def _get_questions_for_main_site(
+    main_site_tourns: list[AllowedTourn], months_ahead_to_check: int = 4
+) -> list[MetaculusQuestion]:
+    site_questions: list[MetaculusQuestion] = []
+    if AllowedTourn.MAIN_SITE in main_site_tourns:
+        target_months_from_now = pendulum.now().add(days=30 * months_ahead_to_check)
+        site_questions += await MetaculusApi.get_questions_matching_filter(
+            ApiFilter(
+                is_in_main_feed=True,
+                allowed_statuses=["open"],
+                group_question_mode="unpack_subquestions",
+                scheduled_resolve_time_lt=target_months_from_now,
+            ),
+            num_questions=10_000,  # big enough to attempt to get everything available
+            error_if_question_target_missed=False,
+        )
+
+    other_tourns = [t for t in main_site_tourns if t != AllowedTourn.MAIN_SITE]
+    for tournament in other_tourns:
+        site_questions += MetaculusApi.get_all_open_questions_from_tournament(
+            tournament.value,
             group_question_mode="unpack_subquestions",
-            scheduled_resolve_time_lt=target_months_from_now,
-        ),
-        num_questions=10_000,  # big enough to attempt to get everything available
-        error_if_question_target_missed=False,
-    )
+        )
+
     filtered_questions = []
-    for question in main_site_questions:
+    for question in site_questions:
         last_forecast_time = question.timestamp_of_my_last_forecast
         assert question.close_time is not None
         assert question.open_time is not None
@@ -423,8 +443,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openai/gpt-5",
                     reasoning_effort="high",
                     temperature=default_temperature,
-                    timeout=10 * 60,
-                    **flex_price_settings,
+                    timeout=15 * 60,
+                    # **flex_price_settings,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
@@ -435,8 +455,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openai/gpt-5",
                     temperature=default_temperature,
-                    timeout=10 * 60,
-                    **flex_price_settings,
+                    timeout=15 * 60,
+                    # **flex_price_settings,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
