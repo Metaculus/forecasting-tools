@@ -7,6 +7,7 @@ It is run by workflows in the .github/workflows directory.
 import argparse
 import asyncio
 import logging
+import os
 from enum import Enum
 from typing import Literal
 
@@ -47,7 +48,6 @@ class AllowedTourn(Enum):
     MAIN_AIB = MetaculusApi.CURRENT_AI_COMPETITION_ID
     MAIN_SITE = "main-site"
     METACULUS_CUP = MetaculusApi.CURRENT_METACULUS_CUP_ID
-    MARKET_PULSE = MetaculusApi.CURRENT_MARKET_PULSE_ID
     GULF_BREEZE = 32810  # https://www.metaculus.com/tournament/GB/
     # When representing a tournament, these should be valid slugs
 
@@ -58,7 +58,6 @@ class TournConfig:
     main_site_tourns = [
         AllowedTourn.MAIN_SITE,
         AllowedTourn.GULF_BREEZE,
-        AllowedTourn.MARKET_PULSE,
     ]
     aib_and_site = aib_only.copy() + main_site_tourns.copy()
     every_x_days_tourns = [AllowedTourn.METACULUS_CUP]
@@ -149,8 +148,22 @@ async def get_questions_for_config(
         < UTC_afternoon_hour + window_length_hrs
     )
 
-    should_forecast_on_main_site = is_interval_day and is_afternoon_window
-    should_forecast_on__every_x_days__questions = is_interval_day and is_morning_window
+    main_site_override = (
+        os.getenv("FORECAST_ON_MAIN_SITE_ALWAYS", "false").lower() == "true"
+    )
+    every_x_days_override = (
+        os.getenv(
+            "FORECAST_ON_REGULARLY_FORECASTED_TOURNAMENTS_ALWAYS", "false"
+        ).lower()
+        == "true"
+    )
+
+    should_forecast_on_main_site = (
+        is_interval_day and is_afternoon_window
+    ) or main_site_override
+    should_forecast_on__every_x_days__questions = (
+        is_interval_day and is_morning_window
+    ) or every_x_days_override
 
     questions: list[MetaculusQuestion] = []
     for tournament in aib_tourns:
