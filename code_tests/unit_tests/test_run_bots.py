@@ -55,7 +55,7 @@ def create_mock_questions() -> list[MetaculusQuestion]:
                 "question": {
                     "my_forecasts": {
                         "latest": {
-                            "timestamp": pendulum.now().subtract(days=20).timestamp()
+                            "start_time": pendulum.now().subtract(days=20).timestamp()
                         }
                     }
                 }
@@ -66,7 +66,7 @@ def create_mock_questions() -> list[MetaculusQuestion]:
                 "question": {
                     "my_forecasts": {
                         "latest": {
-                            "timestamp": pendulum.now().subtract(days=1).timestamp()
+                            "start_time": pendulum.now().subtract(days=1).timestamp()
                         }
                     }
                 }
@@ -86,19 +86,19 @@ def mock_metaculus_api_call(
 
 
 def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
+    out_of_hours = 5
     morning_hour = 11
     afternoon_hour = 19
-    night_hour = 22
     dates = [
         pendulum.datetime(2025, 5, 11, morning_hour + 1, 0, 0),
         pendulum.datetime(2025, 5, 11, afternoon_hour + 1, 0, 0),
-        pendulum.datetime(2025, 5, 11, night_hour + 1, 0, 0),
+        pendulum.datetime(2025, 5, 11, out_of_hours + 1, 0, 0),
         pendulum.datetime(2025, 5, 12, morning_hour + 1, 0, 0),
         pendulum.datetime(2025, 5, 12, afternoon_hour + 1, 0, 0),
-        pendulum.datetime(2025, 5, 12, night_hour + 1, 0, 0),
+        pendulum.datetime(2025, 5, 12, out_of_hours + 1, 0, 0),
         pendulum.datetime(2025, 5, 13, morning_hour + 1, 0, 0),
         pendulum.datetime(2025, 5, 13, afternoon_hour + 1, 0, 0),
-        pendulum.datetime(2025, 5, 13, night_hour + 1, 0, 0),
+        pendulum.datetime(2025, 5, 13, out_of_hours + 1, 0, 0),
     ]
     configs = [
         TournConfig.aib_only,

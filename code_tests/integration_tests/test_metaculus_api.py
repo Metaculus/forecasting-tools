@@ -500,6 +500,10 @@ class TestPostEndpoint:
 
 
 class TestApiFilter:
+
+    @pytest.mark.skip(
+        reason="Reducing the number of calls to metaculus api due to rate limiting"
+    )
     @pytest.mark.parametrize(
         "api_filter, num_questions, randomly_sample",
         [
