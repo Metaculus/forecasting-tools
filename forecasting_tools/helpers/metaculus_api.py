@@ -15,7 +15,7 @@ from typing import Any, Callable, List, Literal, TypeVar, overload
 import pendulum
 import requests
 import typeguard
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from forecasting_tools.data_models.coherence_link import CoherenceLink
 from forecasting_tools.data_models.data_organizer import DataOrganizer
@@ -76,6 +76,7 @@ class ApiFilter(BaseModel):
     is_in_main_feed: bool | None = (
         None  # TODO (Sep 5, 2025): Instead of checking if default project visibility is normal, add the url parameter "for_main_feed=true"
     )
+    other_url_parameters: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def add_timezone_to_dates(self) -> ApiFilter:
@@ -715,6 +716,7 @@ class MetaculusApi:
         if api_filter.allowed_tournaments:
             url_params["tournaments"] = api_filter.allowed_tournaments
 
+        url_params.update(api_filter.other_url_parameters)
         return url_params
 
     @classmethod

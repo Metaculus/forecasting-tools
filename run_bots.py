@@ -49,6 +49,9 @@ class AllowedTourn(Enum):
     MAIN_SITE = "main-site"
     METACULUS_CUP = MetaculusApi.CURRENT_METACULUS_CUP_ID
     GULF_BREEZE = 32810  # https://www.metaculus.com/tournament/GB/
+    DEMOCRACY_THREAT_INDEX = (
+        32829  # https://www.metaculus.com/index/us-democracy-threat/
+    )
     # When representing a tournament, these should be valid slugs
 
 
@@ -58,6 +61,7 @@ class TournConfig:
     main_site_tourns = [
         AllowedTourn.MAIN_SITE,
         AllowedTourn.GULF_BREEZE,
+        AllowedTourn.DEMOCRACY_THREAT_INDEX,
     ]
     aib_and_site = aib_only.copy() + main_site_tourns.copy()
     every_x_days_tourns = [AllowedTourn.METACULUS_CUP]

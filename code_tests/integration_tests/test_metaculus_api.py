@@ -499,9 +499,6 @@ class TestPostEndpoint:
         ), "Questions should not be the same (randomly sampled)"
 
 
-@pytest.mark.skip(
-    reason="Reducing the number of calls to metaculus api due to rate limiting"
-)
 class TestApiFilter:
     @pytest.mark.parametrize(
         "api_filter, num_questions, randomly_sample",
@@ -578,6 +575,26 @@ class TestApiFilter:
         else:
             assert len(questions) > 0
         assert_basic_attributes_at_percentage(questions, 0.8)
+
+    @pytest.mark.skip(
+        reason="In this case main site code filters out posts that have resolution dates too far (even if the subquestion would match)"
+    )
+    async def test_group_question_filter(self) -> None:
+        filter = ApiFilter(
+            allowed_statuses=["open"],
+            group_question_mode="unpack_subquestions",
+            allowed_tournaments=["taiwan"],
+            allowed_types=["binary"],
+            scheduled_resolve_time_lt=datetime(2026, 1, 10),
+        )
+        questions = await MetaculusApi.get_questions_matching_filter(
+            filter, num_questions=1000, error_if_question_target_missed=False
+        )
+        # https://www.metaculus.com/questions/11480/
+        # "Will China launch a full-scale invasion of Taiwan by the following years? (2026)"
+        assert 34362 in [
+            q.id_of_question for q in questions
+        ], "Question 34362 not found in questions"
 
     @pytest.mark.skip(
         reason="Reducing the number of calls to metaculus api due to rate limiting"
@@ -758,6 +775,10 @@ def assert_basic_question_attributes_not_none(
     assert isinstance(
         question.already_forecasted, bool
     ), f"Already forecasted is not a boolean for post ID {post_id}"
+    if question.already_forecasted:
+        assert (
+            question.timestamp_of_my_last_forecast is not None
+        ), f"Timestamp of my last forecast is None for post ID {post_id}"
     if isinstance(question, NumericQuestion):
         assert (
             question.unit_of_measure is not None

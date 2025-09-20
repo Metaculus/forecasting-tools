@@ -251,11 +251,16 @@ class MetaculusQuestion(BaseModel, Jsonable):
     def timestamp_of_my_last_forecast(self) -> datetime | None:
         try:
             time_stamp: float = self.api_json["question"]["my_forecasts"]["latest"][
-                "timestamp"
+                "start_time"
             ]
-            return pendulum.from_timestamp(time_stamp)
+            answer = pendulum.from_timestamp(time_stamp)
         except Exception:
-            return None
+            answer = None
+        if answer is not None:
+            assert (
+                self.already_forecasted
+            ), f"There cannot be a last forecast time if the question is not already forecasted. Last forecast time: {answer}"
+        return answer
 
     @property
     def is_in_main_feed(self) -> bool | None:
