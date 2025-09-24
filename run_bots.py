@@ -228,7 +228,7 @@ def _get__every_x_days__questions(
         should_forecast = (
             last_forecast_time is None
             or last_forecast_time
-            < pendulum.now().subtract(
+            < pendulum.now(tz="UTC").subtract(
                 days=ScheduleConfig.regular_forecast_interval_days
             )
         )
@@ -242,7 +242,9 @@ async def _get_questions_for_main_site(
 ) -> list[MetaculusQuestion]:
     site_questions: list[MetaculusQuestion] = []
     if AllowedTourn.MAIN_SITE in main_site_tourns:
-        target_months_from_now = pendulum.now().add(days=30 * months_ahead_to_check)
+        target_months_from_now = pendulum.now(tz="UTC").add(
+            days=30 * months_ahead_to_check
+        )
         site_questions += await MetaculusApi.get_questions_matching_filter(
             ApiFilter(
                 is_in_main_feed=True,
@@ -277,7 +279,8 @@ async def _get_questions_for_main_site(
         )
         should_forecast = (
             last_forecast_time is None
-            or last_forecast_time < pendulum.now().subtract(days=forecast_every_x_days)
+            or last_forecast_time
+            < pendulum.now(tz="UTC").subtract(days=forecast_every_x_days)
         )
         if should_forecast:
             filtered_questions.append(question)

@@ -185,7 +185,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
         )
 
     def give_question_details_as_markdown(self) -> str:
-        today_string = pendulum.now().strftime("%Y-%m-%d")
+        today_string = pendulum.now(tz="UTC").strftime("%Y-%m-%d") + " (UTC)"
         question_details = textwrap.dedent(
             f"""
             The main question is:

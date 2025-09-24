@@ -393,12 +393,12 @@ class MetaculusApi:
     ) -> list[BinaryQuestion]:
         logger.info(f"Retrieving {num_of_questions_to_return} benchmark questions")
         date_into_future = (
-            pendulum.now() + timedelta(days=days_to_resolve_in)
+            pendulum.now(tz="UTC") + timedelta(days=days_to_resolve_in)
             if days_to_resolve_in
             else None
         )
         date_into_past = (
-            pendulum.now() - timedelta(days=max_days_since_opening)
+            pendulum.now(tz="UTC") - timedelta(days=max_days_since_opening)
             if max_days_since_opening
             else None
         )
