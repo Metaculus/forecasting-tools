@@ -92,19 +92,19 @@ def mock_metaculus_api_call(
 
 
 def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
-    out_of_hours = 5
-    morning_hour = 11
-    afternoon_hour = 19
+    out_of_hours = min(ScheduleConfig.UTC_morning_hour - 2, 0)
+    morning_hour = ScheduleConfig.UTC_morning_hour
+    afternoon_hour = ScheduleConfig.UTC_afternoon_hour
     dates = [
-        pendulum.datetime(2025, 5, 11, morning_hour + 1, 0, 0),
-        pendulum.datetime(2025, 5, 11, afternoon_hour + 1, 0, 0),
-        pendulum.datetime(2025, 5, 11, out_of_hours + 1, 0, 0),
-        pendulum.datetime(2025, 5, 12, morning_hour + 1, 0, 0),
-        pendulum.datetime(2025, 5, 12, afternoon_hour + 1, 0, 0),
-        pendulum.datetime(2025, 5, 12, out_of_hours + 1, 0, 0),
-        pendulum.datetime(2025, 5, 13, morning_hour + 1, 0, 0),
-        pendulum.datetime(2025, 5, 13, afternoon_hour + 1, 0, 0),
-        pendulum.datetime(2025, 5, 13, out_of_hours + 1, 0, 0),
+        pendulum.datetime(2025, 5, 11, morning_hour + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 11, afternoon_hour + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 11, out_of_hours + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 12, morning_hour + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 12, afternoon_hour + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 12, out_of_hours + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 13, morning_hour + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 13, afternoon_hour + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 13, out_of_hours + 1, 0, 0, tz="UTC"),
     ]
     configs = [
         TournConfig.aib_only,
@@ -129,9 +129,9 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
                 == len(config)
             ), "Did not account for all tourns in config"
 
-            is_morning_window = ScheduleConfig.is_morning_window()
-            is_afternoon_window = ScheduleConfig.is_afternoon_window()
-            is_interval_day = ScheduleConfig.is_interval_day()
+            is_morning_window = ScheduleConfig.is_morning_window(time=date)
+            is_afternoon_window = ScheduleConfig.is_afternoon_window(time=date)
+            is_interval_day = ScheduleConfig.is_interval_day(time=date)
 
             expected_aib_questions = (
                 NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL

@@ -8,6 +8,7 @@ import argparse
 import asyncio
 import logging
 import os
+from datetime import datetime
 from enum import Enum
 from typing import Literal
 
@@ -48,32 +49,36 @@ class ScheduleConfig:
     min_main_site_forecast_interval_days: int = 7
 
     window_length_hrs = 2
-    US_morning_hour = 4
-    US_afternoon_hour = 12
+    US_morning_hour = 4  # 4am MT
+    US_afternoon_hour = 12  # 12pm MT
     UTC_morning_hour = US_morning_hour + 7
     UTC_afternoon_hour = US_afternoon_hour + 7
 
     default_max_main_site_questions_per_run = 30
 
     @classmethod
-    def is_interval_day(cls) -> bool:
-        return pendulum.now(tz="UTC").day % cls.regular_forecast_interval_days == 0
+    def is_interval_day(cls, time: datetime | None = None) -> bool:
+        time = time or pendulum.now(tz="UTC")
+        value = time.day % cls.regular_forecast_interval_days == 0
+        return value
 
     @classmethod
-    def is_morning_window(cls) -> bool:
-        return (
-            cls.UTC_morning_hour
-            <= pendulum.now(tz="UTC").hour
-            < cls.UTC_morning_hour + cls.window_length_hrs
-        )
+    def is_morning_window(cls, time: datetime | None = None) -> bool:
+        time = time or pendulum.now(tz="UTC")
+        hour = time.hour
+        max_hour = cls.UTC_morning_hour + cls.window_length_hrs
+        value = cls.UTC_morning_hour <= hour < max_hour
+        return value
 
     @classmethod
-    def is_afternoon_window(cls) -> bool:
-        return (
+    def is_afternoon_window(cls, time: datetime | None = None) -> bool:
+        time = time or pendulum.now(tz="UTC")
+        value = (
             cls.UTC_afternoon_hour
-            <= pendulum.now(tz="UTC").hour
+            <= time.hour
             < cls.UTC_afternoon_hour + cls.window_length_hrs
         )
+        return value
 
 
 class AllowedTourn(Enum):
