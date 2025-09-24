@@ -11,7 +11,13 @@ from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot impor
     UniformProbabilityBot,
 )
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
-from run_bots import AllowedTourn, RunBotConfig, TournConfig, get_questions_for_config
+from run_bots import (
+    AllowedTourn,
+    RunBotConfig,
+    ScheduleConfig,
+    TournConfig,
+    get_questions_for_config,
+)
 
 NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL = 20
 PERCENT_ALREADY_FORECASTED = 0.5
@@ -123,14 +129,9 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
                 == len(config)
             ), "Did not account for all tourns in config"
 
-            window_length_hrs = 7
-            is_morning_window = (
-                morning_hour <= date.hour < morning_hour + window_length_hrs
-            )
-            is_afternoon_window = (
-                afternoon_hour <= date.hour < afternoon_hour + window_length_hrs
-            )
-            is_interval_day = date.day % 3 == 0
+            is_morning_window = ScheduleConfig.is_morning_window()
+            is_afternoon_window = ScheduleConfig.is_afternoon_window()
+            is_interval_day = ScheduleConfig.is_interval_day()
 
             expected_aib_questions = (
                 NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL

@@ -1,6 +1,7 @@
 import asyncio
 import importlib.metadata
 import json
+import logging
 import os
 import urllib.request
 
@@ -11,10 +12,15 @@ from forecasting_tools import (
     ForecastBot,
     MetaculusApi,
     MetaculusQuestion,
+    MonetaryCostManager,
     QuestionOperationalizer,
     TemplateBot,
 )
-from forecasting_tools.forecast_bots.bot_lists import get_all_bots_for_doing_cheap_tests
+from forecasting_tools.forecast_bots.bot_lists import (
+    get_all_bot_question_type_pairs_for_cheap_tests,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def test_example_questions_forecasted_saved_and_loaded() -> None:
@@ -96,22 +102,35 @@ def test_saving_and_loading_question() -> None:
 
 
 @pytest.mark.parametrize(
-    "bot",
-    get_all_bots_for_doing_cheap_tests(),
+    "question_type, bot", get_all_bot_question_type_pairs_for_cheap_tests()
 )
-async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
-    # This tournament has all questions end in 2 years,
-    # and has at least one of every question type (binary, numeric, multiple choice, discrete, date)
-    original_publish_status = bot.publish_reports_to_metaculus
-    try:
-        bot.publish_reports_to_metaculus = True
-        reports = await bot.forecast_on_tournament("ai-2027", return_exceptions=True)
-        bot.log_report_summary(reports, raise_errors=True)
-        assert len(reports) == 15, "Expected 15 reports"
-    except Exception as e:
-        pytest.fail(f"Forecasting on ai-2027 tournament failed: {e}")
-    finally:
-        bot.publish_reports_to_metaculus = original_publish_status
+async def test_predicts_test_question(
+    question_type: type[MetaculusQuestion],
+    bot: ForecastBot,
+) -> None:
+    question = DataOrganizer.get_live_example_question_of_type(question_type)
+    assert isinstance(question, question_type)
+    target_cost_in_usd = 0.3
+    with MonetaryCostManager() as cost_manager:
+        report = await bot.forecast_question(question)
+        logger.info(f"Cost of forecast: {cost_manager.current_usage}")
+        logger.info(f"Report Explanation: \n{report.explanation}")
+        expected_report_type = DataOrganizer.get_report_type_for_question_type(
+            question_type
+        )
+    await report.publish_report_to_metaculus()
+    assert isinstance(report, expected_report_type)
+    assert cost_manager.current_usage <= target_cost_in_usd
+    assert len(report.report_sections) > 1
+    assert report.prediction is not None
+    assert report.explanation is not None
+    assert report.price_estimate is not None
+    assert report.minutes_taken is not None
+    assert report.question is not None
+    assert question.id_of_post is not None
+
+    updated_question = MetaculusApi.get_question_by_post_id(question.id_of_post)
+    assert updated_question.already_forecasted
 
 
 def test_package_resource_loading() -> None:
