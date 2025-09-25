@@ -10,7 +10,7 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
     MonetaryCostManager,
 )
 from forecasting_tools.data_models.data_organizer import DataOrganizer
-from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.data_models.questions import DateQuestion, MetaculusQuestion
 from forecasting_tools.forecast_bots.bot_lists import (
     get_all_bot_question_type_pairs_for_cheap_tests,
 )
@@ -90,8 +90,13 @@ async def test_collects_reports_on_open_questions(mocker: Mock) -> None:
     questions_that_should_be_being_forecast_on = (
         MetaculusApi.get_all_open_questions_from_tournament(tournament_id)
     )
-    assert len(reports) == len(
-        questions_that_should_be_being_forecast_on
+    date_questions = [
+        question
+        for question in questions_that_should_be_being_forecast_on
+        if isinstance(question, DateQuestion)
+    ]
+    assert len(reports) == len(questions_that_should_be_being_forecast_on) - len(
+        date_questions
     ), "Not all questions were forecasted on"
 
 

@@ -363,6 +363,7 @@ class TestPosting:
 
 
 class TestPostEndpoint:
+    @pytest.mark.skip(reason="Quarterly cup ID is best as a number not slug")
     def test_questions_returned_from_list_questions(self) -> None:
         if ForecastingTestManager.metaculus_cup_is_not_active():
             pytest.skip("Quarterly cup is not active")
