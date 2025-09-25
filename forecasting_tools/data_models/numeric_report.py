@@ -182,7 +182,10 @@ class NumericDistribution(BaseModel):
             pmf.append(1 - cdf[-1])
             pmf_array = np.asarray(pmf, dtype=float)
             # cap depends on cdf_size (0.59 if cdf_size is the default 201)
-            cap = (0.59 - 1e-7) * 201 / cdf_size
+            # reduce cap by 1e-11 to avoid floating point error pushing this
+            # above the real cap but also have
+            # lower effect than 1e10 rounding later down the line
+            cap = (0.59 - 1e-11) * 201 / cdf_size
 
             def capped_sum(scale):
                 return np.minimum(cap, scale * pmf_array).sum()
@@ -199,7 +202,7 @@ class NumericDistribution(BaseModel):
                     lo = scale
                 else:
                     hi = scale
-                if hi - lo < 1e-12:
+                if hi - lo < 1e-11:
                     break
             # apply scale and renormalize
             pmf_array = np.minimum(cap, 0.5 * (lo + hi) * pmf_array)
