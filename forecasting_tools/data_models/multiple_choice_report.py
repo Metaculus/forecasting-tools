@@ -23,42 +23,56 @@ class PredictedOptionList(BaseModel):
         sum_of_probabilities = sum(
             option.probability for option in self.predicted_options
         )
-        if abs(sum_of_probabilities - 1) < 0.0001:
-            return self
         if sum_of_probabilities > 1.01 or sum_of_probabilities < 0.99:
             raise ValueError(
                 f"Sum of option probabilities {sum_of_probabilities} is "
                 "too far from 1 to be confident that normalization will deliver an "
                 "intended prediction."
             )
-        else:
-            logger.warning(
-                f"Sum of option probabilities {sum_of_probabilities} is not 1, but is close to 1. "
-                "Normalizing the probabilities."
+        logger.warning(
+            f"Sum of option probabilities {sum_of_probabilities} is not 1, but is close to 1. "
+            "Normalizing the probabilities."
+        )
+
+        # Step 1: Clamp values
+        clamped_list = [
+            max(min(x.probability, 0.999), 0.0012) for x in self.predicted_options
+        ]  # Clamp to 0.12% so that normalization doesn't bring it below 0.1%
+
+        # Step 2: Calculate the sum of all elements
+        total_sum_decimal = sum(clamped_list)
+
+        # Step 3: Normalize the list so that all elements add up to 1
+        normalized_list = [x / total_sum_decimal for x in clamped_list]
+
+        # Step 4: Adjust for any small floating-point errors
+        adjustment = 1.0 - sum(normalized_list)
+        normalized_list[-1] += adjustment
+        normalized_option_probabilities = normalized_list
+
+        new_sum = sum(normalized_option_probabilities)
+        assert (
+            abs(new_sum - 1) < 0.0001
+        ), "Sum of normalized option probabilities is not 1"
+        for original_option, new_probability in zip(
+            self.predicted_options, normalized_option_probabilities
+        ):
+            assert (
+                abs(new_probability - original_option.probability) < 0.01
+            ), "New probability does not match original probability"
+
+        self.predicted_options = [
+            PredictedOption(option_name=option.option_name, probability=probability)
+            for option, probability in zip(
+                self.predicted_options, normalized_option_probabilities
             )
-            # Step 1: Clamp values
-            clamped_list = [
-                max(min(x.probability, 0.999), 0.001) for x in self.predicted_options
-            ]
+        ]
+        return self
 
-            # Step 2: Calculate the sum of all elements
-            total_sum_decimal = sum(clamped_list)
-
-            # Step 3: Normalize the list so that all elements add up to 1
-            normalized_list = [x / total_sum_decimal for x in clamped_list]
-
-            # Step 4: Adjust for any small floating-point errors
-            adjustment = 1.0 - sum(normalized_list)
-            normalized_list[-1] += adjustment
-            normalized_option_probabilities = normalized_list
-
-            self.predicted_options = [
-                PredictedOption(option_name=option.option_name, probability=probability)
-                for option, probability in zip(
-                    self.predicted_options, normalized_option_probabilities
-                )
-            ]
-            return self
+    def to_dict(self) -> dict[str, float]:
+        return {
+            option.option_name: option.probability for option in self.predicted_options
+        }
 
 
 class MultipleChoiceReport(ForecastReport):

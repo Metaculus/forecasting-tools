@@ -445,6 +445,7 @@ class MetaculusApi:
             json=[
                 {
                     "question": question_id,
+                    "source": "api",
                     **forecast_payload,
                 },
             ],

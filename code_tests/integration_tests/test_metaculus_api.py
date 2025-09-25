@@ -7,6 +7,10 @@ import typeguard
 
 from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
 from forecasting_tools.data_models.data_organizer import DataOrganizer
+from forecasting_tools.data_models.multiple_choice_report import (
+    PredictedOption,
+    PredictedOptionList,
+)
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     CanceledResolution,
@@ -287,6 +291,38 @@ class TestGetSpecificQuestions:
         assert question.typed_resolution == expected_resolution
         assert isinstance(question, MultipleChoiceQuestion)
         assert question.mc_resolution == expected_resolution
+
+    def test_forecast_extreme_multiple_choice(self) -> None:
+        url = "https://www.metaculus.com/questions/38601/year-openai-deepmind-or-anthropic-reach-valuation-of-1-trillion/"
+        question = MetaculusApi.get_question_by_url(url)
+        assert question.id_of_question is not None
+        forecast = PredictedOptionList(
+            predicted_options=[
+                PredictedOption(option_name="2025", probability=0.0),
+                PredictedOption(option_name="2026", probability=0.0),
+                PredictedOption(option_name="2027", probability=1.0),
+                PredictedOption(option_name="2028", probability=0.0),
+                PredictedOption(option_name="2029", probability=0.0),
+                PredictedOption(option_name="≥2030", probability=0.0),
+            ]
+        )
+        MetaculusApi.post_multiple_choice_question_prediction(
+            question.id_of_question, forecast.to_dict()
+        )
+
+        forecast_2 = PredictedOptionList(
+            predicted_options=[
+                PredictedOption(option_name="2025", probability=0.2),
+                PredictedOption(option_name="2026", probability=0.1),
+                PredictedOption(option_name="2027", probability=0.3),
+                PredictedOption(option_name="2028", probability=0.05),
+                PredictedOption(option_name="2029", probability=0.35),
+                PredictedOption(option_name="≥2030", probability=0.0),
+            ]
+        )
+        MetaculusApi.post_multiple_choice_question_prediction(
+            question.id_of_question, forecast_2.to_dict()
+        )
 
 
 class TestPosting:
