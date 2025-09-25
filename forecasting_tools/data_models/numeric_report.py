@@ -122,7 +122,6 @@ class NumericDistribution(BaseModel):
 
         sorted_percentile_values = dict(sorted(percentile_values.items()))
 
-
         # Normalize percentile keys
         normalized_percentile_values = {}
         for key, value in sorted_percentile_values.items():
@@ -142,7 +141,9 @@ class NumericDistribution(BaseModel):
                 ) / np.log(deriv_ratio)
             else:
                 # linearly scaled question
-                unscaled_location = (nominal_location - range_min) / (range_max - range_min)
+                unscaled_location = (nominal_location - range_min) / (
+                    range_max - range_min
+                )
             return unscaled_location
 
         percentile_locations = []
@@ -150,7 +151,6 @@ class NumericDistribution(BaseModel):
             height = float(str(percentile).split("_")[-1]) / 100
             location = nominal_location_to_cdf_location(nominal_location)
             percentile_locations.append((location, height))
-
 
         def get_cdf_at(location):
             # helper function that takes a location and returns
@@ -165,22 +165,55 @@ class NumericDistribution(BaseModel):
                     ) / (current[0] - previous[0])
                 previous = current
 
-
         def standardize_cdf(cdf: list[float]) -> list[float]:
             """
             Takes a cdf and returns a standardized version of it
 
+            - smooths over cdfs that spike too heavily (exceed a change of 0.59)
             - assigns no mass outside of closed bounds (scales accordingly)
             - assigns at least a minimum amount of mass outside of open bounds
             - increasing by at least the minimum amount (0.01 / 200 = 0.0005)
-
-            TODO: add smoothing over cdfs that spike too heavily (exceed a change of 0.59)
             """
+            # First, cap the distribution to maximum (default 0.59)
+            # operate in PMF space
+            pmf = [cdf[0]]
+            for i in range(1, len(cdf)):
+                pmf.append(cdf[i] - cdf[i - 1])
+            pmf.append(1 - cdf[-1])
+            pmf_array = np.asarray(pmf, dtype=float)
+            # cap depends on cdf_size (0.59 if cdf_size is the default 201)
+            cap = (0.59 - 1e-7) * 201 / cdf_size
+
+            def capped_sum(scale):
+                return np.minimum(cap, scale * pmf_array).sum()
+
+            # find the appropriate scale search space
+            lo, hi = 0.0, 1.0
+            while capped_sum(hi) < 1.0:
+                hi *= 2.0
+            # home in on scale value that makes capped sum approx 1.0
+            for _ in range(200):
+                scale = 0.5 * (lo + hi)
+                s = capped_sum(scale)
+                if s < 1.0:
+                    lo = scale
+                else:
+                    hi = scale
+                if hi - lo < 1e-12:
+                    break
+            # apply scale and renormalize
+            pmf_array = np.minimum(cap, 0.5 * (lo + hi) * pmf_array)
+            pmf_array = pmf_array / pmf_array.sum()
+            # back to CDF space
+            cdf = np.cumsum(pmf_array).tolist()[:-1]
+
+            # apply open-boundary scaling
             scale_lower_to = 0 if open_lower_bound else cdf[0]
             scale_upper_to = 1.0 if open_upper_bound else cdf[-1]
             rescaled_inbound_mass = scale_upper_to - scale_lower_to
 
-            def standardize(F: float, location: float) -> float:
+            # apply minimum slope
+            def apply_minimum(F: float, location: float) -> float:
                 # `F` is the height of the cdf at `location` (in range [0, 1])
                 # rescale
                 rescaled_F = (F - scale_lower_to) / rescaled_inbound_mass
@@ -195,7 +228,7 @@ class NumericDistribution(BaseModel):
 
             standardized_cdf = []
             for i, F in enumerate(cdf):
-                standardized_F = standardize(F, i / (len(cdf) - 1))
+                standardized_F = apply_minimum(F, i / (len(cdf) - 1))
                 # round to avoid floating point errors
                 standardized_cdf.append(round(standardized_F, 10))
 
