@@ -286,13 +286,13 @@ from forecasting_tools.helpers.prediction_extractor import PredictionExtractor
             {
                 "0": 20,
                 "1": 68.98,
-                "2": 10,
+                "2": 9.99,
                 "3": 1.01,
-                "10": 0.01,
+                "10": 0.1,
             }
             """,
             ["0", "1", "2", "3", "10"],
-            [0.2, 0.6898, 0.1, 0.0101, 0.0001],
+            [0.2, 0.6898, 0.0999, 0.0101, 0.001],
         ),
         (  # Test table format
             """
