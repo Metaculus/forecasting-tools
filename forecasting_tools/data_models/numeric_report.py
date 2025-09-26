@@ -79,18 +79,65 @@ class NumericDistribution(BaseModel):
             )
         return percentiles
 
-    @classmethod
-    def percentile_list_to_dict(
-        cls, percentiles: list[Percentile]
-    ) -> dict[float, float]:
-        return {percentile.percentile: percentile.value for percentile in percentiles}
+    @property
+    def cdf(self) -> list[Percentile]:
+        """
+        Turns a list of percentiles into a full distribution (201 points, if numeric, otherwise based on discrete values)
+        between upper and lower bound (taking into account probability assigned above and below the bounds)
+        that is compatible with Metaculus questions.
+
+        cdf stands for 'continuous distribution function'
+        """
+        # TODO: This function needs to be cleaned up and made more readable
+
+        cdf_size = self.cdf_size or 201
+        continuous_cdf = []
+        cdf_xaxis = []
+        cdf_eval_locations = [i / (cdf_size - 1) for i in range(cdf_size)]
+        for l in cdf_eval_locations:
+            continuous_cdf.append(self._get_cdf_at(l))
+            cdf_xaxis.append(self._cdf_location_to_nominal_location(l))
+        continuous_cdf = self._standardize_cdf(continuous_cdf)
+
+        percentiles = [
+            Percentile(value=value, percentile=percentile)
+            for value, percentile in zip(cdf_xaxis, continuous_cdf)
+        ]
+        assert len(percentiles) == cdf_size
+
+        validation_distribution = NumericDistribution(
+            declared_percentiles=percentiles,
+            open_upper_bound=self.open_upper_bound,
+            open_lower_bound=self.open_lower_bound,
+            upper_bound=self.upper_bound,
+            lower_bound=self.lower_bound,
+            zero_point=self.zero_point,
+        )
+        NumericDistribution.model_validate(validation_distribution)
+        return percentiles
 
     @classmethod
-    def dict_to_percentile_list(
-        cls, percentile_dict: dict[float, float]
+    def _percentile_list_to_dict(
+        cls, percentiles: list[Percentile], multiply_by_100: bool = False
+    ) -> dict[float, float]:
+        return {
+            (
+                percentile.percentile * 100
+                if multiply_by_100
+                else percentile.percentile
+            ): percentile.value
+            for percentile in percentiles
+        }
+
+    @classmethod
+    def _dict_to_percentile_list(
+        cls, percentile_dict: dict[float, float], divide_by_100: bool = False
     ) -> list[Percentile]:
         return [
-            Percentile(percentile=percentile, value=value)
+            Percentile(
+                percentile=percentile / 100 if divide_by_100 else percentile,
+                value=value,
+            )
             for percentile, value in percentile_dict.items()
         ]
 
@@ -108,7 +155,7 @@ class NumericDistribution(BaseModel):
         range_size = abs(range_max - range_min)
         buffer = 1 if range_size > 100 else 0.01 * range_size
 
-        return_percentiles = self.percentile_list_to_dict(input_percentiles)
+        return_percentiles = self._percentile_list_to_dict(input_percentiles)
 
         # Adjust any values that are exactly at the bounds
         for percentile, value in list(return_percentiles.items()):
@@ -133,7 +180,7 @@ class NumericDistribution(BaseModel):
         else:
             return_percentiles[0] = range_min
 
-        return self.dict_to_percentile_list(return_percentiles)
+        return self._dict_to_percentile_list(return_percentiles)
 
     def _nominal_location_to_cdf_location(self, percentile_value: float) -> float:
         range_max = self.upper_bound
@@ -268,43 +315,6 @@ class NumericDistribution(BaseModel):
                 deriv_ratio**location - 1
             ) / (deriv_ratio - 1)
         return scaled_location
-
-    @property
-    def cdf(self) -> list[Percentile]:
-        """
-        Turns a list of percentiles into a full distribution (201 points, if numeric, otherwise based on discrete values)
-        between upper and lower bound (taking into account probability assigned above and below the bounds)
-        that is compatible with Metaculus questions.
-
-        cdf stands for 'continuous distribution function'
-        """
-        # TODO: This function needs to be cleaned up and made more readable
-
-        cdf_size = self.cdf_size or 201
-        continuous_cdf = []
-        cdf_xaxis = []
-        cdf_eval_locations = [i / (cdf_size - 1) for i in range(cdf_size)]
-        for l in cdf_eval_locations:
-            continuous_cdf.append(self._get_cdf_at(l))
-            cdf_xaxis.append(self._cdf_location_to_nominal_location(l))
-        continuous_cdf = self._standardize_cdf(continuous_cdf)
-
-        percentiles = [
-            Percentile(value=value, percentile=percentile)
-            for value, percentile in zip(cdf_xaxis, continuous_cdf)
-        ]
-        assert len(percentiles) == cdf_size
-
-        validation_distribution = NumericDistribution(
-            declared_percentiles=percentiles,
-            open_upper_bound=self.open_upper_bound,
-            open_lower_bound=self.open_lower_bound,
-            upper_bound=self.upper_bound,
-            lower_bound=self.lower_bound,
-            zero_point=self.zero_point,
-        )
-        NumericDistribution.model_validate(validation_distribution)
-        return percentiles
 
     # Luke's original code
     # @property
