@@ -33,6 +33,30 @@ class NumericDistribution(BaseModel):
         None  # Normal numeric questions have 201 points, but discrete questions have fewer
     )
 
+    @field_validator("declared_percentiles")
+    def validate_percentiles(
+        cls: NumericDistribution, percentiles: list[Percentile]
+    ) -> list[Percentile]:
+        for i in range(len(percentiles) - 1):
+            if percentiles[i].percentile >= percentiles[i + 1].percentile:
+                raise ValueError("Percentiles must be in strictly increasing order")
+            if percentiles[i].value > percentiles[i + 1].value:
+                raise ValueError("Values must be in strictly increasing order")
+        if len(percentiles) < 2:
+            raise ValueError("NumericDistribution must have at least 2 percentiles")
+
+        for i in range(len(percentiles) - 1):
+            assert (
+                abs(percentiles[i + 1].percentile - percentiles[i].percentile) >= 5e-05
+            ), (
+                f"Percentiles at indices {i} and {i+1} are too close. CDF must be increasing by at least 5e-05 at every step. "
+                f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
+                f"at values {percentiles[i].value} and {percentiles[i+1].value}. "
+                "One possible reason is that your prediction is mostly or completely out of the upper/lower "
+                "bound range thus assigning very little probability to any one x-axis value."
+            )
+        return percentiles
+
     @classmethod
     def from_question(
         cls, percentiles: list[Percentile], question: NumericQuestion
@@ -55,29 +79,28 @@ class NumericDistribution(BaseModel):
     def community_prediction(self) -> NumericDistribution | None:
         raise NotImplementedError("Not implemented")
 
-    @field_validator("declared_percentiles")
-    def validate_percentiles_order(
-        cls: NumericDistribution, percentiles: list[Percentile]
+    def get_representative_percentiles(
+        self, num_percentiles: int = 5
     ) -> list[Percentile]:
-        for i in range(len(percentiles) - 1):
-            if percentiles[i].percentile >= percentiles[i + 1].percentile:
-                raise ValueError("Percentiles must be in strictly increasing order")
-            if percentiles[i].value > percentiles[i + 1].value:
-                raise ValueError("Values must be in strictly increasing order")
-        if len(percentiles) < 2:
-            raise ValueError("NumericDistribution must have at least 2 percentiles")
+        if num_percentiles <= 1:
+            raise ValueError("Number of percentiles must be at least 2")
 
-        for i in range(len(percentiles) - 1):
-            assert (
-                abs(percentiles[i + 1].percentile - percentiles[i].percentile) >= 5e-05
-            ), (
-                f"Percentiles at indices {i} and {i+1} are too close. CDF must be increasing by at least 5e-05 at every step. "
-                f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
-                f"at values {percentiles[i].value} and {percentiles[i+1].value}. "
-                "One possible reason is that your prediction is mostly or completely out of the upper/lower "
-                "bound range thus assigning very little probability to any one x-axis value."
+        starting_percentiles = self.declared_percentiles
+        if num_percentiles > len(starting_percentiles):
+            logger.warning(
+                f"Number of percentiles requested ({num_percentiles}) is greater than the number of declared percentiles in the distribution ({len(starting_percentiles)}). Using all percentiles."
             )
-        return percentiles
+            num_percentiles = len(starting_percentiles)
+
+        desired_percentile_points = np.linspace(
+            0, len(starting_percentiles) - 1, num_percentiles
+        )
+        desired_indices = [int(round(point)) for point in desired_percentile_points]
+
+        representative_percentiles = [
+            starting_percentiles[idx] for idx in desired_indices
+        ]
+        return representative_percentiles
 
     @property
     def cdf(self) -> list[Percentile]:
@@ -326,374 +349,6 @@ class NumericDistribution(BaseModel):
                 deriv_ratio**location - 1
             ) / (deriv_ratio - 1)
         return scaled_location
-
-    # Luke's original code
-    # @property
-    # def cdf(self) -> list[Percentile]:
-    #     """
-    #     Turns a list of percentiles into a full distribution (201 points, if numeric, otherwise based on discrete values)
-    #     between upper and lower bound (taking into account probability assigned above and below the bounds)
-    #     that is compatible with Metaculus questions.
-
-    #     cdf stands for 'continuous distribution function'
-    #     """
-    #     # TODO: This function needs to be cleaned up and made more readable
-
-    #     percentiles = self.declared_percentiles
-    #     open_upper_bound = self.open_upper_bound
-    #     open_lower_bound = self.open_lower_bound
-    #     upper_bound = self.upper_bound
-    #     lower_bound = self.lower_bound
-    #     zero_point = self.zero_point
-    #     cdf_size = self.cdf_size or 201
-
-    #     # Convert to dict so we don't have to rewrite this function
-    #     percentile_values: dict[float, float] = {
-    #         percentile.percentile * 100: percentile.value for percentile in percentiles
-    #     }
-
-    #     percentile_max = max(float(key) for key in percentile_values.keys())
-    #     percentile_min = min(float(key) for key in percentile_values.keys())
-    #     range_min = lower_bound
-    #     range_max = upper_bound
-    #     range_size = abs(range_max - range_min)
-    #     buffer = 1 if range_size > 100 else 0.01 * range_size
-
-    #     # Adjust any values that are exactly at the bounds
-    #     for percentile, value in list(percentile_values.items()):
-    #         if not open_lower_bound and value <= range_min + buffer:
-    #             percentile_values[percentile] = range_min + buffer
-    #         if not open_upper_bound and value >= range_max - buffer:
-    #             percentile_values[percentile] = range_max - buffer
-
-    #     # Set cdf values outside range
-    #     if open_upper_bound:
-    #         if range_max > percentile_values[percentile_max]:
-    #             percentile_values[int(100 - (0.5 * (100 - percentile_max)))] = range_max
-    #     else:
-    #         percentile_values[100] = range_max
-
-    #     # Set cdf values outside range
-    #     if open_lower_bound:
-    #         if range_min < percentile_values[percentile_min]:
-    #             percentile_values[int(0.5 * percentile_min)] = range_min
-    #     else:
-    #         percentile_values[0] = range_min
-
-    #     sorted_percentile_values = dict(sorted(percentile_values.items()))
-
-    #     # Normalize percentile keys
-    #     normalized_percentile_values = {}
-    #     for key, value in sorted_percentile_values.items():
-    #         percentile = float(key) / 100
-    #         normalized_percentile_values[percentile] = value
-
-    #     def nominal_location_to_cdf_location(nominal_location: float) -> float:
-    #         if zero_point is not None:
-    #             # logarithmically scaled question
-    #             deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
-    #             unscaled_location = (
-    #                 np.log(
-    #                     (nominal_location - range_min) * (deriv_ratio - 1)
-    #                     + (range_max - range_min)
-    #                 )
-    #                 - np.log(range_max - range_min)
-    #             ) / np.log(deriv_ratio)
-    #         else:
-    #             # linearly scaled question
-    #             unscaled_location = (nominal_location - range_min) / (
-    #                 range_max - range_min
-    #             )
-    #         return unscaled_location
-
-    #     percentile_locations = []
-    #     for percentile, nominal_location in normalized_percentile_values.items():
-    #         height = float(str(percentile).split("_")[-1]) / 100
-    #         location = nominal_location_to_cdf_location(nominal_location)
-    #         percentile_locations.append((location, height))
-
-    #     def get_cdf_at(location):
-    #         # helper function that takes a location and returns
-    #         # the height of the cdf at that location, linearly
-    #         # interpolating between values
-    #         previous = percentile_locations[0]
-    #         for i in range(1, len(percentile_locations)):
-    #             current = percentile_locations[i]
-    #             if previous[0] <= location <= current[0]:
-    #                 return previous[1] + (current[1] - previous[1]) * (
-    #                     location - previous[0]
-    #                 ) / (current[0] - previous[0])
-    #             previous = current
-
-    #     def standardize_cdf(cdf: list[float]) -> list[float]:
-    #         """
-    #         Takes a cdf and returns a standardized version of it
-
-    #         - smooths over cdfs that spike too heavily (exceed a change of 0.59)
-    #         - assigns no mass outside of closed bounds (scales accordingly)
-    #         - assigns at least a minimum amount of mass outside of open bounds
-    #         - increasing by at least the minimum amount (0.01 / 200 = 0.0005)
-    #         """
-    #         # First, cap the distribution to maximum (default 0.59)
-    #         # operate in PMF space
-    #         pmf = [cdf[0]]
-    #         for i in range(1, len(cdf)):
-    #             pmf.append(cdf[i] - cdf[i - 1])
-    #         pmf.append(1 - cdf[-1])
-    #         pmf_array = np.asarray(pmf, dtype=float)
-    #         # cap depends on cdf_size (0.59 if cdf_size is the default 201)
-    #         # reduce cap by 1e-11 to avoid floating point error pushing this
-    #         # above the real cap but also have
-    #         # lower effect than 1e10 rounding later down the line
-    #         cap = (0.59 - 1e-11) * 201 / cdf_size
-
-    #         def capped_sum(scale):
-    #             return np.minimum(cap, scale * pmf_array).sum()
-
-    #         # find the appropriate scale search space
-    #         lo, hi = 0.0, 1.0
-    #         while capped_sum(hi) < 1.0:
-    #             hi *= 2.0
-    #         # home in on scale value that makes capped sum approx 1.0
-    #         for _ in range(200):
-    #             scale = 0.5 * (lo + hi)
-    #             s = capped_sum(scale)
-    #             if s < 1.0:
-    #                 lo = scale
-    #             else:
-    #                 hi = scale
-    #             if hi - lo < 1e-11:
-    #                 break
-    #         # apply scale and renormalize
-    #         pmf_array = np.minimum(cap, 0.5 * (lo + hi) * pmf_array)
-    #         pmf_array = pmf_array / pmf_array.sum()
-    #         # back to CDF space
-    #         cdf = np.cumsum(pmf_array).tolist()[:-1]
-
-    #         # apply open-boundary scaling
-    #         scale_lower_to = 0 if open_lower_bound else cdf[0]
-    #         scale_upper_to = 1.0 if open_upper_bound else cdf[-1]
-    #         rescaled_inbound_mass = scale_upper_to - scale_lower_to
-
-    #         # apply minimum slope
-    #         def apply_minimum(F: float, location: float) -> float:
-    #             # `F` is the height of the cdf at `location` (in range [0, 1])
-    #             # rescale
-    #             rescaled_F = (F - scale_lower_to) / rescaled_inbound_mass
-    #             # offset
-    #             if open_lower_bound and open_upper_bound:
-    #                 return 0.988 * rescaled_F + 0.01 * location + 0.001
-    #             elif open_lower_bound:
-    #                 return 0.989 * rescaled_F + 0.01 * location + 0.001
-    #             elif open_upper_bound:
-    #                 return 0.989 * rescaled_F + 0.01 * location
-    #             return 0.99 * rescaled_F + 0.01 * location
-
-    #         standardized_cdf = []
-    #         for i, F in enumerate(cdf):
-    #             standardized_F = apply_minimum(F, i / (len(cdf) - 1))
-    #             # round to avoid floating point errors
-    #             standardized_cdf.append(round(standardized_F, 10))
-
-    #         return standardized_cdf
-
-    #     def cdf_location_to_nominal_location(location: float) -> float:
-    #         if zero_point is None:
-    #             scaled_location = range_min + (range_max - range_min) * location
-    #         else:
-    #             deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
-    #             scaled_location = range_min + (range_max - range_min) * (
-    #                 deriv_ratio**location - 1
-    #             ) / (deriv_ratio - 1)
-    #         return scaled_location
-
-    #     continuous_cdf = []
-    #     cdf_xaxis = []
-    #     cdf_eval_locations = [i / (cdf_size - 1) for i in range(cdf_size)]
-    #     for l in cdf_eval_locations:
-    #         continuous_cdf.append(get_cdf_at(l))
-    #         cdf_xaxis.append(cdf_location_to_nominal_location(l))
-    #     continuous_cdf = standardize_cdf(continuous_cdf)
-
-    #     percentiles = [
-    #         Percentile(value=value, percentile=percentile)
-    #         for value, percentile in zip(cdf_xaxis, continuous_cdf)
-    #     ]
-    #     assert len(percentiles) == cdf_size
-
-    #     # Validate minimum spacing between consecutive values
-    #     for i in range(len(percentiles) - 1):
-    #         assert (
-    #             abs(percentiles[i + 1].percentile - percentiles[i].percentile) >= 5e-05
-    #         ), (
-    #             f"Percentiles at indices {i} and {i+1} are too close. CDF must be increasing by at least 5e-05 at every step. "
-    #             f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
-    #             f"at values {percentiles[i].value} and {percentiles[i+1].value}. "
-    #             "One possible reason is that your prediction is mostly or completely out of the upper/lower "
-    #             "bound range thus assigning very little probability to any one x-axis value."
-    #         )
-    #     return percentiles
-
-    # Ben/Tom's Code
-    # @property
-    # def cdf(self) -> list[Percentile]:
-    #     """
-    #     Turns a list of percentiles into a full distribution (201 points, if numeric, otherwise based on discrete values)
-    #     between upper and lower bound (taking into account probability assigned above and below the bounds)
-    #     that is compatible with Metaculus questions.
-
-    #     cdf stands for 'continuous distribution function'
-    #     """
-    #     # TODO: This function needs to be cleaned up and made more readable
-
-    #     percentiles = self.declared_percentiles
-    #     open_upper_bound = self.open_upper_bound
-    #     open_lower_bound = self.open_lower_bound
-    #     upper_bound = self.upper_bound
-    #     lower_bound = self.lower_bound
-    #     zero_point = self.zero_point
-    #     cdf_size = self.cdf_size or 201
-
-    #     # Convert to dict so we don't have to rewrite this function
-    #     percentile_values: dict[float, float] = {
-    #         percentile.percentile * 100: percentile.value for percentile in percentiles
-    #     }
-
-    #     percentile_max = max(float(key) for key in percentile_values.keys())
-    #     percentile_min = min(float(key) for key in percentile_values.keys())
-    #     range_min = lower_bound
-    #     range_max = upper_bound
-    #     range_size = abs(range_max - range_min)
-    #     buffer = 1 if range_size > 100 else 0.01 * range_size
-
-    #     # Adjust any values that are exactly at the bounds
-    #     for percentile, value in list(percentile_values.items()):
-    #         if not open_lower_bound and value <= range_min + buffer:
-    #             percentile_values[percentile] = range_min + buffer
-    #         if not open_upper_bound and value >= range_max - buffer:
-    #             percentile_values[percentile] = range_max - buffer
-
-    #     # Set cdf values outside range
-    #     if open_upper_bound:
-    #         if range_max > percentile_values[percentile_max]:
-    #             percentile_values[int(100 - (0.5 * (100 - percentile_max)))] = range_max
-    #     else:
-    #         percentile_values[100] = range_max
-
-    #     if open_lower_bound:
-    #         if range_min < percentile_values[percentile_min]:
-    #             percentile_values[int(0.5 * percentile_min)] = range_min
-    #     else:
-    #         percentile_values[0] = range_min
-
-    #     sorted_percentile_values = dict(sorted(percentile_values.items()))
-
-    #     # Normalize percentile keys
-    #     normalized_percentile_values = {}
-    #     for key, value in sorted_percentile_values.items():
-    #         percentile = float(key) / 100
-    #         normalized_percentile_values[percentile] = value
-
-    #     value_percentiles = {
-    #         value: key for key, value in normalized_percentile_values.items()
-    #     }
-
-    #     # function for log scaled questions
-    #     def generate_cdf_locations(
-    #         range_min: float, range_max: float, zero_point: float | None
-    #     ) -> list[float]:
-    #         if zero_point is None:
-    #             scale = lambda x: range_min + (range_max - range_min) * x
-    #         else:
-    #             deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
-    #             scale = lambda x: range_min + (range_max - range_min) * (
-    #                 deriv_ratio**x - 1
-    #             ) / (deriv_ratio - 1)
-    #         return [scale(x) for x in np.linspace(0, 1, cdf_size)]
-
-    #     cdf_xaxis = generate_cdf_locations(range_min, range_max, zero_point)
-
-    #     def linear_interpolation(
-    #         x_values: list[float], xy_pairs: dict[float, float]
-    #     ) -> list[float]:
-    #         # Sort the xy_pairs by x-values
-    #         sorted_pairs = sorted(xy_pairs.items())
-
-    #         # Extract sorted x and y values
-    #         known_x = [pair[0] for pair in sorted_pairs]
-    #         known_y = [pair[1] for pair in sorted_pairs]
-
-    #         # Initialize the result list
-    #         y_values = []
-
-    #         for x in x_values:
-    #             # Check if x is exactly in the known x values
-    #             if x in known_x:
-    #                 y_values.append(known_y[known_x.index(x)])
-    #             else:
-    #                 # Find the indices of the two nearest known x-values
-    #                 i = 0
-    #                 while i < len(known_x) and known_x[i] < x:
-    #                     i += 1
-    #                 # If x is outside the range of known x-values, use the nearest endpoint
-    #                 if i == 0:
-    #                     y_values.append(known_y[0])
-    #                 elif i == len(known_x):
-    #                     y_values.append(known_y[-1])
-    #                 else:
-    #                     # Perform linear interpolation
-    #                     x0, x1 = known_x[i - 1], known_x[i]
-    #                     y0, y1 = known_y[i - 1], known_y[i]
-
-    #                     # Linear interpolation formula
-    #                     y = y0 + (x - x0) * (y1 - y0) / (x1 - x0)
-    #                     y_values.append(y)
-
-    #         return y_values
-
-    #     continuous_cdf = linear_interpolation(cdf_xaxis, value_percentiles)
-
-    #     percentiles = [
-    #         Percentile(value=value, percentile=percentile)
-    #         for value, percentile in zip(cdf_xaxis, continuous_cdf)
-    #     ]
-    #     assert len(percentiles) == cdf_size
-
-    #     # Validate minimum spacing between consecutive values
-    #     # for i in range(len(percentiles) - 1):
-    #     #     assert (
-    #     #         abs(percentiles[i + 1].percentile - percentiles[i].percentile) >= 5e-05
-    #     #     ), (
-    #     #         f"Percentiles at indices {i} and {i+1} are too close. CDF must be increasing by at least 5e-05 at every step. "
-    #     #         f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
-    #     #         f"at values {percentiles[i].value} and {percentiles[i+1].value}. "
-    #     #         "One possibility is that your prediction is mostly or completely out of the upper/lower "
-    #     #         "bound range thus assigning very little probability to any one x-axis value."
-    #     #     )
-    #     return percentiles
-
-    def get_representative_percentiles(
-        self, num_percentiles: int = 5
-    ) -> list[Percentile]:
-        if num_percentiles <= 1:
-            raise ValueError("Number of percentiles must be at least 2")
-
-        starting_percentiles = self.declared_percentiles
-        if num_percentiles > len(starting_percentiles):
-            logger.warning(
-                f"Number of percentiles requested ({num_percentiles}) is greater than the number of declared percentiles in the distribution ({len(starting_percentiles)}). Using all percentiles."
-            )
-            num_percentiles = len(starting_percentiles)
-
-        desired_percentile_points = np.linspace(
-            0, len(starting_percentiles) - 1, num_percentiles
-        )
-        desired_indices = [int(round(point)) for point in desired_percentile_points]
-
-        representative_percentiles = [
-            starting_percentiles[idx] for idx in desired_indices
-        ]
-        return representative_percentiles
 
 
 class NumericReport(ForecastReport):
