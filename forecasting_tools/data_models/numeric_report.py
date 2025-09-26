@@ -266,12 +266,13 @@ class NumericDistribution(BaseModel):
             assert (
                 abs(percentiles[i + 1].percentile - percentiles[i].percentile) >= 5e-05
             ), (
-                f"Percentiles at indices {i} and {i+1} are too close: "
+                f"Percentiles at indices {i} and {i+1} are too close. CDF must be increasing by at least 5e-05 at every step. "
                 f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
                 f"at values {percentiles[i].value} and {percentiles[i+1].value}. "
-                "It is possible that your prediction is mostly or completely out of the upper/lower bound range "
-                "Thus making this cdf mostly meaningless."
+                "One possible reason is that your prediction is mostly or completely out of the upper/lower "
+                "bound range thus assigning very little probability to any one x-axis value."
             )
+        return percentiles
 
         return percentiles
 
