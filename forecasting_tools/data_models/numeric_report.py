@@ -87,6 +87,11 @@ class NumericDistribution(BaseModel):
         that is compatible with Metaculus questions.
 
         cdf stands for 'continuous distribution function'
+
+        At Metaculus CDFs are often represented with 201 points. Each point has:
+        - percentile ("X% of values are below this point". This is the y axis of the cdf graph)
+        - 'value' or 'nominal location' (The real world number that answers the question)
+        - cdf location (a number between 0 and 1 representing where the point is on the cdf x axis, where 0 is range min, and 1 is range max)
         """
         # TODO: This function needs to be cleaned up and made more readable
 
@@ -118,7 +123,7 @@ class NumericDistribution(BaseModel):
 
     @classmethod
     def _percentile_list_to_dict(
-        cls, percentiles: list[Percentile], multiply_by_100: bool = False
+        cls, percentiles: list[Percentile], multiply_by_100: bool
     ) -> dict[float, float]:
         return {
             (
@@ -131,7 +136,7 @@ class NumericDistribution(BaseModel):
 
     @classmethod
     def _dict_to_percentile_list(
-        cls, percentile_dict: dict[float, float], divide_by_100: bool = False
+        cls, percentile_dict: dict[float, float], divide_by_100: bool
     ) -> list[Percentile]:
         return [
             Percentile(
@@ -150,12 +155,13 @@ class NumericDistribution(BaseModel):
         range_max = self.upper_bound
         range_min = self.lower_bound
 
-        percentile_max = max([entry.percentile for entry in input_percentiles])
-        percentile_min = min([entry.percentile for entry in input_percentiles])
+        return_percentiles = self._percentile_list_to_dict(
+            input_percentiles, multiply_by_100=True
+        )
+        percentile_max = max(percentile for percentile in return_percentiles.keys())
+        percentile_min = min(percentile for percentile in return_percentiles.keys())
         range_size = abs(range_max - range_min)
         buffer = 1 if range_size > 100 else 0.01 * range_size
-
-        return_percentiles = self._percentile_list_to_dict(input_percentiles)
 
         # Adjust any values that are exactly at the bounds
         for percentile, value in list(return_percentiles.items()):
@@ -180,7 +186,12 @@ class NumericDistribution(BaseModel):
         else:
             return_percentiles[0] = range_min
 
-        return self._dict_to_percentile_list(return_percentiles)
+        sorted_return_percentiles = dict(sorted(return_percentiles.items()))
+
+        return_list = self._dict_to_percentile_list(
+            sorted_return_percentiles, divide_by_100=True
+        )
+        return return_list
 
     def _nominal_location_to_cdf_location(self, percentile_value: float) -> float:
         range_max = self.upper_bound
@@ -210,14 +221,14 @@ class NumericDistribution(BaseModel):
         bounded_percentiles = self._add_explicit_upper_lower_bound_percentiles(
             self.declared_percentiles
         )
-        cdf_location_to_percentile_mapping_mapping = []
+        cdf_location_to_percentile_mapping = []
         for percentile in bounded_percentiles:
             height = percentile.percentile
             location = self._nominal_location_to_cdf_location(percentile.value)
-            cdf_location_to_percentile_mapping_mapping.append((location, height))
-        previous = cdf_location_to_percentile_mapping_mapping[0]
-        for i in range(1, len(cdf_location_to_percentile_mapping_mapping)):
-            current = cdf_location_to_percentile_mapping_mapping[i]
+            cdf_location_to_percentile_mapping.append((location, height))
+        previous = cdf_location_to_percentile_mapping[0]
+        for i in range(1, len(cdf_location_to_percentile_mapping)):
+            current = cdf_location_to_percentile_mapping[i]
             if previous[0] <= cdf_location <= current[0]:
                 return previous[1] + (current[1] - previous[1]) * (
                     cdf_location - previous[0]

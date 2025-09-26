@@ -348,11 +348,11 @@ class TestGetSpecificQuestions:
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
-            Percentile(percentile=0.048, value=-40),
+            Percentile(percentile=0.048, value=-50),
             Percentile(percentile=0.25, value=31.54),
             Percentile(percentile=0.5, value=112.3),
             Percentile(percentile=0.75, value=231.1),
-            Percentile(percentile=0.984, value=540),
+            Percentile(percentile=0.984, value=550),
         ]
         numeric_distribution = NumericDistribution.from_question(percentiles, question)
         MetaculusApi.post_numeric_question_prediction(
