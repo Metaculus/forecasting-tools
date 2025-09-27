@@ -217,6 +217,12 @@ class NumericDistribution(BaseModel):
         return return_list
 
     def _nominal_location_to_cdf_location(self, percentile_value: float) -> float:
+        """
+        Takes the real world value (like $17k - that would answer the forecasting question)
+        and converts it to a cdf location between 0 and 1 depending on
+        how far it is between the upper and lower bound
+        (it can go over 1 or below 0 if beyond the bounds)
+        """
         range_max = self.upper_bound
         range_min = self.lower_bound
         zero_point = self.zero_point
@@ -234,13 +240,14 @@ class NumericDistribution(BaseModel):
         else:
             # linearly scaled question
             unscaled_location = (percentile_value - range_min) / (range_max - range_min)
-        assert 0 <= unscaled_location <= 1
         return unscaled_location
 
     def _get_cdf_at(self, cdf_location: float) -> float:
-        # helper function that takes a cdf location and returns
-        # the height (percentile) of the cdf at that location, linearly
-        # interpolating between values
+        """
+        Helper function that takes a cdf location and returns
+        the height (percentile) of the cdf at that location, linearly
+        interpolating between values
+        """
         bounded_percentiles = self._add_explicit_upper_lower_bound_percentiles(
             self.declared_percentiles
         )

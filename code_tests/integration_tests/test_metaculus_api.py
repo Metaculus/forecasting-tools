@@ -556,19 +556,35 @@ class TestNumericForecasts:
             question.id_of_question, [p.percentile for p in numeric_distribution.cdf]
         )
 
-    def test_log_scaled_2(self) -> None:
+    def test_forecast_log_scaled_out_of_bounds(self) -> None:
+        # TODO: Get it so that pecentile 0.25 can have value 0 without erroring.
         url = "https://www.metaculus.com/questions/8936/us-workforce-as-it-specialists-in-2050/"
         question = MetaculusApi.get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
-            Percentile(percentile=0.18, value=0.1),
-            Percentile(percentile=0.25, value=0.3042),
-            Percentile(percentile=0.5, value=1.646),
-            Percentile(percentile=0.75, value=4.033),
-            Percentile(percentile=0.89, value=15),
+            Percentile(percentile=0.18, value=-10),
+            Percentile(percentile=0.25, value=0.001),
+            Percentile(percentile=0.5, value=0.1),
+            Percentile(percentile=0.75, value=0.3042),
+            Percentile(percentile=0.90, value=15),
         ]
 
+        numeric_distribution = NumericDistribution.from_question(percentiles, question)
+        MetaculusApi.post_numeric_question_prediction(
+            question.id_of_question, [p.percentile for p in numeric_distribution.cdf]
+        )
+
+    def test_forecast_discrete(self) -> None:
+        url = "https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/"
+        question = MetaculusApi.get_question_by_url(url)
+        assert isinstance(question, DiscreteQuestion)
+        assert question.id_of_question is not None
+        percentiles = [
+            Percentile(percentile=0.25, value=2),
+            Percentile(percentile=0.5, value=5),
+            Percentile(percentile=0.568, value=8),
+        ]
         numeric_distribution = NumericDistribution.from_question(percentiles, question)
         MetaculusApi.post_numeric_question_prediction(
             question.id_of_question, [p.percentile for p in numeric_distribution.cdf]
@@ -580,11 +596,11 @@ class TestNumericForecasts:
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
-            Percentile(percentile=0.048, value=-50),
-            Percentile(percentile=0.25, value=31.54),
-            Percentile(percentile=0.5, value=112.3),
-            Percentile(percentile=0.75, value=231.1),
-            Percentile(percentile=0.984, value=550),
+            Percentile(percentile=0.049, value=-50),
+            Percentile(percentile=0.25, value=52.82),
+            Percentile(percentile=0.5, value=142.8),
+            Percentile(percentile=0.75, value=247.1),
+            Percentile(percentile=0.98, value=550),
         ]
         numeric_distribution = NumericDistribution.from_question(percentiles, question)
         MetaculusApi.post_numeric_question_prediction(
