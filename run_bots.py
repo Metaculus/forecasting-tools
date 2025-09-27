@@ -55,6 +55,7 @@ class ScheduleConfig:
     UTC_afternoon_hour = US_afternoon_hour + 7
 
     default_max_main_site_questions_per_run = 30
+    main_site_months_ahead_to_check = 4
 
     @classmethod
     def is_interval_day(cls, time: datetime | None = None) -> bool:
@@ -243,12 +244,13 @@ def _get__every_x_days__questions(
 
 
 async def _get_questions_for_main_site(
-    main_site_tourns: list[AllowedTourn], months_ahead_to_check: int = 4
+    main_site_tourns: list[AllowedTourn],
+    months_ahead_to_check: int = ScheduleConfig.main_site_months_ahead_to_check,
 ) -> list[MetaculusQuestion]:
     site_questions: list[MetaculusQuestion] = []
     if AllowedTourn.MAIN_SITE in main_site_tourns:
         target_months_from_now = pendulum.now(tz="UTC").add(
-            days=30 * months_ahead_to_check
+            days=31 * months_ahead_to_check
         )
         site_questions += await MetaculusApi.get_questions_matching_filter(
             ApiFilter(
