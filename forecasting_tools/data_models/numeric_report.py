@@ -216,7 +216,7 @@ class NumericDistribution(BaseModel):
         )
         return return_list
 
-    def _nominal_location_to_cdf_location(self, percentile_value: float) -> float:
+    def _nominal_location_to_cdf_location(self, nominal_value: float) -> float:
         """
         Takes the real world value (like $17k - that would answer the forecasting question)
         and converts it to a cdf location between 0 and 1 depending on
@@ -232,14 +232,14 @@ class NumericDistribution(BaseModel):
             deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
             unscaled_location = (
                 np.log(
-                    (percentile_value - range_min) * (deriv_ratio - 1)
+                    (nominal_value - range_min) * (deriv_ratio - 1)
                     + (range_max - range_min)
                 )
                 - np.log(range_max - range_min)
             ) / np.log(deriv_ratio)
         else:
             # linearly scaled question
-            unscaled_location = (percentile_value - range_min) / (range_max - range_min)
+            unscaled_location = (nominal_value - range_min) / (range_max - range_min)
         return unscaled_location
 
     def _get_cdf_at(self, cdf_location: float) -> float:
@@ -343,17 +343,17 @@ class NumericDistribution(BaseModel):
 
         return standardized_cdf
 
-    def _cdf_location_to_nominal_location(self, location: float) -> float:
+    def _cdf_location_to_nominal_location(self, cdf_location: float) -> float:
         range_max = self.upper_bound
         range_min = self.lower_bound
         zero_point = self.zero_point
 
         if zero_point is None:
-            scaled_location = range_min + (range_max - range_min) * location
+            scaled_location = range_min + (range_max - range_min) * cdf_location
         else:
             deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
             scaled_location = range_min + (range_max - range_min) * (
-                deriv_ratio**location - 1
+                deriv_ratio**cdf_location - 1
             ) / (deriv_ratio - 1)
         return scaled_location
 

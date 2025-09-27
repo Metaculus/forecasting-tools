@@ -564,6 +564,7 @@ class TestNumericForecasts:
         assert question.id_of_question is not None
         percentiles = [
             Percentile(percentile=0.18, value=-10),
+            Percentile(percentile=0.24, value=-0.1),
             Percentile(percentile=0.25, value=0.001),
             Percentile(percentile=0.5, value=0.1),
             Percentile(percentile=0.75, value=0.3042),
