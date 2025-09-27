@@ -230,6 +230,9 @@ class NumericDistribution(BaseModel):
         if zero_point is not None:
             # logarithmically scaled question
             deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
+            if nominal_value == zero_point:
+                # If nominal = zero point, then you would take the log of 0. Add a small epsilon to avoid this.
+                nominal_value += 1e-10
             unscaled_location = (
                 np.log(
                     (nominal_value - range_min) * (deriv_ratio - 1)
