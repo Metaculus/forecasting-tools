@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 
 import numpy as np
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, model_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import DiscreteQuestion, NumericQuestion
@@ -32,11 +32,11 @@ class NumericDistribution(BaseModel):
     cdf_size: int | None = (
         None  # Normal numeric questions have 201 points, but discrete questions have fewer
     )
+    standardize_cdf: bool
 
-    @field_validator("declared_percentiles")
-    def validate_percentiles(
-        cls: NumericDistribution, percentiles: list[Percentile]
-    ) -> list[Percentile]:
+    @model_validator(mode="after")
+    def validate_percentiles(self: NumericDistribution) -> NumericDistribution:
+        percentiles = self.declared_percentiles
         for i in range(len(percentiles) - 1):
             if percentiles[i].percentile >= percentiles[i + 1].percentile:
                 raise ValueError("Percentiles must be in strictly increasing order")
@@ -55,11 +55,43 @@ class NumericDistribution(BaseModel):
                 "One possible reason is that your prediction is mostly or completely out of the upper/lower "
                 "bound range thus assigning very little probability to any one x-axis value."
             )
-        return percentiles
+
+        if self.standardize_cdf:
+            percentiles_within_bounds = [
+                percentile
+                for percentile in percentiles
+                if self.lower_bound <= percentile.value <= self.upper_bound
+            ]
+            if len(percentiles_within_bounds) == 0:
+                raise ValueError(
+                    "No declared percentiles are within the range of the question. "
+                    f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
+                    f"Percentiles: {percentiles}"
+                )
+
+            max_to_min_range = self.upper_bound - self.lower_bound
+            max_to_min_range_buffer = max_to_min_range * 3
+            percentiles_far_exceeding_bounds = [
+                percentile
+                for percentile in percentiles
+                if percentile.value < self.lower_bound - max_to_min_range_buffer
+                or percentile.value > self.upper_bound + max_to_min_range_buffer
+            ]
+            if len(percentiles_far_exceeding_bounds) > 0:
+                raise ValueError(
+                    "Some declared percentiles are far exceeding the bounds of the question. "
+                    f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
+                    f"Percentiles: {percentiles_far_exceeding_bounds}"
+                )
+
+        return self
 
     @classmethod
     def from_question(
-        cls, percentiles: list[Percentile], question: NumericQuestion
+        cls,
+        percentiles: list[Percentile],
+        question: NumericQuestion,
+        standardize_cdf: bool = True,
     ) -> NumericDistribution:
         return NumericDistribution(
             declared_percentiles=percentiles,
@@ -69,6 +101,7 @@ class NumericDistribution(BaseModel):
             lower_bound=question.lower_bound,
             zero_point=question.zero_point,
             cdf_size=question.cdf_size,
+            standardize_cdf=standardize_cdf,
         )
 
     @property
@@ -125,7 +158,9 @@ class NumericDistribution(BaseModel):
         for l in cdf_eval_locations:
             continuous_cdf.append(self._get_cdf_at(l))
             cdf_xaxis.append(self._cdf_location_to_nominal_location(l))
-        continuous_cdf = self._standardize_cdf(continuous_cdf)
+
+        if self.standardize_cdf:
+            continuous_cdf = self._standardize_cdf(continuous_cdf)
 
         percentiles = [
             Percentile(value=value, percentile=percentile)
@@ -140,6 +175,7 @@ class NumericDistribution(BaseModel):
             upper_bound=self.upper_bound,
             lower_bound=self.lower_bound,
             zero_point=self.zero_point,
+            standardize_cdf=self.standardize_cdf,
         )
         NumericDistribution.model_validate(validation_distribution)
         return percentiles
