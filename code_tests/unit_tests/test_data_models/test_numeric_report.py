@@ -47,6 +47,7 @@ def test_numeric_distribution_validation() -> None:
         upper_bound=100.0,
         lower_bound=0.0,
         zero_point=None,
+        standardize_cdf=False,
     )
     assert len(distribution.declared_percentiles) == 3
 
@@ -64,6 +65,7 @@ def test_numeric_distribution_validation() -> None:
             upper_bound=100.0,
             lower_bound=0.0,
             zero_point=None,
+            standardize_cdf=False,
         )
 
     # Test non-increasing values
@@ -80,6 +82,7 @@ def test_numeric_distribution_validation() -> None:
             upper_bound=100.0,
             lower_bound=0.0,
             zero_point=None,
+            standardize_cdf=False,
         )
 
 
@@ -98,6 +101,7 @@ def test_get_representative_percentiles() -> None:
         upper_bound=100.0,
         lower_bound=0.0,
         zero_point=None,
+        standardize_cdf=False,
     )
 
     # Test with valid number of percentiles
@@ -140,6 +144,7 @@ async def test_aggregate_predictions() -> None:
         upper_bound=100.0,
         lower_bound=0.0,
         zero_point=None,
+        standardize_cdf=False,
     )
     dist2 = NumericDistribution(
         declared_percentiles=percentiles2,
@@ -148,6 +153,7 @@ async def test_aggregate_predictions() -> None:
         upper_bound=100.0,
         lower_bound=0.0,
         zero_point=None,
+        standardize_cdf=False,
     )
     dist3 = NumericDistribution(
         declared_percentiles=percentiles3,
@@ -156,6 +162,7 @@ async def test_aggregate_predictions() -> None:
         upper_bound=100.0,
         lower_bound=0.0,
         zero_point=None,
+        standardize_cdf=False,
     )
 
     question = NumericQuestion(
@@ -218,6 +225,7 @@ def test_close_bound_distribution(percentiles: list[Percentile]) -> None:
             lower_bound=0.0,
             zero_point=None,
             cdf_size=cdf_size,
+            standardize_cdf=False,
         )
 
         assert distribution.cdf[0].percentile == pytest.approx(0.0)
@@ -249,6 +257,7 @@ def test_error_on_too_little_probability_assigned_in_range() -> None:
         zero_point=None,
         open_lower_bound=True,
         open_upper_bound=True,
+        standardize_cdf=False,
     )
     with pytest.raises(Exception):
         logger.info(prediction.cdf)

@@ -32,7 +32,7 @@ class NumericDistribution(BaseModel):
     cdf_size: int | None = (
         None  # Normal numeric questions have 201 points, but discrete questions have fewer
     )
-    standardize_cdf: bool
+    standardize_cdf: bool = True
 
     @model_validator(mode="after")
     def validate_percentiles(self: NumericDistribution) -> NumericDistribution:
@@ -70,7 +70,7 @@ class NumericDistribution(BaseModel):
                 )
 
             max_to_min_range = self.upper_bound - self.lower_bound
-            max_to_min_range_buffer = max_to_min_range * 3
+            max_to_min_range_buffer = max_to_min_range * 2
             percentiles_far_exceeding_bounds = [
                 percentile
                 for percentile in percentiles
@@ -91,18 +91,29 @@ class NumericDistribution(BaseModel):
         cls,
         percentiles: list[Percentile],
         question: NumericQuestion,
-        standardize_cdf: bool = True,
+        standardize_cdf: bool | None = None,
     ) -> NumericDistribution:
-        return NumericDistribution(
-            declared_percentiles=percentiles,
-            open_upper_bound=question.open_upper_bound,
-            open_lower_bound=question.open_lower_bound,
-            upper_bound=question.upper_bound,
-            lower_bound=question.lower_bound,
-            zero_point=question.zero_point,
-            cdf_size=question.cdf_size,
-            standardize_cdf=standardize_cdf,
-        )
+        if standardize_cdf is None:
+            return NumericDistribution(
+                declared_percentiles=percentiles,
+                open_upper_bound=question.open_upper_bound,
+                open_lower_bound=question.open_lower_bound,
+                upper_bound=question.upper_bound,
+                lower_bound=question.lower_bound,
+                zero_point=question.zero_point,
+                cdf_size=question.cdf_size,
+            )
+        else:
+            return NumericDistribution(
+                declared_percentiles=percentiles,
+                open_upper_bound=question.open_upper_bound,
+                open_lower_bound=question.open_lower_bound,
+                upper_bound=question.upper_bound,
+                lower_bound=question.lower_bound,
+                zero_point=question.zero_point,
+                cdf_size=question.cdf_size,
+                standardize_cdf=standardize_cdf,
+            )
 
     @property
     def inversed_expected_log_score(self) -> float | None:
@@ -224,6 +235,8 @@ class NumericDistribution(BaseModel):
 
         # Adjust any values that are exactly at the bounds
         for percentile, value in list(return_percentiles.items()):
+            # TODO: Handle this more gracefully for log scaled questions
+            #  (where buffer could be quite a bit on the lower bound side)
             if not open_lower_bound and value <= range_min + buffer:
                 return_percentiles[percentile] = range_min + buffer
             if not open_upper_bound and value >= range_max - buffer:
@@ -312,6 +325,7 @@ class NumericDistribution(BaseModel):
         - smooths over cdfs that spike too heavily (exceed a change of 0.59)
         - assigns no mass outside of closed bounds (scales accordingly)
         - assigns at least a minimum amount of mass outside of open bounds
+            (TODO: This might already be done by _add_explicit_upper_lower_bound_percentiles?)
         - increasing by at least the minimum amount (0.01 / 200 = 0.0005)
         """
 
@@ -319,8 +333,46 @@ class NumericDistribution(BaseModel):
         open_lower_bound = self.open_lower_bound
         cdf_size = self.cdf_size or 201
 
+        if cdf_size == 201:
+            cdf = self._flatten_high_density_cdf(cdf)
+        else:
+            logger.debug(
+                "Skipping flattening high density cdf for discrete questions since this code seems to not work well for them (as of Sep 26 2025)"
+            )
+
+        # apply open-boundary scaling
+        scale_lower_to = 0 if open_lower_bound else cdf[0]
+        scale_upper_to = 1.0 if open_upper_bound else cdf[-1]
+        rescaled_inbound_mass = scale_upper_to - scale_lower_to
+
+        # apply minimum slope
+        def apply_minimum(F: float, location: float) -> float:
+            # `F` is the height of the cdf at `location` (in range [0, 1])
+            # rescale
+            rescaled_F = (F - scale_lower_to) / rescaled_inbound_mass
+            # offset
+            if open_lower_bound and open_upper_bound:
+                return 0.988 * rescaled_F + 0.01 * location + 0.001
+            elif open_lower_bound:
+                return 0.989 * rescaled_F + 0.01 * location + 0.001
+            elif open_upper_bound:
+                return 0.989 * rescaled_F + 0.01 * location
+            return 0.99 * rescaled_F + 0.01 * location
+
+        standardized_cdf = []
+        for i, F in enumerate(cdf):
+            standardized_F = apply_minimum(F, i / (len(cdf) - 1))
+            # round to avoid floating point errors
+            standardized_cdf.append(round(standardized_F, 10))
+
+        return standardized_cdf
+
+    def _flatten_high_density_cdf(self, input_cdf: list[float]) -> list[float]:
+        cdf_size = self.cdf_size or 201
+
         # First, cap the distribution to maximum (default 0.59)
         # operate in PMF space
+        cdf = input_cdf.copy()
         pmf = [cdf[0]]
         for i in range(1, len(cdf)):
             pmf.append(cdf[i] - cdf[i - 1])
@@ -354,33 +406,7 @@ class NumericDistribution(BaseModel):
         pmf_array = pmf_array / pmf_array.sum()
         # back to CDF space
         cdf = np.cumsum(pmf_array).tolist()[:-1]
-
-        # apply open-boundary scaling
-        scale_lower_to = 0 if open_lower_bound else cdf[0]
-        scale_upper_to = 1.0 if open_upper_bound else cdf[-1]
-        rescaled_inbound_mass = scale_upper_to - scale_lower_to
-
-        # apply minimum slope
-        def apply_minimum(F: float, location: float) -> float:
-            # `F` is the height of the cdf at `location` (in range [0, 1])
-            # rescale
-            rescaled_F = (F - scale_lower_to) / rescaled_inbound_mass
-            # offset
-            if open_lower_bound and open_upper_bound:
-                return 0.988 * rescaled_F + 0.01 * location + 0.001
-            elif open_lower_bound:
-                return 0.989 * rescaled_F + 0.01 * location + 0.001
-            elif open_upper_bound:
-                return 0.989 * rescaled_F + 0.01 * location
-            return 0.99 * rescaled_F + 0.01 * location
-
-        standardized_cdf = []
-        for i, F in enumerate(cdf):
-            standardized_F = apply_minimum(F, i / (len(cdf) - 1))
-            # round to avoid floating point errors
-            standardized_cdf.append(round(standardized_F, 10))
-
-        return standardized_cdf
+        return cdf
 
     def _cdf_location_to_nominal_location(self, cdf_location: float) -> float:
         range_max = self.upper_bound

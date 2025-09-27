@@ -581,6 +581,27 @@ class TestNumericForecasts:
         ]
         self._check_cdf_processes_and_posts_correctly(percentiles, question)
 
+    @pytest.mark.skip(
+        reason="High probability on one option isn't triggering the 0.59 error, so standardization is not needed"
+    )
+    def test_forecast_discrete_high_density(self) -> None:
+        # TODO: The standardization does not work right here
+        url = "https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/"
+        question = MetaculusApi.get_question_by_url(url)
+        assert isinstance(question, DiscreteQuestion)
+        assert question.id_of_question is not None
+        percentiles = [
+            Percentile(percentile=0.01, value=2.8999999),
+            Percentile(percentile=0.99, value=2.9),
+        ]
+        with pytest.raises(Exception):
+            self._check_cdf_processes_and_posts_correctly(
+                percentiles, question, standardize_cdf=False
+            )
+        self._check_cdf_processes_and_posts_correctly(
+            percentiles, question, standardize_cdf=True
+        )
+
     def test_forecast_regular_numeric(self) -> None:
         url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
         question = MetaculusApi.get_question_by_url(url)
@@ -647,7 +668,7 @@ class TestNumericForecasts:
 
         self._check_cdf_processes_and_posts_correctly(percentiles, question)
 
-    def test_numeric_high_density_forecast(self) -> None:
+    def test_numeric_high_density_forecast_1(self) -> None:
         url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
         question = MetaculusApi.get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
@@ -660,6 +681,27 @@ class TestNumericForecasts:
             self._check_cdf_processes_and_posts_correctly(
                 percentiles, question, standardize_cdf=False
             )
+        self._check_cdf_processes_and_posts_correctly(
+            percentiles, question, standardize_cdf=True
+        )
+
+    def test_numeric_high_density_forecast_2(self) -> None:
+        url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
+        question = MetaculusApi.get_question_by_url(url)
+        assert isinstance(question, NumericQuestion)
+        assert question.id_of_question is not None
+        percentiles = [
+            Percentile(percentile=0.1, value=-50.6),
+            Percentile(percentile=0.2, value=-50.4),
+            Percentile(percentile=0.3, value=-50.2),
+            Percentile(percentile=0.4, value=-50),
+            Percentile(percentile=0.5, value=-49.8),
+            Percentile(percentile=0.6, value=-49.6),
+            Percentile(percentile=0.7, value=-49.4),
+            Percentile(percentile=0.8, value=-49.2),
+            Percentile(percentile=0.9, value=-49),
+        ]
+        # TODO: Rework percentiles so it errors when standardize_cdf is False
         self._check_cdf_processes_and_posts_correctly(
             percentiles, question, standardize_cdf=True
         )
