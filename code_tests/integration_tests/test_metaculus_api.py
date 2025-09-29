@@ -690,18 +690,25 @@ class TestNumericForecasts:
         question = MetaculusApi.get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
+        # percentiles = [
+        #     Percentile(percentile=0.1, value=-50.6),
+        #     Percentile(percentile=0.2, value=-50.4),
+        #     Percentile(percentile=0.3, value=-50.2),
+        #     Percentile(percentile=0.4, value=-50),
+        #     Percentile(percentile=0.5, value=-49.8),
+        #     Percentile(percentile=0.6, value=-49.6),
+        #     Percentile(percentile=0.7, value=-49.4),
+        #     Percentile(percentile=0.8, value=-49.2),
+        #     Percentile(percentile=0.9, value=-49),
+        # ]
         percentiles = [
-            Percentile(percentile=0.1, value=-50.6),
-            Percentile(percentile=0.2, value=-50.4),
-            Percentile(percentile=0.3, value=-50.2),
-            Percentile(percentile=0.4, value=-50),
-            Percentile(percentile=0.5, value=-49.8),
-            Percentile(percentile=0.6, value=-49.6),
-            Percentile(percentile=0.7, value=-49.4),
-            Percentile(percentile=0.8, value=-49.2),
-            Percentile(percentile=0.9, value=-49),
+            Percentile(percentile=0.01, value=-50.0001),
+            Percentile(percentile=0.99, value=-49.9999),
         ]
-        # TODO: Rework percentiles so it errors when standardize_cdf is False
+        with pytest.raises(Exception):
+            self._check_cdf_processes_and_posts_correctly(
+                percentiles, question, standardize_cdf=False
+            )
         self._check_cdf_processes_and_posts_correctly(
             percentiles, question, standardize_cdf=True
         )

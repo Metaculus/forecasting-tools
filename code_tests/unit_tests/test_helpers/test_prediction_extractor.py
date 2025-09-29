@@ -746,7 +746,7 @@ def test_numeric_parsing(
     question: NumericQuestion,
 ) -> None:
     numeric_distribution = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-        gpt_response, question
+        gpt_response, question, standardize_cdf=False
     )
     assert len(numeric_distribution.declared_percentiles) == len(
         expected_percentiles
