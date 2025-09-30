@@ -377,8 +377,7 @@ class MetaculusClient:
         questions = typeguard.check_type(questions, list[BinaryQuestion])
         return questions
 
-    @staticmethod
-    def _get_auth_headers() -> dict[str, dict[str, str]]:
+    def _get_auth_headers(self) -> dict[str, dict[str, str]]:
         METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
         if METACULUS_TOKEN is None:
             raise ValueError("METACULUS_TOKEN environment variable not set")
