@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from typing import List, Literal, overload
-from warnings import deprecated
+
+import typing_extensions
 
 from forecasting_tools.data_models.coherence_link import CoherenceLink
 from forecasting_tools.data_models.questions import BinaryQuestion, MetaculusQuestion
@@ -22,7 +23,7 @@ __all__ = [
 ]
 
 
-@deprecated("MetaculusApi is deprecated, use MetaculusClient instead")
+@typing_extensions.deprecated("MetaculusApi is deprecated, use MetaculusClient instead")
 class MetaculusApi:
     """
     Documentation for the API can be found at https://www.metaculus.com/api/
