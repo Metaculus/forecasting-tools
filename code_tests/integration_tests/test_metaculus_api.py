@@ -666,9 +666,14 @@ class TestNumericForecasts:
             Percentile(percentile=0.75, value=1000),
         ]
 
-        self._check_cdf_processes_and_posts_correctly(percentiles, question)
+        self._check_cdf_processes_and_posts_correctly(
+            percentiles, question, standardize_cdf=True
+        )
+        self._check_cdf_processes_and_posts_correctly(
+            percentiles, question, standardize_cdf=False
+        )
 
-    def test_numeric_high_density_forecast_1(self) -> None:
+    def test_numeric_high_density_forecast_in_middle(self) -> None:
         url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
         question = MetaculusApi.get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
@@ -685,22 +690,11 @@ class TestNumericForecasts:
             percentiles, question, standardize_cdf=True
         )
 
-    def test_numeric_high_density_forecast_2(self) -> None:
+    def test_numeric_high_density_forecast_on_edge(self) -> None:
         url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
         question = MetaculusApi.get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
-        # percentiles = [
-        #     Percentile(percentile=0.1, value=-50.6),
-        #     Percentile(percentile=0.2, value=-50.4),
-        #     Percentile(percentile=0.3, value=-50.2),
-        #     Percentile(percentile=0.4, value=-50),
-        #     Percentile(percentile=0.5, value=-49.8),
-        #     Percentile(percentile=0.6, value=-49.6),
-        #     Percentile(percentile=0.7, value=-49.4),
-        #     Percentile(percentile=0.8, value=-49.2),
-        #     Percentile(percentile=0.9, value=-49),
-        # ]
         percentiles = [
             Percentile(percentile=0.01, value=-50.0001),
             Percentile(percentile=0.99, value=-49.9999),
@@ -734,7 +728,8 @@ class TestNumericForecasts:
         )
         assert question.id_of_post is not None
         MetaculusApi.post_question_comment(
-            question.id_of_post, "Testing prediction edge cases"
+            question.id_of_post,
+            f"Testing prediction edge cases. Declared percentiles: {percentiles}",
         )
 
 

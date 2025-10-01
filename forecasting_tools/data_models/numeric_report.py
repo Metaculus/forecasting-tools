@@ -116,14 +116,6 @@ class NumericDistribution(BaseModel):
                 standardize_cdf=standardize_cdf,
             )
 
-    @property
-    def inversed_expected_log_score(self) -> float | None:
-        raise NotImplementedError("Not implemented")
-
-    @property
-    def community_prediction(self) -> NumericDistribution | None:
-        raise NotImplementedError("Not implemented")
-
     def get_representative_percentiles(
         self, num_percentiles: int = 5
     ) -> list[Percentile]:
@@ -168,7 +160,6 @@ class NumericDistribution(BaseModel):
         - 'value' or 'nominal location' (The real world number that answers the question)
         - cdf location (a number between 0 and 1 representing where the point is on the cdf x axis, where 0 is range min, and 1 is range max)
         """
-        # TODO: This function needs to be cleaned up and made more readable
 
         cdf_size = self.cdf_size or 201
         continuous_cdf = []
@@ -253,16 +244,18 @@ class NumericDistribution(BaseModel):
         # Set cdf values outside range
         if open_upper_bound:
             if range_max > return_percentiles[percentile_max]:
-                return_percentiles[int(100 - (0.5 * (100 - percentile_max)))] = (
-                    range_max
+                halfway_between_max_and_100th_percentile = 100 - (
+                    0.5 * (100 - percentile_max)
                 )
+                return_percentiles[halfway_between_max_and_100th_percentile] = range_max
         else:
             return_percentiles[100] = range_max
 
         # Set cdf values outside range
         if open_lower_bound:
             if range_min < return_percentiles[percentile_min]:
-                return_percentiles[int(0.5 * percentile_min)] = range_min
+                halfway_between_min_and_0th_percentile = 0.5 * percentile_min
+                return_percentiles[halfway_between_min_and_0th_percentile] = range_min
         else:
             return_percentiles[0] = range_min
 
