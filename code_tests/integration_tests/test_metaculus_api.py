@@ -732,6 +732,8 @@ class TestNumericForecasts:
             f"Testing prediction edge cases. Declared percentiles: {percentiles}",
         )
 
+    # TODO: Test extremely flat but valid forecast
+
 
 class TestApiFilter:
 
