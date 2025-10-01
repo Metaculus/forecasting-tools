@@ -1,6 +1,7 @@
 from datetime import datetime
 from unittest.mock import Mock
 
+import dotenv
 import pendulum
 import pytest
 import time_machine
@@ -28,6 +29,8 @@ assert (
     PERCENT_FORECAST_LONG_TIME_AGO + PERCENT_FORECAST_SHORT_TIME_AGO
     == PERCENT_ALREADY_FORECASTED
 )
+
+dotenv.load_dotenv()
 
 
 def create_mock_questions() -> list[MetaculusQuestion]:
