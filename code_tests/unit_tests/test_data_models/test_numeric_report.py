@@ -228,15 +228,18 @@ def test_close_bound_distribution(percentiles: list[Percentile]) -> None:
             standardize_cdf=False,
         )
 
-        assert distribution.cdf[0].percentile == pytest.approx(0.0)
-        assert distribution.cdf[0].value == pytest.approx(0.0)
-        assert distribution.cdf[-1].percentile == pytest.approx(1.0)
+        assert distribution.get_cdf()[0].percentile == pytest.approx(0.0)
+        assert distribution.get_cdf()[0].value == pytest.approx(0.0)
+        assert distribution.get_cdf()[-1].percentile == pytest.approx(1.0)
         assert distribution.cdf[-1].value == pytest.approx(100.0)
 
-        for i in range(len(distribution.cdf) - 1):
-            assert distribution.cdf[i + 1].value - distribution.cdf[i].value > 0.00001
+        for i in range(len(distribution.get_cdf()) - 1):
+            assert (
+                distribution.get_cdf()[i + 1].value - distribution.get_cdf()[i].value
+                > 0.00001
+            )
 
-        assert len(distribution.cdf) == cdf_size
+        assert len(distribution.get_cdf()) == cdf_size
 
 
 def test_error_on_too_little_probability_assigned_in_range() -> None:
@@ -260,5 +263,5 @@ def test_error_on_too_little_probability_assigned_in_range() -> None:
         standardize_cdf=False,
     )
     with pytest.raises(Exception):
-        logger.info(prediction.cdf)
-        prediction.cdf
+        logger.info(prediction.get_cdf())
+        prediction.get_cdf()

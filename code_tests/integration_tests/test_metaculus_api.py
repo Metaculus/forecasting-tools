@@ -729,7 +729,8 @@ class TestNumericForecasts:
             )
         assert question.id_of_question is not None
         MetaculusApi.post_numeric_question_prediction(
-            question.id_of_question, [p.percentile for p in numeric_distribution.cdf]
+            question.id_of_question,
+            [p.percentile for p in numeric_distribution.get_cdf()],
         )
         assert question.id_of_post is not None
         MetaculusApi.post_question_comment(

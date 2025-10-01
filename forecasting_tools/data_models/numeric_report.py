@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 
 import numpy as np
+import typing_extensions
 from pydantic import BaseModel, Field, model_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
@@ -147,7 +148,14 @@ class NumericDistribution(BaseModel):
         return representative_percentiles
 
     @property
+    @typing_extensions.deprecated(
+        "NumericDistribution.cdf (property) will be replaced with NumericDistribution.get_cdf (method). Please switch.",
+        category=None,
+    )
     def cdf(self) -> list[Percentile]:
+        return self.get_cdf()
+
+    def get_cdf(self) -> list[Percentile]:
         """
         Turns a list of percentiles into a full distribution (201 points, if numeric, otherwise based on discrete values)
         between upper and lower bound (taking into account probability assigned above and below the bounds)
@@ -432,7 +440,7 @@ class NumericReport(ForecastReport):
         cls, predictions: list[NumericDistribution], question: NumericQuestion
     ) -> NumericDistribution:
         assert predictions, "No predictions to aggregate"
-        cdfs = [prediction.cdf for prediction in predictions]
+        cdfs = [prediction.get_cdf() for prediction in predictions]
         all_percentiles_of_cdf: list[list[float]] = []
         all_values_of_cdf: list[list[float]] = []
         x_axis: list[float] = [percentile.value for percentile in cdfs[0]]
@@ -490,7 +498,9 @@ class NumericReport(ForecastReport):
                 prediction.declared_percentiles, self.question
             )
 
-        cdf_probabilities = [percentile.percentile for percentile in prediction.cdf]
+        cdf_probabilities = [
+            percentile.percentile for percentile in prediction.get_cdf()
+        ]
 
         MetaculusApi.post_numeric_question_prediction(
             self.question.id_of_question, cdf_probabilities
