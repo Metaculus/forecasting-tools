@@ -10,7 +10,6 @@ from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot,
 )
-from forecasting_tools.helpers.metaculus_api import MetaculusApi
 from run_bots import (
     AllowedTourn,
     RunBotConfig,
@@ -81,11 +80,9 @@ def create_mock_questions() -> list[MetaculusQuestion]:
     return questions
 
 
-def mock_metaculus_api_call(
-    mocker: Mock,
-) -> Mock:
+def mock_metaculus_api_call(mocker: Mock) -> Mock:
     mock_function = mocker.patch(
-        f"{MetaculusApi.get_questions_matching_filter.__module__}.{MetaculusApi.get_questions_matching_filter.__qualname__}",
+        "forecasting_tools.helpers.metaculus_client.MetaculusClient.get_questions_matching_filter",
         return_value=create_mock_questions(),
     )
     return mock_function
