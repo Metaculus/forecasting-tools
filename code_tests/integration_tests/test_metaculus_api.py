@@ -22,7 +22,8 @@ from forecasting_tools.data_models.questions import (
     NumericQuestion,
     QuestionState,
 )
-from forecasting_tools.helpers.metaculus_api import ApiFilter, MetaculusApi
+from forecasting_tools.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.helpers.metaculus_client import ApiFilter
 
 logger = logging.getLogger(__name__)
 

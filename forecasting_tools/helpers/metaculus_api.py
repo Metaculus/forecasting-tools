@@ -10,20 +10,12 @@ from forecasting_tools.helpers.metaculus_client import (
     ApiFilter,
     GroupQuestionMode,
     MetaculusClient,
-    QuestionFullType,
-    QuestionStateAsString,
 )
 
-__all__ = [
-    "MetaculusApi",
-    "ApiFilter",
-    "GroupQuestionMode",
-    "QuestionFullType",
-    "QuestionStateAsString",
-]
 
-
-@typing_extensions.deprecated("MetaculusApi is deprecated, use MetaculusClient instead")
+@typing_extensions.deprecated(
+    "MetaculusApi is deprecated, please replace instances of MetaculusApi.method(...) with MetaculusClient().method(...)"
+)
 class MetaculusApi:
     """
     Documentation for the API can be found at https://www.metaculus.com/api/

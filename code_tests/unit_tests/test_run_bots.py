@@ -6,6 +6,7 @@ import pytest
 import time_machine
 
 from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
+from forecasting_tools import MetaculusClient
 from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot,
@@ -82,7 +83,7 @@ def create_mock_questions() -> list[MetaculusQuestion]:
 
 def mock_metaculus_api_call(mocker: Mock) -> Mock:
     mock_function = mocker.patch(
-        "forecasting_tools.helpers.metaculus_client.MetaculusClient.get_questions_matching_filter",
+        f"{MetaculusClient.get_questions_matching_filter.__module__}.{MetaculusClient.get_questions_matching_filter.__qualname__}",
         return_value=create_mock_questions(),
     )
     return mock_function

@@ -146,8 +146,9 @@ from forecasting_tools.forecast_bots.template_bot import TemplateBot as Template
 from forecasting_tools.helpers.asknews_searcher import (
     AskNewsSearcher as AskNewsSearcher,
 )
-from forecasting_tools.helpers.metaculus_api import ApiFilter as ApiFilter
 from forecasting_tools.helpers.metaculus_api import MetaculusApi as MetaculusApi
+from forecasting_tools.helpers.metaculus_api import MetaculusClient as MetaculusClient
+from forecasting_tools.helpers.metaculus_client import ApiFilter as ApiFilter
 from forecasting_tools.helpers.prediction_extractor import (
     PredictionExtractor as PredictionExtractor,
 )
