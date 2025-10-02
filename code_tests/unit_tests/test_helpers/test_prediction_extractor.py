@@ -269,30 +269,41 @@ from forecasting_tools.helpers.prediction_extractor import PredictionExtractor
             ],
             [0.01, 0.79, 0.2],
         ),
-        (  # comma numbers and small percentages
+        # (  # comma numbers and small percentages
+        #     """
+        #     - "0": 0.5%
+        #     - "1": 99%
+        #     - "2-100": 0.2%
+        #     - "100-1,000": 0.2%
+        #     - "1,001": 0.1%
+        #     """,
+        #     ["0", "1", "2-100", "100-1,000", "1,001"],
+        #     [0.005, 0.99, 0.002, 0.002, 0.001],
+        # ),
+        (  # comma numbers
             """
-            - "0": 0.5%
-            - "1": 99%
-            - "2-100": 0.2%
-            - "100-1,000": 0.2%
-            - "1,001": 0.1%
+            - "0": 2%
+            - "1": 93%
+            - "2-100": 2%
+            - "100-1,000": 2%
+            - "1,001": 1%
             """,
             ["0", "1", "2-100", "100-1,000", "1,001"],
-            [0.005, 0.99, 0.002, 0.002, 0.001],
+            [0.02, 0.93, 0.02, 0.02, 0.01],
         ),
         (  # Test json format
             """
             Research and reasoning
             {
                 "0": 20,
-                "1": 68.98,
+                "1": 66.98,
                 "2": 9.99,
                 "3": 1.01,
-                "10": 0.1,
+                "10": 2.1,
             }
             """,
             ["0", "1", "2", "3", "10"],
-            [0.2, 0.6898, 0.0999, 0.0101, 0.001],
+            [0.2, 0.6698, 0.0999, 0.0101, 0.021],
         ),
         (  # Test table format
             """
@@ -746,7 +757,7 @@ def test_numeric_parsing(
     question: NumericQuestion,
 ) -> None:
     numeric_distribution = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-        gpt_response, question
+        gpt_response, question, standardize_cdf=False
     )
     assert len(numeric_distribution.declared_percentiles) == len(
         expected_percentiles

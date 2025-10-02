@@ -86,6 +86,7 @@ async def test_general_invoke() -> None:
 
 
 async def test_filtered_invoke() -> None:
+    # TODO: See if Exa has a fix for this failing, but its probably something on their end.
     num_results = 3
     model = ExaSearcher(
         num_results=num_results, include_highlights=False, include_text=True

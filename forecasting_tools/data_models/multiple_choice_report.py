@@ -35,9 +35,12 @@ class PredictedOptionList(BaseModel):
         )
 
         # Step 1: Clamp values
+        max_clamped_prob = 0.99
+        min_clamped_prob = 0.01
         clamped_list = [
-            max(min(x.probability, 0.999), 0.0012) for x in self.predicted_options
-        ]  # Clamp to 0.12% so that normalization doesn't bring it below 0.1%
+            max(min(x.probability, max_clamped_prob), min_clamped_prob)
+            for x in self.predicted_options
+        ]
 
         # Step 2: Calculate the sum of all elements
         total_sum_decimal = sum(clamped_list)
@@ -54,12 +57,17 @@ class PredictedOptionList(BaseModel):
         assert (
             abs(new_sum - 1) < 0.0001
         ), "Sum of normalized option probabilities is not 1"
+        max_probability_change = 0.05
         for original_option, new_probability in zip(
             self.predicted_options, normalized_option_probabilities
         ):
-            assert (
-                abs(new_probability - original_option.probability) < 0.01
-            ), "New probability does not match original probability"
+            if (
+                abs(new_probability - original_option.probability)
+                > max_probability_change
+            ):
+                raise ValueError(
+                    f"New probability {new_probability} differs from original probability {original_option.probability} by more than {max_probability_change} for option {original_option.option_name}"
+                )
 
         self.predicted_options = [
             PredictedOption(option_name=option.option_name, probability=probability)

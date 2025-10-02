@@ -91,6 +91,12 @@ def grab_question_details_from_metaculus(
     """
     This function grabs the details of a question from a Metaculus URL or ID.
     """
+    if isinstance(url_or_id, str):
+        try:
+            url_or_id = int(url_or_id)
+        except ValueError:
+            pass
+
     if isinstance(url_or_id, int):
         question = MetaculusApi.get_question_by_post_id(url_or_id)
     else:

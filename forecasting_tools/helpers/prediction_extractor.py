@@ -227,7 +227,7 @@ class PredictionExtractor:
 
     @staticmethod
     def extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-        text: str, question: NumericQuestion
+        text: str, question: NumericQuestion, standardize_cdf: bool | None = None
     ) -> NumericDistribution:
         if not text or text.strip() == "":
             raise ValueError(
@@ -244,7 +244,9 @@ class PredictionExtractor:
             raise ValueError(
                 f"Couldn't extract numeric distribution from response. The text was: {text}"
             )
-        return NumericDistribution.from_question(final_percentiles, question)
+        return NumericDistribution.from_question(
+            final_percentiles, question, standardize_cdf
+        )
 
     @staticmethod
     def _get_percentile_lines(text: str) -> list[str]:

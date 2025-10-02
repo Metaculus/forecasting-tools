@@ -46,6 +46,39 @@ def test_predicted_option_validation() -> None:
         PredictedOption(option_name="Test", probability=1.1)
 
 
+def test_add_to_one_validation() -> None:
+    with pytest.raises(ValidationError):
+        PredictedOptionList(
+            predicted_options=[
+                PredictedOption(option_name="Option A", probability=0.5),
+            ]
+        )
+    with pytest.raises(ValidationError):
+        PredictedOptionList(
+            predicted_options=[
+                PredictedOption(option_name="Option A", probability=0.5),
+                PredictedOption(option_name="Option B", probability=0.6),
+                PredictedOption(option_name="Option C", probability=0.7),
+            ]
+        )
+    with pytest.raises(ValidationError):
+        PredictedOptionList(
+            predicted_options=[
+                PredictedOption(option_name="Option A", probability=0.98),
+                PredictedOption(option_name="Option B", probability=0.02),
+                PredictedOption(option_name="Option C", probability=0.02),
+            ]
+        )
+
+    PredictedOptionList(
+        predicted_options=[
+            PredictedOption(option_name="Option A", probability=0.98),
+            PredictedOption(option_name="Option B", probability=0.01),
+            PredictedOption(option_name="Option C", probability=0.001),
+        ]
+    )
+
+
 async def test_aggregate_predictions_with_same_options() -> None:
     predictions = [
         PredictedOptionList(
@@ -95,3 +128,40 @@ async def test_aggregate_predictions_with_different_options() -> None:
     question = create_test_mc_question()
     with pytest.raises(Exception):
         await MultipleChoiceReport.aggregate_predictions(predictions, question)
+
+
+def test_clamping_of_probabilities() -> None:
+    predicted_option_list = PredictedOptionList(
+        predicted_options=[
+            PredictedOption(option_name="Option A", probability=0),
+            PredictedOption(option_name="Option B", probability=1),
+        ],
+    )
+    assert predicted_option_list.predicted_options[0].probability == 0.01
+    assert predicted_option_list.predicted_options[1].probability == 0.99
+
+    predicted_option_list = PredictedOptionList(
+        predicted_options=[
+            PredictedOption(option_name="Option A", probability=0.001),
+            PredictedOption(option_name="Option B", probability=1),
+            PredictedOption(option_name="Option C", probability=0),
+        ],
+    )
+    assert predicted_option_list.predicted_options[0].probability != 0.001
+    assert predicted_option_list.predicted_options[1].probability != 1
+    assert predicted_option_list.predicted_options[2].probability != 0
+
+    predicted_option_list = PredictedOptionList(
+        predicted_options=[
+            PredictedOption(option_name="Option A", probability=0),
+            PredictedOption(option_name="Option B", probability=1),
+            PredictedOption(option_name="Option C", probability=0),
+            PredictedOption(option_name="Option D", probability=0),
+            PredictedOption(option_name="Option E", probability=0),
+        ],
+    )
+    assert predicted_option_list.predicted_options[0].probability != 0
+    assert predicted_option_list.predicted_options[1].probability != 1
+    assert predicted_option_list.predicted_options[2].probability != 0
+    assert predicted_option_list.predicted_options[3].probability != 0
+    assert predicted_option_list.predicted_options[4].probability != 0
