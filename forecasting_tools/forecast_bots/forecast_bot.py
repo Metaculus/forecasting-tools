@@ -560,7 +560,7 @@ class ForecastBot(ABC):
         time_spent_in_minutes_formatted = f"{round(time_spent_in_minutes, 2)} minutes"
         cost_formatted = f"${round(final_cost,4)} (estimated)"
         disabled_metadata_formatted = "extra_metadata_in_explanation is disabled"
-        full_explanation_without_summary = clean_indents(
+        full_explanation = clean_indents(
             f"""
             # SUMMARY
             *Question*: {question.question_text}
@@ -579,7 +579,13 @@ class ForecastBot(ABC):
             {combined_rationales}
             """
         )
-        return full_explanation_without_summary
+        max_comment_size = 150000
+        if len(full_explanation) > max_comment_size:
+            full_explanation = (
+                full_explanation[:2000]
+                + "\n\n---\n\n The comment size exceeded max size and has been truncated"
+            )
+        return full_explanation
 
     @classmethod
     def _format_and_expand_research_summary(

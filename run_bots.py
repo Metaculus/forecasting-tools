@@ -771,6 +771,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openai/gpt-4.1",
                     temperature=default_temperature,
+                    timeout=60 * 5,
                 ),
                 bot_type="gpt_4_1_optimized",
             ),
@@ -782,6 +783,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openai/gpt-4.1-nano",
                     temperature=default_temperature,
+                    timeout=60 * 5,
                 ),
                 bot_type="gpt_4_1_optimized",
             ),
