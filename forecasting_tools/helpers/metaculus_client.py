@@ -126,7 +126,16 @@ class MetaculusClient:
 
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
 
-    def __init__(self, base_url: str = "https://www.metaculus.com/api"):
+    def __init__(self, base_url: str | None = None):
+        # TODO: Get this working using a pytest fixture or something similar
+        # regular_base_url = "https://www.metaculus.com/api"
+        # dev_base_url = "https://dev.metaculus.com/api"
+        # if base_url is None:
+        #     mode = os.environ.get("FORECASTING_TOOLS_TESTING_MODE")
+        #     is_testing = mode is not None and mode.lower() == "true"
+        #     self.base_url = dev_base_url if is_testing else regular_base_url
+        # else:
+        #     self.base_url = base_url
         self.base_url = base_url
 
     def post_question_comment(
