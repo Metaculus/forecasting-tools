@@ -23,7 +23,7 @@ from forecasting_tools.data_models.questions import (
     QuestionState,
 )
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
-from forecasting_tools.helpers.metaculus_client import ApiFilter
+from forecasting_tools.helpers.metaculus_client import ApiFilter, MetaculusClient
 
 logger = logging.getLogger(__name__)
 
@@ -541,9 +541,9 @@ class TestPostEndpoint:
 class TestNumericForecasts:
 
     def test_forecast_log_scale(self) -> None:
-        url = "https://www.metaculus.com/questions/6609/non-tesla-vehicles-w-tesla-software-by-2030/"
+        url = "https://dev.metaculus.com/questions/6609/non-tesla-vehicles-w-tesla-software-by-2030/"
         # Question resolves 2030 so is decent test question
-        question = MetaculusApi.get_question_by_url(url)
+        question = MetaculusClient.dev().get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
@@ -554,9 +554,34 @@ class TestNumericForecasts:
         ]
         self._check_cdf_processes_and_posts_correctly(percentiles, question)
 
+    def test_forecast_log_scale_repeated_values(self) -> None:
+        url = "https://dev.metaculus.com/questions/25402/"  # Resolves Jan 1 2026
+        question = MetaculusClient.dev().get_question_by_url(url)
+        assert isinstance(question, NumericQuestion)
+        assert question.id_of_question is not None
+        percentiles = [
+            Percentile(percentile=0.1, value=1.0),  # Repeated value
+            Percentile(percentile=0.2, value=1.0),  # Repeated value
+            Percentile(percentile=0.4, value=6.0),
+            Percentile(percentile=0.6, value=12.0),
+            Percentile(percentile=0.8, value=24.0),
+            Percentile(percentile=0.9, value=36.0),
+        ]
+        self._check_cdf_processes_and_posts_correctly(percentiles, question)
+
+        percentiles = [
+            Percentile(percentile=0.1, value=1.0),
+            Percentile(percentile=0.2, value=3.0),
+            Percentile(percentile=0.4, value=6.0),
+            Percentile(percentile=0.6, value=600.0),
+            Percentile(percentile=0.8, value=600.0),  # Repeated value
+            Percentile(percentile=0.9, value=600.0),  # Repeated value
+        ]
+        self._check_cdf_processes_and_posts_correctly(percentiles, question)
+
     def test_forecast_log_scaled_out_of_bounds(self) -> None:
-        url = "https://www.metaculus.com/questions/8936/us-workforce-as-it-specialists-in-2050/"
-        question = MetaculusApi.get_question_by_url(url)
+        url = "https://dev.metaculus.com/questions/8936/us-workforce-as-it-specialists-in-2050/"
+        question = MetaculusClient.dev().get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
@@ -571,8 +596,8 @@ class TestNumericForecasts:
         self._check_cdf_processes_and_posts_correctly(percentiles, question)
 
     def test_forecast_discrete(self) -> None:
-        url = "https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/"
-        question = MetaculusApi.get_question_by_url(url)
+        url = "https://dev.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/"
+        question = MetaculusClient.dev().get_question_by_url(url)
         assert isinstance(question, DiscreteQuestion)
         assert question.id_of_question is not None
         percentiles = [
@@ -587,8 +612,8 @@ class TestNumericForecasts:
     )
     def test_forecast_discrete_high_density(self) -> None:
         # TODO: The standardization does not work right here
-        url = "https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/"
-        question = MetaculusApi.get_question_by_url(url)
+        url = "https://dev.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/"
+        question = MetaculusClient.dev().get_question_by_url(url)
         assert isinstance(question, DiscreteQuestion)
         assert question.id_of_question is not None
         percentiles = [
@@ -604,8 +629,8 @@ class TestNumericForecasts:
         )
 
     def test_forecast_regular_numeric(self) -> None:
-        url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
-        question = MetaculusApi.get_question_by_url(url)
+        url = "https://dev.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
+        question = MetaculusClient.dev().get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
@@ -620,8 +645,8 @@ class TestNumericForecasts:
         )
 
     def test_numeric_fully_out_of_bounds(self) -> None:
-        url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
-        question = MetaculusApi.get_question_by_url(url)
+        url = "https://dev.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
+        question = MetaculusClient.dev().get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
@@ -643,8 +668,8 @@ class TestNumericForecasts:
             )
 
     def test_numeric_in_but_far_exceeding_bounds(self) -> None:
-        url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
-        question = MetaculusApi.get_question_by_url(url)
+        url = "https://dev.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
+        question = MetaculusClient.dev().get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
@@ -657,8 +682,8 @@ class TestNumericForecasts:
             self._check_cdf_processes_and_posts_correctly(percentiles, question)
 
     def test_numeric_exceeding_bounds(self) -> None:
-        url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
-        question = MetaculusApi.get_question_by_url(url)
+        url = "https://dev.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
+        question = MetaculusClient.dev().get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
@@ -675,8 +700,8 @@ class TestNumericForecasts:
         )
 
     def test_numeric_high_density_forecast_in_middle(self) -> None:
-        url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
-        question = MetaculusApi.get_question_by_url(url)
+        url = "https://dev.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
+        question = MetaculusClient.dev().get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
@@ -692,8 +717,8 @@ class TestNumericForecasts:
         )
 
     def test_numeric_high_density_forecast_on_edge(self) -> None:
-        url = "https://www.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
-        question = MetaculusApi.get_question_by_url(url)
+        url = "https://dev.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
+        question = MetaculusClient.dev().get_question_by_url(url)
         assert isinstance(question, NumericQuestion)
         assert question.id_of_question is not None
         percentiles = [
@@ -723,12 +748,12 @@ class TestNumericForecasts:
                 percentiles, question, standardize_cdf=standardize_cdf
             )
         assert question.id_of_question is not None
-        MetaculusApi.post_numeric_question_prediction(
+        MetaculusClient.dev().post_numeric_question_prediction(
             question.id_of_question,
             [p.percentile for p in numeric_distribution.get_cdf()],
         )
         assert question.id_of_post is not None
-        MetaculusApi.post_question_comment(
+        MetaculusClient.dev().post_question_comment(
             question.id_of_post,
             f"Testing prediction edge cases. Declared percentiles: {percentiles}",
         )

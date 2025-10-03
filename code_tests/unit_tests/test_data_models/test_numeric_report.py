@@ -32,34 +32,16 @@ def test_percentile_validation() -> None:
         Percentile(value=10.0, percentile=-0.1)
 
 
-def test_numeric_distribution_validation() -> None:
-    valid_percentiles = [
-        Percentile(value=10.0, percentile=0.1),
-        Percentile(value=20.0, percentile=0.5),
-        Percentile(value=30.0, percentile=0.9),
-    ]
+class TestNumericDistributionValidation:
+    def test_valid_distribution_creation(self) -> None:
+        valid_percentiles = [
+            Percentile(value=10.0, percentile=0.1),
+            Percentile(value=20.0, percentile=0.5),
+            Percentile(value=30.0, percentile=0.9),
+        ]
 
-    # Valid distribution
-    distribution = NumericDistribution(
-        declared_percentiles=valid_percentiles,
-        open_upper_bound=False,
-        open_lower_bound=False,
-        upper_bound=100.0,
-        lower_bound=0.0,
-        zero_point=None,
-        standardize_cdf=False,
-    )
-    assert len(distribution.declared_percentiles) == 3
-
-    # Test non-increasing percentiles
-    invalid_percentiles = [
-        Percentile(value=10.0, percentile=0.5),
-        Percentile(value=20.0, percentile=0.3),  # Decreasing percentile
-        Percentile(value=30.0, percentile=0.9),
-    ]
-    with pytest.raises(ValueError):
-        NumericDistribution(
-            declared_percentiles=invalid_percentiles,
+        distribution = NumericDistribution(
+            declared_percentiles=valid_percentiles,
             open_upper_bound=False,
             open_lower_bound=False,
             upper_bound=100.0,
@@ -67,22 +49,99 @@ def test_numeric_distribution_validation() -> None:
             zero_point=None,
             standardize_cdf=False,
         )
+        assert len(distribution.declared_percentiles) == 3
 
-    # Test non-increasing values
-    invalid_values = [
-        Percentile(value=10.0, percentile=0.1),
-        Percentile(value=5.0, percentile=0.5),  # Decreasing value
-        Percentile(value=30.0, percentile=0.9),
-    ]
-    with pytest.raises(Exception):
-        NumericDistribution(
-            declared_percentiles=invalid_values,
+    def test_non_increasing_percentiles_raises_error(self) -> None:
+        invalid_percentiles = [
+            Percentile(value=10.0, percentile=0.5),
+            Percentile(value=20.0, percentile=0.3),  # Decreasing percentile
+            Percentile(value=30.0, percentile=0.9),
+        ]
+        with pytest.raises(ValueError):
+            NumericDistribution(
+                declared_percentiles=invalid_percentiles,
+                open_upper_bound=False,
+                open_lower_bound=False,
+                upper_bound=100.0,
+                lower_bound=0.0,
+                zero_point=None,
+                standardize_cdf=False,
+            )
+
+    def test_non_increasing_values_raises_error(self) -> None:
+        invalid_values = [
+            Percentile(value=10.0, percentile=0.1),
+            Percentile(value=5.0, percentile=0.5),  # Decreasing value
+            Percentile(value=30.0, percentile=0.9),
+        ]
+        with pytest.raises(Exception):
+            NumericDistribution(
+                declared_percentiles=invalid_values,
+                open_upper_bound=False,
+                open_lower_bound=False,
+                upper_bound=100.0,
+                lower_bound=0.0,
+                zero_point=None,
+                standardize_cdf=False,
+            )
+
+    def test_repeating_values_raises_error(self) -> None:
+        invalid_repeating_values = [
+            Percentile(value=10.0, percentile=0.1),
+            Percentile(value=10.0, percentile=0.5),
+            Percentile(value=20.0, percentile=0.9),
+        ]
+        with pytest.raises(ValueError):
+            NumericDistribution(
+                declared_percentiles=invalid_repeating_values,
+                open_upper_bound=False,
+                open_lower_bound=False,
+                upper_bound=100.0,
+                lower_bound=0.0,
+                zero_point=None,
+                standardize_cdf=False,
+            )
+
+    def test_valid_repeating_values_at_lower_bound(self) -> None:
+        valid_repeating_values_at_bounds = [
+            Percentile(value=0.0, percentile=0.1),
+            Percentile(value=0.0, percentile=0.5),
+            Percentile(value=100.0, percentile=0.9),
+        ]
+        distribution = NumericDistribution(
+            declared_percentiles=valid_repeating_values_at_bounds,
             open_upper_bound=False,
             open_lower_bound=False,
             upper_bound=100.0,
             lower_bound=0.0,
             zero_point=None,
             standardize_cdf=False,
+        )
+        assert len(distribution.declared_percentiles) == 3
+        assert (
+            distribution.declared_percentiles[0].value
+            < distribution.declared_percentiles[1].value
+        )
+
+    def test_valid_repeating_values_at_upper_bound(self) -> None:
+        valid_repeating_values_at_bounds = [
+            Percentile(value=0.0, percentile=0.1),
+            Percentile(value=100.0, percentile=0.5),
+            Percentile(value=100.0, percentile=0.9),
+        ]
+        distribution = NumericDistribution(
+            declared_percentiles=valid_repeating_values_at_bounds,
+            open_upper_bound=False,
+            open_lower_bound=False,
+            upper_bound=100.0,
+            lower_bound=0.0,
+            zero_point=None,
+            standardize_cdf=False,
+        )
+        assert len(distribution.declared_percentiles) == 3
+        assert (
+            distribution.declared_percentiles[2].value
+            > distribution.declared_percentiles[1].value
         )
 
 

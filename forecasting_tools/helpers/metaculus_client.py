@@ -898,3 +898,7 @@ class MetaculusClient:
             cp_reveal_time_gt,
             cp_reveal_time_lt,
         )
+
+    @classmethod
+    def dev(cls) -> MetaculusClient:
+        return cls(base_url="https://dev.metaculus.com/api")

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections import Counter
 
 import numpy as np
 import typing_extensions
@@ -14,13 +15,21 @@ logger = logging.getLogger(__name__)
 
 class Percentile(BaseModel):
     percentile: float = Field(
-        ge=0,
-        le=1,
         description="A number between 0 and 1 (e.g. '90% of people are age 60 or younger' translates to '0.9')",
     )
     value: float = Field(
         description="The number matching the percentile (e.g. '90% of people are age 60 or younger' translates to '60')",
     )
+
+    @model_validator(mode="after")
+    def validate_percentile(self: Percentile) -> Percentile:
+        if self.percentile < 0 or self.percentile > 1:
+            raise ValueError(
+                f"Percentile must be between 0 and 1, but was {self.percentile}"
+            )
+        if np.isnan(self.percentile):
+            raise ValueError(f"Percentile must be a number, but was {self.percentile}")
+        return self
 
 
 class NumericDistribution(BaseModel):
@@ -47,45 +56,89 @@ class NumericDistribution(BaseModel):
             raise ValueError("NumericDistribution must have at least 2 percentiles")
 
         for i in range(len(percentiles) - 1):
-            assert (
-                abs(percentiles[i + 1].percentile - percentiles[i].percentile) >= 5e-05
-            ), (
-                f"Percentiles at indices {i} and {i+1} are too close. CDF must be increasing by at least 5e-05 at every step. "
-                f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
-                f"at values {percentiles[i].value} and {percentiles[i+1].value}. "
-                "One possible reason is that your prediction is mostly or completely out of the upper/lower "
-                "bound range thus assigning very little probability to any one x-axis value."
-            )
+            if abs(percentiles[i + 1].percentile - percentiles[i].percentile) < 5e-05:
+                raise ValueError(
+                    f"Percentiles at indices {i} and {i+1} are too close. CDF must be increasing by at least 5e-05 at every step. "
+                    f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
+                    f"at values {percentiles[i].value} and {percentiles[i+1].value}. "
+                    "One possible reason is that your prediction is mostly or completely out of the upper/lower "
+                    "bound range thus assigning very little probability to any one x-axis value."
+                )
 
         if self.standardize_cdf:
-            percentiles_within_bounds = [
-                percentile
-                for percentile in percentiles
-                if self.lower_bound <= percentile.value <= self.upper_bound
-            ]
-            if len(percentiles_within_bounds) == 0:
-                raise ValueError(
-                    "No declared percentiles are within the range of the question. "
-                    f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
-                    f"Percentiles: {percentiles}"
-                )
+            self._check_too_far_from_bounds(percentiles)
 
-            max_to_min_range = self.upper_bound - self.lower_bound
-            max_to_min_range_buffer = max_to_min_range * 2
-            percentiles_far_exceeding_bounds = [
-                percentile
-                for percentile in percentiles
-                if percentile.value < self.lower_bound - max_to_min_range_buffer
-                or percentile.value > self.upper_bound + max_to_min_range_buffer
-            ]
-            if len(percentiles_far_exceeding_bounds) > 0:
-                raise ValueError(
-                    "Some declared percentiles are far exceeding the bounds of the question. "
-                    f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
-                    f"Percentiles: {percentiles_far_exceeding_bounds}"
-                )
-
+        self.declared_percentiles = self._check_and_update_repeating_values(percentiles)
         return self
+
+    def _check_and_update_repeating_values(
+        self, percentiles: list[Percentile]
+    ) -> list[Percentile]:
+        unique_value_count = Counter(percentile.value for percentile in percentiles)
+        final_percentiles = []
+        for percentile in percentiles:
+            value = percentile.value
+            count = unique_value_count[value]
+            count_too_high = count > 1
+            value_in_bounds = self.lower_bound < value < self.upper_bound
+            value_above_bound = value >= self.upper_bound
+            value_below_bound = value <= self.lower_bound
+            epsilon = 1e-10
+            if not count_too_high:
+                final_percentiles.append(percentile)
+            elif value_in_bounds:
+                raise ValueError(
+                    f"Value {value} is repeated {count} times in percentile list and shouldn't be"
+                )
+            elif value_above_bound:
+                modification = epsilon * percentile.percentile
+                final_percentiles.append(
+                    Percentile(
+                        value=self.upper_bound + modification,
+                        percentile=percentile.percentile,
+                    )
+                )
+            elif value_below_bound:
+                modification = epsilon * (1 - percentile.percentile)
+                final_percentiles.append(
+                    Percentile(
+                        value=self.lower_bound - modification,
+                        percentile=percentile.percentile,
+                    )
+                )
+            else:
+                raise ValueError(
+                    f"Unexpected state: value {value} is repeated {count} times. Bound is {self.lower_bound} and {self.upper_bound}"
+                )
+        return final_percentiles
+
+    def _check_too_far_from_bounds(self, percentiles: list[Percentile]) -> None:
+        percentiles_within_bounds = [
+            percentile
+            for percentile in percentiles
+            if self.lower_bound <= percentile.value <= self.upper_bound
+        ]
+        if len(percentiles_within_bounds) == 0:
+            raise ValueError(
+                "No declared percentiles are within the range of the question. "
+                f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
+                f"Percentiles: {percentiles}"
+            )
+
+        max_to_min_range = self.upper_bound - self.lower_bound
+        max_to_min_range_buffer = max_to_min_range * 2
+        percentiles_far_exceeding_bounds = [
+            percentile
+            for percentile in percentiles
+            if percentile.value < self.lower_bound - max_to_min_range_buffer
+            or percentile.value > self.upper_bound + max_to_min_range_buffer
+        ]
+        if len(percentiles_far_exceeding_bounds) > 0:
+            raise ValueError(
+                "Some declared percentiles are far exceeding the bounds of the question. "
+                f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
+                f"Percentiles: {percentiles_far_exceeding_bounds}"
+            )
 
     @classmethod
     def from_question(
@@ -293,7 +346,7 @@ class NumericDistribution(BaseModel):
         else:
             # linearly scaled question
             unscaled_location = (nominal_value - range_min) / (range_max - range_min)
-        return unscaled_location
+        return float(unscaled_location)
 
     def _get_cdf_at(self, cdf_location: float) -> float:
         """
@@ -313,9 +366,12 @@ class NumericDistribution(BaseModel):
         for i in range(1, len(cdf_location_to_percentile_mapping)):
             current = cdf_location_to_percentile_mapping[i]
             if previous[0] <= cdf_location <= current[0]:
-                return previous[1] + (current[1] - previous[1]) * (
+                result = previous[1] + (current[1] - previous[1]) * (
                     cdf_location - previous[0]
                 ) / (current[0] - previous[0])
+                if np.isnan(result):
+                    raise ValueError(f"Result is NaN for cdf location {cdf_location}")
+                return result
             previous = current
         raise ValueError(f"Input {cdf_location} cannot be found")
 
@@ -421,6 +477,8 @@ class NumericDistribution(BaseModel):
             scaled_location = range_min + (range_max - range_min) * (
                 deriv_ratio**cdf_location - 1
             ) / (deriv_ratio - 1)
+        if np.isnan(scaled_location):
+            raise ValueError(f"Scaled location is NaN for cdf location {cdf_location}")
         return scaled_location
 
 
@@ -457,7 +515,8 @@ class NumericReport(ForecastReport):
         if not predictions:
             raise ValueError("No predictions to aggregate")
 
-        return NumericDistribution.from_question(median_cdf, question)
+        final_distribution = NumericDistribution.from_question(median_cdf, question)
+        return final_distribution
 
     @classmethod
     def make_readable_prediction(cls, prediction: NumericDistribution) -> str:
