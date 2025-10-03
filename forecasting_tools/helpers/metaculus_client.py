@@ -126,7 +126,7 @@ class MetaculusClient:
 
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
 
-    def __init__(self, base_url: str | None = None):
+    def __init__(self, base_url: str = "https://www.metaculus.com/api"):
         # TODO: Get this working using a pytest fixture or something similar
         # regular_base_url = "https://www.metaculus.com/api"
         # dev_base_url = "https://dev.metaculus.com/api"
