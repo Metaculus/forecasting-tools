@@ -84,12 +84,8 @@ class NumericDistribution(BaseModel):
             value_above_bound = value >= self.upper_bound
             value_below_bound = value <= self.lower_bound
             epsilon = 1e-10
-            if not count_too_high:
+            if not count_too_high or value_in_bounds:
                 final_percentiles.append(percentile)
-            elif value_in_bounds:
-                raise ValueError(
-                    f"Value {value} is repeated {count} times in percentile list and shouldn't be"
-                )
             elif value_above_bound:
                 modification = epsilon * percentile.percentile
                 final_percentiles.append(
@@ -365,7 +361,8 @@ class NumericDistribution(BaseModel):
         previous = cdf_location_to_percentile_mapping[0]
         for i in range(1, len(cdf_location_to_percentile_mapping)):
             current = cdf_location_to_percentile_mapping[i]
-            if previous[0] <= cdf_location <= current[0]:
+            epsilon = 1e-10
+            if previous[0] - epsilon <= cdf_location <= current[0] + epsilon:
                 result = previous[1] + (current[1] - previous[1]) * (
                     cdf_location - previous[0]
                 ) / (current[0] - previous[0])
@@ -373,7 +370,7 @@ class NumericDistribution(BaseModel):
                     raise ValueError(f"Result is NaN for cdf location {cdf_location}")
                 return result
             previous = current
-        raise ValueError(f"Input {cdf_location} cannot be found")
+        raise ValueError(f"CDF location Input {cdf_location} cannot be found")
 
     def _standardize_cdf(self, cdf: list[float]) -> list[float]:
         """

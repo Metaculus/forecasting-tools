@@ -58,6 +58,30 @@ The text given to you is trying to give a forecast distribution for a numeric qu
 """
 
 
+# https://www.metaculus.com/questions/10642/
+NUMERIC_FORECAST_2 = """
+Final answer
+Percentile 10: 10
+Percentile 20: 11
+Percentile 40: 11
+Percentile 60: 11
+Percentile 80: 11
+Percentile 90: 11
+"""
+
+PARSING_INSTRUCTIONS_2 = """
+The text given to you is trying to give a forecast distribution for a numeric question.
+- This text is trying to answer the numeric question: "How many UN member states will formally recognize Taiwan at the end of 2025?".
+- When parsing the text, please make sure to give the values (the ones assigned to percentiles) in terms of the correct units.
+- The units for the forecast are: countries
+- Your work will be shown publicly with these units stated verbatim after the numbers your parse.
+- As an example, someone else guessed that the answer will be between 0 and 220 countries.
+- If the answer doesn't give the answer in the correct units, you should parse it in the right units. For instance if the answer gives numbers as $500,000,000 and units are "B $" then you should parse the answer as 0.5 (since $500,000,000 is $0.5 billion).
+- If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
+- Turn any values that are in scientific notation into regular numbers.
+"""
+
+
 @pytest.mark.parametrize(
     "output,parsing_instructions,output_type,expected",
     [
@@ -109,6 +133,19 @@ The text given to you is trying to give a forecast distribution for a numeric qu
                 Percentile(value=-320, percentile=0.6),
                 Percentile(value=-290, percentile=0.8),
                 Percentile(value=-250, percentile=0.9),
+            ],
+        ),
+        (
+            NUMERIC_FORECAST_2,
+            PARSING_INSTRUCTIONS_2,
+            list[Percentile],
+            [
+                Percentile(value=10, percentile=0.1),
+                Percentile(value=11, percentile=0.2),
+                Percentile(value=11, percentile=0.4),
+                Percentile(value=11, percentile=0.6),
+                Percentile(value=11, percentile=0.8),
+                Percentile(value=11, percentile=0.9),
             ],
         ),
     ],

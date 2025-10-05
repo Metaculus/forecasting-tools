@@ -144,6 +144,33 @@ class TestNumericDistributionValidation:
             > distribution.declared_percentiles[1].value
         )
 
+    def test_valid_repeating_percentiles_in_middle_of_distribution(self) -> None:
+        valid_percentiles = [
+            Percentile(value=10, percentile=0.1),
+            Percentile(value=11, percentile=0.2),
+            Percentile(value=11, percentile=0.4),
+            Percentile(value=11, percentile=0.6),
+            Percentile(value=11, percentile=0.8),
+            Percentile(value=11, percentile=0.9),
+        ]
+        distribution = NumericDistribution(
+            declared_percentiles=valid_percentiles,
+            open_upper_bound=False,
+            open_lower_bound=True,
+            upper_bound=220,
+            lower_bound=0.0,
+            zero_point=None,
+            standardize_cdf=False,
+        )
+        assert len(distribution.declared_percentiles) == 6
+        assert distribution.declared_percentiles[0].value == 10
+        assert distribution.declared_percentiles[1].value == 11
+        assert distribution.declared_percentiles[2].value == 11
+        assert distribution.declared_percentiles[3].value == 11
+        assert distribution.declared_percentiles[4].value == 11
+        assert distribution.declared_percentiles[5].value == 11
+        assert distribution.declared_percentiles[5].percentile == 0.9
+
 
 def test_get_representative_percentiles() -> None:
     percentiles = [
