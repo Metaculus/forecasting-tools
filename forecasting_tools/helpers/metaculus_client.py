@@ -127,7 +127,7 @@ class MetaculusClient:
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
 
     def __init__(
-        self, base_url: str = "https://www.metaculus.com/api", timeout: int = 120
+        self, base_url: str = "https://www.metaculus.com/api", timeout: int = 30
     ):
         # TODO: Get this working using a pytest fixture or something similar
         # regular_base_url = "https://www.metaculus.com/api"
@@ -157,6 +157,7 @@ class MetaculusClient:
                 "included_forecast": included_forecast,
             },
             **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
         )
         logger.info(f"Posted comment on post {post_id}")
         raise_for_status_with_additional_info(response)
@@ -179,6 +180,7 @@ class MetaculusClient:
                 "type": link_type,
             },
             **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
         )
         logger.info(f"Posted question link between {question1_id} and {question2_id}")
         raise_for_status_with_additional_info(response)
@@ -189,6 +191,7 @@ class MetaculusClient:
         response = requests.get(
             f"{self.base_url}/coherence/links/{question_id}",
             **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
         )
         raise_for_status_with_additional_info(response)
         content = json.loads(response.content)["data"]
@@ -199,6 +202,7 @@ class MetaculusClient:
         response = requests.delete(
             f"{self.base_url}/coherence/links/{link_id}/delete",
             **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
         )
         logger.info(f"Deleted question link with id {link_id}")
         raise_for_status_with_additional_info(response)
@@ -449,6 +453,7 @@ class MetaculusClient:
                 },
             ],
             **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
         )
         logger.info(f"Posted prediction on question {question_id}")
         raise_for_status_with_additional_info(response)
