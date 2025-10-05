@@ -126,7 +126,9 @@ class MetaculusClient:
 
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
 
-    def __init__(self, base_url: str = "https://www.metaculus.com/api"):
+    def __init__(
+        self, base_url: str = "https://www.metaculus.com/api", timeout: int = 120
+    ):
         # TODO: Get this working using a pytest fixture or something similar
         # regular_base_url = "https://www.metaculus.com/api"
         # dev_base_url = "https://dev.metaculus.com/api"
@@ -137,6 +139,7 @@ class MetaculusClient:
         # else:
         #     self.base_url = base_url
         self.base_url = base_url
+        self.timeout = timeout
 
     def post_question_comment(
         self,
@@ -303,6 +306,7 @@ class MetaculusClient:
         response = requests.get(
             url,
             **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
         )
         raise_for_status_with_additional_info(response)
         json_question = json.loads(response.content)
@@ -463,7 +467,7 @@ class MetaculusClient:
             or num_requested <= self.MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST
         ), "You cannot get more than 100 questions at a time"
         url = f"{self.base_url}/posts/"
-        response = requests.get(url, params=params, **self._get_auth_headers())  # type: ignore
+        response = requests.get(url, params=params, **self._get_auth_headers(), timeout=self.timeout)  # type: ignore
         raise_for_status_with_additional_info(response)
         data = json.loads(response.content)
         results = data["results"]

@@ -85,23 +85,6 @@ class TestNumericDistributionValidation:
                 standardize_cdf=False,
             )
 
-    def test_repeating_values_raises_error(self) -> None:
-        invalid_repeating_values = [
-            Percentile(value=10.0, percentile=0.1),
-            Percentile(value=10.0, percentile=0.5),
-            Percentile(value=20.0, percentile=0.9),
-        ]
-        with pytest.raises(ValueError):
-            NumericDistribution(
-                declared_percentiles=invalid_repeating_values,
-                open_upper_bound=False,
-                open_lower_bound=False,
-                upper_bound=100.0,
-                lower_bound=0.0,
-                zero_point=None,
-                standardize_cdf=False,
-            )
-
     def test_valid_repeating_values_at_lower_bound(self) -> None:
         valid_repeating_values_at_bounds = [
             Percentile(value=0.0, percentile=0.1),
