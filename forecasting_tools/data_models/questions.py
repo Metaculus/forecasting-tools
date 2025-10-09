@@ -289,7 +289,12 @@ class BinaryQuestion(MetaculusQuestion):
     def from_metaculus_api_json(cls, api_json: dict) -> BinaryQuestion:
         normal_metaculus_question = super().from_metaculus_api_json(api_json)
         try:
-            q2_center_community_prediction = api_json["question"]["aggregations"]["recency_weighted"]["latest"]["centers"]  # type: ignore
+            aggregations = api_json["question"]["aggregations"]
+            recency_weighted_latest = aggregations["recency_weighted"]["latest"]  # type: ignore
+            if recency_weighted_latest is not None:
+                q2_center_community_prediction = recency_weighted_latest["centers"]  # type: ignore
+            else:
+                q2_center_community_prediction = aggregations["unweighted"]["latest"]["centers"]  # type: ignore
             assert len(q2_center_community_prediction) == 1
             community_prediction_at_access_time = q2_center_community_prediction[0]
         except (KeyError, TypeError):
