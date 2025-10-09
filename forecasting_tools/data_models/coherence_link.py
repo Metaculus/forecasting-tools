@@ -4,10 +4,6 @@ from pydantic import BaseModel
 
 from forecasting_tools.data_models.questions import MetaculusQuestion
 
-DirectionsType = Literal["positive", "negative"]
-
-StrengthsType = Literal["low", "medium", "high"]
-
 LinkTypesType = Literal["causal"]
 
 
@@ -16,8 +12,8 @@ class CoherenceLink(BaseModel):
     question1: MetaculusQuestion
     question2_id: int
     question2: MetaculusQuestion
-    direction: DirectionsType
-    strength: StrengthsType
+    direction: int
+    strength: int
     type: LinkTypesType
     id: int
 

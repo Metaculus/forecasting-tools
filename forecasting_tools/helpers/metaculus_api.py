@@ -77,8 +77,8 @@ class MetaculusApi:
         cls,
         question1_id: int,
         question2_id: int,
-        direction: str,
-        strength: str,
+        direction: int,
+        strength: int,
         link_type: str,
     ) -> int:
         return cls.METACULUS_CLIENT.post_question_link(

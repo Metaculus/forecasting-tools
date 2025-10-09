@@ -166,8 +166,8 @@ class MetaculusClient:
         self,
         question1_id: int,
         question2_id: int,
-        direction: str,
-        strength: str,
+        direction: int,
+        strength: int,
         link_type: str,
     ) -> int:
         response = requests.post(
