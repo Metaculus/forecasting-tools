@@ -37,7 +37,7 @@ def test_metaculus_question_is_jsonable() -> None:
 
         assert replace_tzinfo_in_string(str(question)) == replace_tzinfo_in_string(
             str(question_2)
-        )
+        ), "The questions are not identical in all the necessary ways"
 
     _assert_correct_number_of_questions(questions_2)
     os.remove(temp_writing_path)
