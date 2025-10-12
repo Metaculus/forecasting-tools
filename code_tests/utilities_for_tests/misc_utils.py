@@ -20,6 +20,7 @@ def replace_tzinfo_in_string(string: str) -> str:
     updated_s = (
         string.replace("datetime.timezone.utc", "")
         .replace("TZInfo(UTC)", "")
+        .replace("TZInfo(0)", "")
         .replace("pendulum.timezone('UTC')", "")
         .replace("Timezone('UTC')", "")
         .replace("TzInfo(UTC)", "")
