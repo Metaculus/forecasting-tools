@@ -1,32 +1,33 @@
-import asyncio
+import os
 
-from forecasting_tools.ai_models.general_llm import GeneralLlm
+testvar = os.getenv("TESTVAR")
+print(f"TESTVAR: {testvar}")
 
-llms = [
-    GeneralLlm(model="metaculus/gpt-4o"),
-    GeneralLlm(
-        model="metaculus/claude-3-5-sonnet-20241022",
-    ),
-    GeneralLlm.thinking_budget_model(
-        model="metaculus/claude-3-7-sonnet-latest",
-    ),
-    GeneralLlm(model="metaculus/o1"),
-    GeneralLlm(
-        model="metaculus/o4-mini",
-    ),
-    GeneralLlm(
-        model="metaculus/gpt-4.1",
-    ),
-    GeneralLlm(
-        model="metaculus/gpt-4o-mini",
-    ),
-    GeneralLlm(
-        model="metaculus/o3-mini",
-    ),
-]
+# llms = [
+#     GeneralLlm(model="metaculus/gpt-4o"),
+#     GeneralLlm(
+#         model="metaculus/claude-3-5-sonnet-20241022",
+#     ),
+#     GeneralLlm.thinking_budget_model(
+#         model="metaculus/claude-3-7-sonnet-latest",
+#     ),
+#     GeneralLlm(model="metaculus/o1"),
+#     GeneralLlm(
+#         model="metaculus/o4-mini",
+#     ),
+#     GeneralLlm(
+#         model="metaculus/gpt-4.1",
+#     ),
+#     GeneralLlm(
+#         model="metaculus/gpt-4o-mini",
+#     ),
+#     GeneralLlm(
+#         model="metaculus/o3-mini",
+#     ),
+# ]
 
-for i, llm in enumerate(llms):
-    response = asyncio.run(llm.invoke("What is your name?"))
-    print(f"Response {i+1}:")
-    print(response)
-    print("-" * 100)
+# for i, llm in enumerate(llms):
+#     response = asyncio.run(llm.invoke("What is your name?"))
+#     print(f"Response {i+1}:")
+#     print(response)
+#     print("-" * 100)
