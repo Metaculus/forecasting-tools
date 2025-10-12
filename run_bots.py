@@ -344,9 +344,24 @@ def create_bot(
     return default_bot
 
 
+def make_claude_thinking_settings(thinking_tokens: int, max_tokens: int) -> dict:
+    return {
+        "temperature": 1,
+        "thinking": {
+            "type": "enabled",
+            "budget_tokens": thinking_tokens,
+        },
+        "max_tokens": max_tokens,
+        "timeout": 160,
+    }
+
+
 def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     """
     Each entry in the dict has a key which is the environment variable set in the project secrets, and also used in the Workflows that run the bots.
+
+    Note that many of the workflow entries are commented out in order to disable them.
+    An entry being marked "none" for tournaments will also be disabled.
 
     Anything that uses the "roughly" cost value (other than the original model the variable matches to)
     is estimated value and was not measured directly. These estimates were derived from Litellm's pricing functionality.
@@ -354,6 +369,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     Useful Links:
     OpenRouter reasoning control settings: https://openrouter.ai/docs/use-cases/reasoning-tokens#controlling-reasoning-tokens
+
+    Comment last updated: 10/11/2025
     """
     default_temperature = 0.3
 
@@ -372,24 +389,23 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     roughly_sonar_deep_research_cost_per_call = 1.35399 / 3
 
     sonnet_4_name = "anthropic/claude-sonnet-4-20250514"
+    sonnet_4_5_name = "anthropic/claude-sonnet-4-5-20250929"
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_default_timeout = 120
     deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-20250514"
+    roughly_sonnet_4_cost = 0.25190
 
     default_perplexity_settings: dict = {
         "web_search_options": {"search_context_size": "high"},
         "reasoning_effort": "high",
     }
     flex_price_settings: dict = {"service_tier": "flex"}
-    claude_thinking_settings: dict = {
-        "temperature": 1,
-        "thinking": {
-            "type": "enabled",
-            "budget_tokens": 16000,
-        },
-        "max_tokens": 32000,
-        "timeout": 160,
-    }
+    claude_thinking_settings_16k: dict = make_claude_thinking_settings(
+        thinking_tokens=16000, max_tokens=32000
+    )
+    claude_thinking_settings_32k: dict = make_claude_thinking_settings(
+        thinking_tokens=32000, max_tokens=64000
+    )
 
     gemini_grounding_llm = GeneralLlm(
         model=gemini_2_5_pro,
@@ -420,7 +436,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 "max_uses": 10,
             }
         ],
-        **claude_thinking_settings,
+        **claude_thinking_settings_16k,
     )  # https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/web-search-tool
     deepseek_r1_exa_online_llm = GeneralLlm(
         model="openrouter/deepseek/deepseek-r1:online",
@@ -478,6 +494,83 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        ############################ Bots started in October 2025 ############################
+        "METAC_CLAUDE_4_5_SONNET_HIGH": {
+            "estimated_cost_per_question": roughly_sonnet_4_cost * 2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model=sonnet_4_5_name,
+                    **claude_thinking_settings_32k,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+        },
+        "METAC_CLAUDE_4_5_SONNET": {
+            "estimated_cost_per_question": roughly_sonnet_4_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model=sonnet_4_5_name,
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_QWEN_3_MAX": {
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost / 2,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/qwen/qwen3-max",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_DEEPSEEK_3_2_REASONING": {
+            "estimated_cost_per_question": guess_at_deepseek_v3_1_cost * 1.2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/deepseek/deepseek-v3.2-exp",
+                    temperature=default_temperature,
+                    reasoning={
+                        "enabled": True,
+                    },
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_DEEPSEEK_3_2": {
+            "estimated_cost_per_question": guess_at_deepseek_v3_1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/deepseek/deepseek-v3.2-exp",
+                    temperature=default_temperature,
+                    reasoning={
+                        "enabled": False,
+                    },
+                ),
+            ),
+            "tournaments": TournConfig.none,
+        },
+        "METAC_GROK_4_FAST_HIGH": {
+            "estimated_cost_per_question": guess_at_deepseek_v3_1_cost * 1.2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="xai/grok-4-fast-reasoning-latest",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GROK_4_FAST": {
+            "estimated_cost_per_question": guess_at_deepseek_v3_1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="xai/grok-4-fast-non-reasoning-latest",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.none,
+        },
         ############################ Bots started in Fall 2025 ############################
         ### Regular Bots
         "METAC_GPT_5_HIGH": {
@@ -531,13 +624,13 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 llm=GeneralLlm(
                     model=sonnet_4_name,
-                    **claude_thinking_settings,
+                    **claude_thinking_settings_16k,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
         },
         "METAC_CLAUDE_4_SONNET": {
-            "estimated_cost_per_question": 0.25190,
+            "estimated_cost_per_question": roughly_sonnet_4_cost,
             "bot": create_bot(
                 llm=GeneralLlm(
                     model=sonnet_4_name,
@@ -551,7 +644,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="anthropic/claude-opus-4-1",
-                    **claude_thinking_settings,
+                    **claude_thinking_settings_16k,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],

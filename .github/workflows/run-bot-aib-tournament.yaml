@@ -14,6 +14,82 @@ concurrency:
 jobs:
   # NOTE: don't remove any of the open source models, since these are the best option for a long term baseline (other models get deprecated)
 
+  #################################### October 2025 new bots ####################################
+
+  bot_claude_4_5_sonnet_high:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_CLAUDE_4_5_SONNET_HIGH'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_4_5_SONNET_HIGH }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+
+  bot_claude_4_5_sonnet:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_CLAUDE_4_5_SONNET'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_4_5_SONNET }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+
+  bot_qwen_3_max:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_QWEN_3_MAX'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_QWEN_3_MAX }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_deepseek_3_2_reasoning:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_DEEPSEEK_3_2_REASONING'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_3_2_REASONING }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  # bot_deepseek_3_2:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_DEEPSEEK_3_2'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_3_2 }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+  #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_grok_4_fast_high:
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: 'METAC_GROK_4_FAST_HIGH'
+    secrets:
+      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_FAST_HIGH }}
+      INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  # bot_grok_4_fast:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_GROK_4_FAST'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_FAST }}
+  #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+  #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
   #################################### Fall 2025 new bots ####################################
 
   ### Classic bots

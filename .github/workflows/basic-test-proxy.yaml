@@ -36,6 +36,5 @@ jobs:
         run: |
           poetry run python .github/scripts/basic_test_proxy.py
         env:
-          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
-          TESTVAR: ${{ secrets.TESTVAR }}
+          METACULUS_TOKEN: ${{ secrets.METAC_TEST_BOT }}
           PYTHONPATH: .
