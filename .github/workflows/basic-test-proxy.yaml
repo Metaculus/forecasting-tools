@@ -10,6 +10,7 @@ on:
 jobs:
   test-proxy:
     runs-on: ubuntu-latest # determines the machine that will run the job - keep as is
+    environment: aib_bots
     steps: # sets up the steps that will be run in order
       # setup repository with all necessary dependencies - keep as is
       - name: Check out repository

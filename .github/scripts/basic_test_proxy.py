@@ -1,6 +1,10 @@
 import os
 
 testvar = os.getenv("TESTVAR")
+if testvar is None:
+    print("TESTVAR is not set")
+else:
+    print("TESTVAR is set")
 print(f"TESTVAR: {testvar}")
 
 # llms = [
