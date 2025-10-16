@@ -170,6 +170,15 @@ class MetaculusClient:
         strength: int,
         link_type: str,
     ) -> int:
+        """
+        Posts a link between questions
+        :param question1_id
+        :param question2_id
+        :param direction: +1 for positive, -1 for negative
+        :param strength: 1 for low, 2 for medium, 5 for high
+        :param link_type: only supports "causal" for now
+        :return: id of the created link
+        """
         response = requests.post(
             f"{self.base_url}/coherence/links/create/",
             json={
@@ -188,6 +197,11 @@ class MetaculusClient:
         return content["id"]
 
     def get_links_for_question(self, question_id: int) -> List[CoherenceLink]:
+        """
+        Returns all links associated with a specific question
+        direction is +1 for positive and -1 for negative
+        strength is 1 for low, 2 for medium and 5 for high
+        """
         response = requests.get(
             f"{self.base_url}/coherence/links/{question_id}",
             **self._get_auth_headers(),  # type: ignore
