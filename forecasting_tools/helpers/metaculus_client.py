@@ -548,7 +548,6 @@ class MetaculusClient:
 
             question_obj = DataOrganizer.get_question_from_post_json(new_post_json)
             questions.append(question_obj)
-        logger.debug("_unpack_conditional_question_obtained %s", questions)
         return questions
 
     @staticmethod
