@@ -738,7 +738,7 @@ class MetaculusClient:
         if api_filter.allowed_types:
             type_filter: list[QuestionFullType] = api_filter.allowed_types  # type: ignore
             if api_filter.group_question_mode == "unpack_subquestions":
-                type_filter.append("group_of_questions")
+                type_filter.extend(["group_of_questions", "conditional"])
             url_params["forecast_type"] = type_filter
 
         if api_filter.allowed_statuses:
