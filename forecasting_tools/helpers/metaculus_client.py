@@ -221,6 +221,19 @@ class MetaculusClient:
         logger.info(f"Deleted question link with id {link_id}")
         raise_for_status_with_additional_info(response)
 
+    def get_needs_update_questions(
+        self, question_id: int, last_datetime: datetime
+    ) -> List[MetaculusQuestion]:
+        response = requests.get(
+            f"{self.base_url}/coherence/links/{question_id}/needs-update",
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+            json={"datetime": last_datetime.isoformat()},
+        )
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)
+        return content["questions"]
+
     def post_binary_question_prediction(
         self, question_id: int, prediction_in_decimal: float
     ) -> None:
