@@ -503,9 +503,7 @@ class MetaculusClient:
         raise_for_status_with_additional_info(response)
         data = json.loads(response.content)
         results = data["results"]
-        supported_posts = [
-            q for q in results if "notebook" not in q and "conditional" not in q
-        ]
+        supported_posts = [q for q in results if "notebook" not in q]
         removed_posts = [post for post in results if post not in supported_posts]
         if len(removed_posts) > 0:
             logger.warning(
@@ -516,11 +514,10 @@ class MetaculusClient:
         questions: list[MetaculusQuestion] = []
         for q in supported_posts:
             try:
-                questions.extend(
-                    self._post_json_to_questions_while_handling_groups(
-                        q, group_question_mode
-                    )
+                new_questions = self._post_json_to_questions_while_handling_groups(
+                    q, group_question_mode
                 )
+                questions.extend(new_questions)
             except Exception as e:
                 logger.warning(
                     f"Error processing post ID {q['id']}: {e.__class__.__name__} {e}"
@@ -531,20 +528,54 @@ class MetaculusClient:
     def _post_json_to_questions_while_handling_groups(
         self, post_json_from_api: dict, group_question_mode: GroupQuestionMode
     ) -> list[MetaculusQuestion]:
-        if "group_of_questions" in post_json_from_api:
-            if group_question_mode == "exclude":
+        if group_question_mode == "exclude":
+            if "group_of_questions" in post_json_from_api:
                 logger.debug(
                     f"Excluding group question post {post_json_from_api['id']}"
                 )
                 return []
-            elif group_question_mode == "unpack_subquestions":
+            if "conditional" in post_json_from_api:
+                logger.debug(
+                    f"Excluding conditional question post {post_json_from_api['id']}"
+                )
+                return []
+        elif group_question_mode == "unpack_subquestions":
+            if "group_of_questions" in post_json_from_api:
                 logger.debug(
                     f"Unpacking subquestions for group question post {post_json_from_api['id']}"
                 )
                 questions = self._unpack_group_question(post_json_from_api)
                 return questions
+            if "conditional" in post_json_from_api:
+                logger.debug(
+                    f"Unpacking subquestions for conditional question post {post_json_from_api['id']}"
+                )
+                questions = self._unpack_conditional_question(post_json_from_api)
+                return questions
         else:
-            return [DataOrganizer.get_question_from_post_json(post_json_from_api)]
+            raise ValueError("group_question_mode option not supported")
+
+        return [DataOrganizer.get_question_from_post_json(post_json_from_api)]
+
+    @staticmethod
+    def _unpack_conditional_question(
+        post_json_from_api: dict,
+    ) -> list[MetaculusQuestion]:
+        conditional = post_json_from_api["conditional"]
+        subquestions = [
+            conditional["question_yes"],
+            conditional["question_no"],
+        ]
+        questions = []
+        for question_json in subquestions:
+            new_question_json = copy.deepcopy(question_json)
+
+            new_post_json = copy.deepcopy(post_json_from_api)
+            new_post_json["question"] = new_question_json
+
+            question_obj = DataOrganizer.get_question_from_post_json(new_post_json)
+            questions.append(question_obj)
+        return questions
 
     @staticmethod
     def _unpack_group_question(post_json_from_api: dict) -> list[MetaculusQuestion]:
@@ -707,7 +738,7 @@ class MetaculusClient:
         if api_filter.allowed_types:
             type_filter: list[QuestionFullType] = api_filter.allowed_types  # type: ignore
             if api_filter.group_question_mode == "unpack_subquestions":
-                type_filter.append("group_of_questions")
+                type_filter.extend(["group_of_questions", "conditional"])
             url_params["forecast_type"] = type_filter
 
         if api_filter.allowed_statuses:
