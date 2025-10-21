@@ -558,24 +558,72 @@ class MetaculusClient:
         return [DataOrganizer.get_question_from_post_json(post_json_from_api)]
 
     @staticmethod
+    def _conditional_questions_add_detail(
+        question: MetaculusQuestion,
+        parent: MetaculusQuestion,
+        child: MetaculusQuestion,
+        yes: bool,
+    ) -> MetaculusQuestion:
+        question.question_text = json.dumps(
+            {
+                "parent_condition": parent.question_text,
+                "given_resolves_as": "YES" if yes else "NO",
+                "child_question_to_forecast": child.question_text,
+            }
+        )
+        question.resolution_criteria = json.dumps(
+            {
+                "parent_condition": parent.resolution_criteria,
+                "child_question_to_forecast": child.resolution_criteria,
+            }
+        )
+        question.fine_print = json.dumps(
+            {
+                "parent_condition": parent.fine_print,
+                "child_question_to_forecast": child.fine_print,
+            }
+        )
+        question.background_info = json.dumps(
+            {
+                "parent_condition": parent.background_info,
+                "child_question_to_forecast": child.background_info,
+            }
+        )
+        return question
+
+    @staticmethod
+    def _unpack_individual_conditional_question(
+        question_json: Any, post_json_from_api
+    ) -> MetaculusQuestion:
+        new_question_json = copy.deepcopy(question_json)
+
+        new_post_json = copy.deepcopy(post_json_from_api)
+        new_post_json["question"] = new_question_json
+
+        question_obj = DataOrganizer.get_question_from_post_json(new_post_json)
+        return question_obj
+
     def _unpack_conditional_question(
+        self,
         post_json_from_api: dict,
     ) -> list[MetaculusQuestion]:
         conditional = post_json_from_api["conditional"]
-        subquestions = [
-            conditional["question_yes"],
-            conditional["question_no"],
+        parent = self._unpack_individual_conditional_question(
+            conditional["condition"], post_json_from_api
+        )
+        child = self._unpack_individual_conditional_question(
+            conditional["condition_child"], post_json_from_api
+        )
+        question_yes = self._unpack_individual_conditional_question(
+            conditional["question_yes"], post_json_from_api
+        )
+        question_no = self._unpack_individual_conditional_question(
+            conditional["question_no"], post_json_from_api
+        )
+        return [
+            self._conditional_questions_add_detail(question_yes, parent, child, True),
+            self._conditional_questions_add_detail(question_no, parent, child, False),
         ]
-        questions = []
-        for question_json in subquestions:
-            new_question_json = copy.deepcopy(question_json)
-
-            new_post_json = copy.deepcopy(post_json_from_api)
-            new_post_json["question"] = new_question_json
-
-            question_obj = DataOrganizer.get_question_from_post_json(new_post_json)
-            questions.append(question_obj)
-        return questions
 
     @staticmethod
     def _unpack_group_question(post_json_from_api: dict) -> list[MetaculusQuestion]:
