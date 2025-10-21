@@ -564,31 +564,31 @@ class MetaculusClient:
         child: MetaculusQuestion,
         yes: bool,
     ) -> MetaculusQuestion:
-        question.question_text = json.dumps(
-            {
-                "parent_condition": parent.question_text,
-                "given_resolves_as": "YES" if yes else "NO",
-                "child_question_to_forecast": child.question_text,
-            }
-        )
-        question.resolution_criteria = json.dumps(
-            {
-                "parent_condition": parent.resolution_criteria,
-                "child_question_to_forecast": child.resolution_criteria,
-            }
-        )
-        question.fine_print = json.dumps(
-            {
-                "parent_condition": parent.fine_print,
-                "child_question_to_forecast": child.fine_print,
-            }
-        )
-        question.background_info = json.dumps(
-            {
-                "parent_condition": parent.background_info,
-                "child_question_to_forecast": child.background_info,
-            }
-        )
+        resolved = "YES" if yes else "NO"
+        question.question_text = f"""
+## Text of parent question, assumed as resolved to {resolved}
+{parent.question_text}
+## Text of question to forecast
+{child.question_text}
+        """.strip()
+        question.resolution_criteria = f"""
+## Resolution criteria of parent question, assumed as resolved to {resolved}
+{parent.resolution_criteria}
+## Resolution criteria of question to forecast
+{child.resolution_criteria}
+        """.strip()
+        question.fine_print = f"""
+## Fine print of parent question, assumed as resolved to {resolved}
+{parent.fine_print}
+## Fine print of question to forecast
+{child.fine_print}
+        """.strip()
+        question.background_info = f"""
+## Background info of parent question, assumed as resolved to {resolved}
+{parent.background_info}
+## Background info of question to forecast
+{child.background_info}
+        """.strip()
         return question
 
     @staticmethod
