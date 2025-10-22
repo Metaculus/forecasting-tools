@@ -35,6 +35,7 @@ from forecasting_tools.ai_models.model_interfaces.tokens_incur_cost import (
 from forecasting_tools.ai_models.model_tracker import ModelTracker
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     LitellmCostTracker,
+    MonetaryCostManager,
 )
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.util.misc import fill_in_citations
@@ -270,19 +271,21 @@ class GeneralLlm(
 
         litellm.drop_params = True
 
-        if self.responses_api:
-            original_response = await aresponses(
-                input=self.model_input_to_message(prompt),  # type: ignore # NOTE: This might only accept the last message in the list?
-                **self.litellm_kwargs,
-            )
-            assert isinstance(original_response, ResponsesAPIResponse)
-            response = self._normalize_response(original_response, ModelResponse())
-            # Simpler method might be just grabbing last message in choices `response.output[-1].content[0].text`
-        else:
-            response = await acompletion(
-                messages=self.model_input_to_message(prompt),
-                **self.litellm_kwargs,
-            )
+        with MonetaryCostManager(1) as cost_manager:
+            if self.responses_api:
+                original_response = await aresponses(
+                    input=self.model_input_to_message(prompt),  # type: ignore # NOTE: This might only accept the last message in the list?
+                    **self.litellm_kwargs,
+                )
+                assert isinstance(original_response, ResponsesAPIResponse)
+                response = self._normalize_response(original_response, ModelResponse())
+                # Simpler method might be just grabbing last message in choices `response.output[-1].content[0].text`
+            else:
+                response = await acompletion(
+                    messages=self.model_input_to_message(prompt),
+                    **self.litellm_kwargs,
+                )
+            call_back_cost = cost_manager.current_usage
 
         assert isinstance(response, ModelResponse)
         choices = response.choices
@@ -305,7 +308,22 @@ class GeneralLlm(
                 f"LLM answer is an empty string. The model was {self.model} and the prompt was: {prompt}"
             )
 
-        cost = LitellmCostTracker.calculate_cost(response._hidden_params)
+        direct_cost = LitellmCostTracker.calculate_cost(response._hidden_params)
+        if call_back_cost == 0:
+            # NOTE: Prefer defaulting to callback cost since it is logged by other calls to litellm
+            MonetaryCostManager.increase_current_usage_in_parent_managers(direct_cost)
+        elif abs(direct_cost - call_back_cost) > 0.0001:
+            logger.warning(
+                f"Litellm direct cost {direct_cost} and callback cost {call_back_cost} are different."
+            )
+
+        if call_back_cost == 0 and direct_cost == 0:
+            observed_no_cost = True
+        else:
+            observed_no_cost = False
+        ModelTracker.give_cost_tracking_warning_if_needed(
+            self._litellm_model, observed_no_cost=observed_no_cost
+        )
 
         if (
             response.model_extra
@@ -327,7 +345,7 @@ class GeneralLlm(
             completion_tokens_used=completion_tokens,
             total_tokens_used=total_tokens,
             model=self.model,
-            cost=cost,
+            cost=direct_cost,
         )
 
         return response

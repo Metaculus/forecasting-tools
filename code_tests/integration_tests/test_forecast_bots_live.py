@@ -81,7 +81,7 @@ async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
 
 async def test_conditional_forecasts() -> None:
     bot = TemplateBot(
-        publish_reports_to_metaculus=False,
+        publish_reports_to_metaculus=True,
         skip_previously_forecasted_questions=False,
         llms={
             "default": GeneralLlm(model="openai/o4-mini", temperature=1),
@@ -89,6 +89,7 @@ async def test_conditional_forecasts() -> None:
             "researcher": GeneralLlm(model="openai/o4-mini", temperature=1),
             "parser": GeneralLlm(model="openai/o4-mini", temperature=1),
         },
+        # TODO: Make sure that template bot uses "Dev" MetaculusClient inside the bot itself
     )
     questions = await MetaculusClient.dev().get_questions_matching_filter(
         ApiFilter(
@@ -97,6 +98,12 @@ async def test_conditional_forecasts() -> None:
         ),
         num_questions=1,
     )
+    url = "https://dev.metaculus.com/questions/40107/conditional-someone-born-before-2001-lives-to-150/"
+    url_questions = MetaculusClient.dev().get_question_by_url(
+        url, group_question_mode="unpack_subquestions"
+    )
+    url_questions = typeguard.check_type(url_questions, list[MetaculusQuestion])
+    questions.extend(url_questions)
     reports = await bot.forecast_questions(questions)
     assert len(reports) == len(questions)
 
