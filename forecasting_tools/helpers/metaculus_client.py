@@ -24,6 +24,7 @@ from forecasting_tools.data_models.questions import (
     MetaculusQuestion,
     QuestionBasicType,
 )
+from forecasting_tools.util.launch_utils import clean_indents
 from forecasting_tools.util.misc import (
     add_timezone_to_dates_in_base_model,
     raise_for_status_with_additional_info,
@@ -564,31 +565,64 @@ class MetaculusClient:
         child: MetaculusQuestion,
         yes: bool,
     ) -> MetaculusQuestion:
-        resolved = "YES" if yes else "NO"
-        question.question_text = f"""
-## Text of parent question, assumed as resolved to {resolved}
-{parent.question_text}
-## Text of question to forecast
-{child.question_text}
-        """.strip()
-        question.resolution_criteria = f"""
-## Resolution criteria of parent question, assumed as resolved to {resolved}
-{parent.resolution_criteria}
-## Resolution criteria of question to forecast
-{child.resolution_criteria}
-        """.strip()
-        question.fine_print = f"""
-## Fine print of parent question, assumed as resolved to {resolved}
-{parent.fine_print}
-## Fine print of question to forecast
-{child.fine_print}
-        """.strip()
-        question.background_info = f"""
-## Background info of parent question, assumed as resolved to {resolved}
-{parent.background_info}
-## Background info of question to forecast
-{child.background_info}
-        """.strip()
+        resolved = '"yes"' if yes else '"no"'
+        question.question_text = f"`{parent.question_text}`, if the question `{child.question_text}` resolves to {resolved}"
+        question.resolution_criteria = clean_indents(
+            f"""
+            IMPORTANT: This is a conditional forecasting question with two components:
+
+            1. **Condition (Parent Question)**: "{parent.question_text}"
+            2. **Outcome (Child Question)**: "{child.question_text}"
+
+            ## Your Task
+            You are forecasting the CHILD question, assuming the PARENT question has resolved to {resolved}.
+
+            ## How This Conditional Question Resolves
+            - Resolves "Yes" if: Parent resolves yes AND Child resolves yes
+            - Resolves "No" if: Parent resolves yes AND Child resolves no
+            - Resolves "Annulled" if: Parent resolves no (you receive no points regardless of the child outcome)
+
+            ## Resolution Criteria for Parent Question (Assumed to Resolve {resolved})
+            ```
+            {parent.resolution_criteria}
+            ```
+
+            ## Resolution Criteria for Child Question (What You Are Actually Forecasting)
+            ```
+            {child.resolution_criteria}
+            ```
+        """
+        )
+        question.fine_print = clean_indents(
+            f"""
+            ## Fine Print for Parent Question (Assumed to Resolve {resolved})
+            ```
+            {parent.fine_print}
+            ```
+
+            ## Fine Print for Child Question (What You Are Actually Forecasting)
+            ```
+            {child.fine_print}
+            ```
+        """
+        )
+        question.background_info = clean_indents(
+            f"""
+            ## Background Information for Parent Question (Assumed to Resolve {resolved})
+            ```
+            {parent.background_info}
+            ```
+
+            Parent question URL: {parent.page_url}
+
+            ## Background Information for Child Question (What You Are Actually Forecasting)
+            ```
+            {child.background_info}
+            ```
+
+            Child question URL: {child.page_url}
+        """
+        )
         return question
 
     @staticmethod
