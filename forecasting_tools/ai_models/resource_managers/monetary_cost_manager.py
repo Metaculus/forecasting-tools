@@ -79,8 +79,15 @@ class LitellmCostTracker(LitellmCustomLogger):
         self._track_cost(kwargs, response_obj)
 
     def _track_cost(self, kwargs: dict, response_obj) -> None:  # NOSONAR
-        cost = self.calculate_cost(kwargs)
-        MonetaryCostManager.increase_current_usage_in_parent_managers(cost)
+        kwarg_cost = self.calculate_cost(kwargs)
+        obj_cost = litellm.cost_calculator.completion_cost(
+            completion_response=response_obj
+        )
+        if abs(kwarg_cost - obj_cost) > 0.0001:
+            logger.warning(
+                f"Litellm kwarg cost {kwarg_cost} and obj cost {obj_cost} are different."
+            )
+        MonetaryCostManager.increase_current_usage_in_parent_managers(obj_cost)
 
     @classmethod
     def calculate_cost(cls, kwargs: dict) -> float:
