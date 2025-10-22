@@ -5,6 +5,7 @@ import pytest
 import typeguard
 
 from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
+from forecasting_tools import ApiFilter, MetaculusClient
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -76,6 +77,28 @@ async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
         pytest.fail(f"Forecasting on ai-2027 tournament failed: {e}")
     finally:
         bot.publish_reports_to_metaculus = original_publish_status
+
+
+async def test_conditional_forecasts() -> None:
+    bot = TemplateBot(
+        publish_reports_to_metaculus=False,
+        skip_previously_forecasted_questions=False,
+        llms={
+            "default": GeneralLlm(model="openai/o4-mini", temperature=1),
+            "summarizer": GeneralLlm(model="openai/o4-mini", temperature=1),
+            "researcher": GeneralLlm(model="openai/o4-mini", temperature=1),
+            "parser": GeneralLlm(model="openai/o4-mini", temperature=1),
+        },
+    )
+    questions = await MetaculusClient.dev().get_questions_matching_filter(
+        ApiFilter(
+            group_question_mode="unpack_subquestions",
+            other_url_parameters={"forecast_type": "conditional"},
+        ),
+        num_questions=1,
+    )
+    reports = await bot.forecast_questions(questions)
+    assert len(reports) == len(questions)
 
 
 async def test_collects_reports_on_open_questions(mocker: Mock) -> None:
