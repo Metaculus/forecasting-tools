@@ -105,7 +105,7 @@ def test_cost_manager_notices_cost_without_mocks(
     if not issubclass(subclass, IncursCost):
         raise ValueError(NOT_INCURS_COST_ERROR_MESSAGE)
 
-    max_cost = 100
+    max_cost = 10
     cost = run_cheap_invoke_and_track_cost(subclass, max_cost)
     assert cost > 0, "No cost was incurred"
 

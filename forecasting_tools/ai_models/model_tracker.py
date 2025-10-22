@@ -15,7 +15,9 @@ class ModelTracker:
     _model_trackers: dict[str, TrackedModel] = {}
 
     @classmethod
-    def give_cost_tracking_warning_if_needed(cls, model: str) -> None:
+    def give_cost_tracking_warning_if_needed(
+        cls, model: str, observed_no_cost: bool | None = None
+    ) -> None:
         model_tracker = cls._model_trackers.get(model)
         if model_tracker is None:
             cls._model_trackers[model] = TrackedModel(model)
@@ -29,6 +31,9 @@ class ModelTracker:
         model_not_supported = model not in supported_model_names
         if model_not_supported:
             message = f"Warning: Model {model} does not support cost tracking."
+            logger.warning(message)
+        if observed_no_cost == True:
+            message = f"Warning: Model {model} returned no cost despite being listed as a tracked model."
             logger.warning(message)
 
         model_tracker.gave_cost_tracking_warning = True

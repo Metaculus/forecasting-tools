@@ -567,7 +567,7 @@ class ForecastBot(ABC):
             *Final Prediction*: {report_type.make_readable_prediction(aggregated_prediction)}
             *Total Cost*: {cost_formatted if self.extra_metadata_in_explanation else disabled_metadata_formatted}
             *Time Spent*: {time_spent_in_minutes_formatted if self.extra_metadata_in_explanation else disabled_metadata_formatted}
-            *LLMs*: {self.make_llm_dict() if self.extra_metadata_in_explanation else disabled_metadata_formatted}
+            *LLMs*: `{self.make_llm_dict() if self.extra_metadata_in_explanation else disabled_metadata_formatted}`
             *Bot Name*: {self.__class__.__name__ if self.extra_metadata_in_explanation else disabled_metadata_formatted}
 
             {combined_summaries}
