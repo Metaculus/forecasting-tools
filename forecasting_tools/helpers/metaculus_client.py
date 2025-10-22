@@ -24,6 +24,7 @@ from forecasting_tools.data_models.questions import (
     MetaculusQuestion,
     QuestionBasicType,
 )
+from forecasting_tools.util.launch_utils import clean_indents
 from forecasting_tools.util.misc import (
     add_timezone_to_dates_in_base_model,
     raise_for_status_with_additional_info,
@@ -503,9 +504,7 @@ class MetaculusClient:
         raise_for_status_with_additional_info(response)
         data = json.loads(response.content)
         results = data["results"]
-        supported_posts = [
-            q for q in results if "notebook" not in q and "conditional" not in q
-        ]
+        supported_posts = [q for q in results if "notebook" not in q]
         removed_posts = [post for post in results if post not in supported_posts]
         if len(removed_posts) > 0:
             logger.warning(
@@ -516,11 +515,10 @@ class MetaculusClient:
         questions: list[MetaculusQuestion] = []
         for q in supported_posts:
             try:
-                questions.extend(
-                    self._post_json_to_questions_while_handling_groups(
-                        q, group_question_mode
-                    )
+                new_questions = self._post_json_to_questions_while_handling_groups(
+                    q, group_question_mode
                 )
+                questions.extend(new_questions)
             except Exception as e:
                 logger.warning(
                     f"Error processing post ID {q['id']}: {e.__class__.__name__} {e}"
@@ -531,20 +529,135 @@ class MetaculusClient:
     def _post_json_to_questions_while_handling_groups(
         self, post_json_from_api: dict, group_question_mode: GroupQuestionMode
     ) -> list[MetaculusQuestion]:
-        if "group_of_questions" in post_json_from_api:
-            if group_question_mode == "exclude":
+        if group_question_mode == "exclude":
+            if "group_of_questions" in post_json_from_api:
                 logger.debug(
                     f"Excluding group question post {post_json_from_api['id']}"
                 )
                 return []
-            elif group_question_mode == "unpack_subquestions":
+            if "conditional" in post_json_from_api:
+                logger.debug(
+                    f"Excluding conditional question post {post_json_from_api['id']}"
+                )
+                return []
+        elif group_question_mode == "unpack_subquestions":
+            if "group_of_questions" in post_json_from_api:
                 logger.debug(
                     f"Unpacking subquestions for group question post {post_json_from_api['id']}"
                 )
                 questions = self._unpack_group_question(post_json_from_api)
                 return questions
+            if "conditional" in post_json_from_api:
+                logger.debug(
+                    f"Unpacking subquestions for conditional question post {post_json_from_api['id']}"
+                )
+                questions = self._unpack_conditional_question(post_json_from_api)
+                return questions
         else:
-            return [DataOrganizer.get_question_from_post_json(post_json_from_api)]
+            raise ValueError("group_question_mode option not supported")
+
+        return [DataOrganizer.get_question_from_post_json(post_json_from_api)]
+
+    @staticmethod
+    def _conditional_questions_add_detail(
+        question: MetaculusQuestion,
+        parent: MetaculusQuestion,
+        child: MetaculusQuestion,
+        yes: bool,
+    ) -> MetaculusQuestion:
+        resolved = '"yes"' if yes else '"no"'
+        question.question_text = f"`{parent.question_text}`, if the question `{child.question_text}` resolves to {resolved}"
+        question.resolution_criteria = clean_indents(
+            f"""
+            IMPORTANT: This is a conditional forecasting question with two components:
+
+            1. **Condition (Parent Question)**: "{parent.question_text}"
+            2. **Outcome (Child Question)**: "{child.question_text}"
+
+            ## Your Task
+            You are forecasting the CHILD question, assuming the PARENT question has resolved to {resolved}.
+
+            ## How This Conditional Question Resolves
+            - Resolves "Yes" if: Parent resolves yes AND Child resolves yes
+            - Resolves "No" if: Parent resolves yes AND Child resolves no
+            - Resolves "Annulled" if: Parent resolves no (you receive no points regardless of the child outcome)
+
+            ## Resolution Criteria for Parent Question (Assumed to Resolve {resolved})
+            ```
+            {parent.resolution_criteria}
+            ```
+
+            ## Resolution Criteria for Child Question (What You Are Actually Forecasting)
+            ```
+            {child.resolution_criteria}
+            ```
+        """
+        )
+        question.fine_print = clean_indents(
+            f"""
+            ## Fine Print for Parent Question (Assumed to Resolve {resolved})
+            ```
+            {parent.fine_print}
+            ```
+
+            ## Fine Print for Child Question (What You Are Actually Forecasting)
+            ```
+            {child.fine_print}
+            ```
+        """
+        )
+        question.background_info = clean_indents(
+            f"""
+            ## Background Information for Parent Question (Assumed to Resolve {resolved})
+            ```
+            {parent.background_info}
+            ```
+
+            Parent question URL: {parent.page_url}
+
+            ## Background Information for Child Question (What You Are Actually Forecasting)
+            ```
+            {child.background_info}
+            ```
+
+            Child question URL: {child.page_url}
+        """
+        )
+        return question
+
+    @staticmethod
+    def _unpack_individual_conditional_question(
+        question_json: Any, post_json_from_api
+    ) -> MetaculusQuestion:
+        new_question_json = copy.deepcopy(question_json)
+
+        new_post_json = copy.deepcopy(post_json_from_api)
+        new_post_json["question"] = new_question_json
+
+        question_obj = DataOrganizer.get_question_from_post_json(new_post_json)
+        return question_obj
+
+    def _unpack_conditional_question(
+        self,
+        post_json_from_api: dict,
+    ) -> list[MetaculusQuestion]:
+        conditional = post_json_from_api["conditional"]
+        parent = self._unpack_individual_conditional_question(
+            conditional["condition"], post_json_from_api
+        )
+        child = self._unpack_individual_conditional_question(
+            conditional["condition_child"], post_json_from_api
+        )
+        question_yes = self._unpack_individual_conditional_question(
+            conditional["question_yes"], post_json_from_api
+        )
+        question_no = self._unpack_individual_conditional_question(
+            conditional["question_no"], post_json_from_api
+        )
+        return [
+            self._conditional_questions_add_detail(question_yes, parent, child, True),
+            self._conditional_questions_add_detail(question_no, parent, child, False),
+        ]
 
     @staticmethod
     def _unpack_group_question(post_json_from_api: dict) -> list[MetaculusQuestion]:
@@ -707,7 +820,7 @@ class MetaculusClient:
         if api_filter.allowed_types:
             type_filter: list[QuestionFullType] = api_filter.allowed_types  # type: ignore
             if api_filter.group_question_mode == "unpack_subquestions":
-                type_filter.append("group_of_questions")
+                type_filter.extend(["group_of_questions", "conditional"])
             url_params["forecast_type"] = type_filter
 
         if api_filter.allowed_statuses:
