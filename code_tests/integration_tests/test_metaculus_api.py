@@ -777,6 +777,7 @@ class TestNumericForecasts:
             ),
             num_questions=20,
         )
+        # TODO: We should also test whether conditionals are grabbed naturally without the special `other_url_parameters` filter. However this would take a while to find a conditional on the site.
         assert len(questions) == 20
 
     def _check_cdf_processes_and_posts_correctly(
