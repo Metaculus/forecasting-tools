@@ -45,8 +45,8 @@ structure_output_model = DEFAULT_STRUCTURE_OUTPUT_MODEL
 
 
 class ScheduleConfig:
-    regular_forecast_interval_days: int = 3
-    min_main_site_forecast_interval_days: int = 7
+    regular_forecast_interval_days: int = 2
+    min_main_site_forecast_interval_days: int = 4
 
     window_length_hrs = 2
     US_morning_hour = 4  # 4am MT
