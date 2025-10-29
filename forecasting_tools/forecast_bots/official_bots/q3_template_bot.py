@@ -3,11 +3,13 @@ from datetime import datetime
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.deprecated_model_classes.perplexity import Perplexity
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.data_models.conditional_models import ConditionalPrediction
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
+    ConditionalQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
@@ -97,3 +99,8 @@ class Q3TemplateBot2024(ForecastBot):
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
         raise NotImplementedError("Numeric was not supported in Q3")
+
+    async def _run_forecast_on_conditional(
+        self, question: ConditionalQuestion, research: str
+    ) -> ReasonedPrediction[ConditionalPrediction]:
+        raise NotImplementedError()
