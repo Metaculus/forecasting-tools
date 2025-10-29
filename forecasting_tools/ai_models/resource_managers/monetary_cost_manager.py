@@ -79,18 +79,36 @@ class LitellmCostTracker(LitellmCustomLogger):
         self._track_cost(kwargs, response_obj)
 
     def _track_cost(self, kwargs: dict, response_obj) -> None:  # NOSONAR
-        kwarg_cost = self.calculate_cost(kwargs)
+        tracked_cost = 0
+        kwarg_cost = self.extract_cost_from_hidden_params(kwargs)
         obj_cost = litellm.cost_calculator.completion_cost(
             completion_response=response_obj
         )
-        if abs(kwarg_cost - obj_cost) > 0.0001:
+        if obj_cost is None:
+            obj_cost = 0
+        if abs(kwarg_cost - obj_cost) > 0.0000001:
             logger.warning(
-                f"Litellm kwarg cost {kwarg_cost} and obj cost {obj_cost} are different."
+                f"Litellm hidden param cost {kwarg_cost} and response object cost {obj_cost} are different."
             )
-        MonetaryCostManager.increase_current_usage_in_parent_managers(obj_cost)
+        tracked_cost = obj_cost
+
+        MonetaryCostManager.increase_current_usage_in_parent_managers(tracked_cost)
 
     @classmethod
-    def calculate_cost(cls, kwargs: dict) -> float:
+    def extract_cost_from_response_obj(cls, response_obj) -> float | None:
+        """
+        Calculate the cost of the API call.
+        """
+        try:
+            return litellm.cost_calculator.completion_cost(
+                completion_response=response_obj
+            )
+        except Exception as e:
+            logger.warning(f"Error calculating cost from response object: {e}")
+            return None
+
+    @classmethod
+    def extract_cost_from_hidden_params(cls, kwargs: dict) -> float:
         """
         Calculate the cost of the API call.
         """

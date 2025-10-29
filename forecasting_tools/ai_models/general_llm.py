@@ -308,7 +308,9 @@ class GeneralLlm(
                 f"LLM answer is an empty string. The model was {self.model} and the prompt was: {prompt}"
             )
 
-        direct_cost = LitellmCostTracker.calculate_cost(response._hidden_params)
+        direct_cost = LitellmCostTracker.extract_cost_from_hidden_params(
+            response._hidden_params
+        )
         if call_back_cost == 0:
             # NOTE: Prefer defaulting to callback cost since it is logged by other calls to litellm
             MonetaryCostManager.increase_current_usage_in_parent_managers(direct_cost)

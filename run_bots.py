@@ -52,7 +52,7 @@ class ScheduleConfig:
     _US_morning_hour = 4  # 4am MT
     _US_afternoon_hour = 12  # 12pm MT
     UTC_morning_hour = _US_morning_hour + 7
-    _UTC_afternoon_hour = _US_afternoon_hour + 7
+    UTC_afternoon_hour = _US_afternoon_hour + 7
 
     default_max_main_site_questions_per_run = 30
     main_site_months_ahead_to_check = 4
@@ -75,9 +75,9 @@ class ScheduleConfig:
     def is_afternoon_window(cls, time: datetime | None = None) -> bool:
         time = time or pendulum.now(tz="UTC")
         value = (
-            cls._UTC_afternoon_hour
+            cls.UTC_afternoon_hour
             <= time.hour
-            < cls._UTC_afternoon_hour + cls._window_length_hrs
+            < cls.UTC_afternoon_hour + cls._window_length_hrs
         )
         return value
 

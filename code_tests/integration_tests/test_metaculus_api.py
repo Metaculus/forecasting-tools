@@ -656,6 +656,25 @@ class TestNumericForecasts:
             percentiles, question, standardize_cdf=True
         )
 
+    def test_discrete_forecast_repeated_value(self) -> None:
+        url = "https://dev.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/"
+        percentiles = [
+            Percentile(value=4, percentile=0.1),
+            Percentile(value=4, percentile=0.2),
+            Percentile(value=4, percentile=0.4),
+            Percentile(value=4, percentile=0.6),
+            Percentile(value=4, percentile=0.8),
+            Percentile(value=4, percentile=0.9),
+        ]
+        question = MetaculusClient.dev().get_question_by_url(url)
+        assert isinstance(question, DiscreteQuestion)
+        self._check_cdf_processes_and_posts_correctly(
+            percentiles, question, standardize_cdf=False
+        )
+        self._check_cdf_processes_and_posts_correctly(
+            percentiles, question, standardize_cdf=True
+        )
+
     def test_forecast_regular_numeric(self) -> None:
         url = "https://dev.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
         question = MetaculusClient.dev().get_question_by_url(url)
