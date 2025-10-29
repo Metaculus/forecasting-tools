@@ -1,5 +1,6 @@
 import logging
 
+from forecasting_tools.data_models.conditional_models import ConditionalPrediction
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOption,
@@ -8,6 +9,7 @@ from forecasting_tools.data_models.multiple_choice_report import (
 from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
+    ConditionalQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
@@ -48,6 +50,11 @@ class UniformProbabilityBot(ForecastBot):
             prediction_value=prediction,
             reasoning="Predicted equal probability for all options",
         )
+
+    async def _run_forecast_on_conditional(
+        self, question: ConditionalQuestion, research: str
+    ) -> ReasonedPrediction[ConditionalPrediction]:
+        raise NotImplementedError()
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str

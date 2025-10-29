@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import copy
 import logging
 import textwrap
 from datetime import datetime
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
 import pendulum
 import typeguard
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
+from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.util.jsonable import Jsonable
 from forecasting_tools.util.misc import add_timezone_to_dates_in_base_model
 
@@ -42,7 +44,9 @@ ResolutionType = (
     BinaryResolution | NumericResolution | DateResolution | MultipleChoiceResolution
 )
 
-QuestionBasicType = Literal["binary", "numeric", "multiple_choice", "date", "discrete"]
+QuestionBasicType = Literal[
+    "binary", "numeric", "multiple_choice", "date", "discrete", "conditional"
+]
 
 
 class MetaculusQuestion(BaseModel, Jsonable):
@@ -158,9 +162,11 @@ class MetaculusQuestion(BaseModel, Jsonable):
                 if "projects" in post_api_json
                 else None
             ),
-            includes_bots_in_aggregates=question_json["include_bots_in_aggregates"],
-            question_weight=question_json["question_weight"],
-            resolution_string=question_json.get("resolution"),
+            includes_bots_in_aggregates=question_json.get(
+                "include_bots_in_aggregates", None
+            ),
+            question_weight=question_json.get("question_weight", None),
+            resolution_string=question_json.get("resolution", None),
             group_question_option=group_question_option,
             api_json=post_api_json,
         )
@@ -496,6 +502,131 @@ class DiscreteQuestion(NumericQuestion):
     @classmethod
     def get_api_type_name(cls) -> QuestionBasicType:
         return "discrete"
+
+
+class ConditionalQuestion(MetaculusQuestion):
+    question_type: Literal["conditional"] = "conditional"
+    parent: MetaculusQuestion
+    child: MetaculusQuestion
+    question_yes: MetaculusQuestion
+    question_no: MetaculusQuestion
+
+    @staticmethod
+    def _conditional_questions_add_detail(
+        question: MetaculusQuestion,
+        parent: MetaculusQuestion,
+        child: MetaculusQuestion,
+        yes: bool,
+    ) -> MetaculusQuestion:
+        resolved = '"yes"' if yes else '"no"'
+        question.question_text = f"`{parent.question_text}`, if the question `{child.question_text}` resolves to {resolved}"
+        question.resolution_criteria = clean_indents(
+            f"""
+            IMPORTANT: This is a conditional forecasting question with two components:
+
+            1. **Condition (Parent Question)**: "{parent.question_text}"
+            2. **Outcome (Child Question)**: "{child.question_text}"
+
+            ## Your Task
+            You are forecasting the CHILD question, assuming the PARENT question has resolved to {resolved}.
+
+            ## How This Conditional Question Resolves
+            - Resolves "Yes" if: Parent resolves yes AND Child resolves yes
+            - Resolves "No" if: Parent resolves yes AND Child resolves no
+            - Resolves "Annulled" if: Parent resolves no (you receive no points regardless of the child outcome)
+
+            ## Resolution Criteria for Parent Question (Assumed to Resolve {resolved})
+            ```
+            {parent.resolution_criteria}
+            ```
+
+            ## Resolution Criteria for Child Question (What You Are Actually Forecasting)
+            ```
+            {child.resolution_criteria}
+            ```
+        """
+        )
+        question.fine_print = clean_indents(
+            f"""
+            ## Fine Print for Parent Question (Assumed to Resolve {resolved})
+            ```
+            {parent.fine_print}
+            ```
+
+            ## Fine Print for Child Question (What You Are Actually Forecasting)
+            ```
+            {child.fine_print}
+            ```
+        """
+        )
+        question.background_info = clean_indents(
+            f"""
+            ## Background Information for Parent Question (Assumed to Resolve {resolved})
+            ```
+            {parent.background_info}
+            ```
+
+            Parent question URL: {parent.page_url}
+
+            ## Background Information for Child Question (What You Are Actually Forecasting)
+            ```
+            {child.background_info}
+            ```
+
+            Child question URL: {child.page_url}
+        """
+        )
+        return question
+
+    @staticmethod
+    def _unpack_individual_conditional_question(
+        question_json: Any, post_json_from_api
+    ) -> MetaculusQuestion:
+        from forecasting_tools.data_models.data_organizer import DataOrganizer
+
+        new_question_json = copy.deepcopy(question_json)
+
+        new_post_json = copy.deepcopy(post_json_from_api)
+        new_post_json["question"] = new_question_json
+
+        question_obj = DataOrganizer.get_question_from_post_json(new_post_json)
+        return question_obj
+
+    @classmethod
+    def from_metaculus_api_json(cls, api_json: dict) -> ConditionalQuestion:
+        conditional = api_json["question"]
+        api_json["question"] = {**api_json, **api_json["question"]}
+        base_question = MetaculusQuestion.from_metaculus_api_json(api_json)
+        questions_map = {
+            "parent": cls._unpack_individual_conditional_question(
+                conditional["condition"], api_json
+            ),
+            "child": cls._unpack_individual_conditional_question(
+                conditional["condition_child"], api_json
+            ),
+            "question_yes": cls._unpack_individual_conditional_question(
+                conditional["question_yes"], api_json
+            ),
+            "question_no": cls._unpack_individual_conditional_question(
+                conditional["question_no"], api_json
+            ),
+        }
+
+        return ConditionalQuestion(
+            **base_question.model_dump(exclude={"question_type"}), **questions_map
+        )
+
+    def get_all_subquestions(self) -> dict[str, MetaculusQuestion]:
+        return {
+            "parent": self.parent,
+            "child": self.child,
+            "question_yes": self.question_yes,
+            "question_no": self.question_no,
+        }
+
+    @classmethod
+    def get_api_type_name(cls) -> QuestionBasicType:
+        return "conditional"
 
 
 class MultipleChoiceQuestion(MetaculusQuestion):

@@ -2,6 +2,8 @@ import typeguard
 from pydantic import BaseModel
 
 from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.conditional_models import ConditionalPrediction
+from forecasting_tools.data_models.conditional_report import ConditionalReport
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.multiple_choice_report import (
     MultipleChoiceReport,
@@ -14,6 +16,7 @@ from forecasting_tools.data_models.numeric_report import (
 )
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
+    ConditionalQuestion,
     DateQuestion,
     DiscreteQuestion,
     MetaculusQuestion,
@@ -29,13 +32,16 @@ class TypeMapping(BaseModel):
     report_type: type[ForecastReport] | None
 
 
-PredictionTypes = NumericDistribution | PredictedOptionList | float
+PredictionTypes = (
+    NumericDistribution | PredictedOptionList | float | ConditionalPrediction
+)
 QuestionTypes = (
     NumericQuestion
     | DateQuestion
     | MultipleChoiceQuestion
     | BinaryQuestion
     | DiscreteQuestion
+    | ConditionalQuestion
 )
 ReportTypes = NumericReport | MultipleChoiceReport | BinaryReport | DiscreteReport
 
@@ -66,6 +72,11 @@ class DataOrganizer:
             question_type=BinaryQuestion,
             test_post_id=578,  # https://www.metaculus.com/questions/578/human-extinction-by-2100/
             report_type=BinaryReport,
+        ),
+        TypeMapping(
+            question_type=ConditionalQuestion,
+            test_post_id=40379,  # https://www.metaculus.com/questions/40379
+            report_type=ConditionalReport,
         ),
     ]
 
@@ -143,6 +154,8 @@ class DataOrganizer:
             question_type = MultipleChoiceQuestion
         elif question_type_string == DateQuestion.get_api_type_name():
             question_type = DateQuestion
+        elif question_type_string == ConditionalQuestion.get_api_type_name():
+            question_type = ConditionalQuestion
         else:
             raise ValueError(f"Unknown question type: {question_type_string}")
         question = question_type.from_metaculus_api_json(post_json)
