@@ -4,6 +4,7 @@ import os
 from code_tests.utilities_for_tests.misc_utils import replace_tzinfo_in_string
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import (
+    ConditionalQuestion,
     DateQuestion,
     DiscreteQuestion,
     MetaculusQuestion,
@@ -62,7 +63,7 @@ def _assert_correct_number_of_questions(questions: list[MetaculusQuestion]) -> N
             assert (
                 len(questions_of_type) == 2
             ), f"Expected 2 {question_type.__name__} questions, got {len(questions_of_type)}"
-        else:
+        elif question_type != ConditionalQuestion:
             assert (
                 len(questions_of_type) > 0
             ), f"Expected > 0 {question_type.__name__} questions, got {len(questions_of_type)}"
