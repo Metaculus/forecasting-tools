@@ -879,7 +879,6 @@ class MetaculusClient:
             if has_disallowed_type:
                 disallowed_ids.add(question.id_of_question)
 
-        print(f"Disallowed ids: {disallowed_ids}")
         return disallowed_ids
 
     @staticmethod
