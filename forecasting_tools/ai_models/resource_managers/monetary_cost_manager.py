@@ -81,9 +81,7 @@ class LitellmCostTracker(LitellmCustomLogger):
     def _track_cost(self, kwargs: dict, response_obj) -> None:  # NOSONAR
         tracked_cost = 0
         kwarg_cost = self.extract_cost_from_hidden_params(kwargs)
-        obj_cost = litellm.cost_calculator.completion_cost(
-            completion_response=response_obj
-        )
+        obj_cost = self.extract_cost_from_response_obj(response_obj)
         if obj_cost is None:
             obj_cost = 0
         if abs(kwarg_cost - obj_cost) > 0.0000001:
