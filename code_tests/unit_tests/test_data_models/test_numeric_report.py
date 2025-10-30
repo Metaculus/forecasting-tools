@@ -147,11 +147,11 @@ class TestNumericDistributionValidation:
         )
         assert len(distribution.declared_percentiles) == 6
         assert distribution.declared_percentiles[0].value == 10
-        assert distribution.declared_percentiles[1].value == 11
-        assert distribution.declared_percentiles[2].value == 11
-        assert distribution.declared_percentiles[3].value == 11
-        assert distribution.declared_percentiles[4].value == 11
-        assert distribution.declared_percentiles[5].value == 11
+        assert 10.999 < distribution.declared_percentiles[1].value <= 11
+        assert 10.999 < distribution.declared_percentiles[2].value <= 11
+        assert 10.999 < distribution.declared_percentiles[3].value <= 11
+        assert 10.999 < distribution.declared_percentiles[4].value <= 11
+        assert 10.999 < distribution.declared_percentiles[5].value <= 11
         assert distribution.declared_percentiles[5].percentile == 0.9
 
 
@@ -334,3 +334,104 @@ def test_error_on_too_little_probability_assigned_in_range() -> None:
     with pytest.raises(Exception):
         logger.info(prediction.get_cdf())
         prediction.get_cdf()
+
+
+def test_numeric_edge_of_bin_edge_case() -> None:
+    """
+    If all of the probability is assigned to 12, we want to make sure that if it resolves "12"
+    that probaiblity was assigned to the bucket that is scored.
+
+    See discussion here on how bounds are handled: https://discord.com/channels/694850840200216657/1248850491773812821/1412537502543118420
+    Also see discussion here: https://metaculus.slack.com/archives/C01Q9AQBVHB/p1761766286194479?thread_ts=1761675067.315789&cid=C01Q9AQBVHB
+    """
+    percentiles = [
+        Percentile(value=12, percentile=0.1),
+        Percentile(value=12, percentile=0.2),
+        Percentile(value=12, percentile=0.4),
+        Percentile(value=12, percentile=0.6),
+        Percentile(value=12, percentile=0.8),
+        Percentile(value=12, percentile=0.9),
+    ]
+    # Question URL: https://www.metaculus.com/questions/39617/opec-member-countries-in-2025/
+    numeric_distribution = NumericDistribution(
+        declared_percentiles=percentiles,
+        open_upper_bound=True,
+        open_lower_bound=False,
+        upper_bound=20,
+        lower_bound=0,
+        zero_point=None,
+        # standardize_cdf=True,
+    )
+    pmf_diffs = _get_and_log_pmf_diffs(numeric_distribution)
+
+    correct_bucket_diff = pmf_diffs[120]
+    wrong_bucket_diff = pmf_diffs[121]
+    assert (
+        correct_bucket_diff > 0.5 > wrong_bucket_diff
+    ), f"The bucket for (12, 12.1] has more probability than the bucket for (11.9, 12] ({wrong_bucket_diff:.5f} > {correct_bucket_diff:.5f})"
+
+
+def test_discrete_distribution_repeated_value() -> None:
+    percentiles = [
+        Percentile(value=12, percentile=0.1),
+        Percentile(value=12, percentile=0.2),
+        Percentile(value=12, percentile=0.4),
+        Percentile(value=12, percentile=0.6),
+        Percentile(value=12, percentile=0.8),
+        Percentile(value=12, percentile=0.9),
+    ]
+    numeric_distribution = NumericDistribution(
+        declared_percentiles=percentiles,
+        open_upper_bound=False,
+        open_lower_bound=False,
+        upper_bound=20,
+        lower_bound=0,
+        zero_point=None,
+        # standardize_cdf=True,
+        cdf_size=21,
+    )
+    pmf_diffs = _get_and_log_pmf_diffs(numeric_distribution)
+
+    assert pmf_diffs[12] > 0.5 > pmf_diffs[13]
+    assert pmf_diffs[12] > 0.5 > pmf_diffs[11]
+
+
+def test_log_scale_distribution_repeated_value() -> None:
+    percentiles = [
+        Percentile(value=11, percentile=0.1),
+        Percentile(value=11, percentile=0.2),
+        Percentile(value=11, percentile=0.4),
+        Percentile(value=11, percentile=0.6),
+        Percentile(value=11, percentile=0.8),
+        Percentile(value=11, percentile=0.9),
+    ]
+    # https://dev.metaculus.com/questions/6609/non-tesla-vehicles-w-tesla-software-by-2030/
+    numeric_distribution = NumericDistribution(
+        declared_percentiles=percentiles,
+        open_upper_bound=False,
+        open_lower_bound=False,
+        upper_bound=100_000_000,
+        lower_bound=1,
+        zero_point=0,
+        # standardize_cdf=True,
+    )
+    pmf_diffs = _get_and_log_pmf_diffs(numeric_distribution)
+    assert (
+        pmf_diffs[27] > 0.5 > pmf_diffs[26]
+    ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.5"
+    assert (
+        pmf_diffs[27] > 0.5 > pmf_diffs[28]
+    ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.5"
+
+
+def _get_and_log_pmf_diffs(distribution: NumericDistribution) -> list[float]:
+    cdf = distribution.get_cdf()
+    pmf_diffs = []
+    for i, percentile in enumerate(cdf):
+        previous_percentile = cdf[i - 1] if i > 0 else cdf[0]
+        diff = percentile.percentile - previous_percentile.percentile
+        logger.info(
+            f"Index {i} | Value {percentile.value:.4f} | Percentile {percentile.percentile:.4f} | Diff {diff:.6f} (Index {i-1} to {i})"
+        )
+        pmf_diffs.append(diff)
+    return pmf_diffs

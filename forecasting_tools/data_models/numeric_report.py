@@ -79,13 +79,22 @@ class NumericDistribution(BaseModel):
         for percentile in percentiles:
             value = percentile.value
             count = unique_value_count[value]
-            count_too_high = count > 1
+            repeated_value = count > 1
             value_in_bounds = self.lower_bound < value < self.upper_bound
             value_above_bound = value >= self.upper_bound
             value_below_bound = value <= self.lower_bound
             epsilon = 1e-10
-            if not count_too_high or value_in_bounds:
+            if not repeated_value:
                 final_percentiles.append(percentile)
+            elif value_in_bounds:
+                greater_epsilon = 1e-6  # TODO: Figure out why normal epsilon doesn't work. Could cause brittle behavior.
+                modification = (1 - percentile.percentile) * greater_epsilon
+                final_percentiles.append(
+                    Percentile(
+                        value=value - modification,
+                        percentile=percentile.percentile,
+                    )
+                )
             elif value_above_bound:
                 modification = epsilon * percentile.percentile
                 final_percentiles.append(
@@ -353,7 +362,7 @@ class NumericDistribution(BaseModel):
         bounded_percentiles = self._add_explicit_upper_lower_bound_percentiles(
             self.declared_percentiles
         )
-        cdf_location_to_percentile_mapping = []
+        cdf_location_to_percentile_mapping: list[tuple[float, float]] = []
         for percentile in bounded_percentiles:
             height = percentile.percentile
             location = self._nominal_location_to_cdf_location(percentile.value)
@@ -531,7 +540,7 @@ class NumericReport(ForecastReport):
         return readable
 
     async def publish_report_to_metaculus(self) -> None:
-        from forecasting_tools.helpers.metaculus_api import MetaculusApi
+        from forecasting_tools.helpers.metaculus_client import MetaculusClient
 
         if self.question.id_of_question is None:
             raise ValueError("Publishing to Metaculus requires a question ID")
@@ -551,10 +560,12 @@ class NumericReport(ForecastReport):
             percentile.percentile for percentile in prediction.get_cdf()
         ]
 
-        MetaculusApi.post_numeric_question_prediction(
+        MetaculusClient().post_numeric_question_prediction(
             self.question.id_of_question, cdf_probabilities
         )
-        MetaculusApi.post_question_comment(self.question.id_of_post, self.explanation)
+        MetaculusClient().post_question_comment(
+            self.question.id_of_post, self.explanation
+        )
 
 
 class DiscreteReport(NumericReport):

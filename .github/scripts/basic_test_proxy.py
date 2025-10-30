@@ -4,9 +4,6 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 
 llms = [
     GeneralLlm(model="metaculus/gpt-4o"),
-    GeneralLlm(
-        model="metaculus/claude-3-5-sonnet-20241022",
-    ),
     GeneralLlm.thinking_budget_model(
         model="metaculus/claude-3-7-sonnet-latest",
     ),
