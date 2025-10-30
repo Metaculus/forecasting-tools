@@ -32,32 +32,12 @@ def _all_tests() -> list[ModelTest]:
             GeneralLlm(model="metaculus/gpt-4o"),
             test_data.get_cheap_user_message(),
         ),
-        # ModelTest(
-        #     GeneralLlm(model="metaculus/claude-3-5-sonnet-20241022"),
-        #     test_data.get_cheap_user_message(),
-        # ),
-        # ModelTest(
-        #     GeneralLlm(model="metaculus/claude-3-7-sonnet-latest"),
-        #     test_data.get_cheap_vision_message_data(),
-        # ),
-        # ModelTest(
-        #     GeneralLlm(
-        #         model="metaculus/claude-3-7-sonnet-latest",
-        #         thinking={
-        #             "type": "enabled",
-        #             "budget_tokens": 16000,
-        #         },
-        #         max_tokens=20000,
-        #         temperature=1,
-        #     ),
-        #     test_data.get_cheap_user_message(),
-        # ),
         ModelTest(
-            GeneralLlm(model="claude-3-5-sonnet-20241022"),
+            GeneralLlm(model="claude-3-7-sonnet-latest"),
             test_data.get_cheap_user_message(),
         ),
         ModelTest(
-            GeneralLlm(model="claude-3-5-sonnet-20241022"),
+            GeneralLlm(model="claude-3-7-sonnet-latest"),
             test_data.get_cheap_vision_message_data(),
         ),
         ModelTest(
