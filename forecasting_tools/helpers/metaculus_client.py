@@ -708,6 +708,7 @@ class MetaculusClient:
             "offset": offset,
             "order_by": api_filter.order_by,
             "with_cp": "true",
+            "include_conditional_cps": "true",
         }
 
         if api_filter.allowed_types:
