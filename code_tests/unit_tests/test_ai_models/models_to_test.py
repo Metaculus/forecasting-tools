@@ -1,9 +1,6 @@
 from litellm import model_cost
 
 from forecasting_tools.ai_models.ai_utils.openai_utils import VisionMessageData
-from forecasting_tools.ai_models.deprecated_model_classes.claude35sonnet import (
-    Claude35Sonnet,
-)
 from forecasting_tools.ai_models.deprecated_model_classes.deepseek_r1 import DeepSeekR1
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4ovision import Gpt4oVision
@@ -44,7 +41,7 @@ class ModelsToTest:
         Gpt4oVision,
         # GptO1Preview,
         # GptO1,
-        Claude35Sonnet,
+        # Claude35Sonnet,
         Perplexity,
         ExaSearcher,
         DeepSeekR1,
