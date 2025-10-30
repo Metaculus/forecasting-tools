@@ -87,11 +87,8 @@ class NumericDistribution(BaseModel):
             if not repeated_value:
                 final_percentiles.append(percentile)
             elif value_in_bounds:
-                cdf_size = self.cdf_size or 201
-                bin_width = (self.upper_bound - self.lower_bound) / (cdf_size - 1)
-                modification = (
-                    bin_width * (1 - percentile.percentile) * (epsilon * 10_000)
-                )
+                greater_epsilon = 1e-6  # TODO: Figure out why normal epsilon doesn't work. Could cause brittle behavior.
+                modification = (1 - percentile.percentile) * greater_epsilon
                 final_percentiles.append(
                     Percentile(
                         value=value - modification,

@@ -336,7 +336,7 @@ def test_error_on_too_little_probability_assigned_in_range() -> None:
         prediction.get_cdf()
 
 
-def test_edge_of_bin_edge_case() -> None:
+def test_numeric_edge_of_bin_edge_case() -> None:
     """
     If all of the probability is assigned to 12, we want to make sure that if it resolves "12"
     that probaiblity was assigned to the bucket that is scored.
@@ -367,7 +367,7 @@ def test_edge_of_bin_edge_case() -> None:
     correct_bucket_diff = pmf_diffs[120]
     wrong_bucket_diff = pmf_diffs[121]
     assert (
-        correct_bucket_diff > wrong_bucket_diff
+        correct_bucket_diff > 0.5 > wrong_bucket_diff
     ), f"The bucket for (12, 12.1] has more probability than the bucket for (11.9, 12] ({wrong_bucket_diff:.5f} > {correct_bucket_diff:.5f})"
 
 
@@ -392,8 +392,36 @@ def test_discrete_distribution_repeated_value() -> None:
     )
     pmf_diffs = _get_and_log_pmf_diffs(numeric_distribution)
 
-    assert pmf_diffs[12] > pmf_diffs[13]
-    assert pmf_diffs[12] > pmf_diffs[11]
+    assert pmf_diffs[12] > 0.5 > pmf_diffs[13]
+    assert pmf_diffs[12] > 0.5 > pmf_diffs[11]
+
+
+def test_log_scale_distribution_repeated_value() -> None:
+    percentiles = [
+        Percentile(value=11, percentile=0.1),
+        Percentile(value=11, percentile=0.2),
+        Percentile(value=11, percentile=0.4),
+        Percentile(value=11, percentile=0.6),
+        Percentile(value=11, percentile=0.8),
+        Percentile(value=11, percentile=0.9),
+    ]
+    # https://dev.metaculus.com/questions/6609/non-tesla-vehicles-w-tesla-software-by-2030/
+    numeric_distribution = NumericDistribution(
+        declared_percentiles=percentiles,
+        open_upper_bound=False,
+        open_lower_bound=False,
+        upper_bound=100_000_000,
+        lower_bound=1,
+        zero_point=0,
+        # standardize_cdf=True,
+    )
+    pmf_diffs = _get_and_log_pmf_diffs(numeric_distribution)
+    assert (
+        pmf_diffs[27] > 0.5 > pmf_diffs[26]
+    ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.5"
+    assert (
+        pmf_diffs[27] > 0.5 > pmf_diffs[28]
+    ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.5"
 
 
 def _get_and_log_pmf_diffs(distribution: NumericDistribution) -> list[float]:
