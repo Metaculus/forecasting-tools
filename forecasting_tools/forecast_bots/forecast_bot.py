@@ -367,6 +367,7 @@ class ForecastBot(ABC):
             valid_prediction_set, research_errors, exception_group = (
                 await self._gather_results_and_exceptions(prediction_tasks)  # type: ignore
             )
+            valid_prediction_set: list[ResearchWithPredictions[PredictionTypes]]
             if research_errors:
                 logger.warning(
                     f"Encountered errors while researching: {research_errors}"
