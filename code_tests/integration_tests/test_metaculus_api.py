@@ -789,10 +789,11 @@ class TestNumericForecasts:
         )
 
     async def test_conditional_question(self) -> None:
+        api_filter = ApiFilter(
+            allowed_types=["conditional"], allowed_subquestion_types=["binary"]
+        )
         questions = await MetaculusClient.dev().get_questions_matching_filter(
-            ApiFilter(
-                allowed_types=["conditional"], allowed_subquestion_types=["binary"]
-            ),
+            api_filter=api_filter,
             num_questions=20,
         )
         # TODO: We should also test whether conditionals are grabbed naturally without the special `other_url_parameters` filter. However this would take a while to find a conditional on the site.
@@ -801,6 +802,9 @@ class TestNumericForecasts:
             all(
                 subquestion.get_question_type() == "binary"
                 for subquestion in question.get_all_subquestions().values()
+            )
+            and assert_questions_match_filter(
+                question.get_all_subquestions().values(), api_filter
             )
             for question in questions
         )

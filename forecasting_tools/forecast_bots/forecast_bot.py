@@ -507,7 +507,6 @@ class ForecastBot(ABC):
     ) -> ReasonedPrediction[PredictedOptionList]:
         raise NotImplementedError("Subclass must implement this method")
 
-    @abstractmethod
     async def _run_forecast_on_conditional(
         self, question: ConditionalQuestion, research: str
     ) -> ReasonedPrediction[ConditionalPrediction]:

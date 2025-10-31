@@ -190,6 +190,7 @@ class FallTemplateBot2025(ForecastBot):
             The reasoning for the {question_type} Question was as such:
             ```
                 {reasoning.reasoning}
+            ```
         """
         )
 

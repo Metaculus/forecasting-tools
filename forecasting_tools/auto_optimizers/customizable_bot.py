@@ -20,13 +20,11 @@ from forecasting_tools.auto_optimizers.question_plus_research import (
     ResearchType,
 )
 from forecasting_tools.data_models.binary_report import BinaryPrediction
-from forecasting_tools.data_models.conditional_models import ConditionalPrediction
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
-    ConditionalQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
@@ -315,11 +313,6 @@ class CustomizableBot(ForecastBot):
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
-        raise NotImplementedError()
-
-    async def _run_forecast_on_conditional(
-        self, question: ConditionalQuestion, research: str
-    ) -> ReasonedPrediction[ConditionalPrediction]:
         raise NotImplementedError()
 
     @classmethod

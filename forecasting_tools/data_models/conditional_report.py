@@ -13,24 +13,24 @@ from forecasting_tools.data_models.questions import (
 class ConditionalReport(ForecastReport):
     question: ConditionalQuestion
     prediction: ConditionalPrediction
-    parent: ForecastReport | None = None
-    child: ForecastReport | None = None
-    question_yes: ForecastReport | None = None
-    question_no: ForecastReport | None = None
+    parent_report: ForecastReport
+    child_report: ForecastReport
+    yes_report: ForecastReport
+    no_report: ForecastReport
 
     def __init__(self, **data):
         super().__init__(**data)
         # TODO: separate explanations by question subtype. Should change the `explanation` type definition to allow non-string explanations
-        self.parent = self._get_question_report(
+        self.parent_report = self._get_question_report(
             self.question.parent, self.prediction.parent, self.explanation
         )
-        self.child = self._get_question_report(
+        self.child_report = self._get_question_report(
             self.question.child, self.prediction.child, self.explanation
         )
-        self.question_yes = self._get_question_report(
+        self.yes_report = self._get_question_report(
             self.question.question_yes, self.prediction.prediction_yes, self.explanation
         )
-        self.question_no = self._get_question_report(
+        self.no_report = self._get_question_report(
             self.question.question_no, self.prediction.prediction_no, self.explanation
         )
 
@@ -97,5 +97,5 @@ class ConditionalReport(ForecastReport):
 
     async def publish_report_to_metaculus(self) -> None:
         # TODO: publish parent/child reports if necessary
-        await self.question_yes.publish_report_to_metaculus()
-        await self.question_no.publish_report_to_metaculus()
+        await self.yes_report.publish_report_to_metaculus()
+        await self.no_report.publish_report_to_metaculus()

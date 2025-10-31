@@ -519,7 +519,7 @@ class ConditionalQuestion(MetaculusQuestion):
         yes: bool,
     ) -> MetaculusQuestion:
         resolved = '"yes"' if yes else '"no"'
-        question.question_text = f"`{parent.question_text}`, if the question `{child.question_text}` resolves to {resolved}"
+        question.question_text = f"`{child.question_text}`, if the question `{parent.question_text}` resolves to {resolved}"
         question.resolution_criteria = clean_indents(
             f"""
             IMPORTANT: This is a conditional forecasting question with two components:
