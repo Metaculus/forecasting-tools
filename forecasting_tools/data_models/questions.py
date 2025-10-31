@@ -597,19 +597,29 @@ class ConditionalQuestion(MetaculusQuestion):
         conditional = api_json["question"]
         api_json["question"] = {**api_json, **api_json["question"]}
         base_question = MetaculusQuestion.from_metaculus_api_json(api_json)
+        parent_question = cls._unpack_individual_conditional_question(
+            conditional["condition"], api_json
+        )
+        child_question = cls._unpack_individual_conditional_question(
+            conditional["condition_child"], api_json
+        )
+        question_yes = cls._unpack_individual_conditional_question(
+            conditional["question_yes"], api_json
+        )
+        question_no = cls._unpack_individual_conditional_question(
+            conditional["question_no"], api_json
+        )
+        question_yes = cls._conditional_questions_add_detail(
+            question_yes, parent_question, child_question, True
+        )
+        question_no = cls._conditional_questions_add_detail(
+            question_no, parent_question, child_question, False
+        )
         questions_map = {
-            "parent": cls._unpack_individual_conditional_question(
-                conditional["condition"], api_json
-            ),
-            "child": cls._unpack_individual_conditional_question(
-                conditional["condition_child"], api_json
-            ),
-            "question_yes": cls._unpack_individual_conditional_question(
-                conditional["question_yes"], api_json
-            ),
-            "question_no": cls._unpack_individual_conditional_question(
-                conditional["question_no"], api_json
-            ),
+            "parent": parent_question,
+            "child": child_question,
+            "question_yes": question_yes,
+            "question_no": question_no,
         }
 
         return ConditionalQuestion(
