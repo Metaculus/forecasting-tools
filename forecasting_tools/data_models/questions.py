@@ -530,11 +530,6 @@ class ConditionalQuestion(MetaculusQuestion):
             ## Your Task
             You are forecasting the CHILD question, assuming the PARENT question has resolved to {resolved}.
 
-            ## How This Conditional Question Resolves
-            - Resolves "Yes" if: Parent resolves yes AND Child resolves yes
-            - Resolves "No" if: Parent resolves yes AND Child resolves no
-            - Resolves "Annulled" if: Parent resolves no (you receive no points regardless of the child outcome)
-
             ## Resolution Criteria for Parent Question (Assumed to Resolve {resolved})
             ```
             {parent.resolution_criteria}
