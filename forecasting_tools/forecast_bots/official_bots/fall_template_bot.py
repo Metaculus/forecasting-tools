@@ -176,7 +176,7 @@ class FallTemplateBot2025(ForecastBot):
             You have previously forecasted the {question_type} Question to the value: {DataOrganizer.get_readable_prediction(reasoning.prediction_value)}
             The reasoning for the {question_type} Question was as such:
             ```
-                {reasoning.reasoning}
+            {reasoning.reasoning}
             ```
         """
         )

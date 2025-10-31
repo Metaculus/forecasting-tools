@@ -15,6 +15,7 @@ from forecasting_tools.data_models.numeric_report import NumericDistribution, Pe
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     CanceledResolution,
+    ConditionalQuestion,
     DateQuestion,
     DiscreteQuestion,
     MetaculusQuestion,
@@ -803,11 +804,9 @@ class TestNumericForecasts:
                 subquestion.get_question_type() == "binary"
                 for subquestion in question.get_all_subquestions().values()
             )
-            and assert_questions_match_filter(
-                question.get_all_subquestions().values(), api_filter
-            )
             for question in questions
         )
+        assert_questions_match_filter(questions, api_filter)
 
     def _check_cdf_processes_and_posts_correctly(
         self,
@@ -1167,6 +1166,23 @@ def assert_questions_match_filter(  # NOSONAR
             assert (
                 type_name in filter.allowed_types
             ), f"Question {question.id_of_post} has type {type_name}, expected one of {filter.allowed_types}"
+
+        if filter.allowed_subquestion_types:
+            if question.question_ids_of_group:
+                question_type = type(question)
+                type_name = question_type.get_api_type_name()
+                assert (
+                    type_name in filter.allowed_subquestion_types
+                ), f"Question {question.id_of_post} has type {type_name}, expected one of {filter.allowed_subquestion_types}"
+            if question.get_question_type() == "conditional":
+                assert isinstance(question, ConditionalQuestion)
+                subquestions = question.get_all_subquestions().values()
+                for subquestion in subquestions:
+                    question_type = type(subquestion)
+                    type_name = question_type.get_api_type_name()
+                    assert (
+                        type_name in filter.allowed_subquestion_types
+                    ), f"Question {subquestion.id_of_post} has type {type_name}, expected one of {filter.allowed_subquestion_types}"
 
         if filter.allowed_statuses:
             assert (
