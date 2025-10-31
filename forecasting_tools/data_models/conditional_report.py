@@ -86,12 +86,14 @@ class ConditionalReport(ForecastReport):
 
     @classmethod
     def make_readable_prediction(cls, prediction: ConditionalPrediction) -> str:
+        from forecasting_tools.data_models.data_organizer import DataOrganizer
+
         return clean_indents(
             f"""
-            Parent forecast: {prediction.parent}
-            Child forecast: {prediction.child}
-            Yes forecast: {prediction.prediction_yes}
-            No forecast: {prediction.prediction_no}
+            Parent forecast: {DataOrganizer.get_readable_prediction(prediction.parent)}
+            Child forecast: {DataOrganizer.get_readable_prediction(prediction.child)}
+            Yes forecast: {DataOrganizer.get_readable_prediction(prediction.prediction_yes)}
+            No forecast: {DataOrganizer.get_readable_prediction(prediction.prediction_no)}
         """
         )
 

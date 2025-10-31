@@ -207,3 +207,16 @@ class DataOrganizer:
                 f"Some objects were not loaded correctly. {len(objects)} objects loaded, {len(jsons)} jsons provided."
             )
         return objects
+
+    @classmethod
+    def get_readable_prediction(cls, prediction: PredictionTypes) -> str:
+        if isinstance(prediction, NumericDistribution):
+            return NumericReport.make_readable_prediction(prediction)
+        elif isinstance(prediction, PredictedOptionList):
+            return MultipleChoiceReport.make_readable_prediction(prediction)
+        elif isinstance(prediction, float):
+            return BinaryReport.make_readable_prediction(prediction)
+        elif isinstance(prediction, ConditionalPrediction):
+            return ConditionalReport.make_readable_prediction(prediction)
+        else:
+            raise ValueError("Unknown prediction type.")

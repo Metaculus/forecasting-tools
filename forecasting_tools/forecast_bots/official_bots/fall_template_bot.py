@@ -159,34 +159,21 @@ class FallTemplateBot2025(ForecastBot):
             logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
 
-    @staticmethod
-    def _get_prediction_as_str(prediction: PredictionTypes) -> str:
-        if isinstance(prediction, NumericDistribution):
-            return ", ".join(
-                [percentile.model_dump_json() for percentile in prediction.get_cdf()]
-            )
-        elif isinstance(prediction, PredictedOptionList):
-            return str(prediction.to_dict())
-        elif isinstance(prediction, float):
-            return str(prediction)
-        elif isinstance(prediction, ConditionalPrediction):
-            raise ValueError("Conditions can't have condition subquestions.")
-        else:
-            raise ValueError("Unknown prediction type.")
-
     def _add_reasoning_to_research(
         self,
         research: str,
         reasoning: ReasonedPrediction[PredictionTypes],
         question_type: str,
     ) -> str:
+        from forecasting_tools.data_models.data_organizer import DataOrganizer
+
         question_type = question_type.title()
         return clean_indents(
             f"""
             {research}
             ---
             ## {question_type} Question Information
-            You have previously forecasted the {question_type} Question to the value: {self._get_prediction_as_str(reasoning.prediction_value)}
+            You have previously forecasted the {question_type} Question to the value: {DataOrganizer.get_readable_prediction(reasoning.prediction_value)}
             The reasoning for the {question_type} Question was as such:
             ```
                 {reasoning.reasoning}
