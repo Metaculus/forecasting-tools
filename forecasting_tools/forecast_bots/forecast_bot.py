@@ -510,7 +510,25 @@ class ForecastBot(ABC):
     async def _run_forecast_on_conditional(
         self, question: ConditionalQuestion, research: str
     ) -> ReasonedPrediction[ConditionalPrediction]:
-        raise NotImplementedError("Subclass must implement this method")
+        yes_info = await self._make_prediction(question.question_yes, research)
+        no_info = await self._make_prediction(question.question_no, research)
+        full_reasoning = clean_indents(
+            f"""
+            ## Yes Question Reasoning
+            {yes_info.reasoning}
+            ## No Question Reasoning
+            {no_info.reasoning}
+        """
+        )
+        full_prediction = ConditionalPrediction(
+            parent="affirm",
+            child="affirm",
+            prediction_yes=yes_info.prediction_value,
+            prediction_no=no_info.prediction_value,
+        )
+        return ReasonedPrediction(
+            reasoning=full_reasoning, prediction_value=full_prediction
+        )
 
     @abstractmethod
     async def _run_forecast_on_numeric(
