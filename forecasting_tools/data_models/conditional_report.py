@@ -1,3 +1,5 @@
+from pydantic import model_validator
+
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.conditional_models import (
     ConditionalPrediction,
@@ -18,8 +20,8 @@ class ConditionalReport(ForecastReport):
     yes_report: ForecastReport
     no_report: ForecastReport
 
-    def __init__(self, **data):
-        super().__init__(**data)
+    @model_validator(mode="after")
+    def populate_reports(self) -> "ConditionalReport":
         # TODO: separate explanations by question subtype. Should change the `explanation` type definition to allow non-string explanations
         self.parent_report = self._get_question_report(
             self.question.parent, self.prediction.parent, self.explanation
@@ -33,6 +35,7 @@ class ConditionalReport(ForecastReport):
         self.no_report = self._get_question_report(
             self.question.question_no, self.prediction.prediction_no, self.explanation
         )
+        return self
 
     @staticmethod
     def _get_question_report_type(question: MetaculusQuestion) -> type[ForecastReport]:
