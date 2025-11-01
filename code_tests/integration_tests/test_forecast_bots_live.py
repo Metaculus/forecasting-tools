@@ -92,15 +92,18 @@ async def test_conditional_forecasts() -> None:
         # TODO: Make sure that template bot uses "Dev" MetaculusClient inside the bot itself
     )
     questions = await MetaculusClient.dev().get_questions_matching_filter(
-        ApiFilter(allowed_types=["conditional"], allowed_subquestion_types=["binary"]),
+        ApiFilter(
+            group_question_mode="unpack_subquestions",
+            other_url_parameters={"forecast_type": "conditional"},
+        ),
         num_questions=1,
     )
     url = "https://dev.metaculus.com/questions/40107/conditional-someone-born-before-2001-lives-to-150/"
     url_questions = MetaculusClient.dev().get_question_by_url(
         url, group_question_mode="unpack_subquestions"
     )
-    url_questions = typeguard.check_type(url_questions, MetaculusQuestion)
-    questions.append(url_questions)
+    url_questions = typeguard.check_type(url_questions, list[MetaculusQuestion])
+    questions.extend(url_questions)
     reports = await bot.forecast_questions(questions)
     assert len(reports) == len(questions)
 
