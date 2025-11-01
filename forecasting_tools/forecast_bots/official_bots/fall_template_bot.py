@@ -8,11 +8,14 @@ from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSear
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.binary_report import BinaryPrediction
+from forecasting_tools.data_models.conditional_models import ConditionalPrediction
+from forecasting_tools.data_models.data_organizer import PredictionTypes
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
+    ConditionalQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
@@ -155,6 +158,64 @@ class FallTemplateBot2025(ForecastBot):
                 research = await self.get_llm("researcher", "llm").invoke(prompt)
             logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
+
+    def _add_reasoning_to_research(
+        self,
+        research: str,
+        reasoning: ReasonedPrediction[PredictionTypes],
+        question_type: str,
+    ) -> str:
+        from forecasting_tools.data_models.data_organizer import DataOrganizer
+
+        question_type = question_type.title()
+        return clean_indents(
+            f"""
+            {research}
+            ---
+            ## {question_type} Question Information
+            You have previously forecasted the {question_type} Question to the value: {DataOrganizer.get_readable_prediction(reasoning.prediction_value)}
+            The reasoning for the {question_type} Question was as such:
+            ```
+            {reasoning.reasoning}
+            ```
+        """
+        )
+
+    async def _run_forecast_on_conditional(
+        self, question: ConditionalQuestion, research: str
+    ) -> ReasonedPrediction[ConditionalPrediction]:
+        # TODO: retrieve previous forecasts if given as part of the question!
+        parent_info = await self._make_prediction(question.parent, research)
+        full_research = self._add_reasoning_to_research(research, parent_info, "parent")
+        child_info = await self._make_prediction(question.child, research)
+        full_research = self._add_reasoning_to_research(
+            full_research, child_info, "child"
+        )
+        yes_info = await self._make_prediction(question.question_yes, full_research)
+        full_research = self._add_reasoning_to_research(full_research, yes_info, "yes")
+        no_info = await self._make_prediction(question.question_no, full_research)
+        full_reasoning = clean_indents(
+            f"""
+            ## Parent Question Reasoning
+            {parent_info.reasoning}
+            ## Child Question Reasoning
+            {child_info.reasoning}
+            ## Yes Question Reasoning
+            {yes_info.reasoning}
+            ## No Question Reasoning
+            {no_info.reasoning}
+        """
+        )
+        # TODO: add option to affirm current parent/child forecasts
+        full_prediction = ConditionalPrediction(
+            parent=parent_info.prediction_value,
+            child=child_info.prediction_value,
+            prediction_yes=yes_info.prediction_value,
+            prediction_no=no_info.prediction_value,
+        )
+        return ReasonedPrediction(
+            reasoning=full_reasoning, prediction_value=full_prediction
+        )
 
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
