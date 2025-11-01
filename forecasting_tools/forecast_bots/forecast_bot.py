@@ -18,6 +18,7 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.data_models.conditional_models import ConditionalPrediction
 from forecasting_tools.data_models.data_organizer import DataOrganizer, PredictionTypes
 from forecasting_tools.data_models.forecast_report import (
     ForecastReport,
@@ -29,6 +30,7 @@ from forecasting_tools.data_models.multiple_choice_report import PredictedOption
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
+    ConditionalQuestion,
     DateQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
@@ -483,6 +485,8 @@ class ForecastBot(ABC):
             forecast_function = lambda q, r: self._run_forecast_on_multiple_choice(q, r)
         elif isinstance(question, NumericQuestion):
             forecast_function = lambda q, r: self._run_forecast_on_numeric(q, r)
+        elif isinstance(question, ConditionalQuestion):
+            forecast_function = lambda q, r: self._run_forecast_on_conditional(q, r)
         elif isinstance(question, DateQuestion):
             raise NotImplementedError("Date questions not supported yet")
         else:
@@ -502,6 +506,29 @@ class ForecastBot(ABC):
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
         raise NotImplementedError("Subclass must implement this method")
+
+    async def _run_forecast_on_conditional(
+        self, question: ConditionalQuestion, research: str
+    ) -> ReasonedPrediction[ConditionalPrediction]:
+        yes_info = await self._make_prediction(question.question_yes, research)
+        no_info = await self._make_prediction(question.question_no, research)
+        full_reasoning = clean_indents(
+            f"""
+            ## Yes Question Reasoning
+            {yes_info.reasoning}
+            ## No Question Reasoning
+            {no_info.reasoning}
+        """
+        )
+        full_prediction = ConditionalPrediction(
+            parent="affirm",
+            child="affirm",
+            prediction_yes=yes_info.prediction_value,
+            prediction_no=no_info.prediction_value,
+        )
+        return ReasonedPrediction(
+            reasoning=full_reasoning, prediction_value=full_prediction
+        )
 
     @abstractmethod
     async def _run_forecast_on_numeric(
@@ -712,8 +739,18 @@ class ForecastBot(ABC):
     async def _get_notepad(self, question: MetaculusQuestion) -> Notepad:
         async with self._note_pad_lock:
             for notepad in self._note_pads:
-                if notepad.question == question:
+                notepad_question = notepad.question
+                if notepad_question == question:
                     return notepad
+                if isinstance(notepad_question, ConditionalQuestion):
+                    if (
+                        notepad_question.parent == question
+                        or notepad_question.child == question
+                        or notepad_question.question_yes == question
+                        or notepad_question.question_no == question
+                    ):
+                        return notepad
+
         raise ValueError(
             f"No notepad found for question: ID: {question.id_of_post} Text: {question.question_text}"
         )
