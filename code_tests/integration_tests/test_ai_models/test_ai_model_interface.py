@@ -11,9 +11,6 @@ from code_tests.utilities_for_tests import coroutine_testing
 from forecasting_tools.ai_models.deprecated_model_classes.gpto1preview import (
     GptO1Preview,
 )
-from forecasting_tools.ai_models.deprecated_model_classes.metaculus4o import (
-    Gpt4oMetaculusProxy,
-)
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 
 logger = logging.getLogger(__name__)
@@ -27,21 +24,6 @@ def test_ai_model_returns_response_with_invoke(
     model_input = model._get_cheap_input_for_invoke()
     response = asyncio.run(model.invoke(model_input))
     assert response is not None, "Response is None"
-
-
-def test_metaculus_4o_returns_response_with_direct_call() -> None:
-    # NOTE: This test seems to never stop running even after failure/success, but only when running by itself. Delete this if the problem goes away
-    open_ai_key = os.environ.get("OPENAI_API_KEY")
-    assert open_ai_key is not None, "OpenAI API Key is not set"
-    os.environ["OPENAI_API_KEY"] = ""
-
-    try:
-        model = Gpt4oMetaculusProxy()
-        model_input = model._get_cheap_input_for_invoke()
-        response = asyncio.run(model._mockable_direct_call_to_model(model_input))
-        assert response is not None, "Response is None"
-    finally:
-        os.environ["OPENAI_API_KEY"] = open_ai_key
 
 
 @pytest.mark.parametrize("subclass", ModelsToTest.BASIC_MODEL_LIST)

@@ -75,7 +75,7 @@ class DataOrganizer:
         ),
         TypeMapping(
             question_type=ConditionalQuestion,
-            test_post_id=40379,  # https://www.metaculus.com/questions/40379
+            test_post_id=40107,  # https://www.metaculus.com/questions/40107/conditional-someone-born-before-2001-lives-to-150/
             report_type=ConditionalReport,
         ),
     ]
