@@ -23,7 +23,7 @@ class UniformProbabilityBot(ForecastBot):
     """
 
     async def run_research(self, question: MetaculusQuestion) -> str:
-        return "No research needed for coin flip bot"
+        return "No research needed for uniform probability bot"
 
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
@@ -88,3 +88,8 @@ class UniformProbabilityBot(ForecastBot):
                 "NOTE: The cdf will have sloping probability at the edges if the bounds are open"
             ),
         )
+
+    async def summarize_research(
+        self, question: MetaculusQuestion, research: str
+    ) -> str:
+        return "No summarization needed for uniform probability bot"

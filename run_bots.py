@@ -392,7 +392,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     sonnet_4_5_name = "anthropic/claude-sonnet-4-5-20250929"
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_default_timeout = 120
-    deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-20250514"
+    deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-5-20250929"  # Switched from claude-sonnet-4-20250514 in Nov 2025
     roughly_sonnet_4_cost = 0.25190
 
     default_perplexity_settings: dict = {
