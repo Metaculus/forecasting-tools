@@ -218,5 +218,7 @@ class DataOrganizer:
             return BinaryReport.make_readable_prediction(prediction)
         elif isinstance(prediction, ConditionalPrediction):
             return ConditionalReport.make_readable_prediction(prediction)
+        elif prediction == "affirm":
+            return "affirm"
         else:
             raise ValueError("Unknown prediction type.")

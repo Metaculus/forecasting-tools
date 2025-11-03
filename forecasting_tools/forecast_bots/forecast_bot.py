@@ -155,6 +155,7 @@ class ForecastBot(ABC):
             NumericQuestion,
             MultipleChoiceQuestion,
             BinaryQuestion,
+            ConditionalQuestion,
         ]
         supported_questions = [
             question

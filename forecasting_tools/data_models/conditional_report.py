@@ -64,19 +64,33 @@ class ConditionalReport(ForecastReport):
         )
 
     @classmethod
+    async def _get_aggregate_for_affirmable_forecast(
+        cls, question: MetaculusQuestion, forecasts: ConditionalPredictionTypes
+    ):
+        forecasts_not_affirmed = [
+            prediction for prediction in forecasts if prediction != "affirm"
+        ]
+        if len(forecasts_not_affirmed) * 2 > len(forecasts):
+            return await cls._get_question_report_type(question).aggregate_predictions(
+                forecasts_not_affirmed, question
+            )
+        else:
+            return "affirm"
+
+    @classmethod
     async def aggregate_predictions(
         cls, predictions: list[ConditionalPrediction], question: ConditionalQuestion
     ) -> ConditionalPrediction:
 
         parent_forecasts = [prediction.parent for prediction in predictions]
-        aggregated_parent = await cls._get_question_report_type(
-            question.parent
-        ).aggregate_predictions(parent_forecasts, question.parent)
+        aggregated_parent = await cls._get_aggregate_for_affirmable_forecast(
+            question.parent, parent_forecasts
+        )
 
         child_forecasts = [prediction.child for prediction in predictions]
-        aggregated_child = await cls._get_question_report_type(
-            question.child
-        ).aggregate_predictions(child_forecasts, question.child)
+        aggregated_child = await cls._get_aggregate_for_affirmable_forecast(
+            question.child, child_forecasts
+        )
 
         yes_forecasts = [prediction.prediction_yes for prediction in predictions]
         aggregated_yes = await cls._get_question_report_type(
