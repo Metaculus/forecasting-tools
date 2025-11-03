@@ -65,12 +65,13 @@ class ConditionalReport(ForecastReport):
 
     @classmethod
     async def _get_aggregate_for_affirmable_forecast(
-        cls, question: MetaculusQuestion, forecasts: ConditionalPredictionTypes
+        cls, question: MetaculusQuestion, forecasts: list[ConditionalPredictionTypes]
     ):
         forecasts_not_affirmed = [
             prediction for prediction in forecasts if prediction != "affirm"
         ]
         if len(forecasts_not_affirmed) * 2 > len(forecasts):
+            # TODO: Correctly aggregate affirmed forecasts later
             return await cls._get_question_report_type(question).aggregate_predictions(
                 forecasts_not_affirmed, question
             )
