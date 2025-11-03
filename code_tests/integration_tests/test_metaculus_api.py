@@ -15,6 +15,7 @@ from forecasting_tools.data_models.numeric_report import NumericDistribution, Pe
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     CanceledResolution,
+    ConditionalQuestion,
     DateQuestion,
     DiscreteQuestion,
     MetaculusQuestion,
@@ -462,19 +463,35 @@ class TestPostEndpoint:
             assert_basic_question_attributes_not_none(question, question.id_of_post)
 
     def test_get_questions_from_tournament(self) -> None:
-        if ForecastingTestManager.metaculus_cup_is_not_active():
-            pytest.skip("Quarterly cup is not active")
-
-        questions = MetaculusApi.get_all_open_questions_from_tournament(
+        questions = MetaculusClient.dev().get_all_open_questions_from_tournament(
             ForecastingTestManager.TOURN_WITH_OPENNESS_AND_TYPE_VARIATIONS
         )
-        for question_type in DataOrganizer.get_all_question_types():
+        question_types = DataOrganizer.get_all_question_types()
+        question_types.remove(ConditionalQuestion)
+        for question_type in question_types:
             assert any(isinstance(question, question_type) for question in questions)
         assert len(questions) == 19
 
         for question in questions:
             assert question.state == QuestionState.OPEN
         assert_basic_attributes_at_percentage(questions, 0.8)
+
+    def test_get_conditional_questions_from_tournament(self) -> None:
+        questions = MetaculusClient.dev().get_all_open_questions_from_tournament(
+            "taiwan"  # https://www.metaculus.com/tournament/taiwan/
+        )
+        conditional_questions = [
+            question
+            for question in questions
+            if isinstance(question, ConditionalQuestion)
+        ]
+        assert len(conditional_questions) >= 1
+        conditional_question = conditional_questions[0]
+        assert conditional_question.get_question_type() == "conditional"
+        assert isinstance(conditional_question.parent, BinaryQuestion)
+        assert isinstance(conditional_question.child, BinaryQuestion)
+        assert isinstance(conditional_question.question_yes, BinaryQuestion)
+        assert isinstance(conditional_question.question_no, BinaryQuestion)
 
     def test_get_benchmark_questions(self) -> None:
         num_questions_to_get = 30
@@ -789,15 +806,23 @@ class TestNumericForecasts:
         )
 
     async def test_conditional_question(self) -> None:
+        api_filter = ApiFilter(
+            allowed_types=["conditional"], allowed_subquestion_types=["binary"]
+        )
         questions = await MetaculusClient.dev().get_questions_matching_filter(
-            ApiFilter(
-                group_question_mode="unpack_subquestions",
-                other_url_parameters={"forecast_type": "conditional"},
-            ),
+            api_filter=api_filter,
             num_questions=20,
         )
         # TODO: We should also test whether conditionals are grabbed naturally without the special `other_url_parameters` filter. However this would take a while to find a conditional on the site.
         assert len(questions) == 20
+        assert all(
+            all(
+                subquestion.get_question_type() == "binary"
+                for subquestion in question.get_all_subquestions().values()
+            )
+            for question in questions
+        )
+        assert_questions_match_filter(questions, api_filter)
 
     def _check_cdf_processes_and_posts_correctly(
         self,
@@ -1157,6 +1182,23 @@ def assert_questions_match_filter(  # NOSONAR
             assert (
                 type_name in filter.allowed_types
             ), f"Question {question.id_of_post} has type {type_name}, expected one of {filter.allowed_types}"
+
+        if filter.allowed_subquestion_types:
+            if question.question_ids_of_group:
+                question_type = type(question)
+                type_name = question_type.get_api_type_name()
+                assert (
+                    type_name in filter.allowed_subquestion_types
+                ), f"Question {question.id_of_post} has type {type_name}, expected one of {filter.allowed_subquestion_types}"
+            if question.get_question_type() == "conditional":
+                assert isinstance(question, ConditionalQuestion)
+                subquestions = question.get_all_subquestions().values()
+                for subquestion in subquestions:
+                    question_type = type(subquestion)
+                    type_name = question_type.get_api_type_name()
+                    assert (
+                        type_name in filter.allowed_subquestion_types
+                    ), f"Question {subquestion.id_of_post} has type {type_name}, expected one of {filter.allowed_subquestion_types}"
 
         if filter.allowed_statuses:
             assert (

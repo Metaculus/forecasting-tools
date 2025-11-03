@@ -25,6 +25,8 @@ def replace_tzinfo_in_string(string: str) -> str:
         .replace("Timezone('UTC')", "")
         .replace("TzInfo(UTC)", "")
         .replace("Timezone('Etc/UTC')", "")
+        .replace("Timezone('America/New_York')", "")
+        .replace("TzInfo(-05:00)", "")
         .replace("datetime.datetime", "")
         .replace("datetime", "")
         .replace("DateTime", "")
