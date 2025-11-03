@@ -56,6 +56,7 @@ async def test_predicts_test_question(
 
     updated_question = MetaculusApi.get_question_by_post_id(question.id_of_post)
     assert updated_question.already_forecasted
+    assert updated_question.timestamp_of_my_last_forecast is not None
 
 
 @pytest.mark.parametrize(

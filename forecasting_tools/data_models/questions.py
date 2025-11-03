@@ -591,6 +591,10 @@ class ConditionalQuestion(MetaculusQuestion):
     def from_metaculus_api_json(cls, api_json: dict) -> ConditionalQuestion:
         conditional = api_json["question"]
         api_json["question"] = {**api_json, **api_json["question"]}
+        api_json["question"]["my_forecasts"] = (
+            conditional["question_yes"]["my_forecasts"]
+            or conditional["question_no"]["my_forecasts"]
+        )
         base_question = MetaculusQuestion.from_metaculus_api_json(api_json)
         parent_question = cls._unpack_individual_conditional_question(
             conditional["condition"], api_json
