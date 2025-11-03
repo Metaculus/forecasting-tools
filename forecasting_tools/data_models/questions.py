@@ -633,6 +633,30 @@ class ConditionalQuestion(MetaculusQuestion):
     def get_api_type_name(cls) -> QuestionBasicType:
         return "conditional"
 
+    @model_validator(mode="before")
+    @classmethod
+    def preprocess(cls, data):
+        if isinstance(data, dict):
+            if "question_text" not in data:
+                data["question_text"] = data["title"]
+                data["parent"] = data["conditional"]["condition"]
+                data["parent"]["question_text"] = data["conditional"]["condition"][
+                    "title"
+                ]
+                data["child"] = data["conditional"]["condition_child"]
+                data["child"]["question_text"] = data["conditional"]["condition_child"][
+                    "title"
+                ]
+                data["question_yes"] = data["conditional"]["question_yes"]
+                data["question_yes"]["question_text"] = data["conditional"][
+                    "question_yes"
+                ]["title"]
+                data["question_no"] = data["conditional"]["question_no"]
+                data["question_no"]["question_text"] = data["conditional"][
+                    "question_no"
+                ]["title"]
+        return data
+
 
 class MultipleChoiceQuestion(MetaculusQuestion):
     question_type: Literal["multiple_choice"] = "multiple_choice"
