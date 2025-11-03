@@ -1,6 +1,7 @@
 import logging
 from unittest.mock import Mock
 
+import pendulum
 import pytest
 import typeguard
 
@@ -56,7 +57,9 @@ async def test_predicts_test_question(
 
     updated_question = MetaculusApi.get_question_by_post_id(question.id_of_post)
     assert updated_question.already_forecasted
+    ten_minutes_ago = pendulum.now().subtract(minutes=10)
     assert updated_question.timestamp_of_my_last_forecast is not None
+    assert updated_question.timestamp_of_my_last_forecast > ten_minutes_ago
 
 
 @pytest.mark.parametrize(
