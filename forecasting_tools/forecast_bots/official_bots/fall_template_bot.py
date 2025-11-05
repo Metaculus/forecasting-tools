@@ -252,6 +252,9 @@ class FallTemplateBot2025(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
+            If given a conditional question with a parent and child, you are to only forecast the **CHILD** question, given the information on how the parent question was resolved.
+            You never re-forecast the parent question under any circumstances.
+
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
@@ -317,6 +320,9 @@ class FallTemplateBot2025(ForecastBot):
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
             (c) A description of an scenario that results in an unexpected outcome.
+
+            If given a conditional question with a parent and child, you are to only forecast the **CHILD** question, given the information on how the parent question was resolved.
+            You never re-forecast the parent question under any circumstances.
 
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
 
@@ -426,6 +432,9 @@ class FallTemplateBot2025(ForecastBot):
             (d) The expectations of experts and markets.
             (e) A brief description of an unexpected scenario that results in a low outcome.
             (f) A brief description of an unexpected scenario that results in a high outcome.
+
+            If given a conditional question with a parent and child, you are to only forecast the **CHILD** question, given the information on how the parent question was resolved.
+            You never re-forecast the parent question under any circumstances.
 
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
 
