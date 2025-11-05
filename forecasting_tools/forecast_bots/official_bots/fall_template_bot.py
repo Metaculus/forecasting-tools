@@ -174,6 +174,7 @@ class FallTemplateBot2025(ForecastBot):
             ---
             ## {question_type} Question Information
             You have previously forecasted the {question_type} Question to the value: {DataOrganizer.get_readable_prediction(reasoning.prediction_value)}
+            This is relevant information for your current forecast, but it is NOT your current forecast, but previous forecasting information that is relevant to your current forecast.
             The reasoning for the {question_type} Question was as such:
             ```
             {reasoning.reasoning}

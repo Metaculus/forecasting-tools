@@ -524,11 +524,15 @@ class ConditionalQuestion(MetaculusQuestion):
             f"""
             IMPORTANT: This is a conditional forecasting question with two components:
 
-            1. **Condition (Parent Question)**: "{parent.question_text}"
+            1. **Condition (Parent Question, NOT BEING FORECASTED RIGHT NOW)**: "{parent.question_text}"
             2. **Outcome (Child Question)**: "{child.question_text}"
 
             ## Your Task
             You are forecasting the CHILD question, assuming the PARENT question has resolved to {resolved}.
+            You are NOT forecasting the PARENT QUESTION!!!!!
+            You have been provided with research relating to the parent question, but you are NOT to forecast it.
+            You shall assume the parent question is resolved to {resolved}.
+            Make sure to only include information relevant to the CHILD QUESTION in the final output, this is absolutely essential.
 
             ## Resolution Criteria for Parent Question (Assumed to Resolve {resolved})
             ```
