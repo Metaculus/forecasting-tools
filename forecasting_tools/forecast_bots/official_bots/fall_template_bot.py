@@ -179,6 +179,7 @@ class FallTemplateBot2025(ForecastBot):
             ```
             {reasoning.reasoning}
             ```
+            This is absolutely essential: do NOT use this reasoning to re-forecast the {question_type} question.
         """
         )
 

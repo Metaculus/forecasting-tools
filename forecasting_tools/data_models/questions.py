@@ -529,9 +529,9 @@ class ConditionalQuestion(MetaculusQuestion):
 
             ## Your Task
             You are forecasting the CHILD question, assuming the PARENT question has resolved to {resolved}.
-            You are NOT forecasting the PARENT QUESTION!!!!!
+            Keep in mind, this is extremely important: you are **NOT** forecasting the PARENT QUESTION!
             You have been provided with research relating to the parent question, but you are NOT to forecast it.
-            You shall assume the parent question is resolved to {resolved}.
+            You shall assume the parent question is resolved to {resolved}, focus on the child question GIVEN THAT INFORMATION.
             Make sure to only include information relevant to the CHILD QUESTION in the final output, this is absolutely essential.
 
             ## Resolution Criteria for Parent Question (Assumed to Resolve {resolved})
