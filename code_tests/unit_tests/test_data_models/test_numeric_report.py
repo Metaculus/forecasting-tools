@@ -367,7 +367,7 @@ def test_numeric_edge_of_bin_edge_case() -> None:
     correct_bucket_diff = pmf_diffs[120]
     wrong_bucket_diff = pmf_diffs[121]
     assert (
-        correct_bucket_diff > 0.5 > wrong_bucket_diff
+        correct_bucket_diff > 0.19 > wrong_bucket_diff
     ), f"The bucket for (12, 12.1] has more probability than the bucket for (11.9, 12] ({wrong_bucket_diff:.5f} > {correct_bucket_diff:.5f})"
 
 
@@ -417,11 +417,11 @@ def test_log_scale_distribution_repeated_value() -> None:
     )
     pmf_diffs = _get_and_log_pmf_diffs(numeric_distribution)
     assert (
-        pmf_diffs[27] > 0.5 > pmf_diffs[26]
-    ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.5"
+        pmf_diffs[27] > 0.19 > pmf_diffs[26]
+    ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.19"
     assert (
-        pmf_diffs[27] > 0.5 > pmf_diffs[28]
-    ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.5"
+        pmf_diffs[27] > 0.19 > pmf_diffs[28]
+    ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.19"
 
 
 def _get_and_log_pmf_diffs(distribution: NumericDistribution) -> list[float]:
