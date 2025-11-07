@@ -351,9 +351,14 @@ class ChatPage(AppPage):
             try:
                 role = message["role"]
             except KeyError:
-                if "type" in message and message["type"] == "reasoning":
-                    logger.warning(f"Found message with no role: {message}")
-                else:
+                try:
+                    if "type" in message and message["type"] == "reasoning":
+                        with st.sidebar.expander("Reasoning"):
+                            for summary in message["summary"]:
+                                st.write(summary["text"])
+                    else:
+                        st.error(f"Unexpected message type: {message['type']}")
+                except KeyError:
                     st.error(f"Unexpected message role. Message: {message}")
                 continue
 

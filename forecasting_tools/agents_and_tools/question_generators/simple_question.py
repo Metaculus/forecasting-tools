@@ -19,8 +19,8 @@ from forecasting_tools.util.jsonable import Jsonable
 class SimpleQuestion(BaseModel, Jsonable):
     question_text: str
     resolution_criteria: str
-    fine_print: str
-    background_information: str
+    fine_print: str | None = None
+    background_information: str | None = None
     expected_resolution_date: datetime
     question_type: Literal["binary", "numeric", "multiple_choice"] = "binary"
     options: list[str] = Field(

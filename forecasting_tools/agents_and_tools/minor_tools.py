@@ -10,6 +10,7 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.helpers.metaculus_api import MetaculusApi, MetaculusQuestion
+from forecasting_tools.helpers.structure_output import structure_output
 from forecasting_tools.util.misc import get_schema_of_base_model
 
 
@@ -143,10 +144,21 @@ def create_tool_for_forecasting_bot(
     )
 
     @agent_tool(description_override=description)
-    def forecast_question_tool(question: SimpleQuestion) -> str:
+    def forecast_question_tool(question: str) -> str:
+        question_object = asyncio.run(
+            structure_output(
+                question,
+                SimpleQuestion,
+                additional_instructions=(
+                    "Please note that if the input you are given is "
+                    "already a json, it is probably structured wrong. "
+                    "Please structure it correctly"
+                ),
+            )
+        )
 
         metaculus_question = SimpleQuestion.simple_questions_to_metaculus_questions(
-            [question]
+            [question_object]
         )[0]
         task = bot.forecast_question(metaculus_question)
         report = asyncio.run(task)
