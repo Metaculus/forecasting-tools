@@ -407,7 +407,7 @@ class CsvAgentPage(AppPage):
             handoffs=[],
         )
 
-        result = await AgentRunner.run(agent, prompt, max_turns=10)
+        result = await AgentRunner.run(agent, prompt, max_turns=15)
 
         final_output = result.final_output
         if not isinstance(final_output, str):
