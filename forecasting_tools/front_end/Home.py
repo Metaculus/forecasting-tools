@@ -13,6 +13,7 @@ sys.path.append(top_level_dir)
 
 
 from forecasting_tools.front_end.app_pages.base_rate_page import BaseRatePage
+from forecasting_tools.front_end.app_pages.csv_agent import CsvAgentPage
 from forecasting_tools.front_end.app_pages.estimator_page import EstimatorPage
 from forecasting_tools.front_end.app_pages.forecaster_page import ForecasterPage
 from forecasting_tools.front_end.app_pages.key_factors_page import KeyFactorsPage
@@ -34,6 +35,7 @@ class HomePage(AppPage):
     NICHE_LIST_RESEARCH_PAGE: type[AppPage] = NicheListResearchPage
     ESTIMATOR_PAGE: type[AppPage] = EstimatorPage
     KEY_FACTORS_PAGE: type[AppPage] = KeyFactorsPage
+    CSV_AGENT_PAGE: type[AppPage] = CsvAgentPage
     BENCHMARK_PAGE: type[AppPage] = BenchmarkPage
     NON_HOME_PAGES: list[type[AppPage]] = [
         CHAT_PAGE,
@@ -42,6 +44,7 @@ class HomePage(AppPage):
         BASE_RATE_PAGE,
         NICHE_LIST_RESEARCH_PAGE,
         ESTIMATOR_PAGE,
+        CSV_AGENT_PAGE,
     ]
 
     @classmethod

@@ -1,11 +1,12 @@
 import asyncio
+import os
 from typing import Callable
 
 import streamlit as st
 
 
 class CustomAuth:
-    DEFAULT_PASSPHRASE = "debias"
+    DEFAULT_PASSPHRASE = os.getenv("PASSPHRASE", "debias")
 
     @staticmethod
     def add_access_control(
