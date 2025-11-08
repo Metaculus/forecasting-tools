@@ -87,13 +87,19 @@ class CsvAgentPage(AppPage):
             except Exception as e:
                 st.error(f"Error reading CSV file: {str(e)}")
 
+        if "processed_df" in st.session_state and "processed_cost" in st.session_state:
+            st.divider()
+            cls._display_results(
+                st.session_state["processed_df"], st.session_state["processed_cost"]
+            )
+
     @classmethod
     async def _display_configuration_and_process(cls, df: pd.DataFrame) -> None:
         with st.form("csv_agent_form"):
             prompt_template = st.text_area(
                 "Prompt Template",
                 placeholder='Example: "Analyze the sentiment of this review: {review_text}"\n\nUse {column_name} to reference CSV columns.',
-                height=150,
+                height=450,
                 help="Use {column_name} syntax to insert values from CSV columns",
             )
 
@@ -144,7 +150,12 @@ class CsvAgentPage(AppPage):
                     for error in validation_errors:
                         st.error(error)
                 else:
-                    if max_rows > 25:
+                    if max_rows > 1000:
+                        st.warning(
+                            f"Please contact Ben if you really want to process more than 1000 rows. Currently selected: {max_rows} rows."
+                        )
+                        return
+                    elif max_rows > 25:
                         st.warning(
                             f"⚠️ You are about to process {max_rows} rows. "
                             "Consider testing on a smaller set first. Some tools "
@@ -336,11 +347,12 @@ class CsvAgentPage(AppPage):
 
         result_df = pd.DataFrame(results)
 
+        st.session_state["processed_df"] = result_df
+        st.session_state["processed_cost"] = total_cost
+
         st.success(
             f"Processing complete! Processed {len(df)} rows in batches of {batch_size}."
         )
-
-        cls._display_results(result_df, total_cost)
 
     @classmethod
     async def _process_single_row(
