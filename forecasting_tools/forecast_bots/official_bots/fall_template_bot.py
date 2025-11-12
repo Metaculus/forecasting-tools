@@ -181,19 +181,52 @@ class FallTemplateBot2025(ForecastBot):
         """
         )
 
+    async def _get_question_prediction_info(
+        self, question: MetaculusQuestion, research: str, question_type: str
+    ) -> tuple[ReasonedPrediction[PredictionTypes], str]:
+        if (
+            question_type in ["parent", "child"]
+            and question.my_last_forecast
+            and question not in self.force_reforecast_in_conditional
+        ):
+            # TODO: add option to not affirm current parent/child forecasts, create new forecast
+            return (
+                ReasonedPrediction(
+                    prediction_value="affirm",
+                    reasoning="Already existing forecast reaffirmed.",
+                ),
+                research,
+            )
+        info = await self._make_prediction(question, research)
+        full_research = self._add_reasoning_to_research(research, info, question_type)
+        return info.prediction_value, full_research
+
     async def _run_forecast_on_conditional(
         self, question: ConditionalQuestion, research: str
     ) -> ReasonedPrediction[ConditionalPrediction]:
-        # TODO: retrieve previous forecasts if given as part of the question!
-        parent_info = await self._make_prediction(question.parent, research)
-        full_research = self._add_reasoning_to_research(research, parent_info, "parent")
-        child_info = await self._make_prediction(question.child, research)
-        full_research = self._add_reasoning_to_research(
-            full_research, child_info, "child"
+        full_research = research
+        parent_info, full_research = self._get_question_prediction_info(
+            question.parent, full_research, "parent"
         )
-        yes_info = await self._make_prediction(question.question_yes, full_research)
-        full_research = self._add_reasoning_to_research(full_research, yes_info, "yes")
-        no_info = await self._make_prediction(question.question_no, full_research)
+        parent_forecast = (
+            parent_info.prediction_value
+            if parent_info.prediction_value != "affirm"
+            else question.parent.my_last_forecast
+        )
+        child_info, full_research = self._get_question_prediction_info(
+            question.child, full_research, "child"
+        )
+        child_forecast = (
+            child_info.prediction_value
+            if child_info.prediction_value != "affirm"
+            else question.child.my_last_forecast
+        )
+        yes_info, full_research = self._get_question_prediction_info(
+            question.question_yes, full_research, "yes"
+        )
+        no_info, full_research = self._get_question_prediction_info(
+            question.question_no, full_research, "no"
+        )
         full_reasoning = clean_indents(
             f"""
             ## Parent Question Reasoning
@@ -206,10 +239,9 @@ class FallTemplateBot2025(ForecastBot):
             {no_info.reasoning}
         """
         )
-        # TODO: add option to affirm current parent/child forecasts
         full_prediction = ConditionalPrediction(
-            parent=parent_info.prediction_value,
-            child=child_info.prediction_value,
+            parent=parent_forecast,
+            child=child_forecast,
             prediction_yes=yes_info.prediction_value,
             prediction_no=no_info.prediction_value,
         )
