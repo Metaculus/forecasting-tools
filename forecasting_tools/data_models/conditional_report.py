@@ -127,9 +127,9 @@ class ConditionalReport(ForecastReport):
         )
 
     async def publish_report_to_metaculus(self) -> None:
-        if not isinstance(self.parent_report.prediction, PredictionAffirmed):
-            await self.parent_report.publish_report_to_metaculus()
-        if not isinstance(self.child_report.prediction, PredictionAffirmed):
-            await self.child_report.publish_report_to_metaculus()
+        # if not isinstance(self.parent_report.prediction, PredictionAffirmed):
+        #    await self.parent_report.publish_report_to_metaculus()
+        # if not isinstance(self.child_report.prediction, PredictionAffirmed):
+        #    await self.child_report.publish_report_to_metaculus()
         await self.yes_report.publish_report_to_metaculus()
         await self.no_report.publish_report_to_metaculus()
