@@ -532,8 +532,8 @@ class MetaculusClient:
     def _post_json_to_questions_while_handling_groups(
         self, post_json_from_api: dict, group_question_mode: GroupQuestionMode
     ) -> list[MetaculusQuestion]:
-        if "group_of_questions" in post_json_from_api:
-            if group_question_mode == "exclude":
+        if group_question_mode == "exclude":
+            if "group_of_questions" in post_json_from_api:
                 logger.debug(
                     f"Excluding group question post {post_json_from_api['id']}"
                 )
