@@ -48,6 +48,8 @@ QuestionBasicType = Literal[
     "binary", "numeric", "multiple_choice", "date", "discrete", "conditional"
 ]
 
+ConditionalSubQuestionType = Literal["parent", "child", "yes", "no"]
+
 
 class MetaculusQuestion(BaseModel, Jsonable):
     question_text: str
@@ -83,6 +85,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     cp_reveal_time: datetime | None = None  # Community Prediction Reveal Time
     question_weight: float | None = None
     resolution_string: str | None = None
+    conditional_type: ConditionalSubQuestionType | None = None
     group_question_option: str | None = (
         None  # For group questions like "How many people will die of coronovirus in the following periouds" it would be "September 2024", "All of 2025", etc
     )
@@ -169,6 +172,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             resolution_string=question_json.get("resolution", None),
             group_question_option=group_question_option,
             api_json=post_api_json,
+            conditional_type=question_json.get("conditional_type", None),
         )
         return question
 
@@ -524,11 +528,15 @@ class ConditionalQuestion(MetaculusQuestion):
             f"""
             IMPORTANT: This is a conditional forecasting question with two components:
 
-            1. **Condition (Parent Question)**: "{parent.question_text}"
+            1. **Condition (Parent Question, NOT BEING FORECASTED RIGHT NOW)**: "{parent.question_text}"
             2. **Outcome (Child Question)**: "{child.question_text}"
 
             ## Your Task
             You are forecasting the CHILD question, assuming the PARENT question has resolved to {resolved}.
+            Keep in mind, this is extremely important: you are **NOT** forecasting the PARENT QUESTION!
+            You have been provided with research relating to the parent question, but you are NOT to forecast it.
+            You shall assume the parent question is resolved to {resolved}, focus on the child question GIVEN THAT INFORMATION.
+            Make sure to only include information relevant to the CHILD QUESTION in the final output, this is absolutely essential.
 
             ## Resolution Criteria for Parent Question (Assumed to Resolve {resolved})
             ```
@@ -575,7 +583,9 @@ class ConditionalQuestion(MetaculusQuestion):
 
     @staticmethod
     def _unpack_individual_conditional_question(
-        question_json: Any, post_json_from_api
+        question_json: Any,
+        post_json_from_api: Any,
+        question_type: ConditionalSubQuestionType,
     ) -> MetaculusQuestion:
         from forecasting_tools.data_models.data_organizer import DataOrganizer
 
@@ -583,6 +593,7 @@ class ConditionalQuestion(MetaculusQuestion):
 
         new_post_json = copy.deepcopy(post_json_from_api)
         new_post_json["question"] = new_question_json
+        new_post_json["question"]["conditional_type"] = question_type
 
         question_obj = DataOrganizer.get_question_from_post_json(new_post_json)
         return question_obj
@@ -597,16 +608,16 @@ class ConditionalQuestion(MetaculusQuestion):
         )
         base_question = MetaculusQuestion.from_metaculus_api_json(api_json)
         parent_question = cls._unpack_individual_conditional_question(
-            conditional["condition"], api_json
+            conditional["condition"], api_json, "parent"
         )
         child_question = cls._unpack_individual_conditional_question(
-            conditional["condition_child"], api_json
+            conditional["condition_child"], api_json, "child"
         )
         question_yes = cls._unpack_individual_conditional_question(
-            conditional["question_yes"], api_json
+            conditional["question_yes"], api_json, "yes"
         )
         question_no = cls._unpack_individual_conditional_question(
-            conditional["question_no"], api_json
+            conditional["question_no"], api_json, "no"
         )
         question_yes = cls._conditional_questions_add_detail(
             question_yes, parent_question, child_question, True
