@@ -8,7 +8,10 @@ from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSear
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.binary_report import BinaryPrediction
-from forecasting_tools.data_models.conditional_models import ConditionalPrediction
+from forecasting_tools.data_models.conditional_models import (
+    ConditionalPrediction,
+    PredictionAffirmed,
+)
 from forecasting_tools.data_models.data_organizer import PredictionTypes
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
@@ -192,7 +195,7 @@ class FallTemplateBot2025(ForecastBot):
             # TODO: add option to not affirm current parent/child forecasts, create new forecast
             return (
                 ReasonedPrediction(
-                    prediction_value="affirm",
+                    prediction_value=PredictionAffirmed(),
                     reasoning="Already existing forecast reaffirmed.",
                 ),
                 research,
@@ -210,7 +213,7 @@ class FallTemplateBot2025(ForecastBot):
         )
         parent_forecast = (
             parent_info.prediction_value
-            if parent_info.prediction_value != "affirm"
+            if not isinstance(parent_info.prediction_value, PredictionAffirmed)
             else question.parent.my_last_forecast
         )
         child_info, full_research = self._get_question_prediction_info(
@@ -218,7 +221,7 @@ class FallTemplateBot2025(ForecastBot):
         )
         child_forecast = (
             child_info.prediction_value
-            if child_info.prediction_value != "affirm"
+            if not isinstance(child_info.prediction_value, PredictionAffirmed)
             else question.child.my_last_forecast
         )
         yes_info, full_research = self._get_question_prediction_info(

@@ -2,7 +2,10 @@ import typeguard
 from pydantic import BaseModel
 
 from forecasting_tools.data_models.binary_report import BinaryReport
-from forecasting_tools.data_models.conditional_models import ConditionalPrediction
+from forecasting_tools.data_models.conditional_models import (
+    ConditionalPrediction,
+    PredictionAffirmed,
+)
 from forecasting_tools.data_models.conditional_report import ConditionalReport
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.multiple_choice_report import (
@@ -218,7 +221,7 @@ class DataOrganizer:
             return BinaryReport.make_readable_prediction(prediction)
         elif isinstance(prediction, ConditionalPrediction):
             return ConditionalReport.make_readable_prediction(prediction)
-        elif prediction == "affirm":
+        elif isinstance(prediction, PredictionAffirmed):
             return "affirm"
         else:
             raise ValueError("Unknown prediction type.")
