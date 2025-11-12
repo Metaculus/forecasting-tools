@@ -116,11 +116,17 @@ class MetaculusQuestion(BaseModel, Jsonable):
         json_state = question_json["status"]
         question_state = QuestionState(json_state)
 
-        forecast_values = None
+        my_last_forecast = None
         try:
             forecast_values = question_json["my_forecasts"]["latest"][  # type: ignore
                 "forecast_values"
             ]
+            if (
+                forecast_values
+                and len(forecast_values) == 2
+                and cls.get_api_type_name() == "binary"
+            ):
+                my_last_forecast = forecast_values[1]
             is_forecasted = forecast_values is not None
         except Exception:
             is_forecasted = False
@@ -161,7 +167,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             cp_reveal_time=cls._parse_api_date(question_json.get("cp_reveal_time")),
             open_time=cls._parse_api_date(question_json.get("open_time")),
             already_forecasted=is_forecasted,
-            my_last_forecast=forecast_values,
+            my_last_forecast=my_last_forecast,
             tournament_slugs=tournament_slugs,
             default_project_id=(
                 post_api_json["projects"]["default_project"]["id"]
