@@ -207,9 +207,8 @@ class FallTemplateBot2025(ForecastBot):
     async def _run_forecast_on_conditional(
         self, question: ConditionalQuestion, research: str
     ) -> ReasonedPrediction[ConditionalPrediction]:
-        full_research = research
         parent_info, full_research = self._get_question_prediction_info(
-            question.parent, full_research, "parent"
+            question.parent, research, "parent"
         )
         parent_forecast = (
             parent_info.prediction_value
@@ -217,7 +216,7 @@ class FallTemplateBot2025(ForecastBot):
             else question.parent.my_last_forecast
         )
         child_info, full_research = self._get_question_prediction_info(
-            question.child, full_research, "child"
+            question.child, research, "child"
         )
         child_forecast = (
             child_info.prediction_value
