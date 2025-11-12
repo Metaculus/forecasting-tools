@@ -31,6 +31,7 @@ from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     ConditionalQuestion,
+    ConditionalSubQuestionType,
     DateQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
@@ -82,6 +83,9 @@ class ForecastBot(ABC):
         enable_summarize_research: bool = True,
         parameters_to_exclude_from_config_dict: list[str] | None = None,
         extra_metadata_in_explanation: bool = False,
+        force_reforecast_in_conditional: frozenset[
+            ConditionalSubQuestionType
+        ] = frozenset(),
     ) -> None:
         assert (
             research_reports_per_question > 0
@@ -102,6 +106,7 @@ class ForecastBot(ABC):
         )
         self.enable_summarize_research = enable_summarize_research
         self.extra_metadata_in_explanation = extra_metadata_in_explanation
+        self.force_reforecast_in_conditional = force_reforecast_in_conditional
         self._note_pads: list[Notepad] = []
         self._note_pad_lock = asyncio.Lock()
         self._llms = llms or self._llm_config_defaults()

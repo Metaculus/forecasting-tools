@@ -124,6 +124,9 @@ class ConditionalReport(ForecastReport):
         )
 
     async def publish_report_to_metaculus(self) -> None:
-        # TODO: publish parent/child reports if necessary
+        if self.parent_report.prediction != "affirm":
+            await self.parent_report.publish_report_to_metaculus()
+        if self.child_report.prediction != "affirm":
+            await self.child_report.publish_report_to_metaculus()
         await self.yes_report.publish_report_to_metaculus()
         await self.no_report.publish_report_to_metaculus()

@@ -79,6 +79,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     )
     date_accessed: datetime = Field(default_factory=pendulum.now)
     already_forecasted: bool | None = None
+    my_last_forecast: Any | None = None
     tournament_slugs: list[str] = Field(default_factory=list)
     default_project_id: int | None = None
     includes_bots_in_aggregates: bool | None = None
@@ -115,6 +116,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
         json_state = question_json["status"]
         question_state = QuestionState(json_state)
 
+        forecast_values = None
         try:
             forecast_values = question_json["my_forecasts"]["latest"][  # type: ignore
                 "forecast_values"
@@ -159,6 +161,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             cp_reveal_time=cls._parse_api_date(question_json.get("cp_reveal_time")),
             open_time=cls._parse_api_date(question_json.get("open_time")),
             already_forecasted=is_forecasted,
+            my_last_forecast=forecast_values,
             tournament_slugs=tournament_slugs,
             default_project_id=(
                 post_api_json["projects"]["default_project"]["id"]
