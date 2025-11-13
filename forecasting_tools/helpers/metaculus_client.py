@@ -145,6 +145,15 @@ class MetaculusClient:
         self.base_url = base_url
         self.timeout = timeout
 
+    def get_current_user_id(self):
+        response = requests.get(
+            f"{self.base_url}/users/me",
+            **self._get_auth_headers(),  # type: ignore
+        )
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)
+        return content["id"]
+
     def post_question_comment(
         self,
         post_id: int,

@@ -493,6 +493,17 @@ class TestPostEndpoint:
         assert isinstance(conditional_question.question_yes, BinaryQuestion)
         assert isinstance(conditional_question.question_no, BinaryQuestion)
 
+    async def test_get_previous_forecast(self) -> None:
+        client = MetaculusClient().dev()
+        user_id = client.get_current_user_id()
+        assert user_id is not None
+        api_filter = ApiFilter(
+            allowed_types=["binary"], other_url_parameters={"forecaster_id": user_id}
+        )
+        questions = await client.get_questions_matching_filter(api_filter=api_filter)
+        assert questions
+        assert all(question.my_last_forecast for question in questions)
+
     def test_get_benchmark_questions(self) -> None:
         num_questions_to_get = 30
         questions = MetaculusApi.get_benchmark_questions(num_questions_to_get)
