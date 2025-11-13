@@ -48,6 +48,8 @@ QuestionBasicType = Literal[
     "binary", "numeric", "multiple_choice", "date", "discrete", "conditional"
 ]
 
+ConditionalSubQuestionType = Literal["parent", "child", "yes", "no"]
+
 
 class MetaculusQuestion(BaseModel, Jsonable):
     question_text: str
