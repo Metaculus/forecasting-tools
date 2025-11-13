@@ -190,7 +190,7 @@ class FallTemplateBot2025(ForecastBot):
         if (
             question_type in ["parent", "child"]
             and question.my_last_forecast
-            and question not in self.force_reforecast_in_conditional
+            and question_type not in self.force_reforecast_in_conditional
         ):
             # TODO: add option to not affirm current parent/child forecasts, create new forecast
             return (
@@ -202,31 +202,21 @@ class FallTemplateBot2025(ForecastBot):
             )
         info = await self._make_prediction(question, research)
         full_research = self._add_reasoning_to_research(research, info, question_type)
-        return info.prediction_value, full_research
+        return info, full_research
 
     async def _run_forecast_on_conditional(
         self, question: ConditionalQuestion, research: str
     ) -> ReasonedPrediction[ConditionalPrediction]:
-        parent_info, full_research = self._get_question_prediction_info(
+        parent_info, full_research = await self._get_question_prediction_info(
             question.parent, research, "parent"
         )
-        parent_forecast = (
-            parent_info.prediction_value
-            if not isinstance(parent_info.prediction_value, PredictionAffirmed)
-            else question.parent.my_last_forecast
-        )
-        child_info, full_research = self._get_question_prediction_info(
+        child_info, full_research = await self._get_question_prediction_info(
             question.child, research, "child"
         )
-        child_forecast = (
-            child_info.prediction_value
-            if not isinstance(child_info.prediction_value, PredictionAffirmed)
-            else question.child.my_last_forecast
-        )
-        yes_info, full_research = self._get_question_prediction_info(
+        yes_info, full_research = await self._get_question_prediction_info(
             question.question_yes, full_research, "yes"
         )
-        no_info, full_research = self._get_question_prediction_info(
+        no_info, full_research = await self._get_question_prediction_info(
             question.question_no, full_research, "no"
         )
         full_reasoning = clean_indents(
@@ -242,8 +232,8 @@ class FallTemplateBot2025(ForecastBot):
         """
         )
         full_prediction = ConditionalPrediction(
-            parent=parent_forecast,
-            child=child_forecast,
+            parent=parent_info.prediction_value,
+            child=child_info.prediction_value,
             prediction_yes=yes_info.prediction_value,
             prediction_no=no_info.prediction_value,
         )

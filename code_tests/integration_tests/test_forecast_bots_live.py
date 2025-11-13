@@ -11,9 +11,14 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.data_models.conditional_models import PredictionAffirmed
 from forecasting_tools.data_models.conditional_report import ConditionalReport
 from forecasting_tools.data_models.data_organizer import DataOrganizer
-from forecasting_tools.data_models.questions import DateQuestion, MetaculusQuestion
+from forecasting_tools.data_models.questions import (
+    ConditionalQuestion,
+    DateQuestion,
+    MetaculusQuestion,
+)
 from forecasting_tools.forecast_bots.bot_lists import (
     get_all_bot_question_type_pairs_for_cheap_tests,
 )
@@ -125,8 +130,34 @@ async def test_conditional_forecasts() -> None:
     )
     url_questions = typeguard.check_type(url_questions, MetaculusQuestion)
     questions.append(url_questions)
+
+    assert all(isinstance(question, ConditionalQuestion) for question in questions)
+    assert len(questions) > 1
+
+    # Add dummy data
+    questions[0].parent.my_last_forecast = 0.15
+    questions[0].child.my_last_forecast = 0.12
+    questions[1].parent.my_last_forecast = None
+    questions[1].child.my_last_forecast = None
+
     reports = await bot.forecast_questions(questions)
     assert len(reports) == len(questions)
+
+    reports_dict = {report.question.id_of_question: report for report in reports}
+    parent_child_pairs = [
+        (question, question.parent, question.child) for question in questions
+    ]
+    assert all(
+        bool(question_parent.my_last_forecast)
+        == isinstance(
+            reports_dict[question.id_of_question].prediction.parent, PredictionAffirmed
+        )
+        and bool(question_child.my_last_forecast)
+        == isinstance(
+            reports_dict[question.id_of_question].prediction.child, PredictionAffirmed
+        )
+        for question, question_parent, question_child in parent_child_pairs
+    )
 
 
 async def test_collects_reports_on_open_questions(mocker: Mock) -> None:
