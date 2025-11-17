@@ -502,7 +502,7 @@ class TestPostEndpoint:
         )
         questions = await client.get_questions_matching_filter(api_filter=api_filter)
         assert questions
-        assert all(question.my_last_forecast for question in questions)
+        assert all(question.previous_forecasts for question in questions)
 
     def test_get_benchmark_questions(self) -> None:
         num_questions_to_get = 30

@@ -187,16 +187,18 @@ class FallTemplateBot2025(ForecastBot):
     async def _get_question_prediction_info(
         self, question: MetaculusQuestion, research: str, question_type: str
     ) -> tuple[ReasonedPrediction[PredictionTypes], str]:
+        previous_forecasts = question.previous_forecasts
         if (
             question_type in ["parent", "child"]
-            and question.my_last_forecast
+            and previous_forecasts
             and question_type not in self.force_reforecast_in_conditional
         ):
             # TODO: add option to not affirm current parent/child forecasts, create new forecast
+            previous_value = previous_forecasts[-1].value
             return (
                 ReasonedPrediction(
                     prediction_value=PredictionAffirmed(),
-                    reasoning="Already existing forecast reaffirmed.",
+                    reasoning=f"Already existing forecast reaffirmed at {previous_value}.",
                 ),
                 research,
             )

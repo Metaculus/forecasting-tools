@@ -12,6 +12,7 @@ import typeguard
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.data_models.previous_forecasts import BinaryPreviousForecast
 from forecasting_tools.util.jsonable import Jsonable
 from forecasting_tools.util.misc import add_timezone_to_dates_in_base_model
 
@@ -79,7 +80,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     )
     date_accessed: datetime = Field(default_factory=pendulum.now)
     already_forecasted: bool | None = None
-    my_last_forecast: Any | None = None
+    previous_forecasts: list[BinaryPreviousForecast] | None = None
     tournament_slugs: list[str] = Field(default_factory=list)
     default_project_id: int | None = None
     includes_bots_in_aggregates: bool | None = None
@@ -115,18 +116,18 @@ class MetaculusQuestion(BaseModel, Jsonable):
         json_state = question_json["status"]
         question_state = QuestionState(json_state)
 
-        my_last_forecast = None
+        previous_forecasts = None
         try:
-            forecast_values = question_json["my_forecasts"]["latest"][  # type: ignore
-                "forecast_values"
-            ]
-            if (
-                forecast_values
-                and len(forecast_values) == 2
-                and cls.get_api_type_name() == "binary"
-            ):
-                my_last_forecast = forecast_values[1]
-            is_forecasted = forecast_values is not None
+            history = question_json["my_forecasts"]["history"]
+            if history and cls.get_api_type_name() == "binary":
+                previous_forecasts = [
+                    BinaryPreviousForecast(
+                        value=forecast["forecast_values"][1],
+                        timestamp=datetime.fromtimestamp(forecast["start_time"]),
+                    )
+                    for forecast in history
+                ]
+            is_forecasted = history is not None
         except Exception:
             is_forecasted = False
 
@@ -166,7 +167,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             cp_reveal_time=cls._parse_api_date(question_json.get("cp_reveal_time")),
             open_time=cls._parse_api_date(question_json.get("open_time")),
             already_forecasted=is_forecasted,
-            my_last_forecast=my_last_forecast,
+            previous_forecasts=previous_forecasts,
             tournament_slugs=tournament_slugs,
             default_project_id=(
                 post_api_json["projects"]["default_project"]["id"]
