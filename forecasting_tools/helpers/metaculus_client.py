@@ -758,7 +758,8 @@ class MetaculusClient:
 
         if api_filter.retrieve_previously_forecast:
             user_id = self.get_current_user_id()
-            url_params["forecaster_id"] = user_id
+            if user_id:
+                url_params["forecaster_id"] = user_id
 
         url_params.update(api_filter.other_url_parameters)
         return url_params

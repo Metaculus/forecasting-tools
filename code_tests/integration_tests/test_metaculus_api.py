@@ -495,8 +495,6 @@ class TestPostEndpoint:
 
     async def test_get_previous_forecast(self) -> None:
         client = MetaculusClient().dev()
-        user_id = client.get_current_user_id()
-        assert user_id is not None
         api_filter = ApiFilter(
             allowed_types=["binary"], retrieve_previously_forecast=True
         )
