@@ -119,6 +119,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
         previous_forecasts = None
         try:
             history = question_json["my_forecasts"]["history"]
+            # TODO: handle other types of forecasts
             if history and cls.get_api_type_name() == "binary":
                 previous_forecasts = [
                     BinaryPreviousForecast(
