@@ -75,6 +75,7 @@ class ApiFilter(BaseModel):
     community_prediction_exists: bool | None = None
     cp_reveal_time_gt: datetime | None = None
     cp_reveal_time_lt: datetime | None = None
+    retrieve_previously_forecast: bool | None = None
     order_by: str = (
         "-published_time"  # Alternatives include things like "-weekly_movement" + is asc, - is desc
     )
@@ -754,6 +755,10 @@ class MetaculusClient:
 
         if api_filter.allowed_tournaments:
             url_params["tournaments"] = api_filter.allowed_tournaments
+
+        if api_filter.retrieve_previously_forecast:
+            user_id = self.get_current_user_id()
+            url_params["forecaster_id"] = user_id
 
         url_params.update(api_filter.other_url_parameters)
         return url_params

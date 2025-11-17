@@ -498,7 +498,7 @@ class TestPostEndpoint:
         user_id = client.get_current_user_id()
         assert user_id is not None
         api_filter = ApiFilter(
-            allowed_types=["binary"], other_url_parameters={"forecaster_id": user_id}
+            allowed_types=["binary"], retrieve_previously_forecast=True
         )
         questions = await client.get_questions_matching_filter(api_filter=api_filter)
         assert questions
