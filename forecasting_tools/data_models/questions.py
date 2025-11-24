@@ -80,7 +80,6 @@ class MetaculusQuestion(BaseModel, Jsonable):
     )
     date_accessed: datetime = Field(default_factory=pendulum.now)
     already_forecasted: bool | None = None
-    previous_forecasts: list[BinaryPreviousForecast] | None = None
     tournament_slugs: list[str] = Field(default_factory=list)
     default_project_id: int | None = None
     includes_bots_in_aggregates: bool | None = None
@@ -116,18 +115,8 @@ class MetaculusQuestion(BaseModel, Jsonable):
         json_state = question_json["status"]
         question_state = QuestionState(json_state)
 
-        previous_forecasts = None
         try:
             history = question_json["my_forecasts"]["history"]
-            # TODO: handle other types of forecasts
-            if history and cls.get_api_type_name() == "binary":
-                previous_forecasts = [
-                    BinaryPreviousForecast(
-                        value=forecast["forecast_values"][1],
-                        timestamp=datetime.fromtimestamp(forecast["start_time"]),
-                    )
-                    for forecast in history
-                ]
             is_forecasted = history is not None
         except Exception:
             is_forecasted = False
@@ -168,7 +157,6 @@ class MetaculusQuestion(BaseModel, Jsonable):
             cp_reveal_time=cls._parse_api_date(question_json.get("cp_reveal_time")),
             open_time=cls._parse_api_date(question_json.get("open_time")),
             already_forecasted=is_forecasted,
-            previous_forecasts=previous_forecasts,
             tournament_slugs=tournament_slugs,
             default_project_id=(
                 post_api_json["projects"]["default_project"]["id"]
@@ -296,6 +284,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
 class BinaryQuestion(MetaculusQuestion):
     question_type: Literal["binary"] = "binary"
     community_prediction_at_access_time: float | None = None
+    previous_forecasts: list[BinaryPreviousForecast] | None = None
 
     @property
     def binary_resolution(self) -> BinaryResolution | None:
@@ -316,10 +305,22 @@ class BinaryQuestion(MetaculusQuestion):
                 q2_center_community_prediction = aggregations["unweighted"]["latest"]["centers"]  # type: ignore
             assert len(q2_center_community_prediction) == 1
             community_prediction_at_access_time = q2_center_community_prediction[0]
+            history = api_json["question"]["my_forecasts"]["history"]
+            previous_forecasts = None
+            if history:
+                previous_forecasts = [
+                    BinaryPreviousForecast(
+                        value=forecast["forecast_values"][1],
+                        timestamp=datetime.fromtimestamp(forecast["start_time"]),
+                    )
+                    for forecast in history
+                ]
         except (KeyError, TypeError):
             community_prediction_at_access_time = None
+            previous_forecasts = None
         return BinaryQuestion(
             community_prediction_at_access_time=community_prediction_at_access_time,
+            previous_forecasts=previous_forecasts,
             **normal_metaculus_question.model_dump(),
         )
 

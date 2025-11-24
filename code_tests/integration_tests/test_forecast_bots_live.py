@@ -150,20 +150,16 @@ async def test_conditional_forecasts() -> None:
     assert len(reports) == len(questions)
 
     reports_dict = {report.question.id_of_question: report for report in reports}
-    parent_child_pairs = [
-        (question, question.parent, question.child) for question in questions
-    ]
-    assert all(
-        bool(question_parent.previous_forecasts)
-        == isinstance(
-            reports_dict[question.id_of_question].prediction.parent, PredictionAffirmed
+    for question in questions:
+        prediction = reports_dict[question.id_of_question].prediction
+        question_parent = question.parent
+        question_child = question.child
+        assert bool(question_parent.previous_forecasts) == isinstance(
+            prediction.parent, PredictionAffirmed
         )
-        and bool(question_child.previous_forecasts)
-        == isinstance(
-            reports_dict[question.id_of_question].prediction.child, PredictionAffirmed
+        assert bool(question_child.previous_forecasts) == isinstance(
+            prediction.child, PredictionAffirmed
         )
-        for question, question_parent, question_child in parent_child_pairs
-    )
 
 
 async def test_collects_reports_on_open_questions(mocker: Mock) -> None:
