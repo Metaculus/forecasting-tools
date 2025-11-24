@@ -296,10 +296,10 @@ class BinaryQuestion(MetaculusQuestion):
         normal_metaculus_question = super().from_metaculus_api_json(api_json)
         try:
             aggregations = api_json["question"]["aggregations"]
-            recency_weighted_latest = aggregations["recency_weighted"]["latest"]  # type: ignore
-            if recency_weighted_latest is not None:
+            try:
+                recency_weighted_latest = aggregations["recency_weighted"]["latest"]  # type: ignore
                 q2_center_community_prediction = recency_weighted_latest["centers"]  # type: ignore
-            else:
+            except KeyError:
                 q2_center_community_prediction = aggregations["unweighted"]["latest"]["centers"]  # type: ignore
             assert len(q2_center_community_prediction) == 1
             community_prediction_at_access_time = q2_center_community_prediction[0]
@@ -313,6 +313,42 @@ class BinaryQuestion(MetaculusQuestion):
     @classmethod
     def get_api_type_name(cls) -> QuestionBasicType:
         return "binary"
+
+    def get_cp_at_time(
+        self,
+        time: datetime,
+    ) -> float | None:
+        if time > pendulum.now():
+            # NOTE: the community prediction often exists for future dates 1 week to 2
+            #       months out since the CP is calculated for these dates as long as
+            #       people's forecasts are not expired.
+            #       We don't want to return a CP for a future date, so we return None.
+            return None
+
+        cp_history: list[dict] = self.api_json["question"]["aggregations"][
+            "recency_weighted"
+        ]["history"]
+        assert time.tzinfo is not None
+
+        time_timestamp = time.timestamp()
+
+        for history_item in cp_history:
+            start_time = history_item["start_time"]
+            end_time = history_item["end_time"]
+
+            if start_time <= time_timestamp and (
+                not end_time or time_timestamp <= end_time
+            ):
+                centers = history_item["centers"]
+                if len(centers) == 1:
+                    return centers[0]
+                else:
+                    raise ValueError(
+                        f"Expected 1 center, got {len(centers)} for time {time}"
+                    )
+
+        logger.warning(f"No confidence prediction found for time {time}")
+        return None
 
 
 class BoundedQuestionMixin:
