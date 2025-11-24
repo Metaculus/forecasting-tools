@@ -1,3 +1,4 @@
+import datetime
 import logging
 from unittest.mock import Mock
 
@@ -11,9 +12,15 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.data_models.conditional_models import PredictionAffirmed
 from forecasting_tools.data_models.conditional_report import ConditionalReport
 from forecasting_tools.data_models.data_organizer import DataOrganizer
-from forecasting_tools.data_models.questions import DateQuestion, MetaculusQuestion
+from forecasting_tools.data_models.previous_forecasts import BinaryPreviousForecast
+from forecasting_tools.data_models.questions import (
+    ConditionalQuestion,
+    DateQuestion,
+    MetaculusQuestion,
+)
 from forecasting_tools.forecast_bots.bot_lists import (
     get_all_bot_question_type_pairs_for_cheap_tests,
 )
@@ -125,8 +132,34 @@ async def test_conditional_forecasts() -> None:
     )
     url_questions = typeguard.check_type(url_questions, MetaculusQuestion)
     questions.append(url_questions)
+
+    assert all(isinstance(question, ConditionalQuestion) for question in questions)
+    assert len(questions) > 1
+
+    # Add dummy data
+    questions[0].parent.previous_forecasts = [
+        BinaryPreviousForecast(value=0.15, timestamp=datetime.datetime.now())
+    ]
+    questions[0].child.previous_forecasts = [
+        BinaryPreviousForecast(value=0.12, timestamp=datetime.datetime.now())
+    ]
+    questions[1].parent.previous_forecasts = None
+    questions[1].child.previous_forecasts = None
+
     reports = await bot.forecast_questions(questions)
     assert len(reports) == len(questions)
+
+    reports_dict = {report.question.id_of_question: report for report in reports}
+    for question in questions:
+        prediction = reports_dict[question.id_of_question].prediction
+        question_parent = question.parent
+        question_child = question.child
+        assert bool(question_parent.previous_forecasts) == isinstance(
+            prediction.parent, PredictionAffirmed
+        )
+        assert bool(question_child.previous_forecasts) == isinstance(
+            prediction.child, PredictionAffirmed
+        )
 
 
 async def test_collects_reports_on_open_questions(mocker: Mock) -> None:

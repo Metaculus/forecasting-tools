@@ -1,15 +1,18 @@
-from typing import Literal
-
 from pydantic import BaseModel
 
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 
+
+class PredictionAffirmed(BaseModel):
+    pass
+
+
 ConditionalPredictionTypesNonAffirmable = (
     NumericDistribution | PredictedOptionList | float
 )
 ConditionalPredictionTypes = (
-    NumericDistribution | PredictedOptionList | float | Literal["affirm"]
+    ConditionalPredictionTypesNonAffirmable | PredictionAffirmed
 )
 
 
