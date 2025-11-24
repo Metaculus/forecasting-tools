@@ -394,9 +394,12 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     sonnet_4_name = "anthropic/claude-sonnet-4-20250514"
     sonnet_4_5_name = "anthropic/claude-sonnet-4-5-20250929"
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
+    gemini_3_pro = "openrouter/google/gemini-3-pro-preview"
     gemini_default_timeout = 120
     deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-5-20250929"  # Switched from claude-sonnet-4-20250514 in Nov 2025
     roughly_sonnet_4_cost = 0.25190
+    roughly_gpt_5_high_cost = 0.37868
+    roughly_gpt_5_cost = 0.19971
 
     default_perplexity_settings: dict = {
         "web_search_options": {"search_context_size": "high"},
@@ -497,6 +500,77 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        ############################ Bots started in November 2025 ############################
+        # "METAC_QWEN_3_MAX_HIGH": {} -> Accidentally made bot w/o realizing that qwen-3-max-thinking is just an upgrade to the base model (not a new parameter)
+        "METAC_KIMI_K2_HIGH": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/moonshotai/kimi-k2-thinking",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        # "METAC_DEEPSEEK_R1_CP_ENABLED": {}, # TODO: Make a framework for this bot
+        "METAC_GPT_5_1_HIGH": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.1",
+                    reasoning_effort="high",
+                    temperature=default_temperature,
+                    timeout=15 * 60,
+                    # **flex_price_settings,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GPT_5_1": {
+            "estimated_cost_per_question": roughly_gpt_5_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.1",
+                    temperature=default_temperature,
+                    timeout=15 * 60,
+                    # **flex_price_settings,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        # "METAC_GEMINI_3_PRO_HIGH": {} # The default for regular gemini 3 pro is "high" so no need to make a separate version
+        "METAC_GEMINI_3_PRO": {
+            "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost * 1.3,
+            "bot": create_bot(
+                GeneralLlm(
+                    model=gemini_3_pro,
+                    reasoning_effort="high",  # This should be default (as of Nov 24th, 2025) even without specifying "high"
+                    temperature=1.0,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GROK_4_1_FAST_HIGH": {
+            "estimated_cost_per_question": guess_at_deepseek_v3_1_cost * 1.2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="xai/grok-4-1-fast-reasoning-latest",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GROK_4_1_FAST": {
+            "estimated_cost_per_question": guess_at_deepseek_v3_1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="xai/grok-4-1-fast-non-reasoning-latest",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ Bots started in October 2025 ############################
         "METAC_CLAUDE_4_5_SONNET_HIGH": {
             "estimated_cost_per_question": roughly_sonnet_4_cost * 2,
@@ -577,7 +651,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         ############################ Bots started in Fall 2025 ############################
         ### Regular Bots
         "METAC_GPT_5_HIGH": {
-            "estimated_cost_per_question": 0.37868,
+            "estimated_cost_per_question": roughly_gpt_5_high_cost,
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="openai/gpt-5",
@@ -590,7 +664,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
         },
         "METAC_GPT_5": {
-            "estimated_cost_per_question": 0.19971,
+            "estimated_cost_per_question": roughly_gpt_5_cost,
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="openai/gpt-5",
