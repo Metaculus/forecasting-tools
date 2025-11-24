@@ -203,7 +203,10 @@ async def get_questions_for_config(
 
     non_date_questions = [q for q in questions if not isinstance(q, DateQuestion)]
 
-    return non_date_questions[
+    filtered_questions = [q for q in non_date_questions if q.id_of_post != 31653]
+    # https://www.metaculus.com/questions/31653/ is rejected by qwen3-max and is causing noisy workflow errors
+
+    return filtered_questions[
         :max_questions
     ]  # Note that the order questions are prioritized matter.
 
