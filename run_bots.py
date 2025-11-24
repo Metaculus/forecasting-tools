@@ -501,7 +501,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     mode_base_bot_mapping = {
         ############################ Bots started in November 2025 ############################
-        # "METAC_QWEN_3_MAX_HIGH": {} -> Accidentally made bot w/o realizing that qwen-3-max-thinking is just an upgrade to the base model (not a new parameter)
         "METAC_KIMI_K2_HIGH": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
             "bot": create_bot(
@@ -512,7 +511,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             ),
             "tournaments": TournConfig.aib_and_site,
         },
-        # "METAC_DEEPSEEK_R1_CP_ENABLED": {}, # TODO: Make a framework for this bot
         "METAC_GPT_5_1_HIGH": {
             "estimated_cost_per_question": roughly_gpt_5_high_cost,
             "bot": create_bot(
@@ -571,6 +569,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             ),
             "tournaments": TournConfig.aib_and_site,
         },
+        # "METAC_QWEN_3_MAX_HIGH": {} -> Accidentally made bot w/o realizing that qwen-3-max-thinking is just an upgrade to the base model (not a new parameter)
+        # "METAC_DEEPSEEK_R1_CP_ENABLED": {}, # TODO: Make a framework for this bot
         ############################ Bots started in October 2025 ############################
         "METAC_CLAUDE_4_5_SONNET_HIGH": {
             "estimated_cost_per_question": roughly_sonnet_4_cost * 2,
