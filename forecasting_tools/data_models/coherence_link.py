@@ -1,4 +1,4 @@
-from typing import Literal, Self
+from typing import List, Literal, Self
 
 from pydantic import BaseModel
 
@@ -9,13 +9,16 @@ LinkTypesType = Literal["causal"]
 
 class CoherenceLink(BaseModel):
     question1_id: int
-    question1: MetaculusQuestion
     question2_id: int
-    question2: MetaculusQuestion
     direction: int
     strength: int
     type: LinkTypesType
     id: int
+
+
+class DetailedCoherenceLink(CoherenceLink, BaseModel):
+    question1: MetaculusQuestion
+    question2: MetaculusQuestion
 
     @classmethod
     def from_metaculus_api_json(cls, api_json: dict) -> Self:
@@ -33,3 +36,8 @@ class CoherenceLink(BaseModel):
             question1=DataOrganizer.get_question_from_question_json(question1),
             question2=DataOrganizer.get_question_from_question_json(question2),
         )
+
+
+class NeedsUpdateResponse(BaseModel):
+    questions: List[MetaculusQuestion]
+    links: list[CoherenceLink]

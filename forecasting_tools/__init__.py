@@ -79,7 +79,9 @@ from forecasting_tools.data_models.binary_report import (
     BinaryPrediction as BinaryPrediction,
 )
 from forecasting_tools.data_models.binary_report import BinaryReport as BinaryReport
-from forecasting_tools.data_models.coherence_link import CoherenceLink as CoherenceLink
+from forecasting_tools.data_models.coherence_link import (
+    DetailedCoherenceLink as DetailedCoherenceLink,
+)
 from forecasting_tools.data_models.data_organizer import DataOrganizer as DataOrganizer
 from forecasting_tools.data_models.forecast_report import (
     ForecastReport as ForecastReport,
