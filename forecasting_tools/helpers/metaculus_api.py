@@ -4,7 +4,7 @@ from typing import List, Literal, overload
 
 import typing_extensions
 
-from forecasting_tools.data_models.coherence_link import CoherenceLink
+from forecasting_tools.data_models.coherence_link import DetailedCoherenceLink
 from forecasting_tools.data_models.questions import BinaryQuestion, MetaculusQuestion
 from forecasting_tools.helpers.metaculus_client import (
     ApiFilter,
@@ -86,7 +86,7 @@ class MetaculusApi:
         )
 
     @classmethod
-    def get_links_for_question(cls, question_id: int) -> List[CoherenceLink]:
+    def get_links_for_question(cls, question_id: int) -> List[DetailedCoherenceLink]:
         return cls.METACULUS_CLIENT.get_links_for_question(question_id)
 
     @classmethod
