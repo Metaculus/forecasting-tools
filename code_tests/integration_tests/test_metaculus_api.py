@@ -496,7 +496,7 @@ class TestPostEndpoint:
     async def test_get_previous_forecast(self) -> None:
         client = MetaculusClient().dev()
         api_filter = ApiFilter(
-            allowed_types=["binary"], retrieve_previously_forecast=True
+            allowed_types=["binary"], is_previously_forecasted_by_user=True
         )
         questions = await client.get_questions_matching_filter(api_filter=api_filter)
         assert questions
