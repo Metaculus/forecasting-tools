@@ -123,8 +123,10 @@ class MetaculusQuestion(BaseModel, Jsonable):
         question_state = QuestionState(json_state)
 
         try:
-            history = question_json["my_forecasts"]["history"]
-            is_forecasted = history is not None
+            forecast_values = question_json["my_forecasts"]["latest"][  # type: ignore
+                "forecast_values"
+            ]
+            is_forecasted = forecast_values is not None
         except Exception:
             is_forecasted = False
 
