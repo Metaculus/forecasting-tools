@@ -15,10 +15,10 @@ from forecasting_tools.agents_and_tools.deprecated.research_coordinator import (
     ResearchCoordinator,
 )
 from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.helpers.metaculus_api import MetaculusQuestion
 from forecasting_tools.util import async_batching
 from forecasting_tools.util.misc import (
+    clean_indents,
     extract_url_from_markdown_link,
     is_markdown_citation,
 )

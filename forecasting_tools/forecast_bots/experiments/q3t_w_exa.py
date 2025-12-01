@@ -1,9 +1,9 @@
 from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot2024,
 )
+from forecasting_tools.util.misc import clean_indents
 
 
 class Q3TemplateWithExa(Q3TemplateBot2024):

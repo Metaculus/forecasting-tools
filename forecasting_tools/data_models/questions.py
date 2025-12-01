@@ -11,10 +11,12 @@ import pendulum
 import typeguard
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.previous_forecasts import BinaryPreviousForecast
 from forecasting_tools.util.jsonable import Jsonable
-from forecasting_tools.util.misc import add_timezone_to_dates_in_base_model
+from forecasting_tools.util.misc import (
+    add_timezone_to_dates_in_base_model,
+    clean_indents,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +120,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
 
         try:
             history = question_json["my_forecasts"]["history"]
-            is_forecasted = history is not None
+            is_forecasted = history is not None and len(history) > 0
         except Exception:
             is_forecasted = False
 

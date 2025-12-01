@@ -14,7 +14,7 @@ from forecasting_tools.ai_models.agent_wrappers import (
     event_to_tool_message,
     general_trace_or_span,
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
 

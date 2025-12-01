@@ -3,7 +3,6 @@ from datetime import datetime
 from forecasting_tools.agents_and_tools.deprecated.research_coordinator import (
     ResearchCoordinator,
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.questions import BinaryQuestion, MetaculusQuestion
@@ -11,6 +10,7 @@ from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot2024,
 )
 from forecasting_tools.helpers.prediction_extractor import PredictionExtractor
+from forecasting_tools.util.misc import clean_indents
 
 
 class Q4VeritasBot(Q3TemplateBot2024):

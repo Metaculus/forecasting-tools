@@ -124,7 +124,7 @@ class TestGetSpecificQuestions:
         assert "6 or 7" in question.options
         assert "8 or 9" in question.options
         assert "10 or more" in question.options
-        assert question.question_weight == 1.0
+        assert question.question_weight == pytest.approx(1.0)
         assert question.option_is_instance_of == "Number"
         assert question.get_question_type() == "multiple_choice"
         assert question.question_type == "multiple_choice"
@@ -500,7 +500,9 @@ class TestPostEndpoint:
         )
         questions = await client.get_questions_matching_filter(api_filter=api_filter)
         assert questions
-        assert all(question.previous_forecasts for question in questions)
+        for question in questions:
+            assert isinstance(question, BinaryQuestion)
+            assert question.previous_forecasts
 
     def test_get_benchmark_questions(self) -> None:
         num_questions_to_get = 30

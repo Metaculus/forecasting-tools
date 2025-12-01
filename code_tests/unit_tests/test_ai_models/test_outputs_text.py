@@ -8,11 +8,11 @@ from pydantic import BaseModel
 
 from code_tests.unit_tests.test_ai_models.ai_mock_manager import AiModelMockManager
 from code_tests.unit_tests.test_ai_models.models_to_test import ModelsToTest
-from forecasting_tools.ai_models.ai_utils.ai_misc import validate_complex_type
 from forecasting_tools.ai_models.ai_utils.response_types import TextTokenCostResponse
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.model_interfaces.outputs_text import OutputsText
+from forecasting_tools.util.misc import validate_complex_type
 
 logger = logging.getLogger(__name__)
 

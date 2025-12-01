@@ -9,9 +9,9 @@ from forecasting_tools.ai_models.agent_wrappers import (
     AgentTool,
     AiAgent,
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.front_end.app_pages.chat_page import ChatPage
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
 

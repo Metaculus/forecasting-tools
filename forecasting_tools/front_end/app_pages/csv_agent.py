@@ -16,7 +16,6 @@ from forecasting_tools.ai_models.agent_wrappers import (
     AgentTool,
     AiAgent,
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
@@ -24,6 +23,7 @@ from forecasting_tools.front_end.app_pages.chat_page import ChatPage
 from forecasting_tools.front_end.helpers.app_page import AppPage
 from forecasting_tools.front_end.helpers.custom_auth import CustomAuth
 from forecasting_tools.helpers.structure_output import structure_output
+from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
 
