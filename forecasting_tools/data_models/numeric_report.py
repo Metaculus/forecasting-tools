@@ -2,13 +2,19 @@ from __future__ import annotations
 
 import logging
 from collections import Counter
+from typing import TYPE_CHECKING
 
 import numpy as np
 import typing_extensions
 from pydantic import BaseModel, Field, model_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.data_models.questions import DiscreteQuestion, NumericQuestion
+
+if TYPE_CHECKING:
+    from forecasting_tools.data_models.questions import (
+        DiscreteQuestion,
+        NumericQuestion,
+    )
 
 logger = logging.getLogger(__name__)
 

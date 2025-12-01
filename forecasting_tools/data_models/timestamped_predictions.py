@@ -1,10 +1,13 @@
 from abc import ABC
 from datetime import datetime
 
-from forecasting_tools import BinaryPrediction, NumericDistribution
+from pydantic import BaseModel
+
+from forecasting_tools.data_models.binary_report import BinaryPrediction
+from forecasting_tools.data_models.numeric_report import NumericDistribution
 
 
-class TimeStampedPrediction(ABC):
+class TimeStampedPrediction(BaseModel, ABC):
     timestamp: datetime
 
 

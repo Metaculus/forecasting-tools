@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar
 
 import typeguard
 from pydantic import BaseModel, Field, field_validator
 
 from forecasting_tools.data_models.markdown_tree import MarkdownTree
-from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.util.jsonable import Jsonable
+
+if TYPE_CHECKING:
+    from forecasting_tools.data_models.questions import MetaculusQuestion
+
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
