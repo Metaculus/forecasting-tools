@@ -16,6 +16,7 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.timestamped_predictions import (
     BinaryTimestampedPrediction,
     NumericTimestampedDistribution,
+    TimeStampedPrediction,
 )
 from forecasting_tools.util.jsonable import Jsonable
 from forecasting_tools.util.misc import add_timezone_to_dates_in_base_model
@@ -91,7 +92,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     question_weight: float | None = None
     resolution_string: str | None = None
     conditional_type: ConditionalSubQuestionType | None = None
-    previous_forecasts: list[Any] | None = None
+    previous_forecasts: list[TimeStampedPrediction] | None = None
     group_question_option: str | None = (
         None  # For group questions like "How many people will die of coronovirus in the following periouds" it would be "September 2024", "All of 2025", etc
     )

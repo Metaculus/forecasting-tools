@@ -1,11 +1,16 @@
+from abc import ABC
 from datetime import datetime
 
 from forecasting_tools import BinaryPrediction, NumericDistribution
 
 
-class BinaryTimestampedPrediction(BinaryPrediction):
+class TimeStampedPrediction(ABC):
     timestamp: datetime
 
 
-class NumericTimestampedDistribution(NumericDistribution):
-    timestamp: datetime
+class BinaryTimestampedPrediction(BinaryPrediction, TimeStampedPrediction):
+    pass
+
+
+class NumericTimestampedDistribution(NumericDistribution, TimeStampedPrediction):
+    pass
