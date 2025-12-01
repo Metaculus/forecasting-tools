@@ -329,9 +329,9 @@ class BinaryQuestion(MetaculusQuestion):
             community_prediction_at_access_time = None
             previous_forecasts = None
         return BinaryQuestion(
+            **normal_metaculus_question.model_dump(exclude={"previous_forecasts"}),
             community_prediction_at_access_time=community_prediction_at_access_time,
             previous_forecasts=previous_forecasts,
-            **normal_metaculus_question.model_dump(),
         )
 
     @classmethod
@@ -548,6 +548,7 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
             ]
 
         return NumericQuestion(
+            **normal_metaculus_question.model_dump(exclude={"previous_forecasts"}),
             upper_bound=upper_bound,
             lower_bound=lower_bound,
             open_upper_bound=open_upper_bound,
@@ -557,7 +558,6 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
             nominal_upper_bound=nominal_upper_bound,
             nominal_lower_bound=nominal_lower_bound,
             previous_forecasts=previous_forecasts,
-            **normal_metaculus_question.model_dump(),
         )
 
     @classmethod
