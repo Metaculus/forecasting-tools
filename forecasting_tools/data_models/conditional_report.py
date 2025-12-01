@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import computed_field
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
