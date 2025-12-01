@@ -85,8 +85,6 @@ def retry_with_exponential_backoff(
                     time.sleep(sleep_time)
                     delay *= exponential_base
 
-            return func(*args, **kwargs)
-
         return wrapper
 
     return decorator
@@ -232,12 +230,16 @@ def validate_complex_type(value: T, expected_type: type[T]) -> TypeGuard[T]:
         # Special handling for list types
         if not isinstance(value, list):
             return False
+        if not args:
+            return True  # bare list type, no element types specified
         return all(validate_complex_type(v, args[0]) for v in value)
 
     if origin is dict:
         # Special handling for dict types
         if not isinstance(value, dict):
             return False
+        if not args:
+            return True  # bare dict type, no key or value types specified
         key_type, value_type = args
         return all(
             validate_complex_type(k, key_type) and validate_complex_type(v, value_type)
