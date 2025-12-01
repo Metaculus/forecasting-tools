@@ -175,7 +175,7 @@ from forecasting_tools import (
     GeneralLlm,
     PredictionExtractor
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.util.misc import clean_indents
 
 class MyCustomBot(TemplateBot):
 

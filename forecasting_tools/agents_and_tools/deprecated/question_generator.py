@@ -15,13 +15,13 @@ from forecasting_tools.agents_and_tools.question_generators.simple_question impo
     SimpleQuestion,
 )
 from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.data_organizer import DataOrganizer, ReportTypes
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025,
 )
+from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
 

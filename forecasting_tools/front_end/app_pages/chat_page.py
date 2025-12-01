@@ -45,7 +45,6 @@ from forecasting_tools.ai_models.agent_wrappers import (
     event_to_tool_message,
     general_trace_or_span,
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
@@ -57,6 +56,7 @@ from forecasting_tools.helpers.forecast_database_manager import (
     ForecastRunType,
 )
 from forecasting_tools.util.jsonable import Jsonable
+from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
 

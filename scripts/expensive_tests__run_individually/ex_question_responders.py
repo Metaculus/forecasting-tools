@@ -13,8 +13,8 @@ from forecasting_tools.agents_and_tools.deprecated.question_responder import (
     QuestionResponder,
 )
 from forecasting_tools.agents_and_tools.deprecated.question_router import QuestionRouter
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
+from forecasting_tools.util.misc import clean_indents
 
 
 #################################### HELPERS ####################################

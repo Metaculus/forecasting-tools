@@ -4,7 +4,7 @@ from typing import Any, Union
 
 import pytest
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import (
+from forecasting_tools.util.misc import (
     clean_indents,
     retry_async_function,
     strip_code_block_markdown,

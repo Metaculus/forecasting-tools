@@ -7,13 +7,13 @@ from typing import Any, TypeVar, get_args, get_origin
 
 from pydantic import BaseModel
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import (
+from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
+from forecasting_tools.util.misc import (
+    get_schema_of_base_model,
     strip_code_block_markdown,
     try_function_till_tries_run_out,
     validate_complex_type,
 )
-from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
-from forecasting_tools.util.misc import get_schema_of_base_model
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)

@@ -5,7 +5,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     DateQuestion,
@@ -14,6 +13,7 @@ from forecasting_tools.data_models.questions import (
     NumericQuestion,
 )
 from forecasting_tools.util.jsonable import Jsonable
+from forecasting_tools.util.misc import clean_indents
 
 
 class SimpleQuestion(BaseModel, Jsonable):

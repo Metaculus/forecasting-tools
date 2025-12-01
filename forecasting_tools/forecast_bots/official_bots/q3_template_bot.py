@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.deprecated_model_classes.perplexity import Perplexity
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
@@ -14,6 +13,7 @@ from forecasting_tools.data_models.questions import (
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.helpers.prediction_extractor import PredictionExtractor
+from forecasting_tools.util.misc import clean_indents
 
 
 class Q3TemplateBot2024(ForecastBot):

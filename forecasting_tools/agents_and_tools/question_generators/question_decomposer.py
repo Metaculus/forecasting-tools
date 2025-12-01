@@ -16,9 +16,9 @@ from forecasting_tools.ai_models.agent_wrappers import (
     AiAgent,
     agent_tool,
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.helpers.structure_output import structure_output
+from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
 
