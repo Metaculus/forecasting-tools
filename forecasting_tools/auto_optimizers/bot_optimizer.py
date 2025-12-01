@@ -2,7 +2,6 @@ import logging
 
 from pydantic import BaseModel
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.auto_optimizers.bot_evaluator import BotEvaluator
 from forecasting_tools.auto_optimizers.control_prompt import ControlPrompt
@@ -17,6 +16,7 @@ from forecasting_tools.auto_optimizers.prompt_optimizer import (
 )
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 from forecasting_tools.data_models.questions import MetaculusQuestion
+from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
 

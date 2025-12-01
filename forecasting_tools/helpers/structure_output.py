@@ -3,9 +3,9 @@ from typing import TypeVar, get_args, get_origin
 
 from pydantic import BaseModel
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.util.file_manipulation import add_to_jsonl_file
+from forecasting_tools.util.misc import clean_indents
 
 T = TypeVar("T")
 

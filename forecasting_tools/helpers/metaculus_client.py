@@ -33,6 +33,7 @@ from forecasting_tools.data_models.questions import (
 from forecasting_tools.util.misc import (
     add_timezone_to_dates_in_base_model,
     raise_for_status_with_additional_info,
+    retry_with_exponential_backoff,
 )
 
 logger = logging.getLogger(__name__)
@@ -116,7 +117,7 @@ class MetaculusClient:
     METACULUS_CUP_2025_1_ID = 32726  # Summer cup 2025
     METACULUS_CUP_FALL_2025_ID = 32828
     AI_2027_TOURNAMENT_ID = "ai-2027"
-    # MAIN_FEED = 144 # site_main
+    MAIN_FEED = 144  # site_main
 
     Q3_2025_MARKET_PULSE_ID = "market-pulse-25q3"
     Q4_2025_MARKET_PULSE_ID = "market-pulse-25q4"
@@ -136,21 +137,20 @@ class MetaculusClient:
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
 
     def __init__(
-        self, base_url: str = "https://www.metaculus.com/api", timeout: int = 30
+        self,
+        base_url: str = "https://www.metaculus.com/api",
+        timeout: int = 30,
+        sleep_time_between_requests_min: float = 1.5,
+        sleep_jitter_seconds: float = 0.5,
     ):
-        # TODO: Get this working using a pytest fixture or something similar
-        # regular_base_url = "https://www.metaculus.com/api"
-        # dev_base_url = "https://dev.metaculus.com/api"
-        # if base_url is None:
-        #     mode = os.environ.get("FORECASTING_TOOLS_TESTING_MODE")
-        #     is_testing = mode is not None and mode.lower() == "true"
-        #     self.base_url = dev_base_url if is_testing else regular_base_url
-        # else:
-        #     self.base_url = base_url
         self.base_url = base_url
         self.timeout = timeout
+        self.sleep_time_between_requests_min = sleep_time_between_requests_min
+        self.sleep_jitter_seconds = sleep_jitter_seconds
 
+    @retry_with_exponential_backoff()
     def get_current_user_id(self):
+        self._sleep_between_requests()
         response = requests.get(
             f"{self.base_url}/users/me",
             **self._get_auth_headers(),  # type: ignore
@@ -159,6 +159,7 @@ class MetaculusClient:
         content = json.loads(response.content)
         return content["id"]
 
+    @retry_with_exponential_backoff()
     def post_question_comment(
         self,
         post_id: int,
@@ -166,6 +167,7 @@ class MetaculusClient:
         is_private: bool = True,
         included_forecast: bool = True,
     ) -> None:
+        self._sleep_between_requests()
         response = requests.post(
             f"{self.base_url}/comments/create/",
             json={
@@ -180,6 +182,7 @@ class MetaculusClient:
         logger.info(f"Posted comment on post {post_id}")
         raise_for_status_with_additional_info(response)
 
+    @retry_with_exponential_backoff()
     def post_question_link(
         self,
         question1_id: int,
@@ -197,6 +200,7 @@ class MetaculusClient:
         :param link_type: only supports "causal" for now
         :return: id of the created link
         """
+        self._sleep_between_requests()
         response = requests.post(
             f"{self.base_url}/coherence/links/create/",
             json={
@@ -214,12 +218,14 @@ class MetaculusClient:
         content = json.loads(response.content)
         return content["id"]
 
+    @retry_with_exponential_backoff()
     def get_links_for_question(self, question_id: int) -> List[DetailedCoherenceLink]:
         """
         Returns all links associated with a specific question
         direction is +1 for positive and -1 for negative
         strength is 1 for low, 2 for medium and 5 for high
         """
+        self._sleep_between_requests()
         response = requests.get(
             f"{self.base_url}/coherence/links/{question_id}",
             **self._get_auth_headers(),  # type: ignore
@@ -232,7 +238,9 @@ class MetaculusClient:
         ]
         return links
 
+    @retry_with_exponential_backoff()
     def delete_question_link(self, link_id: int):
+        self._sleep_between_requests()
         response = requests.delete(
             f"{self.base_url}/coherence/links/{link_id}/delete",
             **self._get_auth_headers(),  # type: ignore
@@ -241,12 +249,14 @@ class MetaculusClient:
         logger.info(f"Deleted question link with id {link_id}")
         raise_for_status_with_additional_info(response)
 
+    @retry_with_exponential_backoff()
     def get_needs_update_questions(
         self,
         question_id: int,
         last_datetime: datetime,
         user_id_for_links: int | None = None,
     ) -> NeedsUpdateResponse:
+        self._sleep_between_requests()
         json_data: dict[str, Any] = {"datetime": last_datetime.isoformat()}
         if user_id_for_links:
             json_data["user_id_for_links"] = user_id_for_links
@@ -361,12 +371,15 @@ class MetaculusClient:
         group_question_mode: GroupQuestionMode = "exclude",
     ) -> MetaculusQuestion | list[MetaculusQuestion]: ...
 
+    @retry_with_exponential_backoff()
     def get_question_by_post_id(
         self,
         post_id: int,
         group_question_mode: GroupQuestionMode = "exclude",
     ) -> MetaculusQuestion | list[MetaculusQuestion]:
         logger.info(f"Retrieving question details for question {post_id}")
+        self._sleep_between_requests()
+
         url = f"{self.base_url}/posts/{post_id}/"
         response = requests.get(
             url,
@@ -500,10 +513,12 @@ class MetaculusClient:
             }
         }
 
+    @retry_with_exponential_backoff()
     def _post_question_prediction(
         self, question_id: int, forecast_payload: dict
     ) -> None:
         url = f"{self.base_url}/questions/forecast/"
+        self._sleep_between_requests()
         response = requests.post(
             url,
             json=[
@@ -519,14 +534,11 @@ class MetaculusClient:
         logger.info(f"Posted prediction on question {question_id}")
         raise_for_status_with_additional_info(response)
 
+    @retry_with_exponential_backoff()
     def _get_questions_from_api(
         self, params: dict[str, Any], group_question_mode: GroupQuestionMode
     ) -> list[MetaculusQuestion]:
-        random_sleep_time = random.uniform(2, 3)
-        logger.debug(
-            f"Sleeping for {random_sleep_time:.1f} seconds before next request"
-        )
-        time.sleep(random_sleep_time)
+        self._sleep_between_requests()
         num_requested = params.get("limit")
         assert (
             num_requested is None
@@ -1061,3 +1073,12 @@ class MetaculusClient:
     @classmethod
     def local(cls) -> MetaculusClient:
         return cls(base_url="http://127.0.0.1:8000/api")
+
+    def _sleep_between_requests(self) -> None:
+        higher_bound = self.sleep_time_between_requests_min + self.sleep_jitter_seconds
+        lower_bound = self.sleep_time_between_requests_min
+        random_sleep_time = random.uniform(lower_bound, higher_bound)
+        logger.debug(
+            f"Sleeping for {random_sleep_time:.1f} seconds before next request"
+        )
+        time.sleep(random_sleep_time)

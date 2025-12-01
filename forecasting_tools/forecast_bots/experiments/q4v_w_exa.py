@@ -1,7 +1,7 @@
 from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.other.q4_veritas_bot import Q4VeritasBot
+from forecasting_tools.util.misc import clean_indents
 
 
 class Q4VeritasWithExa(Q4VeritasBot):

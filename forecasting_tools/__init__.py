@@ -39,7 +39,6 @@ from forecasting_tools.agents_and_tools.research.key_factors_researcher import (
 from forecasting_tools.agents_and_tools.research.smart_searcher import (
     SmartSearcher as SmartSearcher,
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents as clean_indents
 from forecasting_tools.ai_models.ai_utils.openai_utils import (
     VisionMessageData as VisionMessageData,
 )
@@ -165,5 +164,6 @@ from forecasting_tools.helpers.prediction_extractor import (
 from forecasting_tools.helpers.structure_output import (
     structure_output as structure_output,
 )
+from forecasting_tools.util.misc import clean_indents as clean_indents
 
 nest_asyncio.apply()

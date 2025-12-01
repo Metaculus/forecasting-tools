@@ -6,7 +6,6 @@ import typeguard
 from pydantic import BaseModel
 
 from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
@@ -22,6 +21,7 @@ from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025,
 )
 from forecasting_tools.helpers.prediction_extractor import PredictionExtractor
+from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.questions import BinaryQuestion
 from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
     Q3TemplateBot2024,
 )
 from forecasting_tools.helpers.prediction_extractor import PredictionExtractor
+from forecasting_tools.util.misc import clean_indents
 
 
 class Q3TemplatePlusQ4VeritasBinaryPrompt(Q3TemplateBot2024):

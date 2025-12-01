@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pydantic import computed_field
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.conditional_models import (
     ConditionalPrediction,
     ConditionalPredictionTypes,
@@ -13,6 +12,7 @@ from forecasting_tools.data_models.questions import (
     ConditionalQuestion,
     MetaculusQuestion,
 )
+from forecasting_tools.util.misc import clean_indents
 
 
 class ConditionalReport(ForecastReport):

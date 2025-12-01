@@ -9,7 +9,6 @@ from typing import Any, Coroutine, Literal
 
 from pydantic import BaseModel, field_validator, model_validator
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -22,6 +21,7 @@ from forecasting_tools.util.file_manipulation import (
     write_csv_file,
 )
 from forecasting_tools.util.jsonable import Jsonable
+from forecasting_tools.util.misc import clean_indents
 
 full_datetime_format = "%m/%d/%Y %H:%M:%S"
 sheet_date_format1 = "%m/%d/%Y"

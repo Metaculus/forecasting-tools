@@ -2,7 +2,6 @@ import asyncio
 import logging
 from datetime import datetime
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.exa_searcher import (
     ExaHighlightQuote,
     ExaSearcher,
@@ -12,7 +11,11 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.model_interfaces.outputs_text import OutputsText
 from forecasting_tools.helpers.works_cited_creator import WorksCitedCreator
-from forecasting_tools.util.misc import fill_in_citations, make_text_fragment_url
+from forecasting_tools.util.misc import (
+    clean_indents,
+    fill_in_citations,
+    make_text_fragment_url,
+)
 
 logger = logging.getLogger(__name__)
 

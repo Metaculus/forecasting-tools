@@ -13,7 +13,6 @@ from exceptiongroup import ExceptionGroup
 from pydantic import BaseModel
 
 from forecasting_tools.ai_models.agent_wrappers import general_trace_or_span
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -41,6 +40,7 @@ from forecasting_tools.data_models.questions import (
     NumericQuestion,
 )
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.util.misc import clean_indents
 
 T = TypeVar("T")
 

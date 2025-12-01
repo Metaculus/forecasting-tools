@@ -15,12 +15,9 @@ from forecasting_tools.ai_models.agent_wrappers import (
     AiAgent,
     general_trace_or_span,
 )
-from forecasting_tools.ai_models.ai_utils.ai_misc import (
-    clean_indents,
-    retry_async_function,
-)
 from forecasting_tools.auto_optimizers.prompt_data_models import PromptIdea
 from forecasting_tools.helpers.structure_output import structure_output
+from forecasting_tools.util.misc import clean_indents, retry_async_function
 
 logger = logging.getLogger(__name__)
 

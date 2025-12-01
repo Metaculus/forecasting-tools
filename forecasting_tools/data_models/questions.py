@@ -11,7 +11,6 @@ import pendulum
 import typeguard
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
-from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.timestamped_predictions import (
     BinaryTimestampedPrediction,
@@ -19,7 +18,10 @@ from forecasting_tools.data_models.timestamped_predictions import (
     TimeStampedPrediction,
 )
 from forecasting_tools.util.jsonable import Jsonable
-from forecasting_tools.util.misc import add_timezone_to_dates_in_base_model
+from forecasting_tools.util.misc import (
+    add_timezone_to_dates_in_base_model,
+    clean_indents,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -123,10 +125,8 @@ class MetaculusQuestion(BaseModel, Jsonable):
         question_state = QuestionState(json_state)
 
         try:
-            forecast_values = question_json["my_forecasts"]["latest"][  # type: ignore
-                "forecast_values"
-            ]
-            is_forecasted = forecast_values is not None
+            history = question_json["my_forecasts"]["history"]
+            is_forecasted = history is not None and len(history) > 0
         except Exception:
             is_forecasted = False
 
