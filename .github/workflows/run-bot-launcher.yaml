@@ -4,6 +4,10 @@ on:
       bot_name:
         required: true
         type: string
+      cache_key:
+        required: false
+        type: string
+        default: ""
     secrets:
       INPUT_METACULUS_TOKEN:
         required: true
@@ -86,6 +90,14 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
 
+      - name: Restore AskNews cache
+        if: inputs.cache_key != ''
+        uses: actions/cache/restore@v3
+        with:
+          path: ~/.cache/forecasting_tools/asknews
+          key: ${{ inputs.cache_key }}
+        continue-on-error: true
+
       - name: Run bot
         run: |
           poetry run python run_bots.py ${{ inputs.bot_name }}
@@ -93,6 +105,7 @@ jobs:
           METACULUS_TOKEN: ${{ secrets.INPUT_METACULUS_TOKEN }}
           ASKNEWS_CLIENT_ID: ${{ secrets.INPUT_ASKNEWS_CLIENT_ID }}
           ASKNEWS_SECRET: ${{ secrets.INPUT_ASKNEWS_SECRET }}
+          ASKNEWS_CACHE_MODE: use_cache
           OPENAI_API_KEY: ${{ secrets.INPUT_OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.INPUT_ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.INPUT_GEMINI_API_KEY }}

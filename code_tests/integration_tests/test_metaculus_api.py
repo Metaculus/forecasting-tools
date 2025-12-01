@@ -463,7 +463,7 @@ class TestPostEndpoint:
             assert_basic_question_attributes_not_none(question, question.id_of_post)
 
     def test_get_questions_from_tournament(self) -> None:
-        questions = MetaculusClient.dev().get_all_open_questions_from_tournament(
+        questions = MetaculusClient().get_all_open_questions_from_tournament(
             ForecastingTestManager.TOURN_WITH_OPENNESS_AND_TYPE_VARIATIONS
         )
         question_types = DataOrganizer.get_all_question_types()
@@ -477,7 +477,7 @@ class TestPostEndpoint:
         assert_basic_attributes_at_percentage(questions, 0.8)
 
     def test_get_conditional_questions_from_tournament(self) -> None:
-        questions = MetaculusClient.dev().get_all_open_questions_from_tournament(
+        questions = MetaculusClient().get_all_open_questions_from_tournament(
             "taiwan"  # https://www.metaculus.com/tournament/taiwan/
         )
         conditional_questions = [
