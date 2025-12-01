@@ -827,6 +827,7 @@ class TestNumericForecasts:
         assert all(
             all(
                 subquestion.get_question_type() == "binary"
+                and subquestion.conditional_type is not None
                 for subquestion in question.get_all_subquestions().values()
             )
             for question in questions

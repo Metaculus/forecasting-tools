@@ -113,6 +113,18 @@ class FallTemplateBot2025(ForecastBot):
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
     _structure_output_validation_samples = 2
 
+    def _get_conditional_disclaimer_if_necessary(
+        self, question: MetaculusQuestion
+    ) -> str:
+        if question.conditional_type not in ["yes", "no"]:
+            return ""
+        return clean_indents(
+            """
+            As you are given a conditional question with a parent and child, you are to only forecast the **CHILD** question, given the parent question's resolution.
+            You never re-forecast the parent question under any circumstances, but you use probabilistic reasoning, strongly considering the parent question's resolution, to forecast the child question.
+    """
+        )
+
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
             research = ""
@@ -177,10 +189,12 @@ class FallTemplateBot2025(ForecastBot):
             ---
             ## {question_type} Question Information
             You have previously forecasted the {question_type} Question to the value: {DataOrganizer.get_readable_prediction(reasoning.prediction_value)}
+            This is relevant information for your current forecast, but it is NOT your current forecast, but previous forecasting information that is relevant to your current forecast.
             The reasoning for the {question_type} Question was as such:
             ```
             {reasoning.reasoning}
             ```
+            This is absolutely essential: do NOT use this reasoning to re-forecast the {question_type} question.
         """
         )
 
@@ -275,7 +289,7 @@ class FallTemplateBot2025(ForecastBot):
             (d) A brief description of a scenario that results in a Yes outcome.
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
-
+            {self._get_conditional_disclaimer_if_necessary(question)}
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
@@ -341,7 +355,7 @@ class FallTemplateBot2025(ForecastBot):
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
             (c) A description of an scenario that results in an unexpected outcome.
-
+            {self._get_conditional_disclaimer_if_necessary(question)}
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
 
             The last thing you write is your final probabilities for the N options in this order {question.options} as:
@@ -450,7 +464,7 @@ class FallTemplateBot2025(ForecastBot):
             (d) The expectations of experts and markets.
             (e) A brief description of an unexpected scenario that results in a low outcome.
             (f) A brief description of an unexpected scenario that results in a high outcome.
-
+            {self._get_conditional_disclaimer_if_necessary(question)}
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
 
             The last thing you write is your final answer as:
