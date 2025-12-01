@@ -11,8 +11,6 @@ import requests
 from litellm import OpenAI
 from pydantic import BaseModel
 
-from forecasting_tools.util.misc import retry_with_exponential_backoff
-
 FileContent = Union[IO[bytes], bytes, PathLike[str]]
 
 
@@ -45,7 +43,6 @@ class HostedFile(BaseModel):
         return hosted_files
 
     @classmethod
-    @retry_with_exponential_backoff()
     def upload_zipped_files(cls, download_link: str) -> list[HostedFile]:
         # TODO: Handle zip bombs
         # Download zip file directly to memory
