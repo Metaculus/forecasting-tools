@@ -18,7 +18,10 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
-from forecasting_tools.data_models.conditional_models import ConditionalPrediction
+from forecasting_tools.data_models.conditional_models import (
+    ConditionalPrediction,
+    PredictionAffirmed,
+)
 from forecasting_tools.data_models.data_organizer import DataOrganizer, PredictionTypes
 from forecasting_tools.data_models.forecast_report import (
     ForecastReport,
@@ -31,6 +34,7 @@ from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     ConditionalQuestion,
+    ConditionalSubQuestionType,
     DateQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
@@ -102,6 +106,9 @@ class ForecastBot(ABC):
         )
         self.enable_summarize_research = enable_summarize_research
         self.extra_metadata_in_explanation = extra_metadata_in_explanation
+        self.force_reforecast_in_conditional: frozenset[ConditionalSubQuestionType] = (
+            frozenset()
+        )
         self._note_pads: list[Notepad] = []
         self._note_pad_lock = asyncio.Lock()
         self._llms = llms or self._llm_config_defaults()
@@ -523,8 +530,8 @@ class ForecastBot(ABC):
         """
         )
         full_prediction = ConditionalPrediction(
-            parent="affirm",
-            child="affirm",
+            parent=PredictionAffirmed(),
+            child=PredictionAffirmed(),
             prediction_yes=yes_info.prediction_value,
             prediction_no=no_info.prediction_value,
         )

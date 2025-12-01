@@ -12,6 +12,7 @@ import typeguard
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.data_models.previous_forecasts import BinaryPreviousForecast
 from forecasting_tools.util.jsonable import Jsonable
 from forecasting_tools.util.misc import add_timezone_to_dates_in_base_model
 
@@ -47,6 +48,8 @@ ResolutionType = (
 QuestionBasicType = Literal[
     "binary", "numeric", "multiple_choice", "date", "discrete", "conditional"
 ]
+
+ConditionalSubQuestionType = Literal["parent", "child", "yes", "no"]
 
 
 class MetaculusQuestion(BaseModel, Jsonable):
@@ -113,10 +116,8 @@ class MetaculusQuestion(BaseModel, Jsonable):
         question_state = QuestionState(json_state)
 
         try:
-            forecast_values = question_json["my_forecasts"]["latest"][  # type: ignore
-                "forecast_values"
-            ]
-            is_forecasted = forecast_values is not None
+            history = question_json["my_forecasts"]["history"]
+            is_forecasted = history is not None
         except Exception:
             is_forecasted = False
 
@@ -283,6 +284,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
 class BinaryQuestion(MetaculusQuestion):
     question_type: Literal["binary"] = "binary"
     community_prediction_at_access_time: float | None = None
+    previous_forecasts: list[BinaryPreviousForecast] | None = None
 
     @property
     def binary_resolution(self) -> BinaryResolution | None:
@@ -303,10 +305,22 @@ class BinaryQuestion(MetaculusQuestion):
                 q2_center_community_prediction = aggregations["unweighted"]["latest"]["centers"]  # type: ignore
             assert len(q2_center_community_prediction) == 1
             community_prediction_at_access_time = q2_center_community_prediction[0]
+            history = api_json["question"]["my_forecasts"]["history"]
+            previous_forecasts = None
+            if history:
+                previous_forecasts = [
+                    BinaryPreviousForecast(
+                        value=forecast["forecast_values"][1],
+                        timestamp=datetime.fromtimestamp(forecast["start_time"]),
+                    )
+                    for forecast in history
+                ]
         except (KeyError, TypeError):
             community_prediction_at_access_time = None
+            previous_forecasts = None
         return BinaryQuestion(
             community_prediction_at_access_time=community_prediction_at_access_time,
+            previous_forecasts=previous_forecasts,
             **normal_metaculus_question.model_dump(),
         )
 

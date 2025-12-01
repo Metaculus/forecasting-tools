@@ -4,6 +4,7 @@ from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
 from forecasting_tools.data_models.conditional_models import (
     ConditionalPrediction,
     ConditionalPredictionTypes,
+    PredictionAffirmed,
 )
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import (
@@ -68,7 +69,9 @@ class ConditionalReport(ForecastReport):
         cls, question: MetaculusQuestion, forecasts: list[ConditionalPredictionTypes]
     ):
         forecasts_not_affirmed = [
-            prediction for prediction in forecasts if prediction != "affirm"
+            prediction
+            for prediction in forecasts
+            if not isinstance(prediction, PredictionAffirmed)
         ]
         if len(forecasts_not_affirmed) * 2 > len(forecasts):
             # TODO: Correctly aggregate affirmed forecasts later
@@ -76,7 +79,7 @@ class ConditionalReport(ForecastReport):
                 forecasts_not_affirmed, question
             )
         else:
-            return "affirm"
+            return PredictionAffirmed()
 
     @classmethod
     async def aggregate_predictions(
@@ -124,6 +127,9 @@ class ConditionalReport(ForecastReport):
         )
 
     async def publish_report_to_metaculus(self) -> None:
-        # TODO: publish parent/child reports if necessary
+        # if not isinstance(self.parent_report.prediction, PredictionAffirmed):
+        #    await self.parent_report.publish_report_to_metaculus()
+        # if not isinstance(self.child_report.prediction, PredictionAffirmed):
+        #    await self.child_report.publish_report_to_metaculus()
         await self.yes_report.publish_report_to_metaculus()
         await self.no_report.publish_report_to_metaculus()

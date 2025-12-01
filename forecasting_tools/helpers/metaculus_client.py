@@ -75,6 +75,7 @@ class ApiFilter(BaseModel):
     community_prediction_exists: bool | None = None
     cp_reveal_time_gt: datetime | None = None
     cp_reveal_time_lt: datetime | None = None
+    is_previously_forecasted_by_user: bool | None = None
     order_by: str = (
         "-published_time"  # Alternatives include things like "-weekly_movement" + is asc, - is desc
     )
@@ -144,6 +145,15 @@ class MetaculusClient:
         #     self.base_url = base_url
         self.base_url = base_url
         self.timeout = timeout
+
+    def get_current_user_id(self):
+        response = requests.get(
+            f"{self.base_url}/users/me",
+            **self._get_auth_headers(),  # type: ignore
+        )
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)
+        return content["id"]
 
     def post_question_comment(
         self,
@@ -745,6 +755,11 @@ class MetaculusClient:
 
         if api_filter.allowed_tournaments:
             url_params["tournaments"] = api_filter.allowed_tournaments
+
+        if api_filter.is_previously_forecasted_by_user:
+            user_id = self.get_current_user_id()
+            if user_id:
+                url_params["forecaster_id"] = user_id
 
         url_params.update(api_filter.other_url_parameters)
         return url_params
