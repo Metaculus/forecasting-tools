@@ -48,7 +48,6 @@ def retry_with_exponential_backoff(
         requests.exceptions.Timeout,
         requests.exceptions.ConnectionError,
     ),
-    retry_on_status_codes: tuple[int, ...] | None = (429,),
 ) -> Callable:
     if jitter_factor < 1:
         raise ValueError("jitter_factor must be greater than 1")
@@ -71,20 +70,6 @@ def retry_with_exponential_backoff(
                 try:
                     return func(*args, **kwargs)
                 except retry_on_exceptions as e:
-                    should_retry = True
-
-                    if retry_on_status_codes is not None:
-                        should_retry = False
-                        if isinstance(e, requests.exceptions.HTTPError):
-                            if (
-                                hasattr(e.response, "status_code")
-                                and e.response.status_code in retry_on_status_codes
-                            ):
-                                should_retry = True
-
-                    if not should_retry:
-                        raise
-
                     retries += 1
                     if retries > max_retries:
                         logger.error(
