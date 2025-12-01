@@ -7,7 +7,7 @@ import pytest
 import typeguard
 
 from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
-from forecasting_tools import ApiFilter, MetaculusClient
+from forecasting_tools import MetaculusClient
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -120,19 +120,20 @@ async def test_conditional_forecasts() -> None:
             "researcher": GeneralLlm(model="openai/o4-mini", temperature=1),
             "parser": GeneralLlm(model="openai/o4-mini", temperature=1),
         },
-        # TODO: Make sure that template bot uses "Dev" MetaculusClient inside the bot itself
     )
-    questions = await MetaculusClient.dev().get_questions_matching_filter(
-        ApiFilter(allowed_types=["conditional"], allowed_subquestion_types=["binary"]),
-        num_questions=1,
+    url1 = "https://www.metaculus.com/questions/40107/conditional-someone-born-before-2001-lives-to-150/"
+    url_question1 = MetaculusClient().get_question_by_url(
+        url1, group_question_mode="unpack_subquestions"
     )
-    url = "https://dev.metaculus.com/questions/40107/conditional-someone-born-before-2001-lives-to-150/"
-    url_questions = MetaculusClient.dev().get_question_by_url(
-        url, group_question_mode="unpack_subquestions"
-    )
-    url_questions = typeguard.check_type(url_questions, MetaculusQuestion)
-    questions.append(url_questions)
+    url_question1 = typeguard.check_type(url_question1, MetaculusQuestion)
 
+    url2 = "https://www.metaculus.com/questions/27182/cts-ai-extinction-before-2100/"
+    url_question2 = MetaculusClient().get_question_by_url(
+        url2, group_question_mode="unpack_subquestions"
+    )
+    url_question2 = typeguard.check_type(url_question2, MetaculusQuestion)
+
+    questions = [url_question1, url_question2]
     assert all(isinstance(question, ConditionalQuestion) for question in questions)
     assert len(questions) > 1
 
