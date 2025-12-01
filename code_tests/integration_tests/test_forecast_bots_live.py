@@ -120,14 +120,13 @@ async def test_conditional_forecasts() -> None:
             "researcher": GeneralLlm(model="openai/o4-mini", temperature=1),
             "parser": GeneralLlm(model="openai/o4-mini", temperature=1),
         },
-        # TODO: Make sure that template bot uses "Dev" MetaculusClient inside the bot itself
     )
-    questions = await MetaculusClient.dev().get_questions_matching_filter(
+    questions = await MetaculusClient().get_questions_matching_filter(
         ApiFilter(allowed_types=["conditional"], allowed_subquestion_types=["binary"]),
         num_questions=1,
     )
-    url = "https://dev.metaculus.com/questions/40107/conditional-someone-born-before-2001-lives-to-150/"
-    url_questions = MetaculusClient.dev().get_question_by_url(
+    url = "https://www.metaculus.com/questions/40107/conditional-someone-born-before-2001-lives-to-150/"
+    url_questions = MetaculusClient().get_question_by_url(
         url, group_question_mode="unpack_subquestions"
     )
     url_questions = typeguard.check_type(url_questions, MetaculusQuestion)
