@@ -164,6 +164,16 @@ async def get_questions_for_config(
         raise ValueError(f"max questions ({max_questions}) must be at least 1")
     mode = bot_config.mode
     allowed_tournaments = list(set(bot_config.tournaments))
+    return await get_questions_for_allowed_tournaments(
+        allowed_tournaments, max_questions, mode
+    )
+
+
+async def get_questions_for_allowed_tournaments(
+    allowed_tournaments: list[AllowedTourn],
+    max_questions: int,
+    mode: str = "",
+) -> list[MetaculusQuestion]:
     aib_tourns = [t for t in allowed_tournaments if t in TournConfig.aib_only]
     regularly_forecast_tourns = [
         t for t in allowed_tournaments if t in TournConfig.every_x_days_tourns
@@ -172,7 +182,9 @@ async def get_questions_for_config(
         t for t in allowed_tournaments if t in TournConfig.main_site_tourns
     ]
 
-    mode_parts = mode.split("+")
+    mode_parts = mode.split(
+        "+"
+    )  # Allow for adding specific tournaments via the mode name
     if len(mode_parts) > 1:
         suffix = mode_parts[1]
         assert suffix in [t.value for t in allowed_tournaments]
@@ -185,7 +197,7 @@ async def get_questions_for_config(
             "FORECAST_ON_REGULARLY_FORECASTED_TOURNAMENTS_ALWAYS", "false"
         ).lower()
         == "true"
-    )
+    )  # env variables are for testing the workflow w/o waiting 2 days
 
     should_forecast_on_main_site = (
         ScheduleConfig.is_interval_day() and ScheduleConfig.is_afternoon_window()
@@ -209,6 +221,11 @@ async def get_questions_for_config(
 
     filtered_questions = [q for q in non_date_questions if q.id_of_post != 31653]
     # https://www.metaculus.com/questions/31653/ is rejected by qwen3-max and is causing noisy workflow errors
+
+    if max_questions > len(filtered_questions):
+        logger.error(
+            f"Max questions ({max_questions}) is greater than the number of filtered questions ({len(filtered_questions)}). Questions may be being skipped if not forecast soon."
+        )
 
     return filtered_questions[
         :max_questions
@@ -405,7 +422,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_3_pro = "openrouter/google/gemini-3-pro-preview"
     gemini_default_timeout = 5 * 60
-    deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-5-20250929"  # Switched from claude-sonnet-4-20250514 in Nov 2025
+    deepnews_model = "asknews/deep-research/medium-depth/claude-sonnet-4-5-20250929"  # Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
+
     roughly_sonnet_4_cost = 0.25190
     roughly_gpt_5_high_cost = 0.37868
     roughly_gpt_5_cost = 0.19971
