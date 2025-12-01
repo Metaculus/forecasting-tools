@@ -18,7 +18,11 @@ import requests
 import typeguard
 from pydantic import BaseModel, Field, model_validator
 
-from forecasting_tools.data_models.coherence_link import CoherenceLink
+from forecasting_tools.data_models.coherence_link import (
+    CoherenceLink,
+    DetailedCoherenceLink,
+    NeedsUpdateResponse,
+)
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
@@ -210,7 +214,7 @@ class MetaculusClient:
         content = json.loads(response.content)
         return content["id"]
 
-    def get_links_for_question(self, question_id: int) -> List[CoherenceLink]:
+    def get_links_for_question(self, question_id: int) -> List[DetailedCoherenceLink]:
         """
         Returns all links associated with a specific question
         direction is +1 for positive and -1 for negative
@@ -223,7 +227,9 @@ class MetaculusClient:
         )
         raise_for_status_with_additional_info(response)
         content = json.loads(response.content)["data"]
-        links = [CoherenceLink.from_metaculus_api_json(link) for link in content]
+        links = [
+            DetailedCoherenceLink.from_metaculus_api_json(link) for link in content
+        ]
         return links
 
     def delete_question_link(self, link_id: int):
@@ -236,17 +242,31 @@ class MetaculusClient:
         raise_for_status_with_additional_info(response)
 
     def get_needs_update_questions(
-        self, question_id: int, last_datetime: datetime
-    ) -> List[MetaculusQuestion]:
+        self,
+        question_id: int,
+        last_datetime: datetime,
+        user_id_for_links: int | None = None,
+    ) -> NeedsUpdateResponse:
+        json_data: dict[str, Any] = {"datetime": last_datetime.isoformat()}
+        if user_id_for_links:
+            json_data["user_id_for_links"] = user_id_for_links
         response = requests.get(
             f"{self.base_url}/coherence/links/{question_id}/needs-update",
             **self._get_auth_headers(),  # type: ignore
             timeout=self.timeout,
-            json={"datetime": last_datetime.isoformat()},
+            json=json_data,
         )
         raise_for_status_with_additional_info(response)
         content = json.loads(response.content)
-        return content["questions"]
+        questions = [
+            DataOrganizer.get_question_from_question_json(json_q)
+            for json_q in content["questions"]
+        ]
+        links = [
+            CoherenceLink.model_validate(json_link) for json_link in content["links"]
+        ]
+        result = NeedsUpdateResponse(questions=questions, links=links)
+        return result
 
     def post_binary_question_prediction(
         self, question_id: int, prediction_in_decimal: float
@@ -1037,3 +1057,7 @@ class MetaculusClient:
     @classmethod
     def dev(cls) -> MetaculusClient:
         return cls(base_url="https://dev.metaculus.com/api")
+
+    @classmethod
+    def local(cls) -> MetaculusClient:
+        return cls(base_url="http://127.0.0.1:8000/api")
