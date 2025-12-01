@@ -11,8 +11,8 @@ import pendulum
 import typeguard
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
-from forecasting_tools import Percentile
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
+from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.timestamped_predictions import (
     BinaryTimestampedPrediction,
     NumericTimestampedDistribution,
