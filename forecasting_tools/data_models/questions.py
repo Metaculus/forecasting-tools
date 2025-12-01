@@ -12,7 +12,9 @@ import typeguard
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
 from forecasting_tools.ai_models.ai_utils.ai_misc import clean_indents
-from forecasting_tools.data_models.previous_forecasts import BinaryPreviousForecast
+from forecasting_tools.data_models.previous_forecasts import (
+    NumericTimestampedDistribution,
+)
 from forecasting_tools.util.jsonable import Jsonable
 from forecasting_tools.util.misc import add_timezone_to_dates_in_base_model
 
@@ -87,6 +89,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     question_weight: float | None = None
     resolution_string: str | None = None
     conditional_type: ConditionalSubQuestionType | None = None
+    previous_forecasts: list[Any] | None = None
     group_question_option: str | None = (
         None  # For group questions like "How many people will die of coronovirus in the following periouds" it would be "September 2024", "All of 2025", etc
     )
@@ -286,7 +289,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
 class BinaryQuestion(MetaculusQuestion):
     question_type: Literal["binary"] = "binary"
     community_prediction_at_access_time: float | None = None
-    previous_forecasts: list[BinaryPreviousForecast] | None = None
+    previous_forecasts: list[NumericTimestampedDistribution] | None = None
 
     @property
     def binary_resolution(self) -> BinaryResolution | None:
@@ -311,8 +314,8 @@ class BinaryQuestion(MetaculusQuestion):
             previous_forecasts = None
             if history:
                 previous_forecasts = [
-                    BinaryPreviousForecast(
-                        value=forecast["forecast_values"][1],
+                    NumericTimestampedDistribution(
+                        prediction_in_decimal=forecast["forecast_values"][1],
                         timestamp=datetime.fromtimestamp(forecast["start_time"]),
                     )
                     for forecast in history
