@@ -101,6 +101,9 @@ from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOptionList as PredictedOptionList,
 )
 from forecasting_tools.data_models.numeric_report import (
+    DiscreteReport as DiscreteReport,
+)
+from forecasting_tools.data_models.numeric_report import (
     NumericDistribution as NumericDistribution,
 )
 from forecasting_tools.data_models.numeric_report import NumericReport as NumericReport
@@ -120,6 +123,7 @@ BinaryReport.model_rebuild()
 MultipleChoiceReport.model_rebuild()
 ForecastReport.model_rebuild()
 NumericReport.model_rebuild()
+DiscreteReport.model_rebuild()
 from forecasting_tools.data_models.questions import QuestionState as QuestionState
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot as ForecastBot
 from forecasting_tools.forecast_bots.forecast_bot import Notepad as Notepad
