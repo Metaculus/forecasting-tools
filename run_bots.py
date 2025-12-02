@@ -1086,7 +1086,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **default_perplexity_settings,
                 ),
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.none,  # NOTE: No longer available (model deprecated by Perplexity Dec 15th, 2025)
         },
         "METAC_ONLY_SONAR_REASONING_PRO": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
