@@ -86,6 +86,7 @@ class ForecastBot(ABC):
         enable_summarize_research: bool = True,
         parameters_to_exclude_from_config_dict: list[str] | None = None,
         extra_metadata_in_explanation: bool = False,
+        required_successful_predictions: float = 0.75,
     ) -> None:
         assert (
             research_reports_per_question > 0
@@ -109,6 +110,7 @@ class ForecastBot(ABC):
         self.force_reforecast_in_conditional: frozenset[ConditionalSubQuestionType] = (
             frozenset()
         )
+        self.required_successful_predictions: float = required_successful_predictions
         self._note_pads: list[Notepad] = []
         self._note_pad_lock = asyncio.Lock()
         self._llms = llms or self._llm_config_defaults()
@@ -376,16 +378,6 @@ class ForecastBot(ABC):
                 await self._gather_results_and_exceptions(prediction_tasks)  # type: ignore
             )
             valid_prediction_set: list[ResearchWithPredictions[PredictionTypes]]
-            if research_errors:
-                logger.warning(
-                    f"Encountered errors while researching: {research_errors}"
-                )
-            if len(valid_prediction_set) == 0:
-                assert exception_group, "Exception group should not be None"
-                self._reraise_exception_with_prepended_message(
-                    exception_group,
-                    f"All {self.research_reports_per_question} research reports/predictions failed",
-                )
             prediction_errors = [
                 error
                 for prediction_set in valid_prediction_set
@@ -401,6 +393,11 @@ class ForecastBot(ABC):
                 for research_prediction_collection in valid_prediction_set
                 for reasoned_prediction in research_prediction_collection.predictions
             ]
+
+            await self._handle_errors_in__run_individual_question(
+                all_predictions, research_errors, valid_prediction_set, exception_group
+            )
+
             aggregated_prediction = await self._aggregate_predictions(
                 all_predictions,
                 question,
@@ -428,6 +425,29 @@ class ForecastBot(ABC):
             await report.publish_report_to_metaculus()
         await self._remove_notepad(question)
         return report
+
+    async def _handle_errors_in__run_individual_question(
+        self,
+        all_predictions: list[PredictionTypes],
+        research_errors: list[str],
+        valid_prediction_set: list[ResearchWithPredictions[PredictionTypes]],
+        exception_group: ExceptionGroup | None,
+    ) -> None:
+        if research_errors:
+            logger.warning(f"Encountered errors while researching: {research_errors}")
+        if len(valid_prediction_set) == 0:
+            assert exception_group, "Exception group should not be None"
+            self._reraise_exception_with_prepended_message(
+                exception_group,
+                f"All {self.research_reports_per_question} research reports/predictions failed",
+            )
+        if (
+            len(all_predictions)
+            < self.expected_total_predictions * self.required_successful_predictions
+        ):
+            raise ValueError(
+                f"Expected at least {self.expected_total_predictions * self.required_successful_predictions} successful predictions, but only got {len(all_predictions)}"
+            )
 
     async def _aggregate_predictions(
         self,
@@ -728,7 +748,8 @@ class ForecastBot(ABC):
     ) -> None:
         if isinstance(exception, ExceptionGroup):
             raise ExceptionGroup(
-                f"{message}: {exception.message}", exception.exceptions
+                f"{len(exception.exceptions)} sub-exceptions -> {message}: {exception.message}",
+                exception.exceptions,
             )
         else:
             raise RuntimeError(
@@ -1008,3 +1029,7 @@ class ForecastBot(ABC):
             "researcher": researcher,
             "parser": parser,
         }
+
+    @property
+    def expected_total_predictions(self) -> int:
+        return self.research_reports_per_question * self.predictions_per_research_report

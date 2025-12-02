@@ -48,13 +48,14 @@ class ScheduleConfig:
     regular_forecast_interval_days: int = 2
     min_main_site_forecast_interval_days: int = 4
 
-    _window_length_hrs = 2
+    _window_length_hrs = 2.5
     _US_morning_hour = 4  # 4am MT
     _US_afternoon_hour = 12  # 12pm MT
     UTC_morning_hour = _US_morning_hour + 7
     UTC_afternoon_hour = _US_afternoon_hour + 7
 
     default_max_main_site_questions_per_run = 30
+    default_question_batch_size = 30
     main_site_months_ahead_to_check = 4
 
     @classmethod
@@ -122,11 +123,13 @@ class RunBotConfig(BaseModel):
 async def configure_and_run_bot(
     mode: str,
     max_questions_for_run: int = ScheduleConfig.default_max_main_site_questions_per_run,
+    batch_size: int = ScheduleConfig.default_question_batch_size,
 ) -> list[ForecastReport | BaseException]:
     bot_config = get_default_bot_dict()[mode]
     questions = await get_questions_for_config(
         bot_config, max_questions=max_questions_for_run
     )
+    logger.info(f"Running bot {mode} with {len(questions)} questions")
     bot = bot_config.bot
 
     assert isinstance(
@@ -134,7 +137,6 @@ async def configure_and_run_bot(
     ), f"Bot {mode} is not a ForecastBot, it is a {type(bot)}"
     logger.info(f"LLMs for bot are: {bot.make_llm_dict()}")
     all_reports = []
-    batch_size = 10
     batches = [
         questions[i : i + batch_size] for i in range(0, len(questions), batch_size)
     ]

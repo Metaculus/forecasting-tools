@@ -66,8 +66,8 @@ async def test_forecast_report_contains_errors_from_failed_operations(
     failing_function: str,
 ) -> None:
     bot = MockBot(
-        research_reports_per_question=2,
-        predictions_per_research_report=2,
+        research_reports_per_question=4,
+        predictions_per_research_report=4,
     )
     test_question = ForecastingTestManager.get_fake_binary_question()
 
@@ -77,7 +77,7 @@ async def test_forecast_report_contains_errors_from_failed_operations(
     async def mock_with_error(*args, **kwargs):
         nonlocal mock_call_count
         mock_call_count += 1
-        should_error = mock_call_count % 2 == 0
+        should_error = mock_call_count % 4 == 0
         if should_error:
             raise RuntimeError(error_message)
         original_result = await original_function(*args, **kwargs)
@@ -92,10 +92,47 @@ async def test_forecast_report_contains_errors_from_failed_operations(
 
     result = await bot.forecast_question(test_question)
     assert isinstance(result, ForecastReport)
-    expected_num_errors = 2 if failing_function == "prediction" else 1
+    expected_num_errors = 4 if failing_function == "prediction" else 1
     assert len(result.errors) == expected_num_errors
     assert error_message in str(result.errors[0])
     assert "RuntimeError" in str(result.errors[0])
+
+
+@pytest.mark.parametrize("num_failures,should_succeed", [(1, True), (2, False)])
+async def test_errors_when_too_few_forecasts_are_successful(
+    num_failures: int, should_succeed: bool
+) -> None:
+    bot = MockBot(
+        research_reports_per_question=1,
+        predictions_per_research_report=5,
+        required_successful_predictions=0.75,
+    )
+    test_question = ForecastingTestManager.get_fake_binary_question()
+
+    error_message = "Test error"
+    mock_call_count = 0
+
+    async def mock_with_error(*args, **kwargs):
+        nonlocal mock_call_count
+        mock_call_count += 1
+        should_error = mock_call_count <= num_failures
+        if should_error:
+            raise RuntimeError(error_message)
+        original_result = await original_function(*args, **kwargs)
+        return original_result
+
+    original_function = bot._run_forecast_on_binary
+    bot._run_forecast_on_binary = mock_with_error  # type: ignore
+
+    if should_succeed:
+        result = await bot.forecast_question(test_question)
+        assert isinstance(result, ForecastReport)
+        assert len(result.errors) == num_failures
+        assert error_message in str(result.errors[0])
+        assert "RuntimeError" in str(result.errors[0])
+    else:
+        with pytest.raises(Exception):
+            await bot.forecast_question(test_question)
 
 
 async def test_forecast_fails_with_all_predictions_erroring() -> None:

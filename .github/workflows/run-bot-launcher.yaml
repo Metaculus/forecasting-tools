@@ -32,7 +32,7 @@ jobs:
   run_bot:
     runs-on: ubuntu-latest
     environment: aib_bots
-    timeout-minutes: 50
+    timeout-minutes: 55
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
