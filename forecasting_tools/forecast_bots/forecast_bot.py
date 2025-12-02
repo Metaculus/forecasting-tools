@@ -92,6 +92,9 @@ class ForecastBot(ABC):
             research_reports_per_question > 0
         ), "Must run at least one research report"
         assert predictions_per_research_report > 0, "Must run at least one prediction"
+        assert (
+            0 <= required_successful_predictions <= 1
+        ), "Required successful predictions must be between 0 and 1"
         if use_research_summary_to_forecast and not enable_summarize_research:
             raise ValueError(
                 "Cannot use research summary to forecast if summarize_research is False"
