@@ -118,19 +118,27 @@ class NumericDistribution(BaseModel):
         return final_percentiles
 
     def _check_too_far_from_bounds(self, percentiles: list[Percentile]) -> None:
-        percentiles_within_bounds = [
+        max_to_min_range = self.upper_bound - self.lower_bound
+
+        # TODO: Better handle log scaled questions (a fixed wiggle room percentage doesn't work well for them)
+        wiggle_percent = 0.25
+        wiggle_room = max_to_min_range * wiggle_percent
+        upper_bound_plus_wiggle_room = self.upper_bound + wiggle_room
+        lower_bound_minus_wiggle_room = self.lower_bound - wiggle_room
+        percentiles_within_bounds_plus_wiggle_room = [
             percentile
             for percentile in percentiles
-            if self.lower_bound <= percentile.value <= self.upper_bound
+            if lower_bound_minus_wiggle_room
+            <= percentile.value
+            <= upper_bound_plus_wiggle_room
         ]
-        if len(percentiles_within_bounds) == 0:
+        if len(percentiles_within_bounds_plus_wiggle_room) == 0:
             raise ValueError(
-                "No declared percentiles are within the range of the question. "
+                f"No declared percentiles are within the range of the question +/- {wiggle_percent * 100}%. "
                 f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
                 f"Percentiles: {percentiles}"
             )
 
-        max_to_min_range = self.upper_bound - self.lower_bound
         max_to_min_range_buffer = max_to_min_range * 2
         percentiles_far_exceeding_bounds = [
             percentile

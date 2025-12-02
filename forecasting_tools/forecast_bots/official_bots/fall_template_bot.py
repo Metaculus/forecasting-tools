@@ -377,7 +377,9 @@ class FallTemplateBot2025(ForecastBot):
             f"""
             Make sure that all option names are one of the following:
             {question.options}
+
             The text you are parsing may prepend these options with some variation of "Option" which you should remove if not part of the option names I just gave you.
+            Additionally, you may sometimes need to parse a 0% probability. Please do not skip options with 0% but rather make it an entry in your final list with 0% probability.
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
