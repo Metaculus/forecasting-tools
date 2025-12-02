@@ -865,13 +865,16 @@ jobs:
       INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
   # bot_deepseek_r1_sonar_reasoning:
+  #   needs: precache_asknews
   #   uses: ./.github/workflows/run-bot-launcher.yaml
   #   with:
   #     bot_name: 'METAC_DEEPSEEK_R1_SONAR_REASONING'
+  #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
   #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_REASONING }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+  # NOTE: No longer available (model deprecated by Perplexity Dec 15th, 2025)
 
   # bot_only_sonar_reasoning_pro:
   #   uses: ./.github/workflows/run-bot-launcher.yaml
