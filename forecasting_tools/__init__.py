@@ -81,6 +81,9 @@ from forecasting_tools.data_models.binary_report import BinaryReport as BinaryRe
 from forecasting_tools.data_models.coherence_link import (
     DetailedCoherenceLink as DetailedCoherenceLink,
 )
+from forecasting_tools.data_models.conditional_report import (
+    ConditionalReport as ConditionalReport,
+)
 from forecasting_tools.data_models.data_organizer import DataOrganizer as DataOrganizer
 from forecasting_tools.data_models.forecast_report import (
     ForecastReport as ForecastReport,
@@ -101,9 +104,7 @@ from forecasting_tools.data_models.numeric_report import (
     NumericDistribution as NumericDistribution,
 )
 from forecasting_tools.data_models.numeric_report import NumericReport as NumericReport
-from forecasting_tools.data_models.numeric_report import Percentile as Percentile
 from forecasting_tools.data_models.questions import BinaryQuestion as BinaryQuestion
-from forecasting_tools.data_models.questions import DateQuestion as DateQuestion
 from forecasting_tools.data_models.questions import DiscreteQuestion as DiscreteQuestion
 from forecasting_tools.data_models.questions import (
     MetaculusQuestion as MetaculusQuestion,
@@ -112,6 +113,13 @@ from forecasting_tools.data_models.questions import (
     MultipleChoiceQuestion as MultipleChoiceQuestion,
 )
 from forecasting_tools.data_models.questions import NumericQuestion as NumericQuestion
+
+# Fix for: https://docs.pydantic.dev/latest/errors/usage_errors/#class-not-fully-defined
+ConditionalReport.model_rebuild()
+BinaryReport.model_rebuild()
+MultipleChoiceReport.model_rebuild()
+ForecastReport.model_rebuild()
+NumericReport.model_rebuild()
 from forecasting_tools.data_models.questions import QuestionState as QuestionState
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot as ForecastBot
 from forecasting_tools.forecast_bots.forecast_bot import Notepad as Notepad

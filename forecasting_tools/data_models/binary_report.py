@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import logging
 import statistics
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 import numpy as np
 from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.data_models.questions import BinaryQuestion
+
+if TYPE_CHECKING:
+    from forecasting_tools.data_models.questions import BinaryQuestion
 
 logger = logging.getLogger(__name__)
 

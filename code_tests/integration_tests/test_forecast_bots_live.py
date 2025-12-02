@@ -15,11 +15,13 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 from forecasting_tools.data_models.conditional_models import PredictionAffirmed
 from forecasting_tools.data_models.conditional_report import ConditionalReport
 from forecasting_tools.data_models.data_organizer import DataOrganizer
-from forecasting_tools.data_models.previous_forecasts import BinaryPreviousForecast
 from forecasting_tools.data_models.questions import (
     ConditionalQuestion,
     DateQuestion,
     MetaculusQuestion,
+)
+from forecasting_tools.data_models.timestamped_predictions import (
+    BinaryTimestampedPrediction,
 )
 from forecasting_tools.forecast_bots.bot_lists import (
     get_all_bot_question_type_pairs_for_cheap_tests,
@@ -139,10 +141,14 @@ async def test_conditional_forecasts() -> None:
 
     # Add dummy data
     questions[0].parent.previous_forecasts = [
-        BinaryPreviousForecast(value=0.15, timestamp=datetime.datetime.now())
+        BinaryTimestampedPrediction(
+            prediction_in_decimal=0.15, timestamp=datetime.datetime.now()
+        )
     ]
     questions[0].child.previous_forecasts = [
-        BinaryPreviousForecast(value=0.12, timestamp=datetime.datetime.now())
+        BinaryTimestampedPrediction(
+            prediction_in_decimal=0.12, timestamp=datetime.datetime.now()
+        )
     ]
     questions[1].parent.previous_forecasts = None
     questions[1].child.previous_forecasts = None

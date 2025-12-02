@@ -201,6 +201,8 @@ class FallTemplateBot2025(ForecastBot):
     async def _get_question_prediction_info(
         self, question: MetaculusQuestion, research: str, question_type: str
     ) -> tuple[ReasonedPrediction[PredictionTypes], str]:
+        from forecasting_tools.data_models.data_organizer import DataOrganizer
+
         previous_forecasts = question.previous_forecasts
         if (
             question_type in ["parent", "child"]
@@ -208,11 +210,12 @@ class FallTemplateBot2025(ForecastBot):
             and question_type not in self.force_reforecast_in_conditional
         ):
             # TODO: add option to not affirm current parent/child forecasts, create new forecast
-            previous_value = previous_forecasts[-1].value
+            previous_forecast = previous_forecasts[-1]
+            pretty_value = DataOrganizer.get_readable_prediction(previous_forecast)
             return (
                 ReasonedPrediction(
                     prediction_value=PredictionAffirmed(),
-                    reasoning=f"Already existing forecast reaffirmed at {previous_value}.",
+                    reasoning=f"Already existing forecast reaffirmed at {pretty_value}.",
                 ),
                 research,
             )

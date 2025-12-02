@@ -495,14 +495,16 @@ class TestPostEndpoint:
 
     async def test_get_previous_forecast(self) -> None:
         client = MetaculusClient().dev()
-        api_filter = ApiFilter(
-            allowed_types=["binary"], is_previously_forecasted_by_user=True
-        )
-        questions = await client.get_questions_matching_filter(api_filter=api_filter)
-        assert questions
-        for question in questions:
-            assert isinstance(question, BinaryQuestion)
-            assert question.previous_forecasts
+        for allowed_types in {"binary", "numeric"}:
+            api_filter = ApiFilter(
+                allowed_types=[allowed_types],  # type: ignore
+                is_previously_forecasted_by_user=True,
+            )
+            questions = await client.get_questions_matching_filter(
+                api_filter=api_filter
+            )
+            assert questions
+            assert all(question.previous_forecasts for question in questions)
 
     def test_get_benchmark_questions(self) -> None:
         num_questions_to_get = 30

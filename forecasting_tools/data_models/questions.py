@@ -11,7 +11,12 @@ import pendulum
 import typeguard
 from pydantic import AliasChoices, BaseModel, Field, model_validator
 
-from forecasting_tools.data_models.previous_forecasts import BinaryPreviousForecast
+from forecasting_tools.data_models.numeric_report import Percentile
+from forecasting_tools.data_models.timestamped_predictions import (
+    BinaryTimestampedPrediction,
+    NumericTimestampedDistribution,
+    TimeStampedPrediction,
+)
 from forecasting_tools.util.jsonable import Jsonable
 from forecasting_tools.util.misc import (
     add_timezone_to_dates_in_base_model,
@@ -89,6 +94,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     question_weight: float | None = None
     resolution_string: str | None = None
     conditional_type: ConditionalSubQuestionType | None = None
+    previous_forecasts: list[TimeStampedPrediction] | None = None
     group_question_option: str | None = (
         None  # For group questions like "How many people will die of coronovirus in the following periouds" it would be "September 2024", "All of 2025", etc
     )
@@ -288,7 +294,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
 class BinaryQuestion(MetaculusQuestion):
     question_type: Literal["binary"] = "binary"
     community_prediction_at_access_time: float | None = None
-    previous_forecasts: list[BinaryPreviousForecast] | None = None
+    previous_forecasts: list[BinaryTimestampedPrediction] | None = None
 
     @property
     def binary_resolution(self) -> BinaryResolution | None:
@@ -313,8 +319,8 @@ class BinaryQuestion(MetaculusQuestion):
             previous_forecasts = None
             if history:
                 previous_forecasts = [
-                    BinaryPreviousForecast(
-                        value=forecast["forecast_values"][1],
+                    BinaryTimestampedPrediction(
+                        prediction_in_decimal=forecast["forecast_values"][1],
                         timestamp=datetime.fromtimestamp(forecast["start_time"]),
                     )
                     for forecast in history
@@ -325,7 +331,7 @@ class BinaryQuestion(MetaculusQuestion):
         return BinaryQuestion(
             community_prediction_at_access_time=community_prediction_at_access_time,
             previous_forecasts=previous_forecasts,
-            **normal_metaculus_question.model_dump(),
+            **normal_metaculus_question.model_dump(exclude={"previous_forecasts"}),
         )
 
     @classmethod
@@ -489,6 +495,7 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
     )
     nominal_upper_bound: float | None = None
     nominal_lower_bound: float | None = None
+    previous_forecasts: list[NumericTimestampedDistribution] | None = None
 
     @property
     def numeric_resolution(self) -> NumericResolution | None:
@@ -496,6 +503,13 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
             self.typed_resolution, NumericResolution | None
         )
         return resolution
+
+    @staticmethod
+    def _get_percentiles(
+        continuous_range: list[float], forecast_values: list[float]
+    ) -> list[Percentile]:
+        zipped_list = list(zip(continuous_range, forecast_values))
+        return [Percentile(value=x, percentile=y) for x, y in zipped_list]
 
     @classmethod
     def from_metaculus_api_json(cls, api_json: dict) -> NumericQuestion:
@@ -514,6 +528,25 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
             api_json
         )
 
+        continuous_range = api_json["question"]["scaling"]["continuous_range"]
+        history = api_json["question"]["my_forecasts"]["history"]
+        previous_forecasts = None
+        if history:
+            previous_forecasts = [
+                NumericTimestampedDistribution(
+                    declared_percentiles=NumericQuestion._get_percentiles(
+                        continuous_range, forecast["forecast_values"]
+                    ),
+                    open_upper_bound=open_upper_bound,
+                    open_lower_bound=open_lower_bound,
+                    upper_bound=upper_bound,
+                    lower_bound=lower_bound,
+                    zero_point=zero_point,
+                    timestamp=datetime.fromtimestamp(forecast["start_time"]),
+                )
+                for forecast in history
+            ]
+
         return NumericQuestion(
             upper_bound=upper_bound,
             lower_bound=lower_bound,
@@ -523,7 +556,8 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
             cdf_size=cls._get_cdf_size_from_json(api_json),
             nominal_upper_bound=nominal_upper_bound,
             nominal_lower_bound=nominal_lower_bound,
-            **normal_metaculus_question.model_dump(),
+            previous_forecasts=previous_forecasts,
+            **normal_metaculus_question.model_dump(exclude={"previous_forecasts"}),
         )
 
     @classmethod

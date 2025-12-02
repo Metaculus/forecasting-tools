@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import computed_field
 
 from forecasting_tools.data_models.conditional_models import (

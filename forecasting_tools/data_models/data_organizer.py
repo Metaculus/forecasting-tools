@@ -1,7 +1,7 @@
 import typeguard
 from pydantic import BaseModel
 
-from forecasting_tools.data_models.binary_report import BinaryReport
+from forecasting_tools.data_models.binary_report import BinaryPrediction, BinaryReport
 from forecasting_tools.data_models.conditional_models import (
     ConditionalPrediction,
     PredictionAffirmed,
@@ -212,13 +212,19 @@ class DataOrganizer:
         return objects
 
     @classmethod
-    def get_readable_prediction(cls, prediction: PredictionTypes) -> str:
+    def get_readable_prediction(
+        cls, prediction: PredictionTypes | BinaryPrediction
+    ) -> str:
         if isinstance(prediction, NumericDistribution):
             return NumericReport.make_readable_prediction(prediction)
         elif isinstance(prediction, PredictedOptionList):
             return MultipleChoiceReport.make_readable_prediction(prediction)
         elif isinstance(prediction, float):
             return BinaryReport.make_readable_prediction(prediction)
+        elif isinstance(prediction, BinaryPrediction):
+            return BinaryReport.make_readable_prediction(
+                prediction.prediction_in_decimal
+            )
         elif isinstance(prediction, ConditionalPrediction):
             return ConditionalReport.make_readable_prediction(prediction)
         elif isinstance(prediction, PredictionAffirmed):
