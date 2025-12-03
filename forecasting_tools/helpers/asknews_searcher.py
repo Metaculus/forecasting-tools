@@ -87,7 +87,7 @@ class AskNewsSearcher:
 
             await asyncio.sleep(
                 self._default_rate_limit
-            )  # free tier AskNews Free tier has a ratelimit of 1 call per 10 seconds
+            )  # AskNews free tier has a ratelimit of 1 call per 10 seconds
 
             # get context from the "historical" database that contains a news archive going back to 2023
             historical_response = await ask.news.search_news(
