@@ -40,7 +40,7 @@ class AskNewsSearcher:
         self.api_key = api_key or os.getenv("ASKNEWS_API_KEY")
 
         # Check if both authentication methods are defined
-        has_oauth = bool(self.client_id or self.client_secret)
+        has_oauth = bool(self.client_id and self.client_secret)
         has_api_key = bool(self.api_key)
 
         if has_oauth and has_api_key:
