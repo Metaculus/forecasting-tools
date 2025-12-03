@@ -528,24 +528,27 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
             api_json
         )
 
-        continuous_range = api_json["question"]["scaling"]["continuous_range"]
-        history = api_json["question"]["my_forecasts"]["history"]
-        previous_forecasts = None
-        if history:
-            previous_forecasts = [
-                NumericTimestampedDistribution(
-                    declared_percentiles=NumericQuestion._get_percentiles(
-                        continuous_range, forecast["forecast_values"]
-                    ),
-                    open_upper_bound=open_upper_bound,
-                    open_lower_bound=open_lower_bound,
-                    upper_bound=upper_bound,
-                    lower_bound=lower_bound,
-                    zero_point=zero_point,
-                    timestamp=datetime.fromtimestamp(forecast["start_time"]),
-                )
-                for forecast in history
-            ]
+        try:
+            continuous_range = api_json["question"]["scaling"]["continuous_range"]
+            history = api_json["question"]["my_forecasts"]["history"]
+            previous_forecasts = None
+            if history:
+                previous_forecasts = [
+                    NumericTimestampedDistribution(
+                        declared_percentiles=NumericQuestion._get_percentiles(
+                            continuous_range, forecast["forecast_values"]
+                        ),
+                        open_upper_bound=open_upper_bound,
+                        open_lower_bound=open_lower_bound,
+                        upper_bound=upper_bound,
+                        lower_bound=lower_bound,
+                        zero_point=zero_point,
+                        timestamp=datetime.fromtimestamp(forecast["start_time"]),
+                    )
+                    for forecast in history
+                ]
+        except KeyError:
+            previous_forecasts = None
 
         return NumericQuestion(
             upper_bound=upper_bound,
