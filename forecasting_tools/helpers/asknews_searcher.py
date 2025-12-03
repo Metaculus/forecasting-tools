@@ -16,6 +16,7 @@ try:
 except ImportError:
     pass
 
+from forecasting_tools.helpers.asknews_cache import AskNewsCache
 
 # NOTE: More information available here:
 # https://docs.asknews.app/en/news
@@ -33,12 +34,22 @@ class AskNewsSearcher:
         self,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
+        cache_mode: (
+            Literal["use_cache", "use_cache_with_fallback", "no_cache"] | None
+        ) = None,
     ) -> None:
+        if cache_mode is None:
+            cache_mode = os.getenv("ASKNEWS_CACHE_MODE", "no_cache")  # type: ignore
+        if cache_mode not in ["use_cache", "use_cache_with_fallback", "no_cache"]:
+            raise ValueError(f"Invalid cache mode: {cache_mode}")
+
         self.client_id = client_id or os.getenv("ASKNEWS_CLIENT_ID")
         self.client_secret = client_secret or os.getenv("ASKNEWS_SECRET")
 
         if not self.client_id or not self.client_secret:
             raise ValueError("ASKNEWS_CLIENT_ID or ASKNEWS_SECRET is not set")
+
+        self.cache = AskNewsCache(cache_mode=cache_mode)
 
     def get_formatted_news(self, query: str) -> str:
         return asyncio.run(self.get_formatted_news_async(query))
@@ -48,10 +59,14 @@ class AskNewsSearcher:
         Use the AskNews `news` endpoint to get news context for your query.
         The full API reference can be found here: https://docs.asknews.app/en/reference#get-/v1/news/search
         """
+        cached_result = self.cache.get(query)
+        if cached_result is not None:
+            return cached_result
+
         async with AsyncAskNewsSDK(
             client_id=self.client_id,
             client_secret=self.client_secret,
-            scopes=set(["news"]),
+            scopes=set[str](["news"]),
         ) as ask:
 
             # get the latest news related to the query (within the past 48 hours)
@@ -84,8 +99,10 @@ class AskNewsSearcher:
                 formatted_articles += self._format_articles(historical_articles)
             if not hot_articles and not historical_articles:
                 formatted_articles += "No articles were found.\n\n"
+                self.cache.set(query, formatted_articles)
                 return formatted_articles
 
+            self.cache.set(query, formatted_articles)
             return formatted_articles
 
     def _format_articles(self, articles: list[SearchResponseDictItem]) -> str:
