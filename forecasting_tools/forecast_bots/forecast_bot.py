@@ -449,7 +449,9 @@ class ForecastBot(ABC):
             < self.expected_total_predictions * self.required_successful_predictions
         ):
             raise ValueError(
-                f"Expected at least {self.expected_total_predictions * self.required_successful_predictions} successful predictions, but only got {len(all_predictions)}"
+                f"Expected at least {self.expected_total_predictions * self.required_successful_predictions} "
+                f"successful predictions, but only got {len(all_predictions)}. "
+                f"Parameter required_successful_predictions is set to {self.required_successful_predictions}. "
             )
 
     async def _aggregate_predictions(
