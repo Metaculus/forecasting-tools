@@ -33,12 +33,34 @@ class AskNewsSearcher:
         self,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
+        api_key: Optional[str] = None,
     ) -> None:
         self.client_id = client_id or os.getenv("ASKNEWS_CLIENT_ID")
         self.client_secret = client_secret or os.getenv("ASKNEWS_SECRET")
+        self.api_key = api_key or os.getenv("ASKNEWS_API_KEY")
 
-        if not self.client_id or not self.client_secret:
-            raise ValueError("ASKNEWS_CLIENT_ID or ASKNEWS_SECRET is not set")
+        # Check if both authentication methods are defined
+        has_oauth = bool(self.client_id and self.client_secret)
+        has_api_key = bool(self.api_key)
+
+        if has_oauth and has_api_key:
+            raise ValueError(
+                "Cannot use both OAuth (client_id/client_secret) and API key authentication. "
+                "Please provide either ASKNEWS_CLIENT_ID + ASKNEWS_SECRET or ASKNEWS_API_KEY, not both."
+            )
+
+        # Validate OAuth credentials
+        if has_oauth and (not self.client_id or not self.client_secret):
+            raise ValueError(
+                "Incomplete OAuth credentials. Both ASKNEWS_CLIENT_ID and ASKNEWS_SECRET must be set."
+            )
+
+        # Validate that at least one authentication method is provided
+        if not has_oauth and not has_api_key:
+            raise ValueError(
+                "No authentication credentials provided. "
+                "Please set either ASKNEWS_CLIENT_ID + ASKNEWS_SECRET or ASKNEWS_API_KEY"
+            )
 
     def get_formatted_news(self, query: str) -> str:
         return asyncio.run(self.get_formatted_news_async(query))
@@ -51,6 +73,7 @@ class AskNewsSearcher:
         async with AsyncAskNewsSDK(
             client_id=self.client_id,
             client_secret=self.client_secret,
+            api_key=self.api_key,
             scopes=set(["news"]),
         ) as ask:
 
@@ -64,14 +87,14 @@ class AskNewsSearcher:
 
             await asyncio.sleep(
                 self._default_rate_limit
-            )  # free tier AskNews has a ratelimit of 1 call per 10 seconds
+            )  # AskNews free tier has a ratelimit of 1 call per 10 seconds
 
             # get context from the "historical" database that contains a news archive going back to 2023
             historical_response = await ask.news.search_news(
                 query=query,
                 n_articles=10,
                 return_type="both",
-                strategy="news knowledge",  # looks for relevant news within the past 60 days
+                strategy="news knowledge",  # looks for relevant news within the past 160 days
             )
 
             hot_articles = hot_response.as_dicts
@@ -190,6 +213,7 @@ class AskNewsSearcher:
         async with AsyncAskNewsSDK(
             client_id=self.client_id,
             client_secret=self.client_secret,
+            api_key=self.api_key,
             scopes={"chat", "news", "stories", "analytics"},
         ) as sdk:
             response = await sdk.chat.get_deep_news(
