@@ -16,4 +16,4 @@ class BinaryTimestampedPrediction(BinaryPrediction, TimeStampedPrediction):
 
 
 class NumericTimestampedDistribution(NumericDistribution, TimeStampedPrediction):
-    pass
+    strict_validation: bool = False
