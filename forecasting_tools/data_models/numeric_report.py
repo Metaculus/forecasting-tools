@@ -49,6 +49,7 @@ class NumericDistribution(BaseModel):
         None  # Normal numeric questions have 201 points, but discrete questions have fewer
     )
     standardize_cdf: bool = True
+    strict_validation: bool = True
 
     @model_validator(mode="after")
     def validate_percentiles(self: NumericDistribution) -> NumericDistribution:
@@ -60,6 +61,9 @@ class NumericDistribution(BaseModel):
                 raise ValueError("Values must be in strictly increasing order")
         if len(percentiles) < 2:
             raise ValueError("NumericDistribution must have at least 2 percentiles")
+
+        if not self.strict_validation:
+            return self
 
         for i in range(len(percentiles) - 1):
             if abs(percentiles[i + 1].percentile - percentiles[i].percentile) < 5e-05:

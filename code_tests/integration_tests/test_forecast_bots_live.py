@@ -97,6 +97,7 @@ async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
         bot.publish_reports_to_metaculus = original_publish_status
 
 
+@pytest.mark.skip(reason="Taiwan tournament takes too long to process")
 async def test_taiwan_tournament_uniform_probability_bot() -> None:
     bot = UniformProbabilityBot(
         publish_reports_to_metaculus=True, skip_previously_forecasted_questions=False
