@@ -57,7 +57,7 @@ class NumericDistribution(BaseModel):
         for i in range(len(percentiles) - 1):
             if percentiles[i].percentile >= percentiles[i + 1].percentile:
                 raise ValueError("Percentiles must be in strictly increasing order")
-            if percentiles[i].value > percentiles[i + 1].value:
+            if percentiles[i].value >= percentiles[i + 1].value:
                 raise ValueError("Values must be in strictly increasing order")
         if len(percentiles) < 2:
             raise ValueError("NumericDistribution must have at least 2 percentiles")
