@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -57,8 +57,8 @@ class NumericDistribution(BaseModel):
         for i in range(len(percentiles) - 1):
             if percentiles[i].percentile >= percentiles[i + 1].percentile:
                 raise ValueError("Percentiles must be in strictly increasing order")
-            if percentiles[i].value >= percentiles[i + 1].value:
-                raise ValueError("Values must be in strictly increasing order")
+            if percentiles[i].value > percentiles[i + 1].value:
+                raise ValueError("Values must be in monotonically increasing order")
         if len(percentiles) < 2:
             raise ValueError("NumericDistribution must have at least 2 percentiles")
 
@@ -84,47 +84,57 @@ class NumericDistribution(BaseModel):
     def _check_and_update_repeating_values(
         self, percentiles: list[Percentile]
     ) -> list[Percentile]:
-        unique_value_count = Counter(percentile.value for percentile in percentiles)
-        final_percentiles = []
+        """
+        for each location ("value"), get all the percentiles that map to it
+        if there are multiple at or below lower bound, take the largest "percentile"
+        if there are multiple at or above upper bound, take the smallest "percentile"
+        if there are multiple for an in-bound value, only take the largest and
+            smallest, and place the smallest 1/2 * 1/cdf_size below the "value".
+        """
+
+        final_percentiles: list[Percentile] = []
+        percentile_by_value: dict[float, list[float]] = defaultdict(list)
+        lower_bounds: list[float] = []
+        upper_bounds: list[float] = []
+
         for percentile in percentiles:
-            value = percentile.value
-            count = unique_value_count[value]
-            repeated_value = count > 1
-            value_in_bounds = self.lower_bound < value < self.upper_bound
-            value_above_bound = value >= self.upper_bound
-            value_below_bound = value <= self.lower_bound
-            epsilon = 1e-10
-            if not repeated_value:
-                final_percentiles.append(percentile)
-            elif value_in_bounds:
-                greater_epsilon = 1e-6  # TODO: Figure out why normal epsilon doesn't work. Could cause brittle behavior.
-                modification = (1 - percentile.percentile) * greater_epsilon
-                final_percentiles.append(
-                    Percentile(
-                        value=value - modification,
-                        percentile=percentile.percentile,
-                    )
-                )
-            elif value_above_bound:
-                modification = epsilon * percentile.percentile
-                final_percentiles.append(
-                    Percentile(
-                        value=self.upper_bound + modification,
-                        percentile=percentile.percentile,
-                    )
-                )
-            elif value_below_bound:
-                modification = epsilon * (1 - percentile.percentile)
-                final_percentiles.append(
-                    Percentile(
-                        value=self.lower_bound - modification,
-                        percentile=percentile.percentile,
-                    )
-                )
+            if percentile.value <= self.lower_bound:
+                lower_bounds.append(percentile.percentile)
+            elif percentile.value >= self.upper_bound:
+                upper_bounds.append(percentile.percentile)
             else:
-                raise ValueError(
-                    f"Unexpected state: value {value} is repeated {count} times. Bound is {self.lower_bound} and {self.upper_bound}"
+                percentile_by_value[percentile.value].append(percentile.percentile)
+
+        if lower_bounds:
+            final_percentiles.append(
+                Percentile(
+                    value=self.lower_bound,
+                    percentile=max(lower_bounds),
                 )
+            )
+        for value, percentiles_at_value in sorted(percentile_by_value.items()):
+            least_percentile = min(percentiles_at_value)
+            greatest_percentile = max(percentiles_at_value)
+            final_percentiles.append(
+                Percentile(
+                    value=value - 0.5 / ((self.cdf_size or 201) - 1),
+                    percentile=least_percentile,
+                )
+            )
+            final_percentiles.append(
+                Percentile(
+                    value=value,
+                    percentile=greatest_percentile,
+                )
+            )
+        if upper_bounds:
+            final_percentiles.append(
+                Percentile(
+                    value=self.upper_bound,
+                    percentile=min(upper_bounds),
+                )
+            )
+
         return final_percentiles
 
     def _check_too_far_from_bounds(self, percentiles: list[Percentile]) -> None:
