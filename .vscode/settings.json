@@ -22,7 +22,4 @@
   "jupyter.debugJustMyCode": true,
   "debugpy.debugJustMyCode": true,
   "cursorpyright.analysis.typeCheckingMode": "basic",
-  "python-envs.defaultEnvManager": "ms-python.python:poetry",
-  "python-envs.defaultPackageManager": "ms-python.python:poetry",
-  "python-envs.pythonProjects": [],
 }
