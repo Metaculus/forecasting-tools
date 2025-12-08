@@ -143,12 +143,16 @@ async def test_conditional_forecasts() -> None:
     # Add dummy data
     questions[0].parent.previous_forecasts = [
         BinaryTimestampedPrediction(
-            prediction_in_decimal=0.15, timestamp=datetime.datetime.now()
+            prediction_in_decimal=0.15,
+            timestamp=datetime.datetime.now(),
+            timestamp_end=None,
         )
     ]
     questions[0].child.previous_forecasts = [
         BinaryTimestampedPrediction(
-            prediction_in_decimal=0.12, timestamp=datetime.datetime.now()
+            prediction_in_decimal=0.12,
+            timestamp=datetime.datetime.now(),
+            timestamp_end=None,
         )
     ]
     questions[1].parent.previous_forecasts = None

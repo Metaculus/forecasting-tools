@@ -9,6 +9,7 @@ from forecasting_tools.data_models.numeric_report import NumericDistribution
 
 class TimeStampedPrediction(BaseModel, ABC):
     timestamp: datetime
+    timestamp_end: datetime | None
 
 
 class BinaryTimestampedPrediction(BinaryPrediction, TimeStampedPrediction):

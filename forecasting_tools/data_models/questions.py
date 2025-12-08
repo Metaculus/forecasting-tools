@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import logging
 import textwrap
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Literal
 
@@ -321,7 +321,16 @@ class BinaryQuestion(MetaculusQuestion):
                 previous_forecasts = [
                     BinaryTimestampedPrediction(
                         prediction_in_decimal=forecast["forecast_values"][1],
-                        timestamp=datetime.fromtimestamp(forecast["start_time"]),
+                        timestamp=datetime.fromtimestamp(
+                            forecast["start_time"], tz=timezone.utc
+                        ),
+                        timestamp_end=(
+                            datetime.fromtimestamp(
+                                forecast["end_time"], tz=timezone.utc
+                            )
+                            if forecast["end_time"]
+                            else None
+                        ),
                     )
                     for forecast in history
                 ]
@@ -543,7 +552,16 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
                         upper_bound=upper_bound,
                         lower_bound=lower_bound,
                         zero_point=zero_point,
-                        timestamp=datetime.fromtimestamp(forecast["start_time"]),
+                        timestamp=datetime.fromtimestamp(
+                            forecast["start_time"], tz=timezone.utc
+                        ),
+                        timestamp_end=(
+                            datetime.fromtimestamp(
+                                forecast["end_time"], tz=timezone.utc
+                            )
+                            if forecast["end_time"]
+                            else None
+                        ),
                     )
                     for forecast in history
                 ]
