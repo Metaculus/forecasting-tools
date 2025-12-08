@@ -113,6 +113,14 @@ class NumericDistribution(BaseModel):
                 )
             )
         for value, percentiles_at_value in sorted(percentile_by_value.items()):
+            if len(percentiles_at_value) == 1:
+                final_percentiles.append(
+                    Percentile(
+                        value=value,
+                        percentile=percentiles_at_value[0],
+                    )
+                )
+                continue
             least_percentile = min(percentiles_at_value)
             greatest_percentile = max(percentiles_at_value)
             final_percentiles.append(
