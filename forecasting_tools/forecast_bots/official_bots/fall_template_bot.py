@@ -304,6 +304,11 @@ class FallTemplateBot2025(ForecastBot):
 
         return await self._binary_prompt_to_forecast(question, prompt)
 
+    async def _run_forecast_on_date(
+        self, question: NumericQuestion, research: str
+    ) -> ReasonedPrediction[NumericDistribution]:
+        raise NotImplementedError("Implement numeric forecast")
+
     async def _binary_prompt_to_forecast(
         self,
         question: BinaryQuestion,
