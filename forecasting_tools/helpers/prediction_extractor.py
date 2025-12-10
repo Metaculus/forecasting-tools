@@ -10,7 +10,7 @@ from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOptionList,
 )
 from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
-from forecasting_tools.data_models.questions import NumericQuestion
+from forecasting_tools.data_models.questions import DateQuestion, NumericQuestion
 
 logger = logging.getLogger(__name__)
 
@@ -227,7 +227,9 @@ class PredictionExtractor:
 
     @staticmethod
     def extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-        text: str, question: NumericQuestion, standardize_cdf: bool | None = None
+        text: str,
+        question: NumericQuestion | DateQuestion,
+        standardize_cdf: bool | None = None,
     ) -> NumericDistribution:
         if not text or text.strip() == "":
             raise ValueError(
