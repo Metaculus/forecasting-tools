@@ -268,14 +268,14 @@ class NumericDistribution(BaseModel):
         question: NumericQuestion | DateQuestion,
         standardize_cdf: bool | None = None,
     ) -> NumericDistribution:
-        if isinstance(question, NumericQuestion):
-            upper_bound = question.upper_bound
-            lower_bound = question.lower_bound
-        elif isinstance(question, DateQuestion):
-            upper_bound = question.upper_bound.timestamp()
-            lower_bound = question.lower_bound.timestamp()
-        else:
-            raise ValueError()
+
+        upper_bound = question.upper_bound
+        if isinstance(upper_bound, datetime.datetime):
+            upper_bound = upper_bound.timestamp()
+        lower_bound = question.lower_bound
+        if isinstance(lower_bound, datetime.datetime):
+            lower_bound = lower_bound.timestamp()
+
         if standardize_cdf is None:
             return NumericDistribution(
                 declared_percentiles=percentiles,
