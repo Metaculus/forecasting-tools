@@ -64,7 +64,7 @@ class DataOrganizer:
         TypeMapping(
             question_type=DateQuestion,
             test_post_id=4110,  # https://www.metaculus.com/questions/4110/birthdate-of-oldest-living-human-in-2200/
-            report_type=None,  # Not Implemented Yet
+            report_type=NumericReport,
         ),
         TypeMapping(
             question_type=MultipleChoiceQuestion,

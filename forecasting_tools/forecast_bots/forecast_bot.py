@@ -523,7 +523,7 @@ class ForecastBot(ABC):
         elif isinstance(question, ConditionalQuestion):
             forecast_function = lambda q, r: self._run_forecast_on_conditional(q, r)
         elif isinstance(question, DateQuestion):
-            raise NotImplementedError("Date questions not supported yet")
+            forecast_function = lambda q, r: self._run_forecast_on_date(q, r)
         else:
             raise ValueError(f"Unknown question type: {type(question)}")
 
@@ -540,6 +540,11 @@ class ForecastBot(ABC):
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
+        raise NotImplementedError("Subclass must implement this method")
+
+    async def _run_forecast_on_date(
+        self, question: NumericQuestion, research: str
+    ) -> ReasonedPrediction[NumericDistribution]:
         raise NotImplementedError("Subclass must implement this method")
 
     async def _run_forecast_on_conditional(
