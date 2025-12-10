@@ -473,12 +473,14 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         **flex_price_settings,
     )
 
+    kimi_k2_timeout = 5 * 60
     kimi_k2_basic_bot = {
         "estimated_cost_per_question": roughly_deepseek_r1_cost,
         "bot": create_bot(
             GeneralLlm(
                 model="openrouter/moonshotai/kimi-k2",
                 temperature=default_temperature,
+                timeout=kimi_k2_timeout,
             ),
         ),
     }
@@ -509,6 +511,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/moonshotai/kimi-k2-thinking",
                     temperature=default_temperature,
+                    timeout=kimi_k2_timeout,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
