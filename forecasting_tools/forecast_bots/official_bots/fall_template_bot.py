@@ -395,7 +395,7 @@ class FallTemplateBot2025(ForecastBot):
             Percentile(
                 percentile=percentile.percentile,
                 value=datetime.strptime(
-                    f"{percentile.value} UTC", "%Y-%m-%d"
+                    f"{percentile.value} UTC", "%Y-%m-%d %Z"
                 ).timestamp(),
             )
             for percentile in date_percentile_list
