@@ -12,6 +12,7 @@ from forecasting_tools.data_models.forecast_report import ForecastReport
 
 if TYPE_CHECKING:
     from forecasting_tools.data_models.questions import (
+        DateQuestion,
         DiscreteQuestion,
         NumericQuestion,
     )
@@ -231,7 +232,7 @@ class NumericDistribution(BaseModel):
     def from_question(
         cls,
         percentiles: list[Percentile],
-        question: NumericQuestion,
+        question: NumericQuestion | DateQuestion,
         standardize_cdf: bool | None = None,
     ) -> NumericDistribution:
         if standardize_cdf is None:
