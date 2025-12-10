@@ -86,7 +86,7 @@ class ForecastBot(ABC):
         enable_summarize_research: bool = True,
         parameters_to_exclude_from_config_dict: list[str] | None = None,
         extra_metadata_in_explanation: bool = False,
-        required_successful_predictions: float = 0.75,
+        required_successful_predictions: float = 0.5,
     ) -> None:
         assert (
             research_reports_per_question > 0
