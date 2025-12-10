@@ -397,7 +397,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     sonnet_4_5_name = "anthropic/claude-sonnet-4-5-20250929"
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_3_pro = "openrouter/google/gemini-3-pro-preview"
-    gemini_default_timeout = 120
+    gemini_default_timeout = 5 * 60
     deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-5-20250929"  # Switched from claude-sonnet-4-20250514 in Nov 2025
     roughly_sonnet_4_cost = 0.25190
     roughly_gpt_5_high_cost = 0.37868
@@ -616,6 +616,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning={
                         "enabled": True,
                     },
+                    timeout=5 * 60,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -629,6 +630,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning={
                         "enabled": False,
                     },
+                    timeout=3 * 60,
                 ),
             ),
             "tournaments": TournConfig.none,
@@ -785,6 +787,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning={
                         "enabled": True,
                     },
+                    timeout=3 * 60,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
