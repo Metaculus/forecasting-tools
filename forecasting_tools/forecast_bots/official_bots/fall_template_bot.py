@@ -14,7 +14,11 @@ from forecasting_tools.data_models.conditional_models import (
 from forecasting_tools.data_models.data_organizer import PredictionTypes
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
-from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
+from forecasting_tools.data_models.numeric_report import (
+    DateStringPercentile,
+    NumericDistribution,
+    Percentile,
+)
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     ConditionalQuestion,
@@ -379,13 +383,23 @@ class FallTemplateBot2025(ForecastBot):
             - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
             """
         )
-        percentile_list: list[Percentile] = await structure_output(
+        date_percentile_list: list[DateStringPercentile] = await structure_output(
             reasoning,
-            list[Percentile],
+            list[DateStringPercentile],
             model=self.get_llm("parser", "llm"),
             additional_instructions=parsing_instructions,
             num_validation_samples=self._structure_output_validation_samples,
         )
+
+        percentile_list = [
+            Percentile(
+                percentile=percentile.percentile,
+                value=datetime.strptime(
+                    f"{percentile.value} UTC", "%Y-%m-%d"
+                ).timestamp(),
+            )
+            for percentile in date_percentile_list
+        ]
 
         if double_check_extraction:
             redundant_extraction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(

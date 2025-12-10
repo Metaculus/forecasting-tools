@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import datetime
 import logging
+import re
 from collections import Counter
 from typing import TYPE_CHECKING
 
@@ -59,6 +61,37 @@ class Percentile(BaseModel):
             )
         if np.isnan(self.percentile):
             raise ValueError(f"Percentile must be a number, but was {self.percentile}")
+        return self
+
+
+class DateStringPercentile(BaseModel):
+    percentile: float = Field(
+        description="A number between 0 and 1 (e.g. '90% of people are age 60 or younger' translates to '0.9')",
+    )
+    value: str = Field(
+        description="The number matching the percentile (e.g. '90% of people are age 60 or younger' translates to '60')",
+    )
+
+    def is_valid_date(self, date_string: str):
+        pattern = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$"
+        if re.match(pattern, date_string):
+            try:
+                datetime.datetime.strptime(date_string, "%Y-%m-%d")
+                return True
+            except ValueError:
+                return False
+        return False
+
+    @model_validator(mode="after")
+    def validate_percentile(self: Percentile) -> Percentile:
+        if self.percentile < 0 or self.percentile > 1:
+            raise ValueError(
+                f"Percentile must be between 0 and 1, but was {self.percentile}"
+            )
+        if np.isnan(self.percentile):
+            raise ValueError(f"Percentile must be a number, but was {self.percentile}")
+        if not self.is_valid_date(self.value):
+            raise ValueError(f"Date must be in YYYY-MM-DD format, but was {self.value}")
         return self
 
 
@@ -558,12 +591,14 @@ class NumericDistribution(BaseModel):
 
 
 class NumericReport(ForecastReport):
-    question: NumericQuestion
+    question: NumericQuestion | DateQuestion
     prediction: NumericDistribution
 
     @classmethod
     async def aggregate_predictions(
-        cls, predictions: list[NumericDistribution], question: NumericQuestion
+        cls,
+        predictions: list[NumericDistribution],
+        question: NumericQuestion | DateQuestion,
     ) -> NumericDistribution:
         assert predictions, "No predictions to aggregate"
         cdfs = [prediction.get_cdf() for prediction in predictions]
