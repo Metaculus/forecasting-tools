@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Literal
 
 from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
@@ -205,25 +205,21 @@ class FallTemplateBot2025(ForecastBot):
 
         previous_forecasts = question.previous_forecasts
         if (
-            question_type in ["parent", "child"]
+            question.already_forecasted
+            and question_type in ["parent", "child"]
             and previous_forecasts
             and question_type not in self.force_reforecast_in_conditional
         ):
             # TODO: add option to not affirm current parent/child forecasts, create new forecast
             previous_forecast = previous_forecasts[-1]
-            current_utc_time = datetime.now(timezone.utc)
-            if (
-                previous_forecast.timestamp_end is None
-                or previous_forecast.timestamp_end > current_utc_time
-            ):
-                pretty_value = DataOrganizer.get_readable_prediction(previous_forecast)
-                return (
-                    ReasonedPrediction(
-                        prediction_value=PredictionAffirmed(),
-                        reasoning=f"Already existing forecast reaffirmed at {pretty_value}.",
-                    ),
-                    research,
-                )
+            pretty_value = DataOrganizer.get_readable_prediction(previous_forecast)
+            return (
+                ReasonedPrediction(
+                    prediction_value=PredictionAffirmed(),
+                    reasoning=f"Already existing forecast reaffirmed at {pretty_value}.",
+                ),
+                research,
+            )
         info = await self._make_prediction(question, research)
         full_research = self._add_reasoning_to_research(research, info, question_type)
         return info, full_research

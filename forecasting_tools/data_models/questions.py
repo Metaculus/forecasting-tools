@@ -126,7 +126,16 @@ class MetaculusQuestion(BaseModel, Jsonable):
 
         try:
             history = question_json["my_forecasts"]["history"]
-            is_forecasted = history is not None and len(history) > 0
+            has_history = history is not None and len(history) > 0
+            current_utc_time = datetime.now(timezone.utc)
+            previous_forecast = history[-1] if has_history else None
+            end_time = (
+                datetime.fromtimestamp(previous_forecast["end_time"], tz=timezone.utc)
+                if previous_forecast
+                else None
+            )
+            is_forecasted = not (end_time and end_time > current_utc_time)
+
         except Exception:
             is_forecasted = False
 
