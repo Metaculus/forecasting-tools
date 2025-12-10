@@ -684,8 +684,8 @@ class FallTemplateBot2025(ForecastBot):
                 lower_bound_number = question.lower_bound
             unit_of_measure = question.unit_of_measure
         elif isinstance(question, DateQuestion):
-            upper_bound_number = question.upper_bound
-            lower_bound_number = question.lower_bound
+            upper_bound_number = question.upper_bound.date().isoformat()
+            lower_bound_number = question.lower_bound.date().isoformat()
             unit_of_measure = None
         else:
             raise ValueError()
