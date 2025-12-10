@@ -268,13 +268,21 @@ class NumericDistribution(BaseModel):
         question: NumericQuestion | DateQuestion,
         standardize_cdf: bool | None = None,
     ) -> NumericDistribution:
+        if isinstance(question, NumericQuestion):
+            upper_bound = question.upper_bound
+            lower_bound = question.lower_bound
+        elif isinstance(question, DateQuestion):
+            upper_bound = question.upper_bound.timestamp()
+            lower_bound = question.lower_bound.timestamp()
+        else:
+            raise ValueError()
         if standardize_cdf is None:
             return NumericDistribution(
                 declared_percentiles=percentiles,
                 open_upper_bound=question.open_upper_bound,
                 open_lower_bound=question.open_lower_bound,
-                upper_bound=question.upper_bound,
-                lower_bound=question.lower_bound,
+                upper_bound=upper_bound,
+                lower_bound=lower_bound,
                 zero_point=question.zero_point,
                 cdf_size=question.cdf_size,
             )
@@ -283,8 +291,8 @@ class NumericDistribution(BaseModel):
                 declared_percentiles=percentiles,
                 open_upper_bound=question.open_upper_bound,
                 open_lower_bound=question.open_lower_bound,
-                upper_bound=question.upper_bound,
-                lower_bound=question.lower_bound,
+                upper_bound=upper_bound,
+                lower_bound=lower_bound,
                 zero_point=question.zero_point,
                 cdf_size=question.cdf_size,
                 standardize_cdf=standardize_cdf,
