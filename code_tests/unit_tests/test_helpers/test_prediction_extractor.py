@@ -452,6 +452,10 @@ def test_multiple_choice_extraction_failure(reasoning: str, options: list[str]) 
 
 def create_numeric_question(
     magnitude_units: str | None = None,
+    upper_bound: float = 1,
+    lower_bound: float = 0,
+    open_upper_bound: bool = True,
+    open_lower_bound: bool = True,
 ) -> NumericQuestion:
     if magnitude_units is None:
         question_text = "How much will the stock market be worth in 2026? (exact value)"
@@ -462,10 +466,10 @@ def create_numeric_question(
 
     return NumericQuestion(
         question_text=question_text,
-        upper_bound=1,
-        lower_bound=0,
-        open_upper_bound=True,
-        open_lower_bound=True,
+        upper_bound=upper_bound,
+        lower_bound=lower_bound,
+        open_upper_bound=open_upper_bound,
+        open_lower_bound=open_lower_bound,
     )
 
 
@@ -483,7 +487,7 @@ def create_numeric_question(
                 Percentile(value=20, percentile=0.4),
                 Percentile(value=30, percentile=0.6),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=0, upper_bound=100),
         ),
         (
             """
@@ -496,7 +500,7 @@ def create_numeric_question(
                 Percentile(value=2.123, percentile=0.4),
                 Percentile(value=3.123, percentile=0.6),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=0, upper_bound=10),
         ),
         (
             """
@@ -509,7 +513,7 @@ def create_numeric_question(
                 Percentile(value=-10.45, percentile=0.4),
                 Percentile(value=30, percentile=0.6),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=-100, upper_bound=100),
         ),
         (
             """
@@ -526,7 +530,7 @@ def create_numeric_question(
                 Percentile(value=-8, percentile=0.7),
                 Percentile(value=31, percentile=0.8),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=-100, upper_bound=100),
         ),
         (
             """
@@ -539,7 +543,7 @@ def create_numeric_question(
                 Percentile(value=-10, percentile=0.4),
                 Percentile(value=-5.37, percentile=0.6),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=-50, upper_bound=10),
         ),
         (
             """
@@ -552,7 +556,7 @@ def create_numeric_question(
                 Percentile(value=2000000, percentile=0.4),
                 Percentile(value=3000000, percentile=0.6),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=0, upper_bound=100000000),
         ),
         (
             """
@@ -565,7 +569,7 @@ def create_numeric_question(
                 Percentile(value=2000000, percentile=0.4),
                 Percentile(value=3000000, percentile=0.6),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=0, upper_bound=100000000),
         ),
         (
             """
@@ -578,7 +582,7 @@ def create_numeric_question(
                 Percentile(value=2000000.454, percentile=0.4),
                 Percentile(value=3000000.00, percentile=0.6),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=0, upper_bound=100000000),
         ),
         (
             """
@@ -591,7 +595,9 @@ def create_numeric_question(
                 Percentile(value=2.1, percentile=0.4),
                 Percentile(value=3000, percentile=0.6),
             ],
-            create_numeric_question(magnitude_units="millions"),
+            create_numeric_question(
+                magnitude_units="millions", lower_bound=0, upper_bound=10000
+            ),
         ),
         (
             """
@@ -607,7 +613,7 @@ def create_numeric_question(
                 Percentile(value=2000000.454, percentile=0.4),
                 Percentile(value=3000000.00, percentile=0.6),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=0, upper_bound=100000000),
         ),
         (
             """
@@ -629,7 +635,9 @@ def create_numeric_question(
                 Percentile(value=4000, percentile=0.8),
                 Percentile(value=5000, percentile=0.9),
             ],
-            create_numeric_question(magnitude_units="millions"),
+            create_numeric_question(
+                magnitude_units="millions", lower_bound=0, upper_bound=10000
+            ),
         ),
         (
             """
@@ -644,7 +652,7 @@ def create_numeric_question(
                 Percentile(value=2000000, percentile=0.4),
                 Percentile(value=3000000, percentile=0.6),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=0, upper_bound=100000000),
         ),
         (
             """
@@ -664,7 +672,7 @@ def create_numeric_question(
                 Percentile(value=2000000, percentile=0.4),
                 Percentile(value=3000000, percentile=0.6),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=0, upper_bound=100000000),
         ),
         (  # testing with non breaking spaces for commas (gpt o3 uses this)
             """
@@ -683,7 +691,9 @@ def create_numeric_question(
                 Percentile(value=14500, percentile=0.8),
                 Percentile(value=17000, percentile=0.9),
             ],
-            create_numeric_question(),
+            create_numeric_question(
+                magnitude_units="millions", lower_bound=0, upper_bound=100000
+            ),
         ),
         (  # Testing with regular spaces (in case o3 decides this is also a good idea)
             """
@@ -702,7 +712,9 @@ def create_numeric_question(
                 Percentile(value=14500, percentile=0.8),
                 Percentile(value=17000, percentile=0.9),
             ],
-            create_numeric_question(),
+            create_numeric_question(
+                magnitude_units="millions", lower_bound=0, upper_bound=100000
+            ),
         ),
         (  # Testing complicated spaces
             """
@@ -721,7 +733,63 @@ def create_numeric_question(
                 Percentile(value=14500432, percentile=0.8),
                 Percentile(value=17020432.432, percentile=0.9),
             ],
-            create_numeric_question(),
+            create_numeric_question(lower_bound=-100000000, upper_bound=100000000),
+        ),
+        (  # out of bounds values are clipped to the bounds
+            """
+            Percentile 20: -0.1
+            Percentile 40: 0.5
+            Percentile 60: 0.9
+            """,
+            [
+                Percentile(value=0, percentile=0.2),
+                Percentile(value=0.5, percentile=0.4),
+                Percentile(value=0.9, percentile=0.6),
+            ],
+            create_numeric_question(lower_bound=0, upper_bound=1),
+        ),
+        (  # out of bounds values are clipped to the bounds
+            """
+            Percentile 20: -0.1
+            Percentile 40: 0.5
+            Percentile 60: 0.9
+            Percentile 80: 1.1
+            """,
+            [
+                Percentile(value=0, percentile=0.2),
+                Percentile(value=0.5, percentile=0.4),
+                Percentile(value=0.9, percentile=0.6),
+                Percentile(value=1.0, percentile=0.8),
+            ],
+            create_numeric_question(lower_bound=0, upper_bound=1),
+        ),
+        (  # equivalend percentiles get places carefully
+            """
+            Percentile 20: 0.4
+            Percentile 40: 0.4
+            Percentile 60: 0.4
+            Percentile 80: 0.4
+            """,
+            [
+                Percentile(value=0.4 - 0.5 / 200, percentile=0.2),
+                Percentile(value=0.4, percentile=0.8),
+            ],
+            create_numeric_question(lower_bound=0, upper_bound=1),
+        ),
+        (  # only 1 out of bounds value per side
+            """
+            Percentile 20: -0.5
+            Percentile 40: -0.1
+            Percentile 50: 0.5
+            Percentile 60: 1.1
+            Percentile 80: 1.5
+            """,
+            [
+                Percentile(value=0, percentile=0.4),
+                Percentile(value=0.5, percentile=0.5),
+                Percentile(value=1.0, percentile=0.6),
+            ],
+            create_numeric_question(lower_bound=0, upper_bound=1),
         ),
         # (
         #     """
