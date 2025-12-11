@@ -7,7 +7,7 @@ import pytest
 import typeguard
 
 from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
-from forecasting_tools import MetaculusClient
+from forecasting_tools import MetaculusClient, NumericDistribution
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -111,6 +111,24 @@ async def test_taiwan_tournament_uniform_probability_bot() -> None:
     assert any(
         isinstance(report, ConditionalReport) for report in reports
     ), "Expected some conditional reports"
+
+
+async def test_date_question() -> None:
+    bot = TemplateBot(
+        publish_reports_to_metaculus=True,
+        skip_previously_forecasted_questions=False,
+        llms={
+            "default": GeneralLlm(model="openai/o4-mini", temperature=1),
+            "summarizer": GeneralLlm(model="openai/o4-mini", temperature=1),
+            "researcher": GeneralLlm(model="openai/o4-mini", temperature=1),
+            "parser": GeneralLlm(model="openai/o4-mini", temperature=1),
+        },
+    )
+    url = "https://www.metaculus.com/questions/7104/birthdate-of-the-first-human-to-live-to-1000/"
+    question = MetaculusClient().get_question_by_url(url)
+    assert isinstance(question, DateQuestion)
+    report = await bot.forecast_question(question)
+    assert isinstance(report.prediction, NumericDistribution)
 
 
 async def test_conditional_forecasts() -> None:
