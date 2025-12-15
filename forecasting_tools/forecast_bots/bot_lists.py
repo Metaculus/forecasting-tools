@@ -44,6 +44,7 @@ def get_all_important_bot_classes() -> list[type[ForecastBot]]:
         Q4TemplateBot2024,
         Q3TemplateBot2024,
         FallTemplateBot2025,
+        FallResearchOnlyBot2025,
         Q1VeritasBot,
         Q4VeritasBot,
         UniformProbabilityBot,
