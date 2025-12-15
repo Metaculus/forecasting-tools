@@ -4,6 +4,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Literal
 
+import pendulum
+
 from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.binary_report import BinaryPrediction
@@ -378,7 +380,7 @@ class FallTemplateBot2025(ForecastBot):
             f"""
             The text given to you is trying to give a forecast distribution for a date question.
             - This text is trying to answer the numeric question: "{question.question_text}".
-            - As an example, someone else guessed that the answer will be between {question.lower_bound} and {question.upper_bound}, so the numbers parsed from and answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
+            - As an example, someone else guessed that the answer will be between {question.lower_bound} and {question.upper_bound}, so the numbers parsed from an answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
             - The output is given as dates in the format of YYYY-MM-DD
             - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
             """
@@ -394,34 +396,13 @@ class FallTemplateBot2025(ForecastBot):
         percentile_list = [
             Percentile(
                 percentile=percentile.percentile,
-                value=datetime.strptime(
-                    f"{percentile.value} UTC", "%Y-%m-%d %Z"
-                ).timestamp(),
+                value=pendulum.parse(percentile.value).timestamp(),
             )
             for percentile in date_percentile_list
         ]
 
         if double_check_extraction:
-            redundant_extraction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-                reasoning, question
-            )
-            for redundant_percentile in redundant_extraction.declared_percentiles:
-                matching_original_percentile = next(
-                    (
-                        percentile
-                        for percentile in percentile_list
-                        if abs(percentile.percentile - redundant_percentile.percentile)
-                        < 0.001
-                    ),
-                    None,
-                )
-                assert (
-                    matching_original_percentile is not None
-                ), f"Matching original percentile not found for {redundant_percentile.percentile}"
-                assert (
-                    abs(redundant_percentile.value - matching_original_percentile.value)
-                    < 0.001
-                ), f"Redundant extraction {redundant_percentile.value} does not match original percentile {matching_original_percentile.value} for percentile {redundant_percentile.percentile}"
+            raise ValueError("Double check extraction not supported for date questions")
         prediction = NumericDistribution.from_question(percentile_list, question)
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}."
@@ -629,7 +610,7 @@ class FallTemplateBot2025(ForecastBot):
             - When parsing the text, please make sure to give the values (the ones assigned to percentiles) in terms of the correct units.
             - The units for the forecast are: {question.unit_of_measure}
             - Your work will be shown publicly with these units stated verbatim after the numbers your parse.
-            - As an example, someone else guessed that the answer will be between {question.lower_bound} {question.unit_of_measure} and {question.upper_bound} {question.unit_of_measure}, so the numbers parsed from and answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
+            - As an example, someone else guessed that the answer will be between {question.lower_bound} {question.unit_of_measure} and {question.upper_bound} {question.unit_of_measure}, so the numbers parsed from an answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
             - If the answer doesn't give the answer in the correct units, you should parse it in the right units. For instance if the answer gives numbers as $500,000,000 and units are "B $" then you should parse the answer as 0.5 (since $500,000,000 is $0.5 billion).
             - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
             - Turn any values that are in scientific notation into regular numbers.
@@ -686,7 +667,7 @@ class FallTemplateBot2025(ForecastBot):
         elif isinstance(question, DateQuestion):
             upper_bound_number = question.upper_bound.date().isoformat()
             lower_bound_number = question.lower_bound.date().isoformat()
-            unit_of_measure = None
+            unit_of_measure = ""
         else:
             raise ValueError()
 

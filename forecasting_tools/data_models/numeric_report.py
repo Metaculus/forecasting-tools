@@ -66,10 +66,10 @@ class Percentile(BaseModel):
 
 class DateStringPercentile(BaseModel):
     percentile: float = Field(
-        description="A number between 0 and 1 (e.g. '90% of people are age 60 or younger' translates to '0.9')",
+        description="A number between 0 and 1 (e.g. '90% likelihood of AGI by 2040-01-01' translates to '0.9')",
     )
     value: str = Field(
-        description="The number matching the percentile (e.g. '90% of people are age 60 or younger' translates to '60')",
+        description="The date matching the percentile (e.g. '90% likelihood of AGI by 2040-01-01' translates to '2040-01-01')",
     )
 
     def is_valid_date(self, date_string: str):
@@ -83,7 +83,7 @@ class DateStringPercentile(BaseModel):
         return False
 
     @model_validator(mode="after")
-    def validate_percentile(self: Percentile) -> Percentile:
+    def validate_percentile(self: DateStringPercentile) -> DateStringPercentile:
         if self.percentile < 0 or self.percentile > 1:
             raise ValueError(
                 f"Percentile must be between 0 and 1, but was {self.percentile}"
