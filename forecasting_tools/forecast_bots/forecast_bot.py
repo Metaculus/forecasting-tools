@@ -398,7 +398,10 @@ class ForecastBot(ABC):
             ]
 
             await self._handle_errors_in__run_individual_question(
-                all_predictions, research_errors, valid_prediction_set, exception_group
+                all_predictions=all_predictions,
+                research_errors=research_errors,
+                all_errors=all_errors,
+                exception_group=exception_group,
             )
 
             aggregated_prediction = await self._aggregate_predictions(
@@ -433,12 +436,12 @@ class ForecastBot(ABC):
         self,
         all_predictions: list[PredictionTypes],
         research_errors: list[str],
-        valid_prediction_set: list[ResearchWithPredictions[PredictionTypes]],
+        all_errors: list[str],
         exception_group: ExceptionGroup | None,
     ) -> None:
         if research_errors:
             logger.warning(f"Encountered errors while researching: {research_errors}")
-        if len(valid_prediction_set) == 0:
+        if len(all_predictions) == 0:
             assert exception_group, "Exception group should not be None"
             self._reraise_exception_with_prepended_message(
                 exception_group,
@@ -449,7 +452,7 @@ class ForecastBot(ABC):
             < self.expected_total_predictions * self.required_successful_predictions
         ):
             raise ValueError(
-                f"Expected at least {self.expected_total_predictions * self.required_successful_predictions} successful predictions, but only got {len(all_predictions)}"
+                f"Expected at least {self.expected_total_predictions * self.required_successful_predictions} successful predictions, but only got {len(all_predictions)}. Errors encountered: {all_errors}"
             )
 
     async def _aggregate_predictions(
