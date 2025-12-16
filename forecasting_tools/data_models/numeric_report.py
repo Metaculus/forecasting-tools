@@ -19,6 +19,29 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class NumericDefaults:
+    DEFAULT_INBOUND_OUTCOME_COUNT = 200
+    DEFAULT_CDF_SIZE = (
+        201  # Discrete questions have fewer points, Numeric will have 201 points
+    )
+    MAX_NUMERIC_PMF_VALUE = 0.2
+
+    @classmethod
+    def get_max_pmf_value(
+        cls, cdf_size: int, include_wiggle_room: bool = True
+    ) -> float:
+        # cap depends on inboundOutcomeCount (0.2 if it is the default 200)
+        inbound_outcome_count = cdf_size - 1
+        normal_cap = cls.MAX_NUMERIC_PMF_VALUE * (
+            cls.DEFAULT_INBOUND_OUTCOME_COUNT / inbound_outcome_count
+        )
+
+        if include_wiggle_room:
+            return normal_cap * 0.95
+        else:
+            return normal_cap
+
+
 class Percentile(BaseModel):
     percentile: float = Field(
         description="A number between 0 and 1 (e.g. '90% of people are age 60 or younger' translates to '0.9')",
@@ -54,6 +77,24 @@ class NumericDistribution(BaseModel):
     @model_validator(mode="after")
     def validate_percentiles(self: NumericDistribution) -> NumericDistribution:
         percentiles = self.declared_percentiles
+        self._check_percentiles_increasing()
+        self._check_log_scaled_fields()
+
+        if not self.strict_validation:
+            return self
+
+        self._check_percentile_spacing()
+
+        if self.standardize_cdf:
+            self._check_too_far_from_bounds(percentiles)
+        if self.standardize_cdf and len(percentiles) == self.cdf_size:
+            self._check_distribution_too_tall(percentiles)
+
+        self.declared_percentiles = self._check_and_update_repeating_values(percentiles)
+        return self
+
+    def _check_percentiles_increasing(self) -> None:
+        percentiles = self.declared_percentiles
         for i in range(len(percentiles) - 1):
             if percentiles[i].percentile >= percentiles[i + 1].percentile:
                 raise ValueError("Percentiles must be in strictly increasing order")
@@ -62,9 +103,8 @@ class NumericDistribution(BaseModel):
         if len(percentiles) < 2:
             raise ValueError("NumericDistribution must have at least 2 percentiles")
 
-        if not self.strict_validation:
-            return self
-
+    def _check_percentile_spacing(self) -> None:
+        percentiles = self.declared_percentiles
         for i in range(len(percentiles) - 1):
             if abs(percentiles[i + 1].percentile - percentiles[i].percentile) < 5e-05:
                 raise ValueError(
@@ -75,11 +115,19 @@ class NumericDistribution(BaseModel):
                     "bound range thus assigning very little probability to any one x-axis value."
                 )
 
-        if self.standardize_cdf:
-            self._check_too_far_from_bounds(percentiles)
+    def _check_log_scaled_fields(self) -> None:
+        if self.zero_point is not None and self.lower_bound <= self.zero_point:
+            raise ValueError(
+                f"Lower bound {self.lower_bound} is less than or equal to the zero point {self.zero_point}. "
+                "Lower bound must be greater than the zero point."
+            )
 
-        self.declared_percentiles = self._check_and_update_repeating_values(percentiles)
-        return self
+        for percentile in self.declared_percentiles:
+            if self.zero_point is not None and percentile.value < self.zero_point:
+                raise ValueError(
+                    f"Percentile value {percentile.value} is less than the zero point {self.zero_point}. "
+                    "Determining probability less than zero point is currently not supported."
+                )
 
     def _check_and_update_repeating_values(
         self, percentiles: list[Percentile]
@@ -163,6 +211,22 @@ class NumericDistribution(BaseModel):
                 f"Percentiles: {percentiles_far_exceeding_bounds}"
             )
 
+    def _check_distribution_too_tall(self, cdf: list[Percentile]) -> None:
+        if len(cdf) != self.cdf_size:
+            raise ValueError(
+                f"CDF size is not the same as the declared percentiles. CDF size: {len(cdf)}, declared percentiles: {self.cdf_size}"
+            )
+        cap = NumericDefaults.get_max_pmf_value(len(cdf), include_wiggle_room=False)
+
+        for i in range(len(cdf) - 1):
+            pmf_value = cdf[i + 1].percentile - cdf[i].percentile
+            if pmf_value > cap:
+                raise ValueError(
+                    f"Distribution is too concentrated. The probability mass between "
+                    f"values {cdf[i].value} and {cdf[i + 1].value} is {pmf_value:.4f}, "
+                    f"which exceeds the maximum allowed of {cap:.4f}."
+                )
+
     @classmethod
     def from_question(
         cls,
@@ -237,7 +301,7 @@ class NumericDistribution(BaseModel):
         - cdf location (a number between 0 and 1 representing where the point is on the cdf x axis, where 0 is range min, and 1 is range max)
         """
 
-        cdf_size = self.cdf_size or 201
+        cdf_size = self.cdf_size or NumericDefaults.DEFAULT_CDF_SIZE
         continuous_cdf = []
         cdf_xaxis = []
         cdf_eval_locations = [i / (cdf_size - 1) for i in range(cdf_size)]
@@ -399,95 +463,81 @@ class NumericDistribution(BaseModel):
             previous = current
         raise ValueError(f"CDF location Input {cdf_location} cannot be found")
 
-    def _standardize_cdf(self, cdf: list[float]) -> list[float]:
+    def _standardize_cdf(self, cdf: list[float] | np.ndarray) -> list[float]:
         """
+        See documentation: https://metaculus.com/api/#:~:text=CDF%20generation%20details in the
+            "CDF generation details and examples" section
+
         Takes a cdf and returns a standardized version of it
 
-        - smooths over cdfs that spike too heavily (exceed a change of 0.59)
         - assigns no mass outside of closed bounds (scales accordingly)
         - assigns at least a minimum amount of mass outside of open bounds
-            (TODO: This might already be done by _add_explicit_upper_lower_bound_percentiles?)
         - increasing by at least the minimum amount (0.01 / 200 = 0.0005)
+        - caps the maximum growth to 0.2
+
+        Note, thresholds change with different `inbound_outcome_count`s
         """
 
-        open_upper_bound = self.open_upper_bound
-        open_lower_bound = self.open_lower_bound
-        cdf_size = self.cdf_size or 201
+        lower_open = self.open_lower_bound
+        upper_open = self.open_upper_bound
 
-        if cdf_size == 201:
-            cdf = self._flatten_high_density_cdf(cdf)
-        else:
-            logger.debug(
-                "Skipping flattening high density cdf for discrete questions since this code seems to not work well for them (as of Sep 26 2025)"
-            )
-
-        # apply open-boundary scaling
-        scale_lower_to = 0 if open_lower_bound else cdf[0]
-        scale_upper_to = 1.0 if open_upper_bound else cdf[-1]
+        # apply lower bound & enforce boundary values
+        scale_lower_to = 0 if lower_open else cdf[0]
+        scale_upper_to = 1.0 if upper_open else cdf[-1]
         rescaled_inbound_mass = scale_upper_to - scale_lower_to
 
-        # apply minimum slope
         def apply_minimum(F: float, location: float) -> float:
             # `F` is the height of the cdf at `location` (in range [0, 1])
             # rescale
             rescaled_F = (F - scale_lower_to) / rescaled_inbound_mass
             # offset
-            if open_lower_bound and open_upper_bound:
+            if lower_open and upper_open:
                 return 0.988 * rescaled_F + 0.01 * location + 0.001
-            elif open_lower_bound:
+            elif lower_open:
                 return 0.989 * rescaled_F + 0.01 * location + 0.001
-            elif open_upper_bound:
+            elif upper_open:
                 return 0.989 * rescaled_F + 0.01 * location
             return 0.99 * rescaled_F + 0.01 * location
 
-        standardized_cdf = []
-        for i, F in enumerate(cdf):
-            standardized_F = apply_minimum(F, i / (len(cdf) - 1))
-            # round to avoid floating point errors
-            standardized_cdf.append(round(standardized_F, 10))
+        for i, value in enumerate(cdf):
+            cdf[i] = apply_minimum(value, i / (len(cdf) - 1))
 
-        return standardized_cdf
-
-    def _flatten_high_density_cdf(self, input_cdf: list[float]) -> list[float]:
-        cdf_size = self.cdf_size or 201
-
-        # First, cap the distribution to maximum (default 0.59)
+        # apply upper bound
         # operate in PMF space
-        cdf = input_cdf.copy()
-        pmf = [cdf[0]]
-        for i in range(1, len(cdf)):
-            pmf.append(cdf[i] - cdf[i - 1])
-        pmf.append(1 - cdf[-1])
-        pmf_array = np.asarray(pmf, dtype=float)
-        # cap depends on cdf_size (0.59 if cdf_size is the default 201)
-        # reduce cap by 1e-11 to avoid floating point error pushing this
-        # above the real cap but also have
-        # lower effect than 1e10 rounding later down the line
-        cap = (0.59 - 1e-11) * 201 / cdf_size
+        pmf = np.diff(cdf, prepend=0, append=1)
+        cap = NumericDefaults.get_max_pmf_value(len(cdf))
 
-        def capped_sum(scale):
-            return np.minimum(cap, scale * pmf_array).sum()
+        def cap_pmf(scale: float) -> np.ndarray:
+            return np.concatenate(
+                [pmf[:1], np.minimum(cap, scale * pmf[1:-1]), pmf[-1:]]
+            )
+
+        def capped_sum(scale: float) -> float:
+            return float(cap_pmf(scale).sum())
 
         # find the appropriate scale search space
-        lo, hi = 0.0, 1.0
+        lo = hi = scale = 1.0
         while capped_sum(hi) < 1.0:
-            hi *= 2.0
-        # home in on scale value that makes capped sum approx 1.0
-        for _ in range(200):
+            hi *= 1.2
+        # hone in on scale value that makes capped sum 1
+        for _ in range(100):
             scale = 0.5 * (lo + hi)
             s = capped_sum(scale)
             if s < 1.0:
                 lo = scale
             else:
                 hi = scale
-            if hi - lo < 1e-11:
+            if s == 1.0 or (hi - lo) < 2e-5:
                 break
         # apply scale and renormalize
-        pmf_array = np.minimum(cap, 0.5 * (lo + hi) * pmf_array)
-        pmf_array = pmf_array / pmf_array.sum()
+        pmf = cap_pmf(scale)
+        pmf[1:-1] *= (cdf[-1] - cdf[0]) / pmf[1:-1].sum()
         # back to CDF space
-        cdf = np.cumsum(pmf_array).tolist()[:-1]
-        return cdf
+        cdf = np.cumsum(pmf)[:-1]
+
+        # round to minimize floating point errors
+        cdf = np.round(cdf, 10)
+        return cdf.tolist()
 
     def _cdf_location_to_nominal_location(self, cdf_location: float) -> float:
         range_max = self.upper_bound

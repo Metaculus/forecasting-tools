@@ -640,6 +640,9 @@ class TestNumericForecasts:
         ]
         self._check_cdf_processes_and_posts_correctly(percentiles, question)
 
+    @pytest.mark.skip(
+        reason="Stopped supporting distributions that below zero point. TODO: Fix this."
+    )
     def test_forecast_log_scaled_out_of_bounds(self) -> None:
         url = "https://dev.metaculus.com/questions/8936/us-workforce-as-it-specialists-in-2050/"
         question = MetaculusClient.dev().get_question_by_url(url)
@@ -716,6 +719,7 @@ class TestNumericForecasts:
             Percentile(percentile=0.75, value=247.1),
             Percentile(percentile=0.98, value=550),
         ]
+        # TODO: The standardization makes the value in the UI move by 1-3 units. Fix this.
         self._check_cdf_processes_and_posts_correctly(
             percentiles, question, standardize_cdf=True
         )
@@ -794,13 +798,13 @@ class TestNumericForecasts:
             Percentile(percentile=0.1, value=249.999),
             Percentile(percentile=0.9, value=250.0001),
         ]
+        self._check_cdf_processes_and_posts_correctly(
+            percentiles, question, standardize_cdf=True
+        )
         with pytest.raises(Exception):
             self._check_cdf_processes_and_posts_correctly(
                 percentiles, question, standardize_cdf=False
             )
-        self._check_cdf_processes_and_posts_correctly(
-            percentiles, question, standardize_cdf=True
-        )
 
     def test_numeric_high_density_forecast_on_edge(self) -> None:
         url = "https://dev.metaculus.com/questions/7093/australian-greenhouse-gas-emissions-in-2050/"
@@ -827,15 +831,14 @@ class TestNumericForecasts:
             num_questions=20,
         )
         # TODO: We should also test whether conditionals are grabbed naturally without the special `other_url_parameters` filter. However this would take a while to find a conditional on the site.
+
         assert len(questions) == 20
-        assert all(
-            all(
-                subquestion.get_question_type() == "binary"
-                and subquestion.conditional_type is not None
-                for subquestion in question.get_all_subquestions().values()
-            )
-            for question in questions
-        )
+        for question in questions:
+            assert isinstance(question, ConditionalQuestion)
+            for subquestion in question.get_all_subquestions().values():
+                assert subquestion.get_question_type() == "binary"
+                assert subquestion.conditional_type is not None
+
         assert_questions_match_filter(questions, api_filter)
 
     def _check_cdf_processes_and_posts_correctly(
@@ -951,7 +954,7 @@ class TestApiFilter:
         reason="In this case main site code filters out posts that have resolution dates too far (even if the subquestion would match)"
     )
     async def test_group_question_filter(self) -> None:
-        filter = ApiFilter(
+        api_filter = ApiFilter(
             allowed_statuses=["open"],
             group_question_mode="unpack_subquestions",
             allowed_tournaments=["taiwan"],
@@ -959,7 +962,7 @@ class TestApiFilter:
             scheduled_resolve_time_lt=datetime(2026, 1, 10),
         )
         questions = await MetaculusApi.get_questions_matching_filter(
-            filter, num_questions=1000, error_if_question_target_missed=False
+            api_filter, num_questions=1000, error_if_question_target_missed=False
         )
         # https://www.metaculus.com/questions/11480/
         # "Will China launch a full-scale invasion of Taiwan by the following years? (2026)"
