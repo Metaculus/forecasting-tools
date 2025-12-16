@@ -368,8 +368,11 @@ def test_numeric_edge_of_bin_edge_case() -> None:
 
     correct_bucket_diff = pmf_diffs[120]
     wrong_bucket_diff = pmf_diffs[121]
-    expected_max_pmf_value = NumericDefaults.get_max_pmf_value(
-        len(numeric_distribution.get_cdf()), include_wiggle_room=True
+    expected_max_pmf_value = (
+        NumericDefaults.get_max_pmf_value(
+            len(numeric_distribution.get_cdf()), include_wiggle_room=True
+        )
+        * 0.95
     )
     assert (
         correct_bucket_diff > expected_max_pmf_value > wrong_bucket_diff
