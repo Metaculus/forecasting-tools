@@ -227,7 +227,7 @@ class MetaculusClient:
         """
         self._sleep_between_requests()
         response = requests.get(
-            f"{self.base_url}/coherence/links/{question_id}",
+            f"{self.base_url}/coherence/question/{question_id}/links/",
             **self._get_auth_headers(),  # type: ignore
             timeout=self.timeout,
         )
@@ -242,7 +242,7 @@ class MetaculusClient:
     def delete_question_link(self, link_id: int):
         self._sleep_between_requests()
         response = requests.delete(
-            f"{self.base_url}/coherence/links/{link_id}/delete",
+            f"{self.base_url}/coherence/links/{link_id}/delete/",
             **self._get_auth_headers(),  # type: ignore
             timeout=self.timeout,
         )
@@ -261,7 +261,7 @@ class MetaculusClient:
         if user_id_for_links:
             json_data["user_id_for_links"] = user_id_for_links
         response = requests.get(
-            f"{self.base_url}/coherence/links/{question_id}/needs-update",
+            f"{self.base_url}/coherence/question/{question_id}/links/needs-update/",
             **self._get_auth_headers(),  # type: ignore
             timeout=self.timeout,
             json=json_data,
