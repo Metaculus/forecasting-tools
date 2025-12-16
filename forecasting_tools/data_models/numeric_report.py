@@ -19,6 +19,29 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class NumericDefaults:
+    DEFAULT_INBOUND_OUTCOME_COUNT = 200
+    DEFAULT_CDF_SIZE = (
+        201  # Discrete questions have fewer points, Numeric will have 201 points
+    )
+    MAX_NUMERIC_PMF_VALUE = 0.2
+
+    @classmethod
+    def get_max_pmf_value(
+        cls, cdf_size: int, include_wiggle_room: bool = True
+    ) -> float:
+        # cap depends on inboundOutcomeCount (0.2 if it is the default 200)
+        inbound_outcome_count = cdf_size - 1
+        normal_cap = cls.MAX_NUMERIC_PMF_VALUE * (
+            cls.DEFAULT_INBOUND_OUTCOME_COUNT / inbound_outcome_count
+        )
+
+        if include_wiggle_room:
+            return normal_cap * 0.95
+        else:
+            return normal_cap
+
+
 class Percentile(BaseModel):
     percentile: float = Field(
         description="A number between 0 and 1 (e.g. '90% of people are age 60 or younger' translates to '0.9')",
@@ -77,6 +100,8 @@ class NumericDistribution(BaseModel):
 
         if self.standardize_cdf:
             self._check_too_far_from_bounds(percentiles)
+        if self.standardize_cdf and len(percentiles) == self.cdf_size:
+            self._check_distribution_too_tall(percentiles)
 
         self.declared_percentiles = self._check_and_update_repeating_values(percentiles)
         return self
@@ -163,6 +188,22 @@ class NumericDistribution(BaseModel):
                 f"Percentiles: {percentiles_far_exceeding_bounds}"
             )
 
+    def _check_distribution_too_tall(self, cdf: list[Percentile]) -> None:
+        if len(cdf) != self.cdf_size:
+            raise ValueError(
+                f"CDF size is not the same as the declared percentiles. CDF size: {len(cdf)}, declared percentiles: {self.cdf_size}"
+            )
+        cap = NumericDefaults.get_max_pmf_value(len(cdf), include_wiggle_room=False)
+
+        for i in range(len(cdf) - 1):
+            pmf_value = cdf[i + 1].percentile - cdf[i].percentile
+            if pmf_value > cap:
+                raise ValueError(
+                    f"Distribution is too concentrated. The probability mass between "
+                    f"values {cdf[i].value} and {cdf[i + 1].value} is {pmf_value:.4f}, "
+                    f"which exceeds the maximum allowed of {cap:.4f}."
+                )
+
     @classmethod
     def from_question(
         cls,
@@ -237,7 +278,7 @@ class NumericDistribution(BaseModel):
         - cdf location (a number between 0 and 1 representing where the point is on the cdf x axis, where 0 is range min, and 1 is range max)
         """
 
-        cdf_size = self.cdf_size or 201
+        cdf_size = self.cdf_size or NumericDefaults.DEFAULT_CDF_SIZE
         continuous_cdf = []
         cdf_xaxis = []
         cdf_eval_locations = [i / (cdf_size - 1) for i in range(cdf_size)]
@@ -401,7 +442,7 @@ class NumericDistribution(BaseModel):
 
     def _standardize_cdf(self, cdf: list[float] | np.ndarray) -> list[float]:
         """
-        See documentation: https://www.metaculus.com/api/ in the
+        See documentation: https://metaculus.com/api/#:~:text=CDF%20generation%20details in the
             "CDF generation details and examples" section
 
         Takes a cdf and returns a standardized version of it
@@ -416,10 +457,6 @@ class NumericDistribution(BaseModel):
 
         lower_open = self.open_lower_bound
         upper_open = self.open_upper_bound
-        default_inbound_outcome_count = 200
-        inbound_outcome_count = (
-            self.cdf_size - 1 if self.cdf_size else default_inbound_outcome_count
-        )
 
         # apply lower bound & enforce boundary values
         scale_lower_to = 0 if lower_open else cdf[0]
@@ -445,8 +482,7 @@ class NumericDistribution(BaseModel):
         # apply upper bound
         # operate in PMF space
         pmf = np.diff(cdf, prepend=0, append=1)
-        # cap depends on inboundOutcomeCount (0.2 if it is the default 200)
-        cap = 0.2 * (default_inbound_outcome_count / inbound_outcome_count)
+        cap = NumericDefaults.get_max_pmf_value(len(cdf))
 
         def cap_pmf(scale: float) -> np.ndarray:
             return np.concatenate(

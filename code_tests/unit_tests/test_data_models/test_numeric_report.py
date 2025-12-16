@@ -1,8 +1,10 @@
 import logging
+from typing import Literal
 
 import pytest
 
 from forecasting_tools.data_models.numeric_report import (
+    NumericDefaults,
     NumericDistribution,
     NumericReport,
     Percentile,
@@ -366,8 +368,11 @@ def test_numeric_edge_of_bin_edge_case() -> None:
 
     correct_bucket_diff = pmf_diffs[120]
     wrong_bucket_diff = pmf_diffs[121]
+    expected_max_pmf_value = NumericDefaults.get_max_pmf_value(
+        len(numeric_distribution.get_cdf()), include_wiggle_room=True
+    )
     assert (
-        correct_bucket_diff > 0.19 > wrong_bucket_diff
+        correct_bucket_diff > expected_max_pmf_value > wrong_bucket_diff
     ), f"The bucket for (12, 12.1] has more probability than the bucket for (11.9, 12] ({wrong_bucket_diff:.5f} > {correct_bucket_diff:.5f})"
 
 
@@ -416,11 +421,14 @@ def test_log_scale_distribution_repeated_value() -> None:
         # standardize_cdf=True,
     )
     pmf_diffs = _get_and_log_pmf_diffs(numeric_distribution)
+    expected_max_pmf_value = NumericDefaults.get_max_pmf_value(
+        len(numeric_distribution.get_cdf()), include_wiggle_room=True
+    )
     assert (
-        pmf_diffs[27] > 0.19 > pmf_diffs[26]
+        pmf_diffs[27] > expected_max_pmf_value > pmf_diffs[26]
     ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.19"
     assert (
-        pmf_diffs[27] > 0.19 > pmf_diffs[28]
+        pmf_diffs[27] > expected_max_pmf_value > pmf_diffs[28]
     ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.19"
 
 
@@ -435,3 +443,181 @@ def _get_and_log_pmf_diffs(distribution: NumericDistribution) -> list[float]:
         )
         pmf_diffs.append(diff)
     return pmf_diffs
+
+
+@pytest.mark.parametrize(
+    "orientation",
+    ["far_left", "center", "far_right"],
+)
+@pytest.mark.parametrize(
+    "spread",
+    ["very wide", "normal", "very narrow"],
+)
+@pytest.mark.parametrize(
+    "bounds_and_cdf_size",
+    [
+        (-5, 5, 10),
+        (0, 100, 100),
+        (1, 200, 201),
+        (-30_000, 30_000, 201),
+    ],
+)
+@pytest.mark.parametrize(
+    "open_upper_bound",
+    [True, False],
+)
+@pytest.mark.parametrize(
+    "open_lower_bound",
+    [True],
+)
+@pytest.mark.parametrize(
+    "zero_point",
+    [None, -1, 0],
+)
+def test_distribution_variations(
+    orientation: Literal["far_left", "left", "center", "right", "far_right"],
+    spread: Literal["very wide", "wide", "normal", "narrow", "very narrow"],
+    bounds_and_cdf_size: tuple[float, float, int],
+    open_upper_bound: bool,
+    open_lower_bound: bool,
+    zero_point: float | None,
+):
+    check_distribution_variations(
+        orientation,
+        spread,
+        bounds_and_cdf_size,
+        open_upper_bound,
+        open_lower_bound,
+        zero_point,
+    )
+
+
+def check_distribution_variations(
+    orientation: Literal["far_left", "left", "center", "right", "far_right"],
+    spread: Literal["very wide", "wide", "normal", "narrow", "very narrow"],
+    bounds_and_cdf_size: tuple[float, float, int],
+    open_upper_bound: bool,
+    open_lower_bound: bool,
+    zero_point: float | None,
+) -> None:
+    lower_bound, upper_bound, cdf_size = bounds_and_cdf_size
+
+    # if zero_point is not None and zero_point >= lower_bound:
+    #     pytest.skip("zero_point must be less than lower_bound for valid log scale")
+
+    if zero_point is not None and cdf_size != 201:
+        pytest.skip("zero_point is not supported for discrete questions")
+
+    range_size = upper_bound - lower_bound
+
+    orientation_fractions = {
+        "far_left": 0.02,
+        "left": 0.3,
+        "center": 0.5,
+        "right": 0.7,
+        "far_right": 0.98,
+    }
+    center_fraction = orientation_fractions[orientation]
+    center = lower_bound + range_size * center_fraction
+
+    spread_fractions = {
+        "very wide": 0.99,
+        "wide": 0.25,
+        "normal": 0.15,
+        "narrow": 0.08,
+        "very narrow": 0.01,
+    }
+    spread_fraction = spread_fractions[spread]
+    half_spread = spread_fraction * range_size
+
+    percentile_points = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+
+    percentiles = []
+    for p in percentile_points:
+        offset = (p - 0.5) * 2 * half_spread
+        value = center + offset
+        percentiles.append(Percentile(value=value, percentile=p))
+
+    distribution = NumericDistribution(
+        declared_percentiles=percentiles,
+        open_upper_bound=open_upper_bound,
+        open_lower_bound=open_lower_bound,
+        upper_bound=upper_bound,
+        lower_bound=lower_bound,
+        zero_point=zero_point,
+        cdf_size=cdf_size,
+        standardize_cdf=True,
+    )
+
+    cdf = distribution.get_cdf()
+    cdf_distribution = NumericDistribution(
+        declared_percentiles=cdf,
+        open_upper_bound=open_upper_bound,
+        open_lower_bound=open_lower_bound,
+        upper_bound=upper_bound,
+        lower_bound=lower_bound,
+        zero_point=zero_point,
+        cdf_size=cdf_size,
+    )
+    # Let the model validator do most the asserts
+    assert cdf_distribution.cdf_size == cdf_size
+
+
+# @pytest.mark.skip(reason="This test is very large")
+# @pytest.mark.parametrize(
+#     "orientation",
+#     ["far_left", "left", "center", "right", "far_right"],
+# )
+# @pytest.mark.parametrize(
+#     "spread",
+#     ["very wide", "wide", "normal", "narrow", "very narrow"],
+# )
+# @pytest.mark.parametrize(
+#     "bounds_and_cdf_size",
+#     [
+#         (0, 4, 4),
+#         (5, 10, 5),
+#         (0, 6, 6),
+#         (-7, 0, 7),
+#         (-4, 4, 8),
+#         (0, 9, 9),
+#         (0, 10, 10),
+#         (0, 15, 15),
+#         (0, 25, 25),
+#         (0, 79, 79),
+#         (0, 100, 100),
+#         (0, 201, 201),
+#         (0, 200, 201),
+#         (40_000, 100_000, 201),
+#         (-30_000, 30_000, 201),
+#         (-30, -5, 201),
+#     ],
+# )
+# @pytest.mark.parametrize(
+#     "open_upper_bound",
+#     [True, False],
+# )
+# @pytest.mark.parametrize(
+#     "open_lower_bound",
+#     [True, False],
+# )
+# @pytest.mark.parametrize(
+#     "zero_point",
+#     [None, 0, -50],
+# )
+# def test_distribution_variations_extensive(
+#     orientation: Literal["far_left", "left", "center", "right", "far_right"],
+#     spread: Literal["very wide", "wide", "normal", "narrow", "very narrow"],
+#     bounds_and_cdf_size: tuple[float, float, int],
+#     open_upper_bound: bool,
+#     open_lower_bound: bool,
+#     zero_point: float | None,
+# ):
+#     check_distribution_variations(
+#         orientation,
+#         spread,
+#         bounds_and_cdf_size,
+#         open_upper_bound,
+#         open_lower_bound,
+#         zero_point,
+#     )
