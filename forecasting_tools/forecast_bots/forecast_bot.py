@@ -545,6 +545,7 @@ class ForecastBot(ABC):
     async def _run_forecast_on_date(
         self, question: DateQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
+        # Return a numeric distribution of timestamps
         raise NotImplementedError("Subclass must implement this method")
 
     async def _run_forecast_on_conditional(
