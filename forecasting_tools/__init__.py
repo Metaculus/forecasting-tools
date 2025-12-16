@@ -101,7 +101,7 @@ from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOptionList as PredictedOptionList,
 )
 from forecasting_tools.data_models.numeric_report import (
-    DateStringPercentile as DateStringPercentile,
+    DatePercentile as DatePercentile,
 )
 from forecasting_tools.data_models.numeric_report import (
     DiscreteReport as DiscreteReport,

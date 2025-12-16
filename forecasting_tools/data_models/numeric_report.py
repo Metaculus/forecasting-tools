@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import datetime
 import logging
-import re
 from collections import Counter
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -64,34 +63,22 @@ class Percentile(BaseModel):
         return self
 
 
-class DateStringPercentile(BaseModel):
+class DatePercentile(BaseModel):
     percentile: float = Field(
         description="A number between 0 and 1 (e.g. '90% likelihood of AGI by 2040-01-01' translates to '0.9')",
     )
-    value: str = Field(
+    value: datetime = Field(
         description="The date matching the percentile (e.g. '90% likelihood of AGI by 2040-01-01' translates to '2040-01-01')",
     )
 
-    def is_valid_date(self, date_string: str):
-        pattern = r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$"
-        if re.match(pattern, date_string):
-            try:
-                datetime.datetime.strptime(date_string, "%Y-%m-%d")
-                return True
-            except ValueError:
-                return False
-        return False
-
     @model_validator(mode="after")
-    def validate_percentile(self: DateStringPercentile) -> DateStringPercentile:
+    def validate_percentile(self: DatePercentile) -> DatePercentile:
         if self.percentile < 0 or self.percentile > 1:
             raise ValueError(
                 f"Percentile must be between 0 and 1, but was {self.percentile}"
             )
         if np.isnan(self.percentile):
             raise ValueError(f"Percentile must be a number, but was {self.percentile}")
-        if not self.is_valid_date(self.value):
-            raise ValueError(f"Date must be in YYYY-MM-DD format, but was {self.value}")
         return self
 
 
@@ -107,6 +94,7 @@ class NumericDistribution(BaseModel):
     )
     standardize_cdf: bool = True
     strict_validation: bool = True
+    is_date: bool = False
 
     @model_validator(mode="after")
     def validate_percentiles(self: NumericDistribution) -> NumericDistribution:
@@ -268,34 +256,39 @@ class NumericDistribution(BaseModel):
         question: NumericQuestion | DateQuestion,
         standardize_cdf: bool | None = None,
     ) -> NumericDistribution:
+        from forecasting_tools.data_models.questions import DateQuestion
 
-        upper_bound = question.upper_bound
-        if isinstance(upper_bound, datetime.datetime):
-            upper_bound = upper_bound.timestamp()
-        lower_bound = question.lower_bound
-        if isinstance(lower_bound, datetime.datetime):
-            lower_bound = lower_bound.timestamp()
+        is_date = isinstance(question, DateQuestion)
+
+        if is_date:
+            upper_bound_float: float = question.upper_bound.timestamp()
+            lower_bound_float: float = question.lower_bound.timestamp()
+        else:
+            upper_bound_float = question.upper_bound
+            lower_bound_float = question.lower_bound
 
         if standardize_cdf is None:
             return NumericDistribution(
                 declared_percentiles=percentiles,
                 open_upper_bound=question.open_upper_bound,
                 open_lower_bound=question.open_lower_bound,
-                upper_bound=upper_bound,
-                lower_bound=lower_bound,
+                upper_bound=upper_bound_float,
+                lower_bound=lower_bound_float,
                 zero_point=question.zero_point,
                 cdf_size=question.cdf_size,
+                is_date=is_date,
             )
         else:
             return NumericDistribution(
                 declared_percentiles=percentiles,
                 open_upper_bound=question.open_upper_bound,
                 open_lower_bound=question.open_lower_bound,
-                upper_bound=upper_bound,
-                lower_bound=lower_bound,
+                upper_bound=upper_bound_float,
+                lower_bound=lower_bound_float,
                 zero_point=question.zero_point,
                 cdf_size=question.cdf_size,
                 standardize_cdf=standardize_cdf,
+                is_date=is_date,
             )
 
     def get_representative_percentiles(
@@ -648,7 +641,13 @@ class NumericReport(ForecastReport):
         )
         readable = "Probability distribution:\n"
         for percentile in representative_percentiles:
-            readable += f"- {percentile.percentile:.2%} chance of value below {round(percentile.value,6)}\n"
+            if prediction.is_date:
+                formatted_value = datetime.fromtimestamp(percentile.value).strftime(
+                    "%Y-%m-%d %H:%M:%S UTC"
+                )
+            else:
+                formatted_value = str(round(percentile.value, 6))
+            readable += f"- {percentile.percentile:.2%} chance of value below {formatted_value}\n"
         return readable
 
     async def publish_report_to_metaculus(self) -> None:

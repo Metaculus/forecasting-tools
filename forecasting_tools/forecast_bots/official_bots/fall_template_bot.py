@@ -4,8 +4,6 @@ import logging
 from datetime import datetime, timezone
 from typing import Literal
 
-import pendulum
-
 from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.binary_report import BinaryPrediction
@@ -17,7 +15,7 @@ from forecasting_tools.data_models.data_organizer import PredictionTypes
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import (
-    DateStringPercentile,
+    DatePercentile,
     NumericDistribution,
     Percentile,
 )
@@ -364,6 +362,8 @@ class FallTemplateBot2025(ForecastBot):
             Percentile 80: YYYY-MM-DD
             Percentile 90: YYYY-MM-DD
             "
+
+            If hours matter, please prepend the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ
             """
         )
         return await self._date_prompt_to_forecast(question, prompt)
@@ -381,13 +381,13 @@ class FallTemplateBot2025(ForecastBot):
             The text given to you is trying to give a forecast distribution for a date question.
             - This text is trying to answer the numeric question: "{question.question_text}".
             - As an example, someone else guessed that the answer will be between {question.lower_bound} and {question.upper_bound}, so the numbers parsed from an answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
-            - The output is given as dates in the format of YYYY-MM-DD
+            - The output is given as dates/times please format it into a valid datetime parsable string. Assume midnight UTC if no hour is given.
             - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
             """
         )
-        date_percentile_list: list[DateStringPercentile] = await structure_output(
+        date_percentile_list: list[DatePercentile] = await structure_output(
             reasoning,
-            list[DateStringPercentile],
+            list[DatePercentile],
             model=self.get_llm("parser", "llm"),
             additional_instructions=parsing_instructions,
             num_validation_samples=self._structure_output_validation_samples,
@@ -396,7 +396,7 @@ class FallTemplateBot2025(ForecastBot):
         percentile_list = [
             Percentile(
                 percentile=percentile.percentile,
-                value=pendulum.parse(percentile.value).timestamp(),
+                value=percentile.value.timestamp(),
             )
             for percentile in date_percentile_list
         ]
