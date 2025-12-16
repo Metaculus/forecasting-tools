@@ -460,7 +460,7 @@ def _get_and_log_pmf_diffs(distribution: NumericDistribution) -> list[float]:
         (0, 100, 100),
         (1, 200, 201),
         (-30_000, 30_000, 201),
-    ],
+    ],  # TODO: Should discrete questions have bounds at 0.5 intervals?
 )
 @pytest.mark.parametrize(
     "open_upper_bound",
@@ -501,9 +501,6 @@ def check_distribution_variations(
     zero_point: float | None,
 ) -> None:
     lower_bound, upper_bound, cdf_size = bounds_and_cdf_size
-
-    # if zero_point is not None and zero_point >= lower_bound:
-    #     pytest.skip("zero_point must be less than lower_bound for valid log scale")
 
     if zero_point is not None and cdf_size != 201:
         pytest.skip("zero_point is not supported for discrete questions")

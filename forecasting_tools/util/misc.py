@@ -38,7 +38,7 @@ def raise_for_status_with_additional_info(
 
 
 def retry_with_exponential_backoff(
-    max_retries: int = 4,
+    max_retries: int = 3,
     initial_delay: float = 10.0,
     exponential_base: float = 2.0,
     jitter_factor: float = 2.0,

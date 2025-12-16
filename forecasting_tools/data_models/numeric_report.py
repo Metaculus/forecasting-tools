@@ -77,8 +77,13 @@ class NumericDistribution(BaseModel):
     @model_validator(mode="after")
     def validate_percentiles(self: NumericDistribution) -> NumericDistribution:
         percentiles = self.declared_percentiles
-        self._check_percentile_ordering_and_values()
+        self._check_percentiles_increasing()
         self._check_log_scaled_fields()
+
+        if not self.strict_validation:
+            return self
+
+        self._check_percentile_spacing()
 
         if self.standardize_cdf:
             self._check_too_far_from_bounds(percentiles)
@@ -88,7 +93,7 @@ class NumericDistribution(BaseModel):
         self.declared_percentiles = self._check_and_update_repeating_values(percentiles)
         return self
 
-    def _check_percentile_ordering_and_values(self) -> None:
+    def _check_percentiles_increasing(self) -> None:
         percentiles = self.declared_percentiles
         for i in range(len(percentiles) - 1):
             if percentiles[i].percentile >= percentiles[i + 1].percentile:
@@ -98,9 +103,8 @@ class NumericDistribution(BaseModel):
         if len(percentiles) < 2:
             raise ValueError("NumericDistribution must have at least 2 percentiles")
 
-        if not self.strict_validation:
-            return self
-
+    def _check_percentile_spacing(self) -> None:
+        percentiles = self.declared_percentiles
         for i in range(len(percentiles) - 1):
             if abs(percentiles[i + 1].percentile - percentiles[i].percentile) < 5e-05:
                 raise ValueError(
@@ -123,50 +127,6 @@ class NumericDistribution(BaseModel):
                 raise ValueError(
                     f"Percentile value {percentile.value} is less than the zero point {self.zero_point}. "
                     "Determining probability less than zero point is currently not supported."
-                )
-
-    def _check_too_far_from_bounds(self, percentiles: list[Percentile]) -> None:
-        percentiles_within_bounds = [
-            percentile
-            for percentile in percentiles
-            if self.lower_bound <= percentile.value <= self.upper_bound
-        ]
-        if len(percentiles_within_bounds) == 0:
-            raise ValueError(
-                "No declared percentiles are within the range of the question. "
-                f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
-                f"Percentiles: {percentiles}"
-            )
-
-        max_to_min_range = self.upper_bound - self.lower_bound
-        max_to_min_range_buffer = max_to_min_range * 2
-        percentiles_far_exceeding_bounds = [
-            percentile
-            for percentile in percentiles
-            if percentile.value < self.lower_bound - max_to_min_range_buffer
-            or percentile.value > self.upper_bound + max_to_min_range_buffer
-        ]
-        if len(percentiles_far_exceeding_bounds) > 0:
-            raise ValueError(
-                "Some declared percentiles are far exceeding the bounds of the question. "
-                f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
-                f"Percentiles: {percentiles_far_exceeding_bounds}"
-            )
-
-    def _check_distribution_too_tall(self, cdf: list[Percentile]) -> None:
-        if len(cdf) != self.cdf_size:
-            raise ValueError(
-                f"CDF size is not the same as the declared percentiles. CDF size: {len(cdf)}, declared percentiles: {self.cdf_size}"
-            )
-        cap = NumericDefaults.get_max_pmf_value(len(cdf), include_wiggle_room=False)
-
-        for i in range(len(cdf) - 1):
-            pmf_value = cdf[i + 1].percentile - cdf[i].percentile
-            if pmf_value > cap:
-                raise ValueError(
-                    f"Distribution is too concentrated. The probability mass between "
-                    f"values {cdf[i].value} and {cdf[i + 1].value} is {pmf_value:.4f}, "
-                    f"which exceeds the maximum allowed of {cap:.4f}."
                 )
 
     def _check_and_update_repeating_values(
