@@ -592,7 +592,7 @@ class NumericDistribution(BaseModel):
 
 
 class NumericReport(ForecastReport):
-    question: NumericQuestion | DateQuestion
+    question: NumericQuestion
     prediction: NumericDistribution
 
     @classmethod
@@ -681,4 +681,9 @@ class NumericReport(ForecastReport):
 
 class DiscreteReport(NumericReport):
     question: DiscreteQuestion
+    prediction: NumericDistribution
+
+
+class DateReport(NumericReport):
+    question: DateQuestion
     prediction: NumericDistribution

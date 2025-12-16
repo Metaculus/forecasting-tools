@@ -103,6 +103,7 @@ from forecasting_tools.data_models.multiple_choice_report import (
 from forecasting_tools.data_models.numeric_report import (
     DatePercentile as DatePercentile,
 )
+from forecasting_tools.data_models.numeric_report import DateReport as DateReport
 from forecasting_tools.data_models.numeric_report import (
     DiscreteReport as DiscreteReport,
 )
@@ -128,6 +129,7 @@ MultipleChoiceReport.model_rebuild()
 ForecastReport.model_rebuild()
 NumericReport.model_rebuild()
 DiscreteReport.model_rebuild()
+DateReport.model_rebuild()
 from forecasting_tools.data_models.questions import QuestionState as QuestionState
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot as ForecastBot
 from forecasting_tools.forecast_bots.forecast_bot import Notepad as Notepad

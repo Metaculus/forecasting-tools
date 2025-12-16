@@ -13,6 +13,7 @@ from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOptionList,
 )
 from forecasting_tools.data_models.numeric_report import (
+    DateReport,
     DiscreteReport,
     NumericDistribution,
     NumericReport,
@@ -46,7 +47,9 @@ QuestionTypes = (
     | DiscreteQuestion
     | ConditionalQuestion
 )
-ReportTypes = NumericReport | MultipleChoiceReport | BinaryReport | DiscreteReport
+ReportTypes = (
+    NumericReport | MultipleChoiceReport | BinaryReport | DiscreteReport | DateReport
+)
 
 
 class DataOrganizer:
@@ -64,7 +67,7 @@ class DataOrganizer:
         TypeMapping(
             question_type=DateQuestion,
             test_post_id=4110,  # https://www.metaculus.com/questions/4110/birthdate-of-oldest-living-human-in-2200/
-            report_type=NumericReport,
+            report_type=DateReport,
         ),
         TypeMapping(
             question_type=MultipleChoiceQuestion,
