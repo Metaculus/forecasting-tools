@@ -118,18 +118,6 @@ class FallTemplateBot2025(ForecastBot):
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
     _structure_output_validation_samples = 2
 
-    def _get_conditional_disclaimer_if_necessary(
-        self, question: MetaculusQuestion
-    ) -> str:
-        if question.conditional_type not in ["yes", "no"]:
-            return ""
-        return clean_indents(
-            """
-            As you are given a conditional question with a parent and child, you are to only forecast the **CHILD** question, given the parent question's resolution.
-            You never re-forecast the parent question under any circumstances, but you use probabilistic reasoning, strongly considering the parent question's resolution, to forecast the child question.
-    """
-        )
-
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
             research = ""
@@ -368,6 +356,7 @@ class FallTemplateBot2025(ForecastBot):
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
             (c) A description of an scenario that results in an unexpected outcome.
+
             {self._get_conditional_disclaimer_if_necessary(question)}
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
 
@@ -479,6 +468,7 @@ class FallTemplateBot2025(ForecastBot):
             (d) The expectations of experts and markets.
             (e) A brief description of an unexpected scenario that results in a low outcome.
             (f) A brief description of an unexpected scenario that results in a high outcome.
+
             {self._get_conditional_disclaimer_if_necessary(question)}
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
 
@@ -592,6 +582,7 @@ class FallTemplateBot2025(ForecastBot):
             (d) The expectations of experts and markets.
             (e) A brief description of an unexpected scenario that results in a low outcome.
             (f) A brief description of an unexpected scenario that results in a high outcome.
+
             {self._get_conditional_disclaimer_if_necessary(question)}
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
 
@@ -608,7 +599,8 @@ class FallTemplateBot2025(ForecastBot):
             If hours matter, please prepend the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ
             """
         )
-        return await self._date_prompt_to_forecast(question, prompt)
+        forecast = await self._date_prompt_to_forecast(question, prompt)
+        return forecast
 
     async def _date_prompt_to_forecast(
         self,
@@ -682,6 +674,18 @@ class FallTemplateBot2025(ForecastBot):
         else:
             lower_bound_message = f"The outcome can not be lower than {lower_bound_number} {unit_of_measure}."
         return upper_bound_message, lower_bound_message
+
+    def _get_conditional_disclaimer_if_necessary(
+        self, question: MetaculusQuestion
+    ) -> str:
+        if question.conditional_type not in ["yes", "no"]:
+            return ""
+        return clean_indents(
+            """
+            As you are given a conditional question with a parent and child, you are to only forecast the **CHILD** question, given the parent question's resolution.
+            You never re-forecast the parent question under any circumstances, but you use probabilistic reasoning, strongly considering the parent question's resolution, to forecast the child question.
+            """
+        )
 
 
 if __name__ == "__main__":
