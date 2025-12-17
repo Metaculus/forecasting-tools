@@ -987,6 +987,8 @@ class ForecastBot(ABC):
 
         if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
             researcher = "asknews/news-summaries"
+        elif os.getenv("ASKNEWS_API_KEY"):
+            researcher = "asknews/news-summaries"
         elif os.getenv("PERPLEXITY_API_KEY"):
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
         elif os.getenv("OPENROUTER_API_KEY"):
