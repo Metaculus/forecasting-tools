@@ -130,6 +130,19 @@ ForecastReport.model_rebuild()
 NumericReport.model_rebuild()
 DiscreteReport.model_rebuild()
 DateReport.model_rebuild()
+from forecasting_tools.data_models.conditional_models import (
+    ConditionalPrediction as ConditionalPrediction,
+)
+from forecasting_tools.data_models.conditional_models import (
+    PredictionAffirmed as PredictionAffirmed,
+)
+from forecasting_tools.data_models.data_organizer import (
+    PredictionTypes as PredictionTypes,
+)
+from forecasting_tools.data_models.numeric_report import Percentile as Percentile
+from forecasting_tools.data_models.questions import (
+    ConditionalQuestion as ConditionalQuestion,
+)
 from forecasting_tools.data_models.questions import QuestionState as QuestionState
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot as ForecastBot
 from forecasting_tools.forecast_bots.forecast_bot import Notepad as Notepad
