@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -642,9 +642,9 @@ class NumericReport(ForecastReport):
         readable = "Probability distribution:\n"
         for percentile in representative_percentiles:
             if prediction.is_date:
-                formatted_value = datetime.fromtimestamp(percentile.value).strftime(
-                    "%Y-%m-%d %H:%M:%S UTC"
-                )
+                formatted_value = datetime.fromtimestamp(
+                    percentile.value, tz=timezone.utc
+                ).strftime("%Y-%m-%d %H:%M:%S UTC")
             else:
                 formatted_value = str(round(percentile.value, 6))
             readable += f"- {percentile.percentile:.2%} chance of value below {formatted_value}\n"

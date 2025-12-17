@@ -204,7 +204,7 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
 
             Formatting Instructions:
             - This is a date question, and as such, the answer must be expressed in terms of dates.
-            - The dates must be written in the format of YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ. No other formatting is allowed.
+            - The dates must be written in the format of YYYY-MM-DD. If hours matter, please append the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ. No other formatting is allowed.
             - Always start with a lower date chronologically and then increase from there.
             - Do NOT forget this. The dates must be written in chronological order starting at the earliest time at percentile 10 and increasing from there.
 
@@ -221,8 +221,6 @@ class FallResearchOnlyBot2025(FallTemplateBot2025):
             Percentile 80: YYYY-MM-DD
             Percentile 90: YYYY-MM-DD
             "
-
-            If hours matter, please prepend the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ
             """
         )
         async with self._concurrency_limiter:

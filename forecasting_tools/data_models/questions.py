@@ -485,6 +485,7 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
             open_upper_bound=open_upper_bound,
             open_lower_bound=open_lower_bound,
             zero_point=zero_point,
+            cdf_size=cls._get_cdf_size_from_json(api_json),
             **normal_metaculus_question.model_dump(),
         )
 
