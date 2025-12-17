@@ -1,7 +1,7 @@
-from forecasting_tools.forecast_bots.official_bots.fall_research_only_bot import (
+from forecasting_tools.forecast_bots.official_bots.research_only_bot_2025_fall import (
     FallResearchOnlyBot2025,
 )
-from forecasting_tools.forecast_bots.official_bots.fall_template_bot import (
+from forecasting_tools.forecast_bots.official_bots.template_bot_2025_fall import (
     FallTemplateBot2025,
 )
 

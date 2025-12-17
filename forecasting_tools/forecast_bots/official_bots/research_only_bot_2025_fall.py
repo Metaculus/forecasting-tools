@@ -13,7 +13,7 @@ from forecasting_tools.data_models.questions import (
     MultipleChoiceQuestion,
     NumericQuestion,
 )
-from forecasting_tools.forecast_bots.official_bots.fall_template_bot import (
+from forecasting_tools.forecast_bots.official_bots.template_bot_2025_fall import (
     FallTemplateBot2025,
 )
 from forecasting_tools.util.misc import clean_indents
