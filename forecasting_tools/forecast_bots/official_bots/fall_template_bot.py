@@ -596,7 +596,7 @@ class FallTemplateBot2025(ForecastBot):
             Percentile 90: YYYY-MM-DD
             "
 
-            If hours matter, please prepend the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ
+            If hours matter, please append the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ
             """
         )
         forecast = await self._date_prompt_to_forecast(question, prompt)
@@ -613,7 +613,7 @@ class FallTemplateBot2025(ForecastBot):
         parsing_instructions = clean_indents(
             f"""
             The text given to you is trying to give a forecast distribution for a date question.
-            - This text is trying to answer the numeric question: "{question.question_text}".
+            - This text is trying to answer the question: "{question.question_text}".
             - As an example, someone else guessed that the answer will be between {question.lower_bound} and {question.upper_bound}, so the numbers parsed from an answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
             - The output is given as dates/times please format it into a valid datetime parsable string. Assume midnight UTC if no hour is given.
             - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
