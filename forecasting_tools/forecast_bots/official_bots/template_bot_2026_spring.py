@@ -590,8 +590,7 @@ class SpringTemplateBot2026(ForecastBot):
                 previous_forecast.timestamp_end is None
                 or previous_forecast.timestamp_end > current_utc_time
             ):
-                assert isinstance(previous_forecast, PredictionTypes)
-                pretty_value = DataOrganizer.get_readable_prediction(previous_forecast)
+                pretty_value = DataOrganizer.get_readable_prediction(previous_forecast)  # type: ignore
                 prediction = ReasonedPrediction(
                     prediction_value=PredictionAffirmed(),
                     reasoning=f"Already existing forecast reaffirmed at {pretty_value}.",
@@ -674,6 +673,7 @@ if __name__ == "__main__":
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=True,
+        extra_metadata_in_explanation=True,
         # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
         #     "default": GeneralLlm(
         #         model="openrouter/openai/gpt-4o", # "anthropic/claude-sonnet-4-20250514", etc (see docs for litellm)
