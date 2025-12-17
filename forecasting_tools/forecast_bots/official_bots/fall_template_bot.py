@@ -588,12 +588,12 @@ class FallTemplateBot2025(ForecastBot):
 
             The last thing you write is your final answer as:
             "
-            Percentile 10: YYYY-MM-DD
+            Percentile 10: YYYY-MM-DD (oldest date)
             Percentile 20: YYYY-MM-DD
             Percentile 40: YYYY-MM-DD
             Percentile 60: YYYY-MM-DD
             Percentile 80: YYYY-MM-DD
-            Percentile 90: YYYY-MM-DD
+            Percentile 90: YYYY-MM-DD (newest date)
             "
             """
         )
