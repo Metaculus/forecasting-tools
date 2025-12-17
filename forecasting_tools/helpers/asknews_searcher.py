@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Literal, Optional
+from typing import Literal
 
 from asknews_sdk import AsyncAskNewsSDK
 
@@ -31,9 +31,9 @@ class AskNewsSearcher:
 
     def __init__(
         self,
-        client_id: Optional[str] = None,
-        client_secret: Optional[str] = None,
-        api_key: Optional[str] = None,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        api_key: str | None = None,
     ) -> None:
         self.client_id = client_id or os.getenv("ASKNEWS_CLIENT_ID")
         self.client_secret = client_secret or os.getenv("ASKNEWS_SECRET")
