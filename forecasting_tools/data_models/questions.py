@@ -403,8 +403,15 @@ class BoundedQuestionMixin:
         lower_bound = api_json["question"]["scaling"]["range_min"]
         zero_point = api_json["question"]["scaling"]["zero_point"]
 
-        assert isinstance(upper_bound, float), f"Upper bound is {upper_bound}"
-        assert isinstance(lower_bound, float), f"Lower bound is {lower_bound}"
+        try:
+            upper_bound = float(upper_bound)
+            lower_bound = float(lower_bound)
+        except (TypeError, ValueError):
+            logger.error(
+                "Error parsing bounds from API JSON. "
+                "Upper bound: {upper_bound}, Lower bound: {lower_bound}"
+            )
+            raise
         return (
             open_upper_bound,
             open_lower_bound,
