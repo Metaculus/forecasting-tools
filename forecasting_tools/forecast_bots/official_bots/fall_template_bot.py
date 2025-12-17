@@ -14,10 +14,15 @@ from forecasting_tools.data_models.conditional_models import (
 from forecasting_tools.data_models.data_organizer import PredictionTypes
 from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
-from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
+from forecasting_tools.data_models.numeric_report import (
+    DatePercentile,
+    NumericDistribution,
+    Percentile,
+)
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     ConditionalQuestion,
+    DateQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
@@ -112,18 +117,6 @@ class FallTemplateBot2025(ForecastBot):
     )
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
     _structure_output_validation_samples = 2
-
-    def _get_conditional_disclaimer_if_necessary(
-        self, question: MetaculusQuestion
-    ) -> str:
-        if question.conditional_type not in ["yes", "no"]:
-            return ""
-        return clean_indents(
-            """
-            As you are given a conditional question with a parent and child, you are to only forecast the **CHILD** question, given the parent question's resolution.
-            You never re-forecast the parent question under any circumstances, but you use probabilistic reasoning, strongly considering the parent question's resolution, to forecast the child question.
-    """
-        )
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
@@ -363,6 +356,7 @@ class FallTemplateBot2025(ForecastBot):
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
             (c) A description of an scenario that results in an unexpected outcome.
+
             {self._get_conditional_disclaimer_if_necessary(question)}
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
 
@@ -474,6 +468,7 @@ class FallTemplateBot2025(ForecastBot):
             (d) The expectations of experts and markets.
             (e) A brief description of an unexpected scenario that results in a low outcome.
             (f) A brief description of an unexpected scenario that results in a high outcome.
+
             {self._get_conditional_disclaimer_if_necessary(question)}
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
 
@@ -505,7 +500,7 @@ class FallTemplateBot2025(ForecastBot):
             - When parsing the text, please make sure to give the values (the ones assigned to percentiles) in terms of the correct units.
             - The units for the forecast are: {question.unit_of_measure}
             - Your work will be shown publicly with these units stated verbatim after the numbers your parse.
-            - As an example, someone else guessed that the answer will be between {question.lower_bound} {question.unit_of_measure} and {question.upper_bound} {question.unit_of_measure}, so the numbers parsed from and answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
+            - As an example, someone else guessed that the answer will be between {question.lower_bound} {question.unit_of_measure} and {question.upper_bound} {question.unit_of_measure}, so the numbers parsed from an answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
             - If the answer doesn't give the answer in the correct units, you should parse it in the right units. For instance if the answer gives numbers as $500,000,000 and units are "B $" then you should parse the answer as 0.5 (since $500,000,000 is $0.5 billion).
             - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
             - Turn any values that are in scientific notation into regular numbers.
@@ -546,28 +541,149 @@ class FallTemplateBot2025(ForecastBot):
         )
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
+    async def _run_forecast_on_date(
+        self, question: DateQuestion, research: str
+    ) -> ReasonedPrediction[NumericDistribution]:
+        upper_bound_message, lower_bound_message = (
+            self._create_upper_and_lower_bound_messages(question)
+        )
+        prompt = clean_indents(
+            f"""
+            You are a professional forecaster interviewing for a job.
+
+            Your interview question is:
+            {question.question_text}
+
+            Background:
+            {question.background_info}
+
+            {question.resolution_criteria}
+
+            {question.fine_print}
+
+            Your research assistant says:
+            {research}
+
+            Today is {datetime.now().strftime("%Y-%m-%d")}.
+
+            {lower_bound_message}
+            {upper_bound_message}
+
+            Formatting Instructions:
+            - This is a date question, and as such, the answer must be expressed in terms of dates.
+            - The dates must be written in the format of YYYY-MM-DD. If hours matter, please append the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ.No other formatting is allowed.
+            - Always start with a lower date chronologically and then increase from there.
+            - Do NOT forget this. The dates must be written in chronological order starting at the earliest time at percentile 10 and increasing from there.
+
+            Before answering you write:
+            (a) The time left until the outcome to the question is known.
+            (b) The outcome if nothing changed.
+            (c) The outcome if the current trend continued.
+            (d) The expectations of experts and markets.
+            (e) A brief description of an unexpected scenario that results in a low outcome.
+            (f) A brief description of an unexpected scenario that results in a high outcome.
+
+            {self._get_conditional_disclaimer_if_necessary(question)}
+            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+
+            The last thing you write is your final answer as:
+            "
+            Percentile 10: YYYY-MM-DD (oldest date)
+            Percentile 20: YYYY-MM-DD
+            Percentile 40: YYYY-MM-DD
+            Percentile 60: YYYY-MM-DD
+            Percentile 80: YYYY-MM-DD
+            Percentile 90: YYYY-MM-DD (newest date)
+            "
+            """
+        )
+        forecast = await self._date_prompt_to_forecast(question, prompt)
+        return forecast
+
+    async def _date_prompt_to_forecast(
+        self,
+        question: DateQuestion,
+        prompt: str,
+        double_check_extraction: bool = False,
+    ) -> ReasonedPrediction[NumericDistribution]:
+        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
+        parsing_instructions = clean_indents(
+            f"""
+            The text given to you is trying to give a forecast distribution for a date question.
+            - This text is trying to answer the question: "{question.question_text}".
+            - As an example, someone else guessed that the answer will be between {question.lower_bound} and {question.upper_bound}, so the numbers parsed from an answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
+            - The output is given as dates/times please format it into a valid datetime parsable string. Assume midnight UTC if no hour is given.
+            - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
+            """
+        )
+        date_percentile_list: list[DatePercentile] = await structure_output(
+            reasoning,
+            list[DatePercentile],
+            model=self.get_llm("parser", "llm"),
+            additional_instructions=parsing_instructions,
+            num_validation_samples=self._structure_output_validation_samples,
+        )
+
+        percentile_list = [
+            Percentile(
+                percentile=percentile.percentile,
+                value=percentile.value.timestamp(),
+            )
+            for percentile in date_percentile_list
+        ]
+
+        if double_check_extraction:
+            raise ValueError("Double check extraction not supported for date questions")
+
+        prediction = NumericDistribution.from_question(percentile_list, question)
+        logger.info(
+            f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}."
+        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
     def _create_upper_and_lower_bound_messages(
-        self, question: NumericQuestion
+        self, question: NumericQuestion | DateQuestion
     ) -> tuple[str, str]:
-        if question.nominal_upper_bound is not None:
-            upper_bound_number = question.nominal_upper_bound
+        if isinstance(question, NumericQuestion):
+            if question.nominal_upper_bound is not None:
+                upper_bound_number = question.nominal_upper_bound
+            else:
+                upper_bound_number = question.upper_bound
+            if question.nominal_lower_bound is not None:
+                lower_bound_number = question.nominal_lower_bound
+            else:
+                lower_bound_number = question.lower_bound
+            unit_of_measure = question.unit_of_measure
+        elif isinstance(question, DateQuestion):
+            upper_bound_number = question.upper_bound.date().isoformat()
+            lower_bound_number = question.lower_bound.date().isoformat()
+            unit_of_measure = ""
         else:
-            upper_bound_number = question.upper_bound
-        if question.nominal_lower_bound is not None:
-            lower_bound_number = question.nominal_lower_bound
-        else:
-            lower_bound_number = question.lower_bound
+            raise ValueError()
 
         if question.open_upper_bound:
-            upper_bound_message = f"The question creator thinks the number is likely not higher than {upper_bound_number} {question.unit_of_measure}."
+            upper_bound_message = f"The question creator thinks the number is likely not higher than {upper_bound_number} {unit_of_measure}."
         else:
-            upper_bound_message = f"The outcome can not be higher than {upper_bound_number} {question.unit_of_measure}."
+            upper_bound_message = f"The outcome can not be higher than {upper_bound_number} {unit_of_measure}."
 
         if question.open_lower_bound:
-            lower_bound_message = f"The question creator thinks the number is likely not lower than {lower_bound_number} {question.unit_of_measure}."
+            lower_bound_message = f"The question creator thinks the number is likely not lower than {lower_bound_number} {unit_of_measure}."
         else:
-            lower_bound_message = f"The outcome can not be lower than {lower_bound_number} {question.unit_of_measure}."
+            lower_bound_message = f"The outcome can not be lower than {lower_bound_number} {unit_of_measure}."
         return upper_bound_message, lower_bound_message
+
+    def _get_conditional_disclaimer_if_necessary(
+        self, question: MetaculusQuestion
+    ) -> str:
+        if question.conditional_type not in ["yes", "no"]:
+            return ""
+        return clean_indents(
+            """
+            As you are given a conditional question with a parent and child, you are to only forecast the **CHILD** question, given the parent question's resolution.
+            You never re-forecast the parent question under any circumstances, but you use probabilistic reasoning, strongly considering the parent question's resolution, to forecast the child question.
+            """
+        )
 
 
 if __name__ == "__main__":

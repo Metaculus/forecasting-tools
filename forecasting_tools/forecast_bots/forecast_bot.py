@@ -163,22 +163,6 @@ class ForecastBot(ABC):
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
         questions = MetaculusApi.get_all_open_questions_from_tournament(tournament_id)
-        supported_question_types = [
-            NumericQuestion,
-            MultipleChoiceQuestion,
-            BinaryQuestion,
-            ConditionalQuestion,
-        ]
-        supported_questions = [
-            question
-            for question in questions
-            if isinstance(question, tuple(supported_question_types))
-        ]
-        if len(supported_questions) != len(questions):
-            logger.warning(
-                f"Skipping {len(questions) - len(supported_questions)} questions that are not supported (probably date questions)"
-            )
-        questions = supported_questions
         return await self.forecast_questions(questions, return_exceptions)
 
     @overload
@@ -523,7 +507,7 @@ class ForecastBot(ABC):
         elif isinstance(question, ConditionalQuestion):
             forecast_function = lambda q, r: self._run_forecast_on_conditional(q, r)
         elif isinstance(question, DateQuestion):
-            raise NotImplementedError("Date questions not supported yet")
+            forecast_function = lambda q, r: self._run_forecast_on_date(q, r)
         else:
             raise ValueError(f"Unknown question type: {type(question)}")
 
@@ -540,6 +524,12 @@ class ForecastBot(ABC):
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
+        raise NotImplementedError("Subclass must implement this method")
+
+    async def _run_forecast_on_date(
+        self, question: DateQuestion, research: str
+    ) -> ReasonedPrediction[NumericDistribution]:
+        # Return a numeric distribution of timestamps
         raise NotImplementedError("Subclass must implement this method")
 
     async def _run_forecast_on_conditional(

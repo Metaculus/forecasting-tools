@@ -8,6 +8,7 @@ from forecasting_tools.data_models.multiple_choice_report import (
 from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
+    DateQuestion,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericQuestion,
@@ -85,6 +86,46 @@ class UniformProbabilityBot(ForecastBot):
             prediction_value=distribution,
             reasoning=(
                 "Created a uniform distribution between the lower and upper bounds. "
+                "NOTE: The cdf will have sloping probability at the edges if the bounds are open"
+            ),
+        )
+
+    async def _run_forecast_on_date(
+        self, question: DateQuestion, research: str
+    ) -> ReasonedPrediction[NumericDistribution]:
+        lower_bound_timestamp = question.lower_bound.timestamp()
+        upper_bound_timestamp = question.upper_bound.timestamp()
+        distribution_range = upper_bound_timestamp - lower_bound_timestamp
+
+        percentiles = [
+            Percentile(
+                value=lower_bound_timestamp + 0.1 * distribution_range,
+                percentile=0.1,
+            ),
+            Percentile(
+                value=lower_bound_timestamp + 0.3 * distribution_range,
+                percentile=0.3,
+            ),
+            Percentile(
+                value=lower_bound_timestamp + 0.5 * distribution_range,
+                percentile=0.5,
+            ),
+            Percentile(
+                value=lower_bound_timestamp + 0.7 * distribution_range,
+                percentile=0.7,
+            ),
+            Percentile(
+                value=lower_bound_timestamp + 0.9 * distribution_range,
+                percentile=0.9,
+            ),
+        ]
+
+        distribution = NumericDistribution.from_question(percentiles, question)
+
+        return ReasonedPrediction(
+            prediction_value=distribution,
+            reasoning=(
+                "Created a uniform distribution between the lower and upper date bounds. "
                 "NOTE: The cdf will have sloping probability at the edges if the bounds are open"
             ),
         )

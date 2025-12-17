@@ -17,7 +17,6 @@ from forecasting_tools.data_models.conditional_report import ConditionalReport
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import (
     ConditionalQuestion,
-    DateQuestion,
     MetaculusQuestion,
 )
 from forecasting_tools.data_models.timestamped_predictions import (
@@ -89,7 +88,7 @@ async def test_predicts_ai_2027_tournament(bot: ForecastBot) -> None:
         reports = await bot.forecast_on_tournament("ai-2027")
         bot.log_report_summary(reports)
 
-        assert len(reports) == 15, "Expected 19 reports"
+        assert len(reports) == 19, "Expected 19 reports"
 
     except Exception as e:
         pytest.fail(f"Forecasting on ai-2027 tournament failed: {e}")
@@ -186,13 +185,8 @@ async def test_collects_reports_on_open_questions(mocker: Mock) -> None:
     questions_that_should_be_being_forecast_on = (
         MetaculusApi.get_all_open_questions_from_tournament(tournament_id)
     )
-    date_questions = [
-        question
-        for question in questions_that_should_be_being_forecast_on
-        if isinstance(question, DateQuestion)
-    ]
-    assert len(reports) == len(questions_that_should_be_being_forecast_on) - len(
-        date_questions
+    assert len(reports) == len(
+        questions_that_should_be_being_forecast_on
     ), "Not all questions were forecasted on"
 
 
