@@ -108,6 +108,7 @@ class MetaculusClient:
     AI_COMPETITION_ID_Q1 = 32627  # https://www.metaculus.com/tournament/aibq1/
     AI_COMPETITION_ID_Q2 = 32721  # https://www.metaculus.com/tournament/aibq2/
     AIB_FALL_2025_ID = 32813  # https://www.metaculus.com/tournament/fall-aib-2025/
+    AIB_SPRING_2026_ID = 32916
     PRO_COMPARISON_TOURNAMENT_Q1 = 32631
     PRO_COMPARISON_TOURNAMENT_Q2 = (
         32761  # https://www.metaculus.com/tournament/pro-benchmark-q22025
@@ -118,6 +119,7 @@ class MetaculusClient:
     Q1_2025_QUARTERLY_CUP = 32630
     METACULUS_CUP_2025_1_ID = 32726  # Summer cup 2025
     METACULUS_CUP_FALL_2025_ID = 32828
+    METACULUS_CUP_SPRING_2026_ID = None
     AI_2027_TOURNAMENT_ID = "ai-2027"
     MAIN_FEED = 144  # site_main
 
@@ -126,7 +128,7 @@ class MetaculusClient:
 
     CURRENT_METACULUS_CUP_ID = METACULUS_CUP_FALL_2025_ID
     CURRENT_QUARTERLY_CUP_ID = CURRENT_METACULUS_CUP_ID  # Consider this parameter deprecated since quarterly cup is no longer active
-    CURRENT_AI_COMPETITION_ID = AIB_FALL_2025_ID
+    CURRENT_AI_COMPETITION_ID = AIB_SPRING_2026_ID
     CURRENT_MINIBENCH_ID = "minibench"
     CURRENT_MARKET_PULSE_ID = Q4_2025_MARKET_PULSE_ID
 

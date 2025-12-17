@@ -29,6 +29,9 @@ from forecasting_tools.forecast_bots.official_bots.research_only_bot_2025_fall i
 from forecasting_tools.forecast_bots.official_bots.template_bot_2025_fall import (
     FallTemplateBot2025,
 )
+from forecasting_tools.forecast_bots.official_bots.template_bot_2026_spring import (
+    SpringTemplateBot2026,
+)
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot,
 )
@@ -51,6 +54,7 @@ def get_all_important_bot_classes() -> list[type[ForecastBot]]:
         Q2TemplateBotWithDecompositionV1,
         Q2TemplateBotWithDecompositionV2,
         FallResearchOnlyBot2025,
+        SpringTemplateBot2026,
         GPT41OptimizedBot,
     ]
 

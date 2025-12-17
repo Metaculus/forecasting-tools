@@ -30,7 +30,6 @@ from forecasting_tools.data_models.questions import (
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.helpers.metaculus_client import MetaculusClient
-from forecasting_tools.helpers.prediction_extractor import PredictionExtractor
 from forecasting_tools.helpers.structure_output import structure_output
 from forecasting_tools.util.misc import clean_indents
 
@@ -39,18 +38,18 @@ logger = logging.getLogger(__name__)
 
 class SpringTemplateBot2026(ForecastBot):
     """
-    This is a copy of the template bot for Spring 2026 Metaculus AI Tournament.
-    This bot is what is used by Metaculus in our benchmark, but is also provided as a template for new bot makers.
-    This template is given as-is, and though we have covered most test cases
-    in forecasting-tools it may be worth double checking key components locally.
+    This is the template bot for Spring 2026 Metaculus AI Tournament.
+    This is a copy of what is used by Metaculus to run the Metac Bots in our benchmark, provided as a template for new bot makers.
+    This template is given as-is, and is use-at-your-own-risk.
+    We have covered most test cases in forecasting-tools it may be worth double checking key components locally.
+    So far our track record has been 1 mentionable bug per season (affecting forecasts for 1-2% of total questions)
 
-    Main changes since Q2:
-    - An LLM now parses the final forecast output (rather than programmatic parsing)
-    - Added resolution criteria and fine print explicitly to the research prompt
-    - Previously in the prompt, nothing about upper/lower bound was shown when the bounds were open. Now a suggestion is made when this is the case.
-    - Support for nominal bounds was added (i.e. when there are discrete questions and normal upper/lower bounds are not as intuitive)
+    Main changes since Fall:
+    - Additional prompting has been added to numeric questions to emphasize putting pecentile values in the correct order.
+    - Support for conditional and date questions has been added
+    - Note: Spring AIB will not use date/conditional questions, so these are only for forecasting on the main site as you wish.
 
-    The main entry point of this bot is `forecast_on_tournament` in the parent class.
+    The main entry point of this bot is `bot.forecast_on_tournament(tournament_id)` in the parent class.
     See the script at the bottom of the file for more details on how to run the bot.
     Ignoring the finer details, the general flow is:
     - Load questions from Metaculus
@@ -61,13 +60,16 @@ class SpringTemplateBot2026(ForecastBot):
         - Submit prediction (if publish_reports_to_metaculus is True)
     - Return a list of ForecastReport objects
 
-    Only the research and forecast functions need to be implemented in ForecastBot subclasses,
-    though you may want to override other ones.
-    In this example, you can change the prompts to be whatever you want since,
-    structure_output uses an LLMto intelligently reformat the output into the needed structure.
+    Alternatively, you can use the MetaculusClient to make a custom filter of questions to forecast on
+    and forecast them with `bot.forecast_questions(questions)`
 
-    By default (i.e. 'tournament' mode), when you run this script, it will forecast on any open questions for the
-    MiniBench and Seasonal AIB tournaments. If you want to forecast on only one or the other, you can remove one
+    Only the research and forecast functions need to be implemented in ForecastBot subclasses,
+    though you may want to override other ForecastBot functions.
+    In this example, you can change the prompts to be whatever you want since,
+    structure_output uses an LLM to intelligently reformat the output into the needed structure.
+
+    By default (i.e. 'tournament' mode), when you run this script, it will forecast on any open questions in the
+    primary bot tournament and MiniBench. If you want to forecast on only one or the other, you can remove one
     of them from the 'tournament' mode code at the bottom of the file.
 
     You can experiment with what models work best with your bot by using the `llms` parameter when initializing the bot.
@@ -83,7 +85,7 @@ class SpringTemplateBot2026(ForecastBot):
                 allowed_tries=2,
             ),
             "summarizer": "openai/gpt-4o-mini",
-            "researcher": "asknews/deep-research/low",
+            "researcher": "asknews/news-summaries",
             "parser": "openai/gpt-4o-mini",
         },
     )
@@ -92,10 +94,10 @@ class SpringTemplateBot2026(ForecastBot):
     Then you can access the model in custom functions like this:
     ```python
     research_strategy = self.get_llm("researcher", "model_name"
-    if research_strategy == "asknews/deep-research/low":
+    if research_strategy == "asknews/news-summaries":
         ...
     # OR
-    summarizer = await self.get_llm("summarizer", "model_name").invoke(prompt)
+    summarizer = await self.get_llm("summarizer", "llm").invoke(prompt)
     # OR
     reasoning = await self.get_llm("default", "llm").invoke(prompt)
     ```
@@ -117,6 +119,8 @@ class SpringTemplateBot2026(ForecastBot):
     )
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
     _structure_output_validation_samples = 2
+
+    ##################################### RESEARCH #####################################
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
@@ -144,6 +148,7 @@ class SpringTemplateBot2026(ForecastBot):
                 research = await researcher.invoke(prompt)
             elif (
                 researcher == "asknews/news-summaries"
+                or researcher == "asknews/deep-research/low-depth"
                 or researcher == "asknews/deep-research/medium-depth"
                 or researcher == "asknews/deep-research/high-depth"
             ):
@@ -167,96 +172,7 @@ class SpringTemplateBot2026(ForecastBot):
             logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
 
-    def _add_reasoning_to_research(
-        self,
-        research: str,
-        reasoning: ReasonedPrediction[PredictionTypes],
-        question_type: str,
-    ) -> str:
-        from forecasting_tools.data_models.data_organizer import DataOrganizer
-
-        question_type = question_type.title()
-        return clean_indents(
-            f"""
-            {research}
-            ---
-            ## {question_type} Question Information
-            You have previously forecasted the {question_type} Question to the value: {DataOrganizer.get_readable_prediction(reasoning.prediction_value)}
-            This is relevant information for your current forecast, but it is NOT your current forecast, but previous forecasting information that is relevant to your current forecast.
-            The reasoning for the {question_type} Question was as such:
-            ```
-            {reasoning.reasoning}
-            ```
-            This is absolutely essential: do NOT use this reasoning to re-forecast the {question_type} question.
-        """
-        )
-
-    async def _get_question_prediction_info(
-        self, question: MetaculusQuestion, research: str, question_type: str
-    ) -> tuple[ReasonedPrediction[PredictionTypes], str]:
-        from forecasting_tools.data_models.data_organizer import DataOrganizer
-
-        previous_forecasts = question.previous_forecasts
-        if (
-            question_type in ["parent", "child"]
-            and previous_forecasts
-            and question_type not in self.force_reforecast_in_conditional
-        ):
-            # TODO: add option to not affirm current parent/child forecasts, create new forecast
-            previous_forecast = previous_forecasts[-1]
-            current_utc_time = datetime.now(timezone.utc)
-            if (
-                previous_forecast.timestamp_end is None
-                or previous_forecast.timestamp_end > current_utc_time
-            ):
-                pretty_value = DataOrganizer.get_readable_prediction(previous_forecast)
-                return (
-                    ReasonedPrediction(
-                        prediction_value=PredictionAffirmed(),
-                        reasoning=f"Already existing forecast reaffirmed at {pretty_value}.",
-                    ),
-                    research,
-                )
-        info = await self._make_prediction(question, research)
-        full_research = self._add_reasoning_to_research(research, info, question_type)
-        return info, full_research
-
-    async def _run_forecast_on_conditional(
-        self, question: ConditionalQuestion, research: str
-    ) -> ReasonedPrediction[ConditionalPrediction]:
-        parent_info, full_research = await self._get_question_prediction_info(
-            question.parent, research, "parent"
-        )
-        child_info, full_research = await self._get_question_prediction_info(
-            question.child, research, "child"
-        )
-        yes_info, full_research = await self._get_question_prediction_info(
-            question.question_yes, full_research, "yes"
-        )
-        no_info, full_research = await self._get_question_prediction_info(
-            question.question_no, full_research, "no"
-        )
-        full_reasoning = clean_indents(
-            f"""
-            ## Parent Question Reasoning
-            {parent_info.reasoning}
-            ## Child Question Reasoning
-            {child_info.reasoning}
-            ## Yes Question Reasoning
-            {yes_info.reasoning}
-            ## No Question Reasoning
-            {no_info.reasoning}
-        """
-        )
-        full_prediction = ConditionalPrediction(
-            parent=parent_info.prediction_value,
-            child=child_info.prediction_value,
-            prediction_yes=yes_info.prediction_value,
-            prediction_no=no_info.prediction_value,
-        )
-        return ReasonedPrediction(
-            reasoning=full_reasoning, prediction_value=full_prediction
-        )
+    ##################################### BINARY QUESTIONS #####################################
 
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
@@ -291,6 +207,7 @@ class SpringTemplateBot2026(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
             {self._get_conditional_disclaimer_if_necessary(question)}
+
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
@@ -301,7 +218,6 @@ class SpringTemplateBot2026(ForecastBot):
         self,
         question: BinaryQuestion,
         prompt: str,
-        double_check_extraction: bool = False,
     ) -> ReasonedPrediction[float]:
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
@@ -311,20 +227,14 @@ class SpringTemplateBot2026(ForecastBot):
             model=self.get_llm("parser", "llm"),
             num_validation_samples=self._structure_output_validation_samples,
         )
-        if double_check_extraction:
-            redundant_extraction = PredictionExtractor.extract_last_percentage_value(
-                reasoning
-            )
-            assert (
-                abs(redundant_extraction - binary_prediction.prediction_in_decimal)
-                < 0.001
-            ), f"Redundant extraction {redundant_extraction} does not match binary prediction {binary_prediction.prediction_in_decimal}"
         decimal_pred = max(0.01, min(0.99, binary_prediction.prediction_in_decimal))
 
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {decimal_pred}."
         )
         return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
+
+    ##################################### MULTIPLE CHOICE QUESTIONS #####################################
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -373,7 +283,6 @@ class SpringTemplateBot2026(ForecastBot):
         self,
         question: MultipleChoiceQuestion,
         prompt: str,
-        double_check_extraction: bool = False,
     ) -> ReasonedPrediction[PredictedOptionList]:
         parsing_instructions = clean_indents(
             f"""
@@ -393,31 +302,6 @@ class SpringTemplateBot2026(ForecastBot):
             num_validation_samples=self._structure_output_validation_samples,
             additional_instructions=parsing_instructions,
         )
-        if double_check_extraction:
-            redundant_extraction = (
-                PredictionExtractor.extract_option_list_with_percentage_afterwards(
-                    reasoning, question.options
-                )
-            )
-            for redundant_prediction in redundant_extraction.predicted_options:
-                matching_original_option = next(
-                    (
-                        option
-                        for option in predicted_option_list.predicted_options
-                        if option.option_name == redundant_prediction.option_name
-                    ),
-                    None,
-                )
-                assert (
-                    matching_original_option is not None
-                ), f"Matching original option not found for {redundant_prediction.option_name}"
-                assert (
-                    abs(
-                        redundant_prediction.probability
-                        - matching_original_option.probability
-                    )
-                    < 0.001
-                ), f"Redundant extraction {redundant_prediction.probability} does not match original option {matching_original_option.probability} for option {redundant_prediction.option_name}"
 
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}."
@@ -425,6 +309,8 @@ class SpringTemplateBot2026(ForecastBot):
         return ReasonedPrediction(
             prediction_value=predicted_option_list, reasoning=reasoning
         )
+
+    ##################################### NUMERIC QUESTIONS #####################################
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
@@ -459,7 +345,7 @@ class SpringTemplateBot2026(ForecastBot):
             Formatting Instructions:
             - Please notice the units requested and give your answer in these units (e.g. whether you represent a number as 1,000,000 or 1 million).
             - Never use scientific notation.
-            - Always start with a smaller number (more negative if negative) and then increase from there
+            - Always start with a smaller number (more negative if negative) and then increase from there. The value for percentile 10 should always be less than the value for percentile 20, and so on.
 
             Before answering you write:
             (a) The time left until the outcome to the question is known.
@@ -474,12 +360,12 @@ class SpringTemplateBot2026(ForecastBot):
 
             The last thing you write is your final answer as:
             "
-            Percentile 10: XX
+            Percentile 10: XX (lowest number value)
             Percentile 20: XX
             Percentile 40: XX
             Percentile 60: XX
             Percentile 80: XX
-            Percentile 90: XX
+            Percentile 90: XX (highest number value)
             "
             """
         )
@@ -489,7 +375,6 @@ class SpringTemplateBot2026(ForecastBot):
         self,
         question: NumericQuestion,
         prompt: str,
-        double_check_extraction: bool = False,
     ) -> ReasonedPrediction[NumericDistribution]:
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
@@ -513,33 +398,13 @@ class SpringTemplateBot2026(ForecastBot):
             additional_instructions=parsing_instructions,
             num_validation_samples=self._structure_output_validation_samples,
         )
-
-        if double_check_extraction:
-            redundant_extraction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-                reasoning, question
-            )
-            for redundant_percentile in redundant_extraction.declared_percentiles:
-                matching_original_percentile = next(
-                    (
-                        percentile
-                        for percentile in percentile_list
-                        if abs(percentile.percentile - redundant_percentile.percentile)
-                        < 0.001
-                    ),
-                    None,
-                )
-                assert (
-                    matching_original_percentile is not None
-                ), f"Matching original percentile not found for {redundant_percentile.percentile}"
-                assert (
-                    abs(redundant_percentile.value - matching_original_percentile.value)
-                    < 0.001
-                ), f"Redundant extraction {redundant_percentile.value} does not match original percentile {matching_original_percentile.value} for percentile {redundant_percentile.percentile}"
         prediction = NumericDistribution.from_question(percentile_list, question)
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}."
         )
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    ##################################### DATE QUESTIONS #####################################
 
     async def _run_forecast_on_date(
         self, question: DateQuestion, research: str
@@ -604,7 +469,6 @@ class SpringTemplateBot2026(ForecastBot):
         self,
         question: DateQuestion,
         prompt: str,
-        double_check_extraction: bool = False,
     ) -> ReasonedPrediction[NumericDistribution]:
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
@@ -632,10 +496,6 @@ class SpringTemplateBot2026(ForecastBot):
             )
             for percentile in date_percentile_list
         ]
-
-        if double_check_extraction:
-            raise ValueError("Double check extraction not supported for date questions")
-
         prediction = NumericDistribution.from_question(percentile_list, question)
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}."
@@ -673,6 +533,98 @@ class SpringTemplateBot2026(ForecastBot):
             lower_bound_message = f"The outcome can not be lower than {lower_bound_number} {unit_of_measure}."
         return upper_bound_message, lower_bound_message
 
+    ##################################### CONDITIONAL QUESTIONS #####################################
+
+    async def _run_forecast_on_conditional(
+        self, question: ConditionalQuestion, research: str
+    ) -> ReasonedPrediction[ConditionalPrediction]:
+        parent_info, full_research = await self._get_question_prediction_info(
+            question.parent, research, "parent"
+        )
+        child_info, full_research = await self._get_question_prediction_info(
+            question.child, research, "child"
+        )
+        yes_info, full_research = await self._get_question_prediction_info(
+            question.question_yes, full_research, "yes"
+        )
+        no_info, full_research = await self._get_question_prediction_info(
+            question.question_no, full_research, "no"
+        )
+        full_reasoning = clean_indents(
+            f"""
+            ## Parent Question Reasoning
+            {parent_info.reasoning}
+            ## Child Question Reasoning
+            {child_info.reasoning}
+            ## Yes Question Reasoning
+            {yes_info.reasoning}
+            ## No Question Reasoning
+            {no_info.reasoning}
+        """
+        )
+        full_prediction = ConditionalPrediction(
+            parent=parent_info.prediction_value,  # type: ignore
+            child=child_info.prediction_value,  # type: ignore
+            prediction_yes=yes_info.prediction_value,  # type: ignore
+            prediction_no=no_info.prediction_value,  # type: ignore
+        )
+        return ReasonedPrediction(
+            reasoning=full_reasoning, prediction_value=full_prediction
+        )
+
+    async def _get_question_prediction_info(
+        self, question: MetaculusQuestion, research: str, question_type: str
+    ) -> tuple[ReasonedPrediction[PredictionTypes | PredictionAffirmed], str]:
+        from forecasting_tools.data_models.data_organizer import DataOrganizer
+
+        previous_forecasts = question.previous_forecasts
+        if (
+            question_type in ["parent", "child"]
+            and previous_forecasts
+            and question_type not in self.force_reforecast_in_conditional
+        ):
+            # TODO: add option to not affirm current parent/child forecasts, create new forecast
+            previous_forecast = previous_forecasts[-1]
+            current_utc_time = datetime.now(timezone.utc)
+            if (
+                previous_forecast.timestamp_end is None
+                or previous_forecast.timestamp_end > current_utc_time
+            ):
+                assert isinstance(previous_forecast, PredictionTypes)
+                pretty_value = DataOrganizer.get_readable_prediction(previous_forecast)
+                prediction = ReasonedPrediction(
+                    prediction_value=PredictionAffirmed(),
+                    reasoning=f"Already existing forecast reaffirmed at {pretty_value}.",
+                )
+                return (prediction, research)  # type: ignore
+        info = await self._make_prediction(question, research)
+        full_research = self._add_reasoning_to_research(research, info, question_type)
+        return info, full_research  # type: ignore
+
+    def _add_reasoning_to_research(
+        self,
+        research: str,
+        reasoning: ReasonedPrediction[PredictionTypes],
+        question_type: str,
+    ) -> str:
+        from forecasting_tools.data_models.data_organizer import DataOrganizer
+
+        question_type = question_type.title()
+        return clean_indents(
+            f"""
+            {research}
+            ---
+            ## {question_type} Question Information
+            You have previously forecasted the {question_type} Question to the value: {DataOrganizer.get_readable_prediction(reasoning.prediction_value)}
+            This is relevant information for your current forecast, but it is NOT your current forecast, but previous forecasting information that is relevant to your current forecast.
+            The reasoning for the {question_type} Question was as such:
+            ```
+            {reasoning.reasoning}
+            ```
+            This is absolutely essential: do NOT use this reasoning to re-forecast the {question_type} question.
+            """
+        )
+
     def _get_conditional_disclaimer_if_necessary(
         self, question: MetaculusQuestion
     ) -> str:
@@ -698,7 +650,7 @@ if __name__ == "__main__":
     litellm_logger.propagate = False
 
     parser = argparse.ArgumentParser(
-        description="Run the Q1TemplateBot forecasting system"
+        description="Run the TemplateBot forecasting system"
     )
     parser.add_argument(
         "--mode",
@@ -730,13 +682,14 @@ if __name__ == "__main__":
         #         allowed_tries=2,
         #     ),
         #     "summarizer": "openai/gpt-4o-mini",
-        #     "researcher": "asknews/deep-research/low",
+        #     "researcher": "asknews/news-summaries",
         #     "parser": "openai/gpt-4o-mini",
         # },
     )
 
     client = MetaculusClient()
     if run_mode == "tournament":
+        # You may want to change this to the specific tournament ID you want to forecast on
         seasonal_tournament_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 client.CURRENT_AI_COMPETITION_ID, return_exceptions=True
