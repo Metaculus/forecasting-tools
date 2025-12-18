@@ -408,8 +408,8 @@ class BoundedQuestionMixin:
             lower_bound = float(lower_bound)
         except (TypeError, ValueError):
             logger.error(
-                "Error parsing bounds from API JSON. "
-                "Upper bound: {upper_bound}, Lower bound: {lower_bound}"
+                f"Error parsing bounds from API JSON. "
+                f"Upper bound: {upper_bound}, Lower bound: {lower_bound}"
             )
             raise
         return (
