@@ -144,7 +144,7 @@ class MetaculusClient:
         self,
         base_url: str = API_BASE_URL,
         timeout: int = 30,
-        sleep_time_between_requests_min: float = 1.5,
+        sleep_time_between_requests_min: float = 2.5,
         sleep_jitter_seconds: float = 0.5,
     ):
         self.base_url = base_url
