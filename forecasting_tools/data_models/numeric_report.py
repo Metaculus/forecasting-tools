@@ -22,10 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 class NumericDefaults:
-    DEFAULT_INBOUND_OUTCOME_COUNT = 200
     DEFAULT_CDF_SIZE = (
         201  # Discrete questions have fewer points, Numeric will have 201 points
     )
+    DEFAULT_INBOUND_OUTCOME_COUNT = DEFAULT_CDF_SIZE - 1
     MAX_NUMERIC_PMF_VALUE = 0.2
 
     @classmethod
