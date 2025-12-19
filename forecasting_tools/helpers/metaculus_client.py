@@ -144,12 +144,12 @@ class MetaculusClient:
         self,
         base_url: str = API_BASE_URL,
         timeout: int = 30,
-        sleep_time_between_requests_min: float = 2.5,
-        sleep_jitter_seconds: float = 0.5,
+        sleep_seconds_between_requests: float = 3.5,
+        sleep_jitter_seconds: float = 1,
     ):
         self.base_url = base_url
         self.timeout = timeout
-        self.sleep_time_between_requests_min = sleep_time_between_requests_min
+        self.sleep_time_between_requests_min = sleep_seconds_between_requests
         self.sleep_jitter_seconds = sleep_jitter_seconds
 
     @retry_with_exponential_backoff()

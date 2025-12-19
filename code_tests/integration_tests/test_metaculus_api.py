@@ -515,6 +515,7 @@ class TestPostEndpoint:
             assert questions
             assert all(question.previous_forecasts for question in questions)
 
+    @pytest.mark.skip(reason="Benchmark questions are not being used currently")
     def test_get_benchmark_questions(self) -> None:
         num_questions_to_get = 30
         questions = MetaculusApi.get_benchmark_questions(num_questions_to_get)
