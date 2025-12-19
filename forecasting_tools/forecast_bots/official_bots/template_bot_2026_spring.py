@@ -45,7 +45,7 @@ class SpringTemplateBot2026(ForecastBot):
     So far our track record has been 1 mentionable bug per season (affecting forecasts for 1-2% of total questions)
 
     Main changes since Fall:
-    - Additional prompting has been added to numeric questions to emphasize putting pecentile values in the correct order.
+    - Additional prompting has been added to numeric questions to emphasize putting percentile values in the correct order.
     - Support for conditional and date questions has been added
     - Note: Spring AIB will not use date/conditional questions, so these are only for forecasting on the main site as you wish.
 
@@ -93,7 +93,7 @@ class SpringTemplateBot2026(ForecastBot):
 
     Then you can access the model in custom functions like this:
     ```python
-    research_strategy = self.get_llm("researcher", "model_name"
+    research_strategy = self.get_llm("researcher", "model_name")
     if research_strategy == "asknews/news-summaries":
         ...
     # OR
@@ -265,7 +265,7 @@ class SpringTemplateBot2026(ForecastBot):
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
-            (c) A description of an scenario that results in an unexpected outcome.
+            (c) A description of a scenario that results in an unexpected outcome.
 
             {self._get_conditional_disclaimer_if_necessary(question)}
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
@@ -436,7 +436,7 @@ class SpringTemplateBot2026(ForecastBot):
 
             Formatting Instructions:
             - This is a date question, and as such, the answer must be expressed in terms of dates.
-            - The dates must be written in the format of YYYY-MM-DD. If hours matter, please append the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ.No other formatting is allowed.
+            - The dates must be written in the format of YYYY-MM-DD. If hours matter, please append the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ. No other formatting is allowed.
             - Always start with a lower date chronologically and then increase from there.
             - Do NOT forget this. The dates must be written in chronological order starting at the earliest time at percentile 10 and increasing from there.
 

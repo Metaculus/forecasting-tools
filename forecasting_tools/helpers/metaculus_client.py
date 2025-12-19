@@ -400,7 +400,7 @@ class MetaculusClient:
         return questions
 
     @retry_with_exponential_backoff()
-    def get_current_user_id(self):
+    def get_current_user_id(self) -> int:
         self._sleep_between_requests()
         response = requests.get(
             f"{self.base_url}/users/me",
@@ -408,7 +408,7 @@ class MetaculusClient:
         )
         raise_for_status_with_additional_info(response)
         content = json.loads(response.content)
-        return content["id"]
+        return int(content["id"])
 
     @retry_with_exponential_backoff()
     def post_question_link(
