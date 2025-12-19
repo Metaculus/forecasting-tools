@@ -1,12 +1,12 @@
-from forecasting_tools.forecast_bots.official_bots.fall_research_only_bot import (
+from forecasting_tools.forecast_bots.official_bots.research_only_bot_2025_fall import (
     FallResearchOnlyBot2025,
 )
-from forecasting_tools.forecast_bots.official_bots.fall_template_bot import (
-    FallTemplateBot2025,
+from forecasting_tools.forecast_bots.official_bots.template_bot_2026_spring import (
+    SpringTemplateBot2026,
 )
 
 
-class TemplateBot(FallTemplateBot2025):
+class TemplateBot(SpringTemplateBot2026):
     pass
 
 

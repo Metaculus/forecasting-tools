@@ -108,6 +108,7 @@ class MetaculusClient:
     AI_COMPETITION_ID_Q1 = 32627  # https://www.metaculus.com/tournament/aibq1/
     AI_COMPETITION_ID_Q2 = 32721  # https://www.metaculus.com/tournament/aibq2/
     AIB_FALL_2025_ID = 32813  # https://www.metaculus.com/tournament/fall-aib-2025/
+    AIB_SPRING_2026_ID = 32916
     PRO_COMPARISON_TOURNAMENT_Q1 = 32631
     PRO_COMPARISON_TOURNAMENT_Q2 = (
         32761  # https://www.metaculus.com/tournament/pro-benchmark-q22025
@@ -118,6 +119,7 @@ class MetaculusClient:
     Q1_2025_QUARTERLY_CUP = 32630
     METACULUS_CUP_2025_1_ID = 32726  # Summer cup 2025
     METACULUS_CUP_FALL_2025_ID = 32828
+    METACULUS_CUP_SPRING_2026_ID = None
     AI_2027_TOURNAMENT_ID = "ai-2027"
     MAIN_FEED = 144  # site_main
 
@@ -126,7 +128,7 @@ class MetaculusClient:
 
     CURRENT_METACULUS_CUP_ID = METACULUS_CUP_FALL_2025_ID
     CURRENT_QUARTERLY_CUP_ID = CURRENT_METACULUS_CUP_ID  # Consider this parameter deprecated since quarterly cup is no longer active
-    CURRENT_AI_COMPETITION_ID = AIB_FALL_2025_ID
+    CURRENT_AI_COMPETITION_ID = AIB_SPRING_2026_ID
     CURRENT_MINIBENCH_ID = "minibench"
     CURRENT_MARKET_PULSE_ID = Q4_2025_MARKET_PULSE_ID
 
@@ -151,17 +153,6 @@ class MetaculusClient:
         self.sleep_jitter_seconds = sleep_jitter_seconds
 
     @retry_with_exponential_backoff()
-    def get_current_user_id(self):
-        self._sleep_between_requests()
-        response = requests.get(
-            f"{self.base_url}/users/me",
-            **self._get_auth_headers(),  # type: ignore
-        )
-        raise_for_status_with_additional_info(response)
-        content = json.loads(response.content)
-        return content["id"]
-
-    @retry_with_exponential_backoff()
     def post_question_comment(
         self,
         post_id: int,
@@ -183,102 +174,6 @@ class MetaculusClient:
         )
         logger.info(f"Posted comment on post {post_id}")
         raise_for_status_with_additional_info(response)
-
-    @retry_with_exponential_backoff()
-    def post_question_link(
-        self,
-        question1_id: int,
-        question2_id: int,
-        direction: int,
-        strength: int,
-        link_type: str,
-    ) -> int:
-        """
-        Posts a link between questions
-        :param question1_id
-        :param question2_id
-        :param direction: +1 for positive, -1 for negative
-        :param strength: 1 for low, 2 for medium, 5 for high
-        :param link_type: only supports "causal" for now
-        :return: id of the created link
-        """
-        self._sleep_between_requests()
-        response = requests.post(
-            f"{self.base_url}/coherence/links/create/",
-            json={
-                "question1_id": question1_id,
-                "question2_id": question2_id,
-                "direction": direction,
-                "strength": strength,
-                "type": link_type,
-            },
-            **self._get_auth_headers(),  # type: ignore
-            timeout=self.timeout,
-        )
-        logger.info(f"Posted question link between {question1_id} and {question2_id}")
-        raise_for_status_with_additional_info(response)
-        content = json.loads(response.content)
-        return content["id"]
-
-    @retry_with_exponential_backoff()
-    def get_links_for_question(self, question_id: int) -> List[DetailedCoherenceLink]:
-        """
-        Returns all links associated with a specific question
-        direction is +1 for positive and -1 for negative
-        strength is 1 for low, 2 for medium and 5 for high
-        """
-        self._sleep_between_requests()
-        response = requests.get(
-            f"{self.base_url}/coherence/question/{question_id}/links/",
-            **self._get_auth_headers(),  # type: ignore
-            timeout=self.timeout,
-        )
-        raise_for_status_with_additional_info(response)
-        content = json.loads(response.content)["data"]
-        links = [
-            DetailedCoherenceLink.from_metaculus_api_json(link) for link in content
-        ]
-        return links
-
-    @retry_with_exponential_backoff()
-    def delete_question_link(self, link_id: int):
-        self._sleep_between_requests()
-        response = requests.delete(
-            f"{self.base_url}/coherence/links/{link_id}/delete/",
-            **self._get_auth_headers(),  # type: ignore
-            timeout=self.timeout,
-        )
-        logger.info(f"Deleted question link with id {link_id}")
-        raise_for_status_with_additional_info(response)
-
-    @retry_with_exponential_backoff()
-    def get_needs_update_questions(
-        self,
-        question_id: int,
-        last_datetime: datetime,
-        user_id_for_links: int | None = None,
-    ) -> NeedsUpdateResponse:
-        self._sleep_between_requests()
-        json_data: dict[str, Any] = {"datetime": last_datetime.isoformat()}
-        if user_id_for_links:
-            json_data["user_id_for_links"] = user_id_for_links
-        response = requests.get(
-            f"{self.base_url}/coherence/question/{question_id}/links/needs-update/",
-            **self._get_auth_headers(),  # type: ignore
-            timeout=self.timeout,
-            json=json_data,
-        )
-        raise_for_status_with_additional_info(response)
-        content = json.loads(response.content)
-        questions = [
-            DataOrganizer.get_question_from_question_json(json_q)
-            for json_q in content["questions"]
-        ]
-        links = [
-            CoherenceLink.model_validate(json_link) for json_link in content["links"]
-        ]
-        result = NeedsUpdateResponse(questions=questions, links=links)
-        return result
 
     def post_binary_question_prediction(
         self, question_id: int, prediction_in_decimal: float
@@ -503,6 +398,113 @@ class MetaculusClient:
         )
         questions = typeguard.check_type(questions, list[BinaryQuestion])
         return questions
+
+    @retry_with_exponential_backoff()
+    def get_current_user_id(self) -> int:
+        self._sleep_between_requests()
+        response = requests.get(
+            f"{self.base_url}/users/me",
+            **self._get_auth_headers(),  # type: ignore
+        )
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)
+        return int(content["id"])
+
+    @retry_with_exponential_backoff()
+    def post_question_link(
+        self,
+        question1_id: int,
+        question2_id: int,
+        direction: int,
+        strength: int,
+        link_type: str,
+    ) -> int:
+        """
+        Posts a link between questions
+        :param question1_id
+        :param question2_id
+        :param direction: +1 for positive, -1 for negative
+        :param strength: 1 for low, 2 for medium, 5 for high
+        :param link_type: only supports "causal" for now
+        :return: id of the created link
+        """
+        self._sleep_between_requests()
+        response = requests.post(
+            f"{self.base_url}/coherence/links/create/",
+            json={
+                "question1_id": question1_id,
+                "question2_id": question2_id,
+                "direction": direction,
+                "strength": strength,
+                "type": link_type,
+            },
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        logger.info(f"Posted question link between {question1_id} and {question2_id}")
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)
+        return content["id"]
+
+    @retry_with_exponential_backoff()
+    def get_links_for_question(self, question_id: int) -> List[DetailedCoherenceLink]:
+        """
+        Returns all links associated with a specific question
+        direction is +1 for positive and -1 for negative
+        strength is 1 for low, 2 for medium and 5 for high
+        """
+        self._sleep_between_requests()
+        response = requests.get(
+            f"{self.base_url}/coherence/question/{question_id}/links/",
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)["data"]
+        links = [
+            DetailedCoherenceLink.from_metaculus_api_json(link) for link in content
+        ]
+        return links
+
+    @retry_with_exponential_backoff()
+    def delete_question_link(self, link_id: int):
+        self._sleep_between_requests()
+        response = requests.delete(
+            f"{self.base_url}/coherence/links/{link_id}/delete/",
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        logger.info(f"Deleted question link with id {link_id}")
+        raise_for_status_with_additional_info(response)
+
+    @retry_with_exponential_backoff()
+    def get_needs_update_questions(
+        self,
+        question_id: int,
+        last_datetime: datetime,
+        user_id_for_links: int | None = None,
+    ) -> NeedsUpdateResponse:
+        self._sleep_between_requests()
+        json_data: dict[str, Any] = {"datetime": last_datetime.isoformat()}
+        if user_id_for_links:
+            json_data["user_id_for_links"] = user_id_for_links
+        response = requests.get(
+            f"{self.base_url}/coherence/question/{question_id}/links/needs-update/",
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+            json=json_data,
+        )
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)
+        questions = [
+            DataOrganizer.get_question_from_question_json(json_q)
+            for json_q in content["questions"]
+        ]
+        links = [
+            CoherenceLink.model_validate(json_link) for json_link in content["links"]
+        ]
+        result = NeedsUpdateResponse(questions=questions, links=links)
+        return result
 
     def _get_auth_headers(self) -> dict[str, dict[str, str]]:
         METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")

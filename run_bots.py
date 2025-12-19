@@ -20,11 +20,11 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import DateQuestion, MetaculusQuestion
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
-from forecasting_tools.forecast_bots.official_bots.fall_research_only_bot import (
-    FallResearchOnlyBot2025,
-)
 from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
     GPT41OptimizedBot,
+)
+from forecasting_tools.forecast_bots.official_bots.research_only_bot_2025_fall import (
+    FallResearchOnlyBot2025,
 )
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot,
