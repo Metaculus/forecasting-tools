@@ -545,14 +545,14 @@ jobs:
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-  bot_grok_4_live_search:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_GROK_4_LIVE_SEARCH'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_LIVE_SEARCH }}
-      INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  # bot_grok_4_live_search: # live search is now deprecated
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_GROK_4_LIVE_SEARCH'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_LIVE_SEARCH }}
+  #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   # bot_sonnet_4_search:
   #   uses: ./.github/workflows/run-bot-launcher.yaml

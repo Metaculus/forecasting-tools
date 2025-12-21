@@ -557,7 +557,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="openrouter/nvidia/llama-3.1-nemotron-ultra-253b-v1",
-                    temperature=default_temperature,
+                    temperature=0,  # 0 is recommended for this model in non-reasoning mode
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -970,7 +970,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=grok_4_search_llm,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Live search is now deprecated
         },
         "METAC_SONNET_4_SEARCH": {
             "estimated_cost_per_question": 1.53366,
