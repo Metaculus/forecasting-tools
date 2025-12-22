@@ -30,6 +30,11 @@ from forecasting_tools.data_models.questions import (
     MetaculusQuestion,
     QuestionBasicType,
 )
+from forecasting_tools.data_models.user_response import (
+    TokenResponse,
+    TokenUserResponse,
+    UserResponse,
+)
 from forecasting_tools.util.misc import (
     add_timezone_to_dates_in_base_model,
     raise_for_status_with_additional_info,
@@ -158,6 +163,59 @@ class MetaculusClient:
         raise_for_status_with_additional_info(response)
         content = json.loads(response.content)
         return content["id"]
+
+    @retry_with_exponential_backoff()
+    def get_user_bots(self) -> list[UserResponse]:
+        self._sleep_between_requests()
+        response = requests.get(
+            f"{self.base_url}/users/me/bots/",
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)
+        bots = [
+            UserResponse(id=bot_data["id"], username=bot_data["username"])
+            for bot_data in content
+        ]
+        logger.info(f"Retrieved {len(bots)} bots for current user")
+        return bots
+
+    @retry_with_exponential_backoff()
+    def get_bot_token(self, bot_id: int) -> TokenResponse:
+        self._sleep_between_requests()
+        response = requests.get(
+            f"{self.base_url}/users/me/bots/{bot_id}/token/",
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)
+        token_response = TokenResponse(token=content["token"])
+        logger.info(f"Retrieved token for bot {bot_id}")
+        return token_response
+
+    @retry_with_exponential_backoff()
+    def create_bot(self, username: str) -> TokenUserResponse:
+        self._sleep_between_requests()
+        response = requests.post(
+            f"{self.base_url}/users/me/bots/create/",
+            json={"username": username},
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        raise_for_status_with_additional_info(response)
+        content = json.loads(response.content)
+
+        # Combine token and user data for TokenUserResponse
+        combined_data = {
+            "token": content["token"],
+            "id": content["user"]["id"],
+            "username": content["user"]["username"],
+        }
+        bot_response = TokenUserResponse(**combined_data)
+        logger.info(f"Created bot with username '{username}' and id {bot_response.id}")
+        return bot_response
 
     @retry_with_exponential_backoff()
     def post_question_comment(
