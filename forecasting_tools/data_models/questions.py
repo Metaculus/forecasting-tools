@@ -403,8 +403,15 @@ class BoundedQuestionMixin:
         lower_bound = api_json["question"]["scaling"]["range_min"]
         zero_point = api_json["question"]["scaling"]["zero_point"]
 
-        assert isinstance(upper_bound, float), f"Upper bound is {upper_bound}"
-        assert isinstance(lower_bound, float), f"Lower bound is {lower_bound}"
+        try:
+            upper_bound = float(upper_bound)
+            lower_bound = float(lower_bound)
+        except (TypeError, ValueError):
+            logger.error(
+                f"Error parsing bounds from API JSON. "
+                f"Upper bound: {upper_bound}, Lower bound: {lower_bound}"
+            )
+            raise
         return (
             open_upper_bound,
             open_lower_bound,
@@ -445,6 +452,7 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
     open_upper_bound: bool
     open_lower_bound: bool
     zero_point: float | None = None
+    cdf_size: int = 201
 
     @model_validator(mode="before")
     @classmethod
@@ -484,6 +492,7 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
             open_upper_bound=open_upper_bound,
             open_lower_bound=open_lower_bound,
             zero_point=zero_point,
+            cdf_size=cls._get_cdf_size_from_json(api_json),
             **normal_metaculus_question.model_dump(),
         )
 

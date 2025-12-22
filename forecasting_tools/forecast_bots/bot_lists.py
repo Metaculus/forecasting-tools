@@ -8,12 +8,6 @@ from forecasting_tools.forecast_bots.experiments.q2t_w_decomposition import (
 from forecasting_tools.forecast_bots.experiments.q4_veritas_bot import Q4VeritasBot
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.main_bot import MainBot
-from forecasting_tools.forecast_bots.official_bots.fall_research_only_bot import (
-    FallResearchOnlyBot2025,
-)
-from forecasting_tools.forecast_bots.official_bots.fall_template_bot import (
-    FallTemplateBot2025,
-)
 from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
     GPT41OptimizedBot,
 )
@@ -28,6 +22,15 @@ from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
 )
 from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
     Q4TemplateBot2024,
+)
+from forecasting_tools.forecast_bots.official_bots.research_only_bot_2025_fall import (
+    FallResearchOnlyBot2025,
+)
+from forecasting_tools.forecast_bots.official_bots.template_bot_2025_fall import (
+    FallTemplateBot2025,
+)
+from forecasting_tools.forecast_bots.official_bots.template_bot_2026_spring import (
+    SpringTemplateBot2026,
 )
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot,
@@ -44,12 +47,14 @@ def get_all_important_bot_classes() -> list[type[ForecastBot]]:
         Q4TemplateBot2024,
         Q3TemplateBot2024,
         FallTemplateBot2025,
+        FallResearchOnlyBot2025,
         Q1VeritasBot,
         Q4VeritasBot,
         UniformProbabilityBot,
         Q2TemplateBotWithDecompositionV1,
         Q2TemplateBotWithDecompositionV2,
         FallResearchOnlyBot2025,
+        SpringTemplateBot2026,
         GPT41OptimizedBot,
     ]
 

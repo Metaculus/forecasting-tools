@@ -15,6 +15,8 @@ from forecasting_tools.data_models.numeric_report import NumericReport
 def test_metaculus_report_is_jsonable() -> None:
     temp_writing_path = "temp/temp_metaculus_report.json"
     read_report_path = "code_tests/unit_tests/test_data_models/forecasting_test_data/metaculus_forecast_report_examples.json"
+    # TODO: Add examples for conditional and date reports (and discrete reports?)
+
     reports = DataOrganizer.load_reports_from_file_path(read_report_path)
     assert any(isinstance(report, NumericReport) for report in reports)
     assert any(isinstance(report, BinaryReport) for report in reports)

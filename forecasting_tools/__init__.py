@@ -101,6 +101,10 @@ from forecasting_tools.data_models.multiple_choice_report import (
     PredictedOptionList as PredictedOptionList,
 )
 from forecasting_tools.data_models.numeric_report import (
+    DatePercentile as DatePercentile,
+)
+from forecasting_tools.data_models.numeric_report import DateReport as DateReport
+from forecasting_tools.data_models.numeric_report import (
     DiscreteReport as DiscreteReport,
 )
 from forecasting_tools.data_models.numeric_report import (
@@ -108,6 +112,7 @@ from forecasting_tools.data_models.numeric_report import (
 )
 from forecasting_tools.data_models.numeric_report import NumericReport as NumericReport
 from forecasting_tools.data_models.questions import BinaryQuestion as BinaryQuestion
+from forecasting_tools.data_models.questions import DateQuestion as DateQuestion
 from forecasting_tools.data_models.questions import DiscreteQuestion as DiscreteQuestion
 from forecasting_tools.data_models.questions import (
     MetaculusQuestion as MetaculusQuestion,
@@ -124,16 +129,24 @@ MultipleChoiceReport.model_rebuild()
 ForecastReport.model_rebuild()
 NumericReport.model_rebuild()
 DiscreteReport.model_rebuild()
+DateReport.model_rebuild()
+from forecasting_tools.data_models.conditional_models import (
+    ConditionalPrediction as ConditionalPrediction,
+)
+from forecasting_tools.data_models.conditional_models import (
+    PredictionAffirmed as PredictionAffirmed,
+)
+from forecasting_tools.data_models.data_organizer import (
+    PredictionTypes as PredictionTypes,
+)
+from forecasting_tools.data_models.numeric_report import Percentile as Percentile
+from forecasting_tools.data_models.questions import (
+    ConditionalQuestion as ConditionalQuestion,
+)
 from forecasting_tools.data_models.questions import QuestionState as QuestionState
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot as ForecastBot
 from forecasting_tools.forecast_bots.forecast_bot import Notepad as Notepad
 from forecasting_tools.forecast_bots.main_bot import MainBot as MainBot
-from forecasting_tools.forecast_bots.official_bots.fall_research_only_bot import (
-    FallResearchOnlyBot2025 as FallResearchOnlyBot2025,
-)
-from forecasting_tools.forecast_bots.official_bots.fall_template_bot import (
-    FallTemplateBot2025 as FallTemplateBot2025,
-)
 from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
     GPT41OptimizedBot as GPT41OptimizedBot,
 )
@@ -148,6 +161,15 @@ from forecasting_tools.forecast_bots.official_bots.q3_template_bot import (
 )
 from forecasting_tools.forecast_bots.official_bots.q4_template_bot import (
     Q4TemplateBot2024 as Q4TemplateBot2024,
+)
+from forecasting_tools.forecast_bots.official_bots.research_only_bot_2025_fall import (
+    FallResearchOnlyBot2025 as FallResearchOnlyBot2025,
+)
+from forecasting_tools.forecast_bots.official_bots.template_bot_2025_fall import (
+    FallTemplateBot2025 as FallTemplateBot2025,
+)
+from forecasting_tools.forecast_bots.official_bots.template_bot_2026_spring import (
+    SpringTemplateBot2026 as SpringTemplateBot2026,
 )
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot as UniformProbabilityBot,

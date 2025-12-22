@@ -163,22 +163,6 @@ class ForecastBot(ABC):
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
         questions = MetaculusApi.get_all_open_questions_from_tournament(tournament_id)
-        supported_question_types = [
-            NumericQuestion,
-            MultipleChoiceQuestion,
-            BinaryQuestion,
-            ConditionalQuestion,
-        ]
-        supported_questions = [
-            question
-            for question in questions
-            if isinstance(question, tuple(supported_question_types))
-        ]
-        if len(supported_questions) != len(questions):
-            logger.warning(
-                f"Skipping {len(questions) - len(supported_questions)} questions that are not supported (probably date questions)"
-            )
-        questions = supported_questions
         return await self.forecast_questions(questions, return_exceptions)
 
     @overload
@@ -398,7 +382,10 @@ class ForecastBot(ABC):
             ]
 
             await self._handle_errors_in__run_individual_question(
-                all_predictions, research_errors, valid_prediction_set, exception_group
+                all_predictions=all_predictions,
+                research_errors=research_errors,
+                all_errors=all_errors,
+                exception_group=exception_group,
             )
 
             aggregated_prediction = await self._aggregate_predictions(
@@ -433,12 +420,12 @@ class ForecastBot(ABC):
         self,
         all_predictions: list[PredictionTypes],
         research_errors: list[str],
-        valid_prediction_set: list[ResearchWithPredictions[PredictionTypes]],
+        all_errors: list[str],
         exception_group: ExceptionGroup | None,
     ) -> None:
         if research_errors:
             logger.warning(f"Encountered errors while researching: {research_errors}")
-        if len(valid_prediction_set) == 0:
+        if len(all_predictions) == 0:
             assert exception_group, "Exception group should not be None"
             self._reraise_exception_with_prepended_message(
                 exception_group,
@@ -449,7 +436,7 @@ class ForecastBot(ABC):
             < self.expected_total_predictions * self.required_successful_predictions
         ):
             raise ValueError(
-                f"Expected at least {self.expected_total_predictions * self.required_successful_predictions} successful predictions, but only got {len(all_predictions)}"
+                f"Expected at least {self.expected_total_predictions * self.required_successful_predictions} successful predictions, but only got {len(all_predictions)}. Errors encountered: {all_errors}"
             )
 
     async def _aggregate_predictions(
@@ -520,7 +507,7 @@ class ForecastBot(ABC):
         elif isinstance(question, ConditionalQuestion):
             forecast_function = lambda q, r: self._run_forecast_on_conditional(q, r)
         elif isinstance(question, DateQuestion):
-            raise NotImplementedError("Date questions not supported yet")
+            forecast_function = lambda q, r: self._run_forecast_on_date(q, r)
         else:
             raise ValueError(f"Unknown question type: {type(question)}")
 
@@ -537,6 +524,12 @@ class ForecastBot(ABC):
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
+        raise NotImplementedError("Subclass must implement this method")
+
+    async def _run_forecast_on_date(
+        self, question: DateQuestion, research: str
+    ) -> ReasonedPrediction[NumericDistribution]:
+        # Return a numeric distribution of timestamps
         raise NotImplementedError("Subclass must implement this method")
 
     async def _run_forecast_on_conditional(
@@ -993,6 +986,8 @@ class ForecastBot(ABC):
             summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
 
         if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
+            researcher = "asknews/news-summaries"
+        elif os.getenv("ASKNEWS_API_KEY"):
             researcher = "asknews/news-summaries"
         elif os.getenv("PERPLEXITY_API_KEY"):
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)

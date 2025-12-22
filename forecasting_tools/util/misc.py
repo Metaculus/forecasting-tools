@@ -38,11 +38,11 @@ def raise_for_status_with_additional_info(
 
 
 def retry_with_exponential_backoff(
-    max_retries: int = 4,
-    initial_delay: float = 10.0,
-    exponential_base: float = 2.0,
-    jitter_factor: float = 2.0,
-    max_delay: float = 60.0,
+    max_retries: int = 3,
+    initial_delay: float = 2.5,
+    exponential_base: float = 3,
+    jitter_factor: float = 8.0,
+    max_delay: float = 75.0,
     retry_on_exceptions: tuple[type[Exception], ...] = (
         requests.exceptions.RequestException,
         requests.exceptions.Timeout,

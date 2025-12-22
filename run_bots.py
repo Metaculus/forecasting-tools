@@ -20,11 +20,11 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import DateQuestion, MetaculusQuestion
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
-from forecasting_tools.forecast_bots.official_bots.fall_research_only_bot import (
-    FallResearchOnlyBot2025,
-)
 from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
     GPT41OptimizedBot,
+)
+from forecasting_tools.forecast_bots.official_bots.research_only_bot_2025_fall import (
+    FallResearchOnlyBot2025,
 )
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot,
@@ -106,7 +106,7 @@ class TournConfig:
     aib_and_site = aib_only.copy() + main_site_tourns.copy()
     every_x_days_tourns = [AllowedTourn.METACULUS_CUP]
     experimental = []
-    none = []
+    NONE = []
 
     forecasts_per_main_site_question: int = 5
 
@@ -392,12 +392,13 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     guess_at_deepseek_v3_1_cost = roughly_deepseek_r1_cost / 2
     roughly_one_call_to_grok_4_llm = 0.084
     roughly_sonar_deep_research_cost_per_call = 1.35399 / 3
+    roughly_opus_4_5_cost = 1.5
 
     sonnet_4_name = "anthropic/claude-sonnet-4-20250514"
     sonnet_4_5_name = "anthropic/claude-sonnet-4-5-20250929"
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_3_pro = "openrouter/google/gemini-3-pro-preview"
-    gemini_default_timeout = 120
+    gemini_default_timeout = 5 * 60
     deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-5-20250929"  # Switched from claude-sonnet-4-20250514 in Nov 2025
     roughly_sonnet_4_cost = 0.25190
     roughly_gpt_5_high_cost = 0.37868
@@ -414,6 +415,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     claude_thinking_settings_32k: dict = make_claude_thinking_settings(
         thinking_tokens=32000, max_tokens=64000
     )
+    gpt_5_timeout = 15 * 60
 
     gemini_grounding_llm = GeneralLlm(
         model=gemini_2_5_pro,
@@ -504,6 +506,93 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        # "METAC_GROK_4_1_HIGH": {} # TODO: Add these bots to github workflow. Its not yet released via API as of Dec 21st, 2025
+        # "METAC_GROK_4_1": {}
+        ############################ Bots started in December 2025 ############################
+        "METAC_CLAUDE_OPUS_4_5_HIGH_32K": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 1.3,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-opus-4-5",
+                    **claude_thinking_settings_32k,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_CLAUDE_OPUS_4_5": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-opus-4-5",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_only,
+        },
+        "METAC_GPT_5_2_HIGH": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost * 1.5,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.2",
+                    reasoning_effort="high",
+                    temperature=default_temperature,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GPT_5_2": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 1.5,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.2",
+                    temperature=default_temperature,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_only,
+        },
+        "METAC_LLAMA_3_1_NEMOTRON_ULTRA_253B": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/nvidia/llama-3.1-nemotron-ultra-253b-v1",
+                    temperature=0,  # 0 is recommended for this model in non-reasoning mode
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GEMINI_3_FLASH": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost * 2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/google/gemini-3-flash-preview",
+                    temperature=default_temperature,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GLM_4_6": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/z-ai/glm-4.6",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_LLAMA_3_1_405B_INSTRUCT": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost * 3,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/meta-llama/llama-3.1-405b-instruct",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.NONE,  # Removed since low performance and non-negligible cost
+        },
         ############################ Bots started in November 2025 ############################
         "METAC_KIMI_K2_HIGH": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
@@ -523,7 +612,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openai/gpt-5.1",
                     reasoning_effort="high",
                     temperature=default_temperature,
-                    timeout=15 * 60,
+                    timeout=gpt_5_timeout,
                     # **flex_price_settings,
                 ),
             ),
@@ -535,7 +624,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openai/gpt-5.1",
                     temperature=default_temperature,
-                    timeout=15 * 60,
+                    timeout=gpt_5_timeout,
                     # **flex_price_settings,
                 ),
             ),
@@ -616,6 +705,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning={
                         "enabled": True,
                     },
+                    timeout=5 * 60,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -629,9 +719,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning={
                         "enabled": False,
                     },
+                    timeout=3 * 60,
                 ),
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_GROK_4_FAST_HIGH": {
             "estimated_cost_per_question": guess_at_deepseek_v3_1_cost * 1.2,
@@ -651,7 +742,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         ############################ Bots started in Fall 2025 ############################
         ### Regular Bots
@@ -662,7 +753,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openai/gpt-5",
                     reasoning_effort="high",
                     temperature=default_temperature,
-                    timeout=15 * 60,
+                    timeout=gpt_5_timeout,
                     # **flex_price_settings,
                 ),
             ),
@@ -674,7 +765,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openai/gpt-5",
                     temperature=default_temperature,
-                    timeout=15 * 60,
+                    timeout=gpt_5_timeout,
                     # **flex_price_settings,
                 ),
             ),
@@ -785,6 +876,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning={
                         "enabled": True,
                     },
+                    timeout=3 * 60,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
@@ -821,7 +913,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 bot_type="research_only",
             ),
             "discontinued": True,
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_SONAR_DEEP_RESEARCH": {
             "estimated_cost_per_question": 3
@@ -842,7 +934,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_GEMINI_2_5_PRO_GROUNDING": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost
@@ -878,7 +970,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=grok_4_search_llm,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Live search is now deprecated
         },
         "METAC_SONNET_4_SEARCH": {
             "estimated_cost_per_question": 1.53366,
@@ -967,17 +1059,17 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         "METAC_GROK_4_TOOLS": {
             "estimated_cost_per_question": None,
             "bot": None,
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },  # Don't have time to implement this, but this is a env variable that exists
         "METAC_GPT_5_HIGH_TOOLS": {
             "estimated_cost_per_question": None,
             "bot": None,
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },  # Don't have time to implement this, but this is a env variable that exists
         "METAC_SONNET_4_HIGH_TOOLS": {
             "estimated_cost_per_question": None,
             "bot": None,
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },  # Don't have time to implement this, but this is a env variable that exists
         ############################ Bots started in Q2 2025 ############################
         "METAC_GEMINI_2_5_PRO_GEMINI_2_5_PRO_GROUNDING": {
@@ -990,7 +1082,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 researcher=gemini_grounding_llm,
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_GEMINI_2_5_PRO_SONAR_REASONING_PRO": {
             "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
@@ -1005,7 +1097,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **default_perplexity_settings,
                 ),
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_GEMINI_2_5_EXA_PRO": {
             "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
@@ -1019,7 +1111,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="exa/exa"
                 ),  # NOTE: Used to be exa-pro but that got deprecated
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_SONAR_PRO": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -1109,7 +1201,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 default_research_comparison_forecast_llm,
                 researcher="smart-searcher/openrouter/deepseek/deepseek-r1",
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_ASK_EXA_PRO": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -1140,7 +1232,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # **flex_price_settings,
                 ),
             ),
-            "tournaments": TournConfig.none + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE + [AllowedTourn.METACULUS_CUP],
         },
         "METAC_O3_TOKEN": {
             "estimated_cost_per_question": 0.16 * 0.8,
@@ -1226,7 +1318,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning_effort="high",
                 ),
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_O1_TOKEN": {
             "estimated_cost_per_question": 1.15,
@@ -1247,7 +1339,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_O3_MINI_HIGH_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_cost,
@@ -1258,7 +1350,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning_effort="high",
                 ),
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_O3_MINI_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_cost,
@@ -1269,7 +1361,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning_effort="medium",
                 ),
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_GPT_4O_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_cost,
@@ -1315,7 +1407,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=160,
                 ),
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost,
@@ -1325,7 +1417,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost,
@@ -1335,7 +1427,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.none,  # NOTE: No longer available (model deprecated by Anthropic)
+            "tournaments": TournConfig.NONE,  # NOTE: No longer available (model deprecated by Anthropic)
         },
         "METAC_CLAUDE_3_5_SONNET_20240620_TOKEN": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost,
@@ -1345,7 +1437,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.none,  # NOTE: No longer available (model deprecated by Anthropic)
+            "tournaments": TournConfig.NONE,  # NOTE: No longer available (model deprecated by Anthropic)
         },
         "METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN": {
             "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
@@ -1366,7 +1458,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.none,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_LLAMA_4_MAVERICK_17B_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
