@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pydantic import computed_field
 
 from forecasting_tools.data_models.conditional_models import (
@@ -13,6 +15,9 @@ from forecasting_tools.data_models.questions import (
     MetaculusQuestion,
 )
 from forecasting_tools.util.misc import clean_indents
+
+if TYPE_CHECKING:
+    from forecasting_tools.helpers.metaculus_client import MetaculusClient
 
 
 class ConditionalReport(ForecastReport):
@@ -128,10 +133,11 @@ class ConditionalReport(ForecastReport):
         """
         )
 
-    async def publish_report_to_metaculus(self) -> None:
-        # if not isinstance(self.parent_report.prediction, PredictionAffirmed):
-        #    await self.parent_report.publish_report_to_metaculus()
-        # if not isinstance(self.child_report.prediction, PredictionAffirmed):
-        #    await self.child_report.publish_report_to_metaculus()
-        await self.yes_report.publish_report_to_metaculus()
-        await self.no_report.publish_report_to_metaculus()
+    async def publish_report_to_metaculus(
+        self, metaculus_client: MetaculusClient | None = None
+    ) -> None:
+        from forecasting_tools.helpers.metaculus_client import MetaculusClient
+
+        metaculus_client = metaculus_client or MetaculusClient()
+        await self.yes_report.publish_report_to_metaculus(metaculus_client)
+        await self.no_report.publish_report_to_metaculus(metaculus_client)

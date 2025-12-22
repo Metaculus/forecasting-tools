@@ -11,6 +11,7 @@ from forecasting_tools.data_models.forecast_report import ForecastReport
 
 if TYPE_CHECKING:
     from forecasting_tools.data_models.questions import BinaryQuestion
+    from forecasting_tools.helpers.metaculus_client import MetaculusClient
 
 logger = logging.getLogger(__name__)
 
@@ -50,19 +51,24 @@ class BinaryReport(ForecastReport):
             raise ValueError("Prediction must be between 0 and 1")
         return v
 
-    async def publish_report_to_metaculus(self) -> None:
-        from forecasting_tools.helpers.metaculus_api import MetaculusApi
+    async def publish_report_to_metaculus(
+        self, metaculus_client: MetaculusClient | None = None
+    ) -> None:
+        from forecasting_tools.helpers.metaculus_client import MetaculusClient
 
+        metaculus_client = metaculus_client or MetaculusClient()
         if self.question.id_of_question is None:
             raise ValueError("Question ID is None")
         if self.question.id_of_post is None:
             raise ValueError(
                 "Publishing to Metaculus requires a post ID for the question"
             )
-        MetaculusApi.post_binary_question_prediction(
+        metaculus_client.post_binary_question_prediction(
             self.question.id_of_question, self.prediction
         )
-        MetaculusApi.post_question_comment(self.question.id_of_post, self.explanation)
+        metaculus_client.post_question_comment(
+            self.question.id_of_post, self.explanation
+        )
 
     @classmethod
     async def aggregate_predictions(

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field, model_validator
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
 from forecasting_tools.data_models.questions import MultipleChoiceQuestion
+
+if TYPE_CHECKING:
+    from forecasting_tools.helpers.metaculus_client import MetaculusClient
 
 logger = logging.getLogger(__name__)
 
@@ -95,8 +99,12 @@ class MultipleChoiceReport(ForecastReport):
     def community_prediction(self) -> PredictedOptionList | None:
         raise NotImplementedError("Not implemented")
 
-    async def publish_report_to_metaculus(self) -> None:
-        from forecasting_tools.helpers.metaculus_api import MetaculusApi
+    async def publish_report_to_metaculus(
+        self, metaculus_client: MetaculusClient | None = None
+    ) -> None:
+        from forecasting_tools.helpers.metaculus_client import MetaculusClient
+
+        metaculus_client = metaculus_client or MetaculusClient()
 
         if self.question.id_of_question is None:
             raise ValueError("Question ID is None")
@@ -108,10 +116,12 @@ class MultipleChoiceReport(ForecastReport):
             raise ValueError(
                 "Publishing to Metaculus requires a post ID for the question"
             )
-        MetaculusApi.post_multiple_choice_question_prediction(
+        metaculus_client.post_multiple_choice_question_prediction(
             self.question.id_of_question, options_with_probabilities
         )
-        MetaculusApi.post_question_comment(self.question.id_of_post, self.explanation)
+        metaculus_client.post_question_comment(
+            self.question.id_of_post, self.explanation
+        )
 
     @classmethod
     async def aggregate_predictions(
