@@ -734,14 +734,14 @@ jobs:
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
-  bot_deepseek_r1_sonar_reasoning:
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: 'METAC_DEEPSEEK_R1_SONAR_REASONING'
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_REASONING }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+  # bot_deepseek_r1_sonar_reasoning:
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: 'METAC_DEEPSEEK_R1_SONAR_REASONING'
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_REASONING }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
   # bot_only_sonar_reasoning_pro:
   #   uses: ./.github/workflows/run-bot-launcher.yaml

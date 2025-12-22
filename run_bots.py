@@ -1164,7 +1164,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **default_perplexity_settings,
                 ),
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # sonar-reasoning is now deprecated
         },
         "METAC_ONLY_SONAR_REASONING_PRO": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
