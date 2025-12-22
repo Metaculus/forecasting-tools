@@ -151,11 +151,13 @@ class MetaculusClient:
         timeout: int = 30,
         sleep_seconds_between_requests: float = 3.5,
         sleep_jitter_seconds: float = 1,
+        token: str | None = None,
     ):
         self.base_url = base_url
         self.timeout = timeout
         self.sleep_time_between_requests_min = sleep_seconds_between_requests
         self.sleep_jitter_seconds = sleep_jitter_seconds
+        self.token = token
 
     @retry_with_exponential_backoff()
     def get_user_bots(self) -> list[UserResponse]:
@@ -565,9 +567,9 @@ class MetaculusClient:
         return result
 
     def _get_auth_headers(self) -> dict[str, dict[str, str]]:
-        METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
+        METACULUS_TOKEN = self.token or os.getenv("METACULUS_TOKEN")
         if METACULUS_TOKEN is None:
-            raise ValueError("METACULUS_TOKEN environment variable not set")
+            raise ValueError("METACULUS_TOKEN environment variable or field not set")
         return {
             "headers": {
                 "Authorization": f"Token {METACULUS_TOKEN}",
