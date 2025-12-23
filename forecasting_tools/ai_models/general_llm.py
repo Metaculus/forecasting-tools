@@ -88,7 +88,7 @@ class GeneralLlm(
             "timeout": 80,
         },
         "deepseek/": {
-            "timeout": 80,
+            "timeout": 150,
         },
         "perplexity/": {
             "timeout": 120,
