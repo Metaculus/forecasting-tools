@@ -12,7 +12,7 @@ from forecasting_tools.util.jsonable import Jsonable
 
 if TYPE_CHECKING:
     from forecasting_tools.data_models.questions import MetaculusQuestion
-
+    from forecasting_tools.helpers.metaculus_client import MetaculusClient
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
@@ -128,7 +128,9 @@ class ForecastReport(BaseModel, Jsonable, ABC):
         raise NotImplementedError("Subclass must implement this abstract method")
 
     @abstractmethod
-    async def publish_report_to_metaculus(self) -> None:
+    async def publish_report_to_metaculus(
+        self, metaculus_client: MetaculusClient | None = None
+    ) -> None:
         raise NotImplementedError("Subclass must implement this abstract method")
 
     def _get_and_validate_section(self, index: int, expected_word: str) -> MarkdownTree:

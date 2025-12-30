@@ -17,7 +17,7 @@ if TYPE_CHECKING:
         DiscreteQuestion,
         NumericQuestion,
     )
-
+    from forecasting_tools.helpers.metaculus_client import MetaculusClient
 logger = logging.getLogger(__name__)
 
 
@@ -650,8 +650,12 @@ class NumericReport(ForecastReport):
             readable += f"- {percentile.percentile:.2%} chance of value below {formatted_value}\n"
         return readable
 
-    async def publish_report_to_metaculus(self) -> None:
+    async def publish_report_to_metaculus(
+        self, metaculus_client: MetaculusClient | None = None
+    ) -> None:
         from forecasting_tools.helpers.metaculus_client import MetaculusClient
+
+        metaculus_client = metaculus_client or MetaculusClient()
 
         if self.question.id_of_question is None:
             raise ValueError("Publishing to Metaculus requires a question ID")
@@ -671,10 +675,10 @@ class NumericReport(ForecastReport):
             percentile.percentile for percentile in prediction.get_cdf()
         ]
 
-        MetaculusClient().post_numeric_question_prediction(
+        metaculus_client.post_numeric_question_prediction(
             self.question.id_of_question, cdf_probabilities
         )
-        MetaculusClient().post_question_comment(
+        metaculus_client.post_question_comment(
             self.question.id_of_post, self.explanation
         )
 

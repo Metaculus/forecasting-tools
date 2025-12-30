@@ -39,7 +39,7 @@ from forecasting_tools.data_models.questions import (
     MultipleChoiceQuestion,
     NumericQuestion,
 )
-from forecasting_tools.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.helpers.metaculus_client import MetaculusClient
 from forecasting_tools.util.misc import clean_indents
 
 T = TypeVar("T")
@@ -87,6 +87,7 @@ class ForecastBot(ABC):
         parameters_to_exclude_from_config_dict: list[str] | None = None,
         extra_metadata_in_explanation: bool = False,
         required_successful_predictions: float = 0.5,
+        metaculus_client: MetaculusClient | None = None,
     ) -> None:
         assert (
             research_reports_per_question > 0
@@ -117,6 +118,7 @@ class ForecastBot(ABC):
         self._note_pads: list[Notepad] = []
         self._note_pad_lock = asyncio.Lock()
         self._llms = llms or self._llm_config_defaults()
+        self.metaculus_client = metaculus_client or MetaculusClient()
 
         for purpose, llm in self._llm_config_defaults().items():
             if purpose not in self._llms:
@@ -162,7 +164,9 @@ class ForecastBot(ABC):
         tournament_id: int | str,
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
-        questions = MetaculusApi.get_all_open_questions_from_tournament(tournament_id)
+        questions = self.metaculus_client.get_all_open_questions_from_tournament(
+            tournament_id
+        )
         return await self.forecast_questions(questions, return_exceptions)
 
     @overload
@@ -412,7 +416,9 @@ class ForecastBot(ABC):
             errors=all_errors,
         )
         if self.publish_reports_to_metaculus:
-            await report.publish_report_to_metaculus()
+            await report.publish_report_to_metaculus(
+                metaculus_client=self.metaculus_client
+            )
         await self._remove_notepad(question)
         return report
 
@@ -548,8 +554,8 @@ class ForecastBot(ABC):
         full_prediction = ConditionalPrediction(
             parent=PredictionAffirmed(),
             child=PredictionAffirmed(),
-            prediction_yes=yes_info.prediction_value,
-            prediction_no=no_info.prediction_value,
+            prediction_yes=yes_info.prediction_value,  # type: ignore
+            prediction_no=no_info.prediction_value,  # type: ignore
         )
         return ReasonedPrediction(
             reasoning=full_reasoning, prediction_value=full_prediction
