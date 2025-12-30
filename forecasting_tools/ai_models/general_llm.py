@@ -304,8 +304,11 @@ class GeneralLlm(
             logger.warning(
                 f"Model {self.model} returned an empty string as an answer. Raising exception (though this will probably result in a retry)"
             )
+            message_prompt = str(prompt)
+            if len(message_prompt) > 2000:
+                message_prompt = message_prompt[:1000] + "..." + message_prompt[-1000:]
             raise RuntimeError(
-                f"LLM answer is an empty string. The model was {self.model} and the prompt was: {prompt}"
+                f"LLM answer is an empty string. The model was {self.model} and the prompt was: {message_prompt}"
             )
 
         direct_cost = LitellmCostTracker.extract_cost_from_hidden_params(
