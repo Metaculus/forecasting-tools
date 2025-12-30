@@ -757,7 +757,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # **flex_price_settings,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,
         },
         "METAC_GPT_5": {
             "estimated_cost_per_question": roughly_gpt_5_cost,
@@ -769,7 +769,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # **flex_price_settings,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,
         },
         "METAC_GPT_5_MINI": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
@@ -800,7 +800,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **claude_thinking_settings_16k,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,
         },
         "METAC_CLAUDE_4_SONNET": {
             "estimated_cost_per_question": roughly_sonnet_4_cost,
@@ -810,7 +810,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_CLAUDE_4_1_OPUS_HIGH_16K": {
             "estimated_cost_per_question": 1.56,
@@ -820,7 +820,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **claude_thinking_settings_16k,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,
         },
         "METAC_GROK_4": {
             "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_llm,
@@ -1013,7 +1013,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=default_research_comparison_forecast_llm,
                 researcher=grok_4_search_llm,
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Live search is now deprecated
         },
         "METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost + 1.5 / 3,
@@ -1232,7 +1232,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # **flex_price_settings,
                 ),
             ),
-            "tournaments": TournConfig.NONE + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,
         },
         "METAC_O3_TOKEN": {
             "estimated_cost_per_question": 0.16 * 0.8,
@@ -1448,7 +1448,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gemini_default_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,
         },
         "METAC_GEMINI_2_0_FLASH_TOKEN": {
             "estimated_cost_per_question": 0.05,
