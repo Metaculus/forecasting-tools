@@ -10,7 +10,7 @@ from forecasting_tools.agents_and_tools.research.key_factors_researcher import (
     ScoredKeyFactor,
 )
 from forecasting_tools.data_models.questions import MetaculusQuestion, QuestionState
-from forecasting_tools.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.helpers.metaculus_client import MetaculusClient
 from forecasting_tools.util import file_manipulation
 from forecasting_tools.util.custom_logger import CustomLogger
 
@@ -58,7 +58,7 @@ async def run_key_factors_on_tournament(
     if tournament_id is None:
         questions = post_id_or_string_question
     else:
-        tournament_questions = MetaculusApi.get_all_open_questions_from_tournament(
+        tournament_questions = MetaculusClient().get_all_open_questions_from_tournament(
             tournament_id,
         )
         open_questions = [
@@ -103,7 +103,7 @@ async def _process_question(question: int | str | MetaculusQuestion) -> dict:
             api_json={},
         )
     if isinstance(question, int):
-        metaculus_question = MetaculusApi.get_question_by_post_id(question)
+        metaculus_question = MetaculusClient().get_question_by_post_id(question)
     else:
         assert isinstance(question, MetaculusQuestion)
         metaculus_question = question
