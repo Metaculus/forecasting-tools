@@ -130,12 +130,13 @@ class MetaculusClient:
 
     Q3_2025_MARKET_PULSE_ID = "market-pulse-25q3"
     Q4_2025_MARKET_PULSE_ID = "market-pulse-25q4"
+    Q1_2026_MARKET_PULSE_ID = "market-pulse-26q1"
 
     CURRENT_METACULUS_CUP_ID = METACULUS_CUP_FALL_2025_ID
     CURRENT_QUARTERLY_CUP_ID = CURRENT_METACULUS_CUP_ID  # Consider this parameter deprecated since quarterly cup is no longer active
     CURRENT_AI_COMPETITION_ID = AIB_SPRING_2026_ID
     CURRENT_MINIBENCH_ID = "minibench"
-    CURRENT_MARKET_PULSE_ID = Q4_2025_MARKET_PULSE_ID
+    CURRENT_MARKET_PULSE_ID = Q1_2026_MARKET_PULSE_ID
 
     TEST_QUESTION_URLS = [
         "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary

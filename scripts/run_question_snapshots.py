@@ -11,7 +11,7 @@ from forecasting_tools.auto_optimizers.question_plus_research import (
 )
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import MetaculusQuestion
-from forecasting_tools.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.helpers.metaculus_client import MetaculusClient
 from forecasting_tools.util.custom_logger import CustomLogger
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ async def grab_questions(include_research: bool) -> None:
     # --- Parameters ---
     target_questions_to_use = 500
     target_training_size = 50
-    chosen_questions = MetaculusApi.get_benchmark_questions(
+    chosen_questions = MetaculusClient().get_benchmark_questions(
         target_questions_to_use,
         max_days_since_opening=365 + 180,
         days_to_resolve_in=None,

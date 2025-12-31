@@ -37,7 +37,7 @@ async def benchmark_forecast_bots() -> None:
     bots = get_chosen_q2_bots()
     additional_code_to_snapshot = []
     # num_questions_to_use = 150
-    # chosen_questions = MetaculusApi.get_benchmark_questions(
+    # chosen_questions = MetaculusClient().get_benchmark_questions(
     #     num_questions_to_use,
     # )
     snapshots = QuestionPlusResearch.load_json_from_file_path(

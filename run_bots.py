@@ -30,7 +30,8 @@ from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot impor
     UniformProbabilityBot,
 )
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
-from forecasting_tools.helpers.metaculus_api import ApiFilter, MetaculusApi
+from forecasting_tools.helpers.metaculus_api import ApiFilter
+from forecasting_tools.helpers.metaculus_client import MetaculusClient
 from forecasting_tools.helpers.structure_output import DEFAULT_STRUCTURE_OUTPUT_MODEL
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,7 @@ default_for_publish_to_metaculus = True
 default_for_using_summary = False
 default_num_forecasts_for_research_only_bot = 3
 structure_output_model = DEFAULT_STRUCTURE_OUTPUT_MODEL
+default_metaculus_client = MetaculusClient()
 
 
 class ScheduleConfig:
@@ -84,10 +86,10 @@ class ScheduleConfig:
 
 
 class AllowedTourn(Enum):
-    MINIBENCH = MetaculusApi.CURRENT_MINIBENCH_ID
-    MAIN_AIB = MetaculusApi.CURRENT_AI_COMPETITION_ID
+    MINIBENCH = MetaculusClient.CURRENT_MINIBENCH_ID
+    MAIN_AIB = MetaculusClient.CURRENT_AI_COMPETITION_ID
     MAIN_SITE = "main-site"
-    METACULUS_CUP = MetaculusApi.CURRENT_METACULUS_CUP_ID
+    METACULUS_CUP = MetaculusClient.CURRENT_METACULUS_CUP_ID
     GULF_BREEZE = 32810  # https://www.metaculus.com/tournament/GB/
     DEMOCRACY_THREAT_INDEX = (
         32829  # https://www.metaculus.com/index/us-democracy-threat/
@@ -214,7 +216,7 @@ async def get_questions_for_config(
 
 
 def _get_aib_questions(tournament: AllowedTourn) -> list[MetaculusQuestion]:
-    aib_questions = MetaculusApi.get_all_open_questions_from_tournament(
+    aib_questions = default_metaculus_client.get_all_open_questions_from_tournament(
         tournament.value
     )
     filtered_questions = []
@@ -229,8 +231,10 @@ def _get__every_x_days__questions(
 ) -> list[MetaculusQuestion]:
     tournament_questions: list[MetaculusQuestion] = []
     for tournament in tournaments:
-        tournament_questions += MetaculusApi.get_all_open_questions_from_tournament(
-            tournament.value
+        tournament_questions += (
+            default_metaculus_client.get_all_open_questions_from_tournament(
+                tournament.value
+            )
         )
 
     filtered_questions = []
@@ -257,7 +261,7 @@ async def _get_questions_for_main_site(
         target_months_from_now = pendulum.now(tz="UTC").add(
             days=31 * months_ahead_to_check
         )
-        site_questions += await MetaculusApi.get_questions_matching_filter(
+        site_questions += await default_metaculus_client.get_questions_matching_filter(
             ApiFilter(
                 is_in_main_feed=True,
                 allowed_statuses=["open"],
@@ -270,9 +274,11 @@ async def _get_questions_for_main_site(
 
     other_tourns = [t for t in main_site_tourns if t != AllowedTourn.MAIN_SITE]
     for tournament in other_tourns:
-        site_questions += MetaculusApi.get_all_open_questions_from_tournament(
-            tournament.value,
-            group_question_mode="unpack_subquestions",
+        site_questions += (
+            default_metaculus_client.get_all_open_questions_from_tournament(
+                tournament.value,
+                group_question_mode="unpack_subquestions",
+            )
         )
 
     filtered_questions = []
@@ -1329,7 +1335,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning_effort="medium",
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,
         },
         "METAC_O1_MINI_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_cost,
