@@ -1,9 +1,7 @@
 """
 Script to generate a CSV table of bot costs per tournament.
 
-For each bot, shows:
-- The estimated cost per question
-- The cost for each tournament (cost if bot runs on that tournament, 0 if not)
+IMPORTANT: Please note that the observed cost of the bots ends up being roughly 2x the estimated costs in Fall 2025 AIB.
 """
 
 import csv
