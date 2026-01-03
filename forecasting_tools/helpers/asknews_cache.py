@@ -7,6 +7,8 @@ from typing import Literal
 
 import pendulum
 
+from forecasting_tools.util.file_manipulation import add_to_jsonl_file, load_jsonl_file
+
 
 class AskNewsCache:
     _cache_directory = Path.home() / ".cache" / "forecasting_tools" / "asknews"
@@ -32,7 +34,7 @@ class AskNewsCache:
         return f"{today}_{query_hash}"
 
     def _get_cache_filepath(self, cache_key: str) -> Path:
-        return self._cache_directory / f"{cache_key}.json"
+        return self._cache_directory / f"{cache_key}.jsonl"
 
     def get(self, query: str) -> str | None:
         if self.cache_mode == "no_cache":
@@ -49,8 +51,9 @@ class AskNewsCache:
             return None
 
         try:
-            with open(cache_file, "r") as f:
-                cache_data = json.load(f)
+            cache_data = load_jsonl_file(str(cache_file))
+            assert len(cache_data) == 1, "Cache file should contain only one entry"
+            cache_data = cache_data[0]
 
             cached_time = pendulum.parse(cache_data["timestamp"])
             assert isinstance(cached_time, pendulum.DateTime)
@@ -79,14 +82,16 @@ class AskNewsCache:
         cache_key = self._get_cache_key(query)
         cache_file = self._get_cache_filepath(cache_key)
 
+        if cache_file.exists():
+            cache_file.unlink()
+
         cache_data = {
             "query": query,
             "result": result,
             "timestamp": pendulum.now(tz="UTC").to_iso8601_string(),
         }
 
-        with open(cache_file, "w") as f:
-            json.dump(cache_data, f)
+        add_to_jsonl_file(str(cache_file), [cache_data])
 
     def clear_expired_entries(self) -> int:
         if self.cache_mode == "no_cache":
@@ -95,10 +100,11 @@ class AskNewsCache:
         count = 0
         current_timestamp = pendulum.now(tz="UTC").timestamp()
 
-        for cache_file in self._cache_directory.glob("*.json"):
+        for cache_file in self._cache_directory.glob("*.jsonl"):
             try:
-                with open(cache_file, "r") as f:
-                    cache_data = json.load(f)
+                cache_data = load_jsonl_file(str(cache_file))
+                assert len(cache_data) == 1, "Cache file should contain only one entry"
+                cache_data = cache_data[0]
 
                 cached_time = pendulum.parse(cache_data["timestamp"])
                 assert isinstance(cached_time, pendulum.DateTime)
@@ -116,7 +122,7 @@ class AskNewsCache:
 
     def clear_all(self) -> int:
         count = 0
-        for cache_file in self._cache_directory.glob("*.json"):
+        for cache_file in self._cache_directory.glob("*.jsonl"):
             cache_file.unlink()
             count += 1
         return count
