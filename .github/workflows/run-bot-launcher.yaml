@@ -95,7 +95,7 @@ jobs:
         if: inputs.cache_key != ''
         uses: actions/cache/restore@v3
         with:
-          path: ~/.cache/forecasting_tools/asknews
+          path: ~/.cache
           key: ${{ inputs.cache_key }}
 
       - name: Verify cache was restored
@@ -104,9 +104,9 @@ jobs:
           echo "Cache key: ${{ inputs.cache_key }}"
           echo "Cache hit: ${{ steps.cache-restore.outputs.cache-hit }}"
           echo "Cache directory contents:"
-          ls -la $HOME/.cache/forecasting_tools/asknews/ || echo "Cache directory not found"
+          ls -la ~/.cache/forecasting_tools/asknews/ || echo "Cache directory not found"
           if [ "${{ steps.cache-restore.outputs.cache-hit }}" != "true" ]; then
-            echo "WARNING: Cache was not restored. Bot will use fallback mode."
+            echo "WARNING: Cache was not restored."
           fi
 
       - name: Run bot

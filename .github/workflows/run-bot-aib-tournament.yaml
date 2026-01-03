@@ -80,7 +80,7 @@ jobs:
       - name: Cache AskNews results
         uses: actions/cache/save@v3
         with:
-          path: ~/.cache/forecasting_tools/asknews
+          path: ~/.cache
           key: asknews-cache-${{ github.run_id }}
 
   # NOTE: don't remove any of the open source models, since these are the best option for a long term baseline (other models get deprecated)
