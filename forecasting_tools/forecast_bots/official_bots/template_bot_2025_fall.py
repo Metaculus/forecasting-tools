@@ -142,9 +142,12 @@ class FallTemplateBot2025(ForecastBot):
 
             if isinstance(researcher, GeneralLlm):
                 research = await researcher.invoke(prompt)
+            elif researcher == "asknews/news-summaries":
+                research = await AskNewsSearcher().get_formatted_news_async(
+                    question.question_text
+                )
             elif (
-                researcher == "asknews/news-summaries"
-                or researcher == "asknews/deep-research/medium-depth"
+                researcher == "asknews/deep-research/medium-depth"
                 or researcher == "asknews/deep-research/high-depth"
             ):
                 research = await AskNewsSearcher().call_preconfigured_version(
