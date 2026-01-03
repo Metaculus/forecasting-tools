@@ -5,7 +5,6 @@ This should be run before the main bot runs to populate the cache.
 
 import asyncio
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -44,10 +43,6 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    env_var = os.getenv("REFORCAST_AIB_QUESTIONS", "false")
-    reforecast_aib_questions = env_var.lower() == "true"
-    logger.info(f"Reforcasting AIB questions: {reforecast_aib_questions}")
-    logger.info(f"Environment variable: {env_var}")
 
     asyncio.run(precache_all_questions())
 

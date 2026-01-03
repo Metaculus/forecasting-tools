@@ -201,9 +201,7 @@ async def get_questions_for_allowed_tournaments(
         ).lower()
         == "true"
     )  # env variables are for testing the workflow w/o waiting 2 days
-    reforecast_aib_questions = (
-        os.getenv("REFORCAST_AIB_QUESTIONS", "false").lower() == "true"
-    )
+    reforecast_aib_questions = True  # Manually change this if testing
 
     should_forecast_on_main_site = (
         ScheduleConfig.is_interval_day() and ScheduleConfig.is_afternoon_window()
