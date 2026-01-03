@@ -13,6 +13,7 @@ import dotenv
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
+from forecasting_tools.forecast_bots.template_bot import TemplateBot
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from run_bots import TournConfig, get_questions_for_allowed_tournaments
 
@@ -31,10 +32,11 @@ async def precache_all_questions() -> None:
 
     logger.info(f"Found {len(questions)} questions to cache")
 
-    tasks = [
-        searcher.get_formatted_news_async(question.question_text)
-        for question in questions
-    ]
+    tasks = []
+    for question in questions:
+        query = TemplateBot._get_research_prompt(question, "asknews/news-summaries")
+        tasks.append(searcher.get_formatted_news_async(query))
+
     await asyncio.gather(*tasks)
 
 

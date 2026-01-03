@@ -127,22 +127,7 @@ class SpringTemplateBot2026(ForecastBot):
             research = ""
             researcher = self.get_llm("researcher")
 
-            prompt = clean_indents(
-                f"""
-                You are an assistant to a superforecaster.
-                The superforecaster will give you a question they intend to forecast on.
-                To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-                You do not produce forecasts yourself.
-
-                Question:
-                {question.question_text}
-
-                This question's outcome will be determined by the specific criteria below:
-                {question.resolution_criteria}
-
-                {question.fine_print}
-                """
-            )
+            prompt = self._get_research_prompt(question, researcher)
 
             if isinstance(researcher, GeneralLlm):
                 research = await researcher.invoke(prompt)
@@ -171,6 +156,31 @@ class SpringTemplateBot2026(ForecastBot):
                 research = await self.get_llm("researcher", "llm").invoke(prompt)
             logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
+
+    @staticmethod
+    def _get_research_prompt(
+        question: MetaculusQuestion, researcher: str | GeneralLlm
+    ) -> str:
+        if GeneralLlm.to_model_name(researcher) == "asknews/news-summaries":
+            return question.question_text
+
+        prompt = clean_indents(
+            f"""
+            You are an assistant to a superforecaster.
+            The superforecaster will give you a question they intend to forecast on.
+            To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
+            You do not produce forecasts yourself.
+
+            Question:
+            {question.question_text}
+
+            This question's outcome will be determined by the specific criteria below:
+            {question.resolution_criteria}
+
+            {question.fine_print}
+            """
+        )
+        return prompt
 
     ##################################### BINARY QUESTIONS #####################################
 
