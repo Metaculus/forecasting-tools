@@ -18,7 +18,7 @@ from pydantic import BaseModel
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.data_models.questions import DateQuestion, MetaculusQuestion
+from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
     GPT41OptimizedBot,
@@ -164,6 +164,19 @@ async def get_questions_for_config(
         raise ValueError(f"max questions ({max_questions}) must be at least 1")
     mode = bot_config.mode
     allowed_tournaments = list(set(bot_config.tournaments))
+    return await get_questions_for_allowed_tournaments(
+        allowed_tournaments, max_questions, mode
+    )
+
+
+async def get_questions_for_allowed_tournaments(
+    allowed_tournaments: list[AllowedTourn],
+    max_questions: int,
+    mode: str | None,
+) -> list[MetaculusQuestion]:
+    if mode is None:
+        mode = ""
+
     aib_tourns = [t for t in allowed_tournaments if t in TournConfig.aib_only]
     regularly_forecast_tourns = [
         t for t in allowed_tournaments if t in TournConfig.every_x_days_tourns
@@ -172,7 +185,9 @@ async def get_questions_for_config(
         t for t in allowed_tournaments if t in TournConfig.main_site_tourns
     ]
 
-    mode_parts = mode.split("+")
+    mode_parts = mode.split(
+        "+"
+    )  # Allow for adding specific tournaments via the mode name
     if len(mode_parts) > 1:
         suffix = mode_parts[1]
         assert suffix in [t.value for t in allowed_tournaments]
@@ -185,7 +200,8 @@ async def get_questions_for_config(
             "FORECAST_ON_REGULARLY_FORECASTED_TOURNAMENTS_ALWAYS", "false"
         ).lower()
         == "true"
-    )
+    )  # env variables are for testing the workflow w/o waiting 2 days
+    reforecast_aib_questions = False  # Manually change this if testing
 
     should_forecast_on_main_site = (
         ScheduleConfig.is_interval_day() and ScheduleConfig.is_afternoon_window()
@@ -196,7 +212,7 @@ async def get_questions_for_config(
 
     questions: list[MetaculusQuestion] = []
     for tournament in aib_tourns:
-        questions.extend(_get_aib_questions(tournament))
+        questions.extend(_get_aib_questions(tournament, reforecast_aib_questions))
 
     if should_forecast_on__every_x_days__questions:
         questions.extend(_get__every_x_days__questions(regularly_forecast_tourns))
@@ -205,24 +221,32 @@ async def get_questions_for_config(
         main_site_questions = await _get_questions_for_main_site(main_site_tourns)
         questions.extend(main_site_questions)
 
-    non_date_questions = [q for q in questions if not isinstance(q, DateQuestion)]
-
-    filtered_questions = [q for q in non_date_questions if q.id_of_post != 31653]
+    filtered_questions = [q for q in questions if q.id_of_post != 31653]
     # https://www.metaculus.com/questions/31653/ is rejected by qwen3-max and is causing noisy workflow errors
 
-    return filtered_questions[
-        :max_questions
-    ]  # Note that the order questions are prioritized matter.
+    questions_to_forecast = filtered_questions[:max_questions]
+    logger.info(
+        f"Questions to forecast: {len(questions_to_forecast)}. Possible questions that need forecasting: {len(filtered_questions)}"
+    )
+    return questions_to_forecast
 
 
-def _get_aib_questions(tournament: AllowedTourn) -> list[MetaculusQuestion]:
+def _get_aib_questions(
+    tournament: AllowedTourn, reforecast_aib_questions: bool
+) -> list[MetaculusQuestion]:
     aib_questions = default_metaculus_client.get_all_open_questions_from_tournament(
         tournament.value
     )
     filtered_questions = []
+    already_forecasted_skip_count = 0
     for question in aib_questions:
-        if not question.already_forecasted:
+        if reforecast_aib_questions or not question.already_forecasted:
             filtered_questions.append(question)
+        else:
+            already_forecasted_skip_count += 1
+    logger.info(
+        f"Skipping {already_forecasted_skip_count} already forecasted AIB questions from {tournament.name}"
+    )
     return filtered_questions
 
 
@@ -405,7 +429,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_3_pro = "openrouter/google/gemini-3-pro-preview"
     gemini_default_timeout = 5 * 60
-    deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-5-20250929"  # Switched from claude-sonnet-4-20250514 in Nov 2025
+    deepnews_model = "asknews/deep-research/medium-depth/claude-sonnet-4-5-20250929"  # Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
+
     roughly_sonnet_4_cost = 0.25190
     roughly_gpt_5_high_cost = 0.37868
     roughly_gpt_5_cost = 0.19971

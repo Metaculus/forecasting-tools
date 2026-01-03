@@ -26,9 +26,9 @@ class GPT41OptimizedBot(FallTemplateBot2025):
                 logger.warning(
                     "This bot was optimized on AskNews search, using other search providers may result in lower performance"
                 )
-            research = await AskNewsSearcher().get_formatted_news_async(
-                question.question_text
-            )
+            research = await AskNewsSearcher(
+                cache_mode="use_cache_with_fallback"
+            ).get_formatted_news_async(question.question_text)
             return research
 
     async def _run_forecast_on_binary(
