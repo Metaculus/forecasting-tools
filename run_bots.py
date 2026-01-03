@@ -18,7 +18,7 @@ from pydantic import BaseModel
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.data_models.questions import DateQuestion, MetaculusQuestion
+from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
     GPT41OptimizedBot,
@@ -223,19 +223,14 @@ async def get_questions_for_allowed_tournaments(
         main_site_questions = await _get_questions_for_main_site(main_site_tourns)
         questions.extend(main_site_questions)
 
-    non_date_questions = [q for q in questions if not isinstance(q, DateQuestion)]
-
-    filtered_questions = [q for q in non_date_questions if q.id_of_post != 31653]
+    filtered_questions = [q for q in questions if q.id_of_post != 31653]
     # https://www.metaculus.com/questions/31653/ is rejected by qwen3-max and is causing noisy workflow errors
 
-    if max_questions > len(filtered_questions):
-        logger.error(
-            f"Max questions ({max_questions}) is greater than the number of filtered questions ({len(filtered_questions)}). Questions may be being skipped if not forecast soon."
-        )
-
-    return filtered_questions[
-        :max_questions
-    ]  # Note that the order questions are prioritized matter.
+    questions_to_forecast = filtered_questions[:max_questions]
+    logger.info(
+        f"Questions to forecast: {len(questions_to_forecast)}. Possible questions that need forecasting: {len(filtered_questions)}"
+    )
+    return questions_to_forecast
 
 
 def _get_aib_questions(
