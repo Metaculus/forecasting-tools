@@ -37,7 +37,13 @@ async def precache_all_questions() -> None:
         query = TemplateBot._get_research_prompt(question, "asknews/news-summaries")
         tasks.append(searcher.get_formatted_news_async(query))
 
-    await asyncio.gather(*tasks)
+    results = await asyncio.wait_for(
+        asyncio.gather(*tasks, return_exceptions=True), timeout=120
+    )
+    # Log any failures
+    failed = sum(1 for r in results if isinstance(r, Exception))
+    if failed:
+        logger.warning(f"Failed to cache {failed}/{len(results)} questions")
 
 
 if __name__ == "__main__":
