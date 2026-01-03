@@ -75,12 +75,12 @@ jobs:
       - name: List cached files
         run: |
           echo "Cache directory contents:"
-          ls -la $HOME/.cache/forecasting_tools/asknews/ || echo "No cache files found"
+          ls -la ~/.cache/forecasting_tools/asknews/ || echo "No cache files found"
 
       - name: Cache AskNews results
         uses: actions/cache/save@v3
         with:
-          path: ${{ env.HOME }}/.cache/forecasting_tools/asknews
+          path: ~/.cache/forecasting_tools/asknews
           key: asknews-cache-${{ github.run_id }}
 
   # NOTE: don't remove any of the open source models, since these are the best option for a long term baseline (other models get deprecated)

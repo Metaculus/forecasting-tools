@@ -95,7 +95,7 @@ jobs:
         if: inputs.cache_key != ''
         uses: actions/cache/restore@v3
         with:
-          path: ${{ env.HOME }}/.cache/forecasting_tools/asknews
+          path: ~/.cache/forecasting_tools/asknews
           key: ${{ inputs.cache_key }}
 
       - name: Verify cache was restored
