@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from typing import Literal
 
@@ -21,6 +22,8 @@ from forecasting_tools.helpers.asknews_cache import AskNewsCache
 # NOTE: More information available here:
 # https://docs.asknews.app/en/news
 # https://docs.asknews.app/en/deepnews
+
+logger = logging.getLogger(__name__)
 
 
 class AskNewsSearcher:
@@ -83,6 +86,7 @@ class AskNewsSearcher:
         """
         cached_result = self.cache.get(query)
         if cached_result is not None:
+            logger.info(f"Found cached result for query: {query}")
             return cached_result
 
         async with AsyncAskNewsSDK(
