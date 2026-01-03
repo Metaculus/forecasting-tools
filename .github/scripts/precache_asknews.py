@@ -12,8 +12,6 @@ import dotenv
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import os
-from typing import Literal
 
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from run_bots import TournConfig, get_questions_for_allowed_tournaments
@@ -23,16 +21,12 @@ dotenv.load_dotenv()
 
 
 async def precache_all_questions() -> None:
-    cache_mode: Literal["use_cache", "use_cache_with_fallback", "no_cache"] = os.getenv("ASKNEWS_CACHE_MODE", "no_cache")  # type: ignore
-    assert (
-        cache_mode != "no_cache"
-    ), "Cache mode must be set to use_cache or use_cache_with_fallback"
+    cache_mode = "use_cache_with_fallback"
     searcher = AskNewsSearcher(cache_mode=cache_mode)
 
     logger.info("Fetching all questions from all tournaments")
     questions = await get_questions_for_allowed_tournaments(
-        allowed_tournaments=TournConfig.everything,
-        max_questions=200,
+        allowed_tournaments=TournConfig.everything, max_questions=200, mode=None
     )
 
     logger.info(f"Found {len(questions)} questions to cache")

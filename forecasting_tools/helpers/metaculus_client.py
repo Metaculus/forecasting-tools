@@ -113,7 +113,7 @@ class MetaculusClient:
     AI_COMPETITION_ID_Q1 = 32627  # https://www.metaculus.com/tournament/aibq1/
     AI_COMPETITION_ID_Q2 = 32721  # https://www.metaculus.com/tournament/aibq2/
     AIB_FALL_2025_ID = 32813  # https://www.metaculus.com/tournament/fall-aib-2025/
-    AIB_SPRING_2026_ID = 32916
+    AIB_SPRING_2026_ID = 32916  # https://www.metaculus.com/tournament/spring-aib-2026/
 
     PRO_COMPARISON_TOURNAMENT_Q1 = 32631
     PRO_COMPARISON_TOURNAMENT_Q2 = (

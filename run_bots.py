@@ -172,8 +172,11 @@ async def get_questions_for_config(
 async def get_questions_for_allowed_tournaments(
     allowed_tournaments: list[AllowedTourn],
     max_questions: int,
-    mode: str = "",
+    mode: str | None,
 ) -> list[MetaculusQuestion]:
+    if mode is None:
+        mode = ""
+
     aib_tourns = [t for t in allowed_tournaments if t in TournConfig.aib_only]
     regularly_forecast_tourns = [
         t for t in allowed_tournaments if t in TournConfig.every_x_days_tourns
@@ -198,6 +201,9 @@ async def get_questions_for_allowed_tournaments(
         ).lower()
         == "true"
     )  # env variables are for testing the workflow w/o waiting 2 days
+    reforecast_aib_questions = (
+        os.getenv("REFORCAST_AIB_QUESTIONS", "false").lower() == "true"
+    )
 
     should_forecast_on_main_site = (
         ScheduleConfig.is_interval_day() and ScheduleConfig.is_afternoon_window()
@@ -208,7 +214,7 @@ async def get_questions_for_allowed_tournaments(
 
     questions: list[MetaculusQuestion] = []
     for tournament in aib_tourns:
-        questions.extend(_get_aib_questions(tournament))
+        questions.extend(_get_aib_questions(tournament, reforecast_aib_questions))
 
     if should_forecast_on__every_x_days__questions:
         questions.extend(_get__every_x_days__questions(regularly_forecast_tourns))
@@ -232,14 +238,22 @@ async def get_questions_for_allowed_tournaments(
     ]  # Note that the order questions are prioritized matter.
 
 
-def _get_aib_questions(tournament: AllowedTourn) -> list[MetaculusQuestion]:
+def _get_aib_questions(
+    tournament: AllowedTourn, reforecast_aib_questions: bool
+) -> list[MetaculusQuestion]:
     aib_questions = default_metaculus_client.get_all_open_questions_from_tournament(
         tournament.value
     )
     filtered_questions = []
+    already_forecasted_skip_count = 0
     for question in aib_questions:
-        if not question.already_forecasted:
+        if reforecast_aib_questions or not question.already_forecasted:
             filtered_questions.append(question)
+        else:
+            already_forecasted_skip_count += 1
+    logger.info(
+        f"Skipping {already_forecasted_skip_count} already forecasted AIB questions from {tournament.name}"
+    )
     return filtered_questions
 
 
