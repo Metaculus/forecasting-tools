@@ -116,7 +116,7 @@ jobs:
           METACULUS_TOKEN: ${{ secrets.INPUT_METACULUS_TOKEN }}
           ASKNEWS_CLIENT_ID: ${{ secrets.INPUT_ASKNEWS_CLIENT_ID }}
           ASKNEWS_SECRET: ${{ secrets.INPUT_ASKNEWS_SECRET }}
-          ASKNEWS_CACHE_MODE: use_cache
+          ASKNEWS_CACHE_MODE: use_cache_with_fallback
           OPENAI_API_KEY: ${{ secrets.INPUT_OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.INPUT_ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.INPUT_GEMINI_API_KEY }}
