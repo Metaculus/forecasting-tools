@@ -52,7 +52,7 @@ class GeneralLlm(
     OutputsText,
 ):
     """
-    A wrapper around litellm's acompletion function that adds some functionality
+    A wrapper around litellm's acompletion function that adds functionality
     like rate limiting, retry logic, metaculus proxy, and cost callback handling.
 
     Litellm support every model, most every parameter, and acts as one interface for every provider.
@@ -231,9 +231,13 @@ class GeneralLlm(
 
         ModelTracker.give_cost_tracking_warning_if_needed(self._litellm_model)
 
-    async def invoke(self, prompt: ModelInputType, system_prompt: str | None = None) -> str:
+    async def invoke(
+        self, prompt: ModelInputType, system_prompt: str | None = None
+    ) -> str:
         response: TextTokenCostResponse = (
-            await self._invoke_with_request_cost_time_and_token_limits_and_retry(prompt, system_prompt=system_prompt)
+            await self._invoke_with_request_cost_time_and_token_limits_and_retry(
+                prompt, system_prompt=system_prompt
+            )
         )
         data = response.data
         return data
