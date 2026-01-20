@@ -56,6 +56,11 @@ class TestGetSpecificQuestions:
         assert question.question_type == "binary"
         assert question.question_ids_of_group is None
         assert question.is_in_main_feed is True
+        assert set([category.name for category in question.categories]) == {
+            "Health & Pandemics",
+            "Nuclear Technology & Risks",
+            "Technology",
+        }, f"Categories are not correct for post ID {question.id_of_post}. Categories: {question.categories}"
         assert_basic_question_attributes_not_none(question, question.id_of_post)
 
     def test_get_numeric_question_type_from_id(self) -> None:
@@ -71,6 +76,9 @@ class TestGetSpecificQuestions:
         assert question.question_weight == 1.0
         assert question.get_question_type() == "numeric"
         assert question.question_type == "numeric"
+        assert set([category.name for category in question.categories]) == {
+            "Health & Pandemics"
+        }
         assert_basic_question_attributes_not_none(question, question.id_of_post)
         assert question.lower_bound == 0
         assert question.upper_bound == 200
@@ -1186,6 +1194,7 @@ def assert_basic_question_attributes_not_none(
         assert isinstance(question.question_ids_of_group, list)
         assert all(isinstance(q_id, int) for q_id in question.question_ids_of_group)
         assert question.group_question_option is not None
+    assert len(question.categories) > 0, f"Categories is empty for post ID {post_id}"
 
 
 def assert_questions_match_filter(  # NOSONAR
