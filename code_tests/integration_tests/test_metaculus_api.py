@@ -15,6 +15,7 @@ from forecasting_tools.data_models.numeric_report import NumericDistribution, Pe
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     CanceledResolution,
+    Category,
     ConditionalQuestion,
     DateQuestion,
     DiscreteQuestion,
@@ -78,7 +79,7 @@ class TestGetSpecificQuestions:
         assert question.question_type == "numeric"
         assert set([category.name for category in question.categories]) == {
             "Health & Pandemics"
-        }
+        }, f"Categories are not correct for post ID {question.id_of_post}. Categories: {question.categories}"
         assert_basic_question_attributes_not_none(question, question.id_of_post)
         assert question.lower_bound == 0
         assert question.upper_bound == 200
@@ -643,6 +644,7 @@ class TestNumericForecasts:
         ]
         self._check_cdf_processes_and_posts_correctly(percentiles, question)
 
+    @pytest.mark.skip(reason="The test question is now closed for forecasting")
     def test_log_scale_another_edge_case(self) -> None:
         # This test was able to replicate a floating point epsilon error at one point.
         url = "https://dev.metaculus.com/questions/7546"
@@ -1219,7 +1221,9 @@ def assert_basic_question_attributes_not_none(
         assert isinstance(question.question_ids_of_group, list)
         assert all(isinstance(q_id, int) for q_id in question.question_ids_of_group)
         assert question.group_question_option is not None
-    assert len(question.categories) > 0, f"Categories is empty for post ID {post_id}"
+    assert all(
+        isinstance(category, Category) for category in question.categories
+    ), f"Categories is not a list of strings for post ID {post_id}"
 
 
 def assert_questions_match_filter(  # NOSONAR

@@ -234,24 +234,27 @@ class GeneralLlm(
     async def invoke(
         self, prompt: ModelInputType, system_prompt: str | None = None
     ) -> str:
-        response: TextTokenCostResponse = (
-            await self._invoke_with_request_cost_time_and_token_limits_and_retry(
-                prompt, system_prompt=system_prompt
+        if system_prompt is not None and isinstance(prompt, str):
+            prompt = self.model_input_to_message(prompt, system_prompt)
+        elif system_prompt is not None and isinstance(prompt, list):
+            raise ValueError(
+                "System prompt cannot be used with list of messages since the list may include a system message already"
             )
+        response: TextTokenCostResponse = (
+            await self._invoke_with_request_cost_time_and_token_limits_and_retry(prompt)
         )
         data = response.data
         return data
 
     @RetryableModel._retry_according_to_model_allowed_tries
     async def _invoke_with_request_cost_time_and_token_limits_and_retry(
-        self, prompt: ModelInputType, system_prompt: str | None = None
+        self,
+        prompt: ModelInputType,
     ) -> Any:
         logger.debug(f"Invoking model with prompt: {prompt}")
 
-        prompt = self.model_input_to_message(prompt, system_prompt)
-
         with track_generation(
-            input=prompt,
+            input=self.model_input_to_message(prompt),
             model=self.model,
         ) as span:
             direct_call_response = await self._mockable_direct_call_to_model(prompt)

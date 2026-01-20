@@ -166,8 +166,8 @@ class MetaculusClient:
 
         self.token = token or os.getenv("METACULUS_TOKEN")
         if self.token is None:
-            raise ValueError(
-                "METACULUS_TOKEN environment variable or or token field not set"
+            logger.warning(
+                "METACULUS_TOKEN environment variable and/or token field not set"
             )
 
     @retry_with_exponential_backoff()
@@ -578,6 +578,10 @@ class MetaculusClient:
         return result
 
     def _get_auth_headers(self) -> dict[str, dict[str, str]]:
+        if self.token is None:
+            logger.warning(
+                "METACULUS_TOKEN environment variable and/or token field not set"
+            )
         return {
             "headers": {
                 "Authorization": f"Token {self.token}",
@@ -1184,6 +1188,66 @@ class MetaculusClient:
         )
         raise_for_status_with_additional_info(response)
 
+    def create_question(self, question: MetaculusQuestion) -> MetaculusQuestion:
+        question_data = self._get_post_create_data(question)
+        self._sleep_between_requests()
+        response = requests.post(
+            f"{self.base_url}/posts/create/",
+            json=question_data,
+            headers={
+                "accept": "application/json",
+                "Authorization": f"Token {self.token}",
+            },
+        )
+
+        raise_for_status_with_additional_info(response)
+        created_question = self._post_json_to_questions_while_handling_groups(
+            json.loads(response.content), "exclude"
+        )
+        if len(created_question) != 1:
+            logger.error(
+                f"Expected 1 question to be created, got {len(created_question)}"
+            )
+        return created_question[0]
+
+    def approve_question(self, question: MetaculusQuestion) -> None:
+        response = requests.post(
+            f"{self.base_url}/posts/{question.id_of_post}/approve/",
+            data={
+                "published_at": (
+                    question.published_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.published_time
+                    else None
+                ),
+                "open_time": (
+                    question.open_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.open_time
+                    else None
+                ),
+                "cp_reveal_time": (
+                    question.cp_reveal_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.cp_reveal_time
+                    else None
+                ),
+                "scheduled_close_time": (
+                    question.close_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.close_time
+                    else None
+                ),
+                "scheduled_resolve_time": (
+                    question.scheduled_resolution_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.scheduled_resolution_time
+                    else None
+                ),
+            },
+            headers={
+                "accept": "application/json",
+                "Authorization": f"Token {self.token}",
+            },
+        )
+
+        raise_for_status_with_additional_info(response)
+
     @staticmethod
     def _get_post_create_data(question: MetaculusQuestion) -> dict:
         return {
@@ -1251,63 +1315,3 @@ class MetaculusClient:
                 "group_rank": None,  # only group questions
             },
         }
-
-    def create_question(self, question: MetaculusQuestion) -> MetaculusQuestion:
-        question_data = self._get_post_create_data(question)
-        self._sleep_between_requests()
-        response = requests.post(
-            f"{self.base_url}/posts/create/",
-            json=question_data,
-            headers={
-                "accept": "application/json",
-                "Authorization": f"Token {self.token}",
-            },
-        )
-
-        raise_for_status_with_additional_info(response)
-        created_question = self._post_json_to_questions_while_handling_groups(
-            json.loads(response.content), "exclude"
-        )
-        if len(created_question) != 1:
-            logger.error(
-                f"Expected 1 question to be created, got {len(created_question)}"
-            )
-        return created_question[0]
-
-    def approve_question(self, question: MetaculusQuestion) -> None:
-        response = requests.post(
-            f"{self.base_url}/posts/{question.id_of_post}/approve/",
-            data={
-                "published_at": (
-                    question.published_time.strftime("%Y-%m-%dT%H:%M:%S")
-                    if question.published_time
-                    else None
-                ),
-                "open_time": (
-                    question.open_time.strftime("%Y-%m-%dT%H:%M:%S")
-                    if question.open_time
-                    else None
-                ),
-                "cp_reveal_time": (
-                    question.cp_reveal_time.strftime("%Y-%m-%dT%H:%M:%S")
-                    if question.cp_reveal_time
-                    else None
-                ),
-                "scheduled_close_time": (
-                    question.close_time.strftime("%Y-%m-%dT%H:%M:%S")
-                    if question.close_time
-                    else None
-                ),
-                "scheduled_resolve_time": (
-                    question.scheduled_resolution_time.strftime("%Y-%m-%dT%H:%M:%S")
-                    if question.scheduled_resolution_time
-                    else None
-                ),
-            },
-            headers={
-                "accept": "application/json",
-                "Authorization": f"Token {self.token}",
-            },
-        )
-
-        raise_for_status_with_additional_info(response)
