@@ -1111,19 +1111,34 @@ def assert_basic_question_attributes_not_none(
         question.question_text is not None
     ), f"Question text is None for post ID {post_id}"
     assert question.close_time is not None, f"Close time is None for post ID {post_id}"
+    assert (
+        question.close_time.tzinfo is not None
+    ), f"Close time is not timezone aware for post ID {post_id}"
     assert question.open_time is not None, f"Open time is None for post ID {post_id}"
+    assert (
+        question.open_time.tzinfo is not None
+    ), f"Open time is not timezone aware for post ID {post_id}"
     assert (
         question.published_time is not None
     ), f"Published time is None for post ID {post_id}"
     assert (
+        question.published_time.tzinfo is not None
+    ), f"Published time is not timezone aware for post ID {post_id}"
+    assert (
         question.scheduled_resolution_time is not None
     ), f"Scheduled resolution time is None for post ID {post_id}"
+    assert (
+        question.scheduled_resolution_time.tzinfo is not None
+    ), f"Scheduled resolution time is not timezone aware for post ID {post_id}"
     assert (
         question.includes_bots_in_aggregates is not None
     ), f"Includes bots in aggregates is None for post ID {post_id}"
     assert (
         question.cp_reveal_time is not None
     ), f"CP reveal time is None for post ID {post_id}"
+    assert (
+        question.cp_reveal_time.tzinfo is not None
+    ), f"CP reveal time is not timezone aware for post ID {post_id}"
     assert isinstance(
         question.state, QuestionState
     ), f"State is not a QuestionState for post ID {post_id}"
@@ -1142,6 +1157,10 @@ def assert_basic_question_attributes_not_none(
     assert question.actual_resolution_time is None or isinstance(
         question.actual_resolution_time, datetime
     ), f"Actual resolution time is not a datetime for post ID {post_id}"
+    if question.actual_resolution_time is not None:
+        assert (
+            question.actual_resolution_time.tzinfo is not None
+        ), f"Actual resolution time is not timezone aware for post ID {post_id}"
     assert isinstance(
         question.api_json, dict
     ), f"API JSON is not a dict for post ID {post_id}"
@@ -1164,6 +1183,9 @@ def assert_basic_question_attributes_not_none(
     assert question.date_accessed > pendulum.now().subtract(
         days=1
     ), f"Date accessed is not in the past for post ID {post_id}"
+    assert (
+        question.date_accessed.tzinfo is not None
+    ), f"Date accessed is not timezone aware for post ID {post_id}"
     assert isinstance(
         question.already_forecasted, bool
     ), f"Already forecasted is not a boolean for post ID {post_id}"
@@ -1171,6 +1193,9 @@ def assert_basic_question_attributes_not_none(
         assert (
             question.timestamp_of_my_last_forecast is not None
         ), f"Timestamp of my last forecast is None for post ID {post_id}"
+        assert (
+            question.timestamp_of_my_last_forecast.tzinfo is not None
+        ), f"Timestamp of my last forecast is not timezone aware for post ID {post_id}"
     if isinstance(question, NumericQuestion):
         assert (
             question.unit_of_measure is not None
