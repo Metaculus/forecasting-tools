@@ -349,9 +349,10 @@ class MetaculusClient:
         self._sleep_between_requests()
 
         url = f"{self.base_url}/posts/{post_id}/"
+        headers = self._get_auth_headers()
         response = requests.get(
             url,
-            **self._get_auth_headers(),  # type: ignore
+            **headers,  # type: ignore
             timeout=self.timeout,
         )
         raise_for_status_with_additional_info(response)
@@ -582,12 +583,13 @@ class MetaculusClient:
             logger.warning(
                 "METACULUS_TOKEN environment variable and/or token field not set"
             )
-        return {
+        headers = {
             "headers": {
                 "Authorization": f"Token {self.token}",
                 "Accept-Language": "en",
             }
         }
+        return headers
 
     @retry_with_exponential_backoff()
     def _post_question_prediction(
@@ -1179,6 +1181,7 @@ class MetaculusClient:
             **self._get_auth_headers(),  # type: ignore
         )
         raise_for_status_with_additional_info(response)
+        logger.info(f"Resolved question ID {question_id} with resolution {resolution}")
 
     def unresolve_question(self, question_id: int) -> None:
         self._sleep_between_requests()
@@ -1187,6 +1190,7 @@ class MetaculusClient:
             **self._get_auth_headers(),  # type: ignore
         )
         raise_for_status_with_additional_info(response)
+        logger.info(f"Unresolved question ID {question_id}")
 
     def create_question(self, question: MetaculusQuestion) -> MetaculusQuestion:
         question_data = self._get_post_create_data(question)
@@ -1201,14 +1205,22 @@ class MetaculusClient:
         )
 
         raise_for_status_with_additional_info(response)
-        created_question = self._post_json_to_questions_while_handling_groups(
+        created_question_list = self._post_json_to_questions_while_handling_groups(
             json.loads(response.content), "exclude"
         )
-        if len(created_question) != 1:
+        if len(created_question_list) != 1:
             logger.error(
-                f"Expected 1 question to be created, got {len(created_question)}"
+                f"Expected 1 question to be created, got {len(created_question_list)}. Questions created: {[question.page_url for question in created_question_list]}"
             )
-        return created_question[0]
+        single_created_question = created_question_list[0]
+        logger.info(f"Created new questions: {single_created_question.page_url}")
+
+        assert single_created_question.id_of_post is not None
+        full_created_question = self.get_question_by_post_id(
+            single_created_question.id_of_post
+        )
+
+        return full_created_question
 
     def approve_question(self, question: MetaculusQuestion) -> None:
         response = requests.post(
@@ -1247,18 +1259,23 @@ class MetaculusClient:
         )
 
         raise_for_status_with_additional_info(response)
+        logger.info(f"Approved question {question.page_url}")
 
     @staticmethod
     def _get_post_create_data(question: MetaculusQuestion) -> dict:
+        if question.published_time is None:
+            publish_time = question.open_time
+        else:
+            publish_time = question.published_time
+
         return {
             "title": question.question_text,
             "short_title": question.custom_metadata.get("short_name", None)
             or question.question_text,
             "default_project": question.default_project_id,
+            "categories": [category.id for category in question.categories],
             "published_at": (
-                question.open_time.strftime("%Y-%m-%dT%H:%M:%S")
-                if question.open_time
-                else None
+                publish_time.strftime("%Y-%m-%dT%H:%M:%S") if publish_time else None
             ),
             "is_automatically_translated": False,
             "question": {

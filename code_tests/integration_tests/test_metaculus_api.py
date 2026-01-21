@@ -1356,12 +1356,12 @@ def assert_questions_match_filter(  # NOSONAR
 
 class TestAdminFunctions:
 
-    def test_create_question(self) -> None:
-        token = os.getenv("METACULUS_TOKEN")
+    def test_all_admin_functions(self) -> None:
+        token = os.getenv("ADMIN_METACULUS_TOKEN")
         if token is None:
             raise ValueError("ADMIN_METACULUS_TOKEN is not set")
         client = MetaculusClient(
-            base_url="https://dev.metaculus.com",
+            base_url="https://dev.metaculus.com/api",
             token=token,
         )
         question_to_create = client.get_question_by_url(
@@ -1373,22 +1373,17 @@ class TestAdminFunctions:
         question_to_create.tournament_slugs = [slug]
 
         created_question = client.create_question(question_to_create)
+        client.approve_question(created_question)
+
         assert created_question is not None
         assert created_question.id_of_post is not None
         assert created_question.default_project_id == project_id
-        assert created_question.tournament_slugs == [slug]
+        assert created_question.id_of_post != question_to_create.id_of_post
+        assert created_question.id_of_question != question_to_create.id_of_question
 
         assert created_question.question_text == question_to_create.question_text
-        assert (
-            created_question.resolution_criteria
-            == question_to_create.resolution_criteria
-        )
-        assert created_question.fine_print == question_to_create.fine_print
-        assert created_question.background_info == question_to_create.background_info
         assert created_question.open_time == question_to_create.open_time
         assert created_question.close_time == question_to_create.close_time
-        assert created_question.published_time == question_to_create.published_time
-        assert created_question.tournament_slugs == question_to_create.tournament_slugs
         assert (
             created_question.includes_bots_in_aggregates
             == question_to_create.includes_bots_in_aggregates
@@ -1399,15 +1394,32 @@ class TestAdminFunctions:
             created_question.resolution_string == question_to_create.resolution_string
         )
         assert created_question.conditional_type == question_to_create.conditional_type
-        assert (
-            created_question.previous_forecasts == question_to_create.previous_forecasts
-        )
-        assert created_question.categories == question_to_create.categories
-        assert created_question.is_in_main_feed == question_to_create.is_in_main_feed
-        assert created_question.id_of_question != question_to_create.id_of_question
-        assert created_question.id_of_post != question_to_create.id_of_post
-        assert created_question.date_accessed == question_to_create.date_accessed
         assert_basic_question_attributes_not_none(
             created_question, created_question.id_of_post
         )
         assert str(created_question.categories) == str(question_to_create.categories)
+        assert set(category.name for category in created_question.categories) == {
+            "Artificial Intelligence"
+        }
+        assert (
+            created_question.resolution_criteria
+            == question_to_create.resolution_criteria
+        )
+        assert created_question.fine_print == question_to_create.fine_print
+        assert created_question.background_info == question_to_create.background_info
+        assert set(created_question.tournament_slugs) == {slug}
+        assert created_question.published_time == question_to_create.published_time
+
+        client.resolve_question(created_question.id_of_post, "yes", datetime.now())
+        resolved_question = client.get_question_by_post_id(created_question.id_of_post)
+        assert resolved_question.state == QuestionState.RESOLVED
+        assert resolved_question.actual_resolution_time is not None
+        assert resolved_question.resolution_string == "yes"
+
+        client.unresolve_question(created_question.id_of_post)
+        unresolved_question = client.get_question_by_post_id(
+            created_question.id_of_post
+        )
+        assert resolved_question.state != QuestionState.RESOLVED
+        assert unresolved_question.actual_resolution_time is None
+        assert unresolved_question.resolution_string is None

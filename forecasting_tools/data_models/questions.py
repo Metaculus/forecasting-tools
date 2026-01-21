@@ -144,7 +144,11 @@ class MetaculusQuestion(BaseModel, Jsonable):
             tournaments: list[dict] = post_api_json["projects"]["tournament"]  # type: ignore
             tournament_slugs = [str(t["slug"]) for t in tournaments]
         except KeyError:
-            tournament_slugs = []
+            try:
+                question_series: list[dict] = post_api_json["projects"]["question_series"]  # type: ignore
+                tournament_slugs = [str(q["slug"]) for q in question_series]
+            except KeyError:
+                tournament_slugs = []
 
         group_question_option = question_json.get("label", None)
         if group_question_option is not None and group_question_option.strip() == "":
@@ -157,6 +161,8 @@ class MetaculusQuestion(BaseModel, Jsonable):
         categories = [
             Category(**category_dict) for category_dict in categories_dict_list
         ]
+
+        published_time = cls._parse_api_date(post_api_json.get("published_at"))
 
         question = MetaculusQuestion(
             # NOTE: Reminder - When adding new fields, consider if group questions
@@ -180,7 +186,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             scheduled_resolution_time=cls._parse_api_date(
                 question_json.get("scheduled_resolve_time")
             ),
-            published_time=cls._parse_api_date(post_api_json.get("published_at")),
+            published_time=published_time,
             cp_reveal_time=cls._parse_api_date(question_json.get("cp_reveal_time")),
             open_time=cls._parse_api_date(question_json.get("open_time")),
             already_forecasted=is_forecasted,
