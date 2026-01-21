@@ -1413,7 +1413,7 @@ class TestAdminFunctions:
         assert created_question.published_time == question_to_create.published_time
 
         ### Resolve question ###
-        client.resolve_question(created_question.id_of_question, "yes", datetime.now())
+        client.resolve_question(created_question.id_of_question, "yes", pendulum.now())
         resolved_question = client.get_question_by_post_id(created_question.id_of_post)
         assert resolved_question.state == QuestionState.RESOLVED
         assert resolved_question.actual_resolution_time is not None

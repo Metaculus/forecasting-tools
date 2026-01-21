@@ -234,7 +234,9 @@ class GeneralLlm(
     async def invoke(
         self, prompt: ModelInputType, system_prompt: str | None = None
     ) -> str:
-        if system_prompt is not None and isinstance(prompt, str):
+        if system_prompt is not None and (
+            isinstance(prompt, str) or isinstance(prompt, VisionMessageData)
+        ):
             prompt = self.model_input_to_message(prompt, system_prompt)
         elif system_prompt is not None and isinstance(prompt, list):
             raise ValueError(

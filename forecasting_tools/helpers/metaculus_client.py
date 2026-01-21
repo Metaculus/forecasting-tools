@@ -580,7 +580,7 @@ class MetaculusClient:
 
     def _get_auth_headers(self) -> dict[str, dict[str, str]]:
         if self.token is None:
-            logger.warning(
+            raise ValueError(
                 "METACULUS_TOKEN environment variable and/or token field not set"
             )
         headers = {
@@ -1163,6 +1163,7 @@ class MetaculusClient:
 
     #################### ADMIN FUNCTIONS ####################
 
+    @retry_with_exponential_backoff()
     def resolve_question(
         self, question_id: int, resolution: str | None, resolve_time: datetime
     ) -> None:
@@ -1177,21 +1178,25 @@ class MetaculusClient:
             json={
                 "resolution": resolution,
                 "actual_resolve_time": resolve_time.strftime("%Y-%m-%dT%H:%M:%S"),
-            },
+            },  # TODO: Find all instances of strftime that doesn't use timezone, and add timezone
             **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
         )
         raise_for_status_with_additional_info(response)
         logger.info(f"Resolved question ID {question_id} with resolution {resolution}")
 
+    @retry_with_exponential_backoff()
     def unresolve_question(self, question_id: int) -> None:
         self._sleep_between_requests()
         response = requests.post(
             f"{self.base_url}/questions/{question_id}/unresolve/",
             **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
         )
         raise_for_status_with_additional_info(response)
         logger.info(f"Unresolved question ID {question_id}")
 
+    @retry_with_exponential_backoff()
     def create_question(self, question: MetaculusQuestion) -> MetaculusQuestion:
         question_data = self._get_post_create_data(question)
         self._sleep_between_requests()
@@ -1202,6 +1207,7 @@ class MetaculusClient:
                 "accept": "application/json",
                 "Authorization": f"Token {self.token}",
             },
+            timeout=self.timeout,
         )
 
         raise_for_status_with_additional_info(response)
@@ -1209,7 +1215,7 @@ class MetaculusClient:
             json.loads(response.content), "exclude"
         )
         if len(created_question_list) != 1:
-            logger.error(
+            raise ValueError(
                 f"Expected 1 question to be created, got {len(created_question_list)}. Questions created: {[question.page_url for question in created_question_list]}"
             )
         single_created_question = created_question_list[0]
@@ -1222,7 +1228,9 @@ class MetaculusClient:
 
         return full_created_question
 
+    @retry_with_exponential_backoff()
     def approve_question(self, question: MetaculusQuestion) -> None:
+        self._sleep_between_requests()
         response = requests.post(
             f"{self.base_url}/posts/{question.id_of_post}/approve/",
             data={
@@ -1252,6 +1260,7 @@ class MetaculusClient:
                     else None
                 ),
             },
+            timeout=self.timeout,
             headers={
                 "accept": "application/json",
                 "Authorization": f"Token {self.token}",
