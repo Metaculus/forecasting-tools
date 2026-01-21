@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, timezone
 
 import pendulum
@@ -15,6 +16,7 @@ from forecasting_tools.data_models.numeric_report import NumericDistribution, Pe
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     CanceledResolution,
+    Category,
     ConditionalQuestion,
     DateQuestion,
     DiscreteQuestion,
@@ -56,6 +58,11 @@ class TestGetSpecificQuestions:
         assert question.question_type == "binary"
         assert question.question_ids_of_group is None
         assert question.is_in_main_feed is True
+        assert set([category.name for category in question.categories]) == {
+            "Health & Pandemics",
+            "Nuclear Technology & Risks",
+            "Technology",
+        }, f"Categories are not correct for post ID {question.id_of_post}. Categories: {question.categories}"
         assert_basic_question_attributes_not_none(question, question.id_of_post)
 
     def test_get_numeric_question_type_from_id(self) -> None:
@@ -71,6 +78,9 @@ class TestGetSpecificQuestions:
         assert question.question_weight == 1.0
         assert question.get_question_type() == "numeric"
         assert question.question_type == "numeric"
+        assert set([category.name for category in question.categories]) == {
+            "Health & Pandemics"
+        }, f"Categories are not correct for post ID {question.id_of_post}. Categories: {question.categories}"
         assert_basic_question_attributes_not_none(question, question.id_of_post)
         assert question.lower_bound == 0
         assert question.upper_bound == 200
@@ -635,6 +645,7 @@ class TestNumericForecasts:
         ]
         self._check_cdf_processes_and_posts_correctly(percentiles, question)
 
+    @pytest.mark.skip(reason="The test question is now closed for forecasting")
     def test_log_scale_another_edge_case(self) -> None:
         # This test was able to replicate a floating point epsilon error at one point.
         url = "https://dev.metaculus.com/questions/7546"
@@ -1103,19 +1114,34 @@ def assert_basic_question_attributes_not_none(
         question.question_text is not None
     ), f"Question text is None for post ID {post_id}"
     assert question.close_time is not None, f"Close time is None for post ID {post_id}"
+    assert (
+        question.close_time.tzinfo is not None
+    ), f"Close time is not timezone aware for post ID {post_id}"
     assert question.open_time is not None, f"Open time is None for post ID {post_id}"
+    assert (
+        question.open_time.tzinfo is not None
+    ), f"Open time is not timezone aware for post ID {post_id}"
     assert (
         question.published_time is not None
     ), f"Published time is None for post ID {post_id}"
     assert (
+        question.published_time.tzinfo is not None
+    ), f"Published time is not timezone aware for post ID {post_id}"
+    assert (
         question.scheduled_resolution_time is not None
     ), f"Scheduled resolution time is None for post ID {post_id}"
+    assert (
+        question.scheduled_resolution_time.tzinfo is not None
+    ), f"Scheduled resolution time is not timezone aware for post ID {post_id}"
     assert (
         question.includes_bots_in_aggregates is not None
     ), f"Includes bots in aggregates is None for post ID {post_id}"
     assert (
         question.cp_reveal_time is not None
     ), f"CP reveal time is None for post ID {post_id}"
+    assert (
+        question.cp_reveal_time.tzinfo is not None
+    ), f"CP reveal time is not timezone aware for post ID {post_id}"
     assert isinstance(
         question.state, QuestionState
     ), f"State is not a QuestionState for post ID {post_id}"
@@ -1134,6 +1160,10 @@ def assert_basic_question_attributes_not_none(
     assert question.actual_resolution_time is None or isinstance(
         question.actual_resolution_time, datetime
     ), f"Actual resolution time is not a datetime for post ID {post_id}"
+    if question.actual_resolution_time is not None:
+        assert (
+            question.actual_resolution_time.tzinfo is not None
+        ), f"Actual resolution time is not timezone aware for post ID {post_id}"
     assert isinstance(
         question.api_json, dict
     ), f"API JSON is not a dict for post ID {post_id}"
@@ -1156,6 +1186,9 @@ def assert_basic_question_attributes_not_none(
     assert question.date_accessed > pendulum.now().subtract(
         days=1
     ), f"Date accessed is not in the past for post ID {post_id}"
+    assert (
+        question.date_accessed.tzinfo is not None
+    ), f"Date accessed is not timezone aware for post ID {post_id}"
     assert isinstance(
         question.already_forecasted, bool
     ), f"Already forecasted is not a boolean for post ID {post_id}"
@@ -1163,6 +1196,9 @@ def assert_basic_question_attributes_not_none(
         assert (
             question.timestamp_of_my_last_forecast is not None
         ), f"Timestamp of my last forecast is None for post ID {post_id}"
+        assert (
+            question.timestamp_of_my_last_forecast.tzinfo is not None
+        ), f"Timestamp of my last forecast is not timezone aware for post ID {post_id}"
     if isinstance(question, NumericQuestion):
         assert (
             question.unit_of_measure is not None
@@ -1186,6 +1222,9 @@ def assert_basic_question_attributes_not_none(
         assert isinstance(question.question_ids_of_group, list)
         assert all(isinstance(q_id, int) for q_id in question.question_ids_of_group)
         assert question.group_question_option is not None
+    assert all(
+        isinstance(category, Category) for category in question.categories
+    ), f"Categories is not a list of strings for post ID {post_id}"
 
 
 def assert_questions_match_filter(  # NOSONAR
@@ -1313,3 +1352,78 @@ def assert_questions_match_filter(  # NOSONAR
             assert (
                 filter_passes
             ), f"Question {question.id_of_post} has no community prediction at access time"
+
+
+class TestAdminFunctions:
+
+    def test_all_admin_functions(self) -> None:
+        token = os.getenv("ADMIN_METACULUS_TOKEN")
+        if token is None:
+            raise ValueError("ADMIN_METACULUS_TOKEN is not set")
+        client = MetaculusClient(
+            base_url="https://dev.metaculus.com/api",
+            token=token,
+        )
+        question_to_create = client.get_question_by_url(
+            "https://dev.metaculus.com/questions/39162/"
+        )
+        project_id = 1156  # https://dev.metaculus.com/tournament/beta-testing/
+        slug = "beta-testing"
+        question_to_create.default_project_id = project_id
+        question_to_create.tournament_slugs = [slug]
+
+        ### Create and approve question ###
+        created_question = client.create_question(question_to_create)
+        client.approve_question(created_question)
+
+        assert created_question is not None
+        assert created_question.id_of_post is not None
+        assert created_question.id_of_question is not None
+        assert created_question.default_project_id == project_id
+        assert created_question.id_of_post != question_to_create.id_of_post
+        assert created_question.id_of_question != question_to_create.id_of_question
+
+        assert created_question.question_text == question_to_create.question_text
+        assert created_question.open_time == question_to_create.open_time
+        assert created_question.close_time == question_to_create.close_time
+        assert (
+            created_question.includes_bots_in_aggregates
+            == question_to_create.includes_bots_in_aggregates
+        )
+        assert created_question.cp_reveal_time == question_to_create.cp_reveal_time
+        assert created_question.question_weight == question_to_create.question_weight
+        assert (
+            created_question.resolution_string == question_to_create.resolution_string
+        )
+        assert created_question.conditional_type == question_to_create.conditional_type
+        assert_basic_question_attributes_not_none(
+            created_question, created_question.id_of_post
+        )
+        assert str(created_question.categories) == str(question_to_create.categories)
+        assert set(category.name for category in created_question.categories) == {
+            "Artificial Intelligence"
+        }
+        assert (
+            created_question.resolution_criteria
+            == question_to_create.resolution_criteria
+        )
+        assert created_question.fine_print == question_to_create.fine_print
+        assert created_question.background_info == question_to_create.background_info
+        assert set(created_question.tournament_slugs) == {slug}
+        assert created_question.published_time == question_to_create.published_time
+
+        ### Resolve question ###
+        client.resolve_question(created_question.id_of_question, "yes", pendulum.now())
+        resolved_question = client.get_question_by_post_id(created_question.id_of_post)
+        assert resolved_question.state == QuestionState.RESOLVED
+        assert resolved_question.actual_resolution_time is not None
+        assert resolved_question.resolution_string == "yes"
+
+        ### Unresolve question ###
+        client.unresolve_question(created_question.id_of_question)
+        unresolved_question = client.get_question_by_post_id(
+            created_question.id_of_post
+        )
+        assert unresolved_question.actual_resolution_time is None
+        assert unresolved_question.resolution_string is None
+        assert unresolved_question.state != QuestionState.RESOLVED

@@ -25,6 +25,13 @@ def _all_tests() -> list[ModelTest]:
             [{"role": "user", "content": test_data.get_cheap_user_message()}],
         ),
         ModelTest(
+            GeneralLlm(model="openai/gpt-4o"),
+            [
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": test_data.get_cheap_user_message()},
+            ],
+        ),
+        ModelTest(
             GeneralLlm(model="o3-mini", reasoning_effort="low"),
             test_data.get_cheap_user_message(),
         ),
@@ -97,6 +104,21 @@ def test_general_llm_instances_run(
             "asknews/"
         ):
             assert cost_manager.current_usage > 0, "No cost was incurred"
+
+
+def test_system_prompt_parameter() -> None:
+    model = GeneralLlm(model="gpt-4o")
+    response = asyncio.run(
+        model.invoke(
+            "Hello, world!",
+            system_prompt="If the user says 'Hello, world!', say 'Hello there friend! I am a turkey.' back to them.",
+        )
+    )
+    assert response is not None, "Response is None"
+    assert response != "", "Response is an empty string"
+    logger.info(f"Response: {response}")
+    assert "friend" in response.lower(), "Response is not friendly"
+    assert "turkey" in response.lower(), "Response is not a turkey"
 
 
 def test_timeout_works() -> None:

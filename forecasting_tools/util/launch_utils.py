@@ -331,9 +331,18 @@ class SheetOrganizer:
 
     @staticmethod
     def compute_upcoming_day(
-        day_of_week: Literal["monday", "saturday", "friday"],
+        day_of_week: Literal[
+            "monday", "saturday", "friday", "tuesday", "wednesday", "thursday"
+        ],
     ) -> datetime:
-        day_number = {"monday": 0, "saturday": 5, "friday": 4}
+        day_number = {
+            "monday": 0,
+            "tuesday": 1,
+            "wednesday": 2,
+            "thursday": 3,
+            "saturday": 5,
+            "friday": 4,
+        }
         today = datetime.now().date()
         today_weekday = today.weekday()
         target_weekday = day_number[day_of_week]

@@ -163,7 +163,12 @@ class MetaculusClient:
         self.timeout = timeout
         self.sleep_time_between_requests_min = sleep_seconds_between_requests
         self.sleep_jitter_seconds = sleep_jitter_seconds
-        self.token = token
+
+        self.token = token or os.getenv("METACULUS_TOKEN")
+        if self.token is None:
+            logger.warning(
+                "METACULUS_TOKEN environment variable and/or token field not set"
+            )
 
     @retry_with_exponential_backoff()
     def get_user_bots(self) -> list[UserResponse]:
@@ -344,9 +349,10 @@ class MetaculusClient:
         self._sleep_between_requests()
 
         url = f"{self.base_url}/posts/{post_id}/"
+        headers = self._get_auth_headers()
         response = requests.get(
             url,
-            **self._get_auth_headers(),  # type: ignore
+            **headers,  # type: ignore
             timeout=self.timeout,
         )
         raise_for_status_with_additional_info(response)
@@ -573,15 +579,17 @@ class MetaculusClient:
         return result
 
     def _get_auth_headers(self) -> dict[str, dict[str, str]]:
-        METACULUS_TOKEN = self.token or os.getenv("METACULUS_TOKEN")
-        if METACULUS_TOKEN is None:
-            raise ValueError("METACULUS_TOKEN environment variable or field not set")
-        return {
+        if self.token is None:
+            raise ValueError(
+                "METACULUS_TOKEN environment variable and/or token field not set"
+            )
+        headers = {
             "headers": {
-                "Authorization": f"Token {METACULUS_TOKEN}",
+                "Authorization": f"Token {self.token}",
                 "Accept-Language": "en",
             }
         }
+        return headers
 
     @retry_with_exponential_backoff()
     def _post_question_prediction(
@@ -1152,3 +1160,184 @@ class MetaculusClient:
             f"Sleeping for {random_sleep_time:.1f} seconds before next request"
         )
         time.sleep(random_sleep_time)
+
+    #################### ADMIN FUNCTIONS ####################
+
+    @retry_with_exponential_backoff()
+    def resolve_question(
+        self, question_id: int, resolution: str | None, resolve_time: datetime
+    ) -> None:
+        self._sleep_between_requests()
+        if resolution is None:
+            logger.warning(
+                f"Resolution is None, Question ID {question_id} not resolved"
+            )
+            return
+        response = requests.post(
+            f"{self.base_url}/questions/{question_id}/resolve/",
+            json={
+                "resolution": resolution,
+                "actual_resolve_time": resolve_time.strftime("%Y-%m-%dT%H:%M:%S"),
+            },  # TODO: Find all instances of strftime that doesn't use timezone, and add timezone
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        raise_for_status_with_additional_info(response)
+        logger.info(f"Resolved question ID {question_id} with resolution {resolution}")
+
+    @retry_with_exponential_backoff()
+    def unresolve_question(self, question_id: int) -> None:
+        self._sleep_between_requests()
+        response = requests.post(
+            f"{self.base_url}/questions/{question_id}/unresolve/",
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        raise_for_status_with_additional_info(response)
+        logger.info(f"Unresolved question ID {question_id}")
+
+    @retry_with_exponential_backoff()
+    def create_question(self, question: MetaculusQuestion) -> MetaculusQuestion:
+        question_data = self._get_post_create_data(question)
+        self._sleep_between_requests()
+        response = requests.post(
+            f"{self.base_url}/posts/create/",
+            json=question_data,
+            headers={
+                "accept": "application/json",
+                "Authorization": f"Token {self.token}",
+            },
+            timeout=self.timeout,
+        )
+
+        raise_for_status_with_additional_info(response)
+        created_question_list = self._post_json_to_questions_while_handling_groups(
+            json.loads(response.content), "exclude"
+        )
+        if len(created_question_list) != 1:
+            raise ValueError(
+                f"Expected 1 question to be created, got {len(created_question_list)}. Questions created: {[question.page_url for question in created_question_list]}"
+            )
+        single_created_question = created_question_list[0]
+        logger.info(f"Created new questions: {single_created_question.page_url}")
+
+        assert single_created_question.id_of_post is not None
+        full_created_question = self.get_question_by_post_id(
+            single_created_question.id_of_post
+        )
+
+        return full_created_question
+
+    @retry_with_exponential_backoff()
+    def approve_question(self, question: MetaculusQuestion) -> None:
+        self._sleep_between_requests()
+        response = requests.post(
+            f"{self.base_url}/posts/{question.id_of_post}/approve/",
+            data={
+                "published_at": (
+                    question.published_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.published_time
+                    else None
+                ),
+                "open_time": (
+                    question.open_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.open_time
+                    else None
+                ),
+                "cp_reveal_time": (
+                    question.cp_reveal_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.cp_reveal_time
+                    else None
+                ),
+                "scheduled_close_time": (
+                    question.close_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.close_time
+                    else None
+                ),
+                "scheduled_resolve_time": (
+                    question.scheduled_resolution_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.scheduled_resolution_time
+                    else None
+                ),
+            },
+            timeout=self.timeout,
+            headers={
+                "accept": "application/json",
+                "Authorization": f"Token {self.token}",
+            },
+        )
+
+        raise_for_status_with_additional_info(response)
+        logger.info(f"Approved question {question.page_url}")
+
+    @staticmethod
+    def _get_post_create_data(question: MetaculusQuestion) -> dict:
+        if question.published_time is None:
+            publish_time = question.open_time
+        else:
+            publish_time = question.published_time
+
+        return {
+            "title": question.question_text,
+            "short_title": question.custom_metadata.get("short_name", None)
+            or question.question_text,
+            "default_project": question.default_project_id,
+            "categories": [category.id for category in question.categories],
+            "published_at": (
+                publish_time.strftime("%Y-%m-%dT%H:%M:%S") if publish_time else None
+            ),
+            "is_automatically_translated": False,
+            "question": {
+                "title": question.question_text,
+                "description": question.background_info or "",
+                "type": getattr(question, "question_type", "binary"),
+                "possibilities": None,  # deprecated
+                "resolution": None,
+                "include_bots_in_aggregates": (
+                    question.includes_bots_in_aggregates
+                    if isinstance(question.includes_bots_in_aggregates, bool)
+                    else True  # defaults to True since mini bench is a bot thing
+                ),
+                "default_aggregation_method": "unweighted",
+                "default_score_type": "spot_peer",
+                "question_weight": (
+                    question.question_weight if question.question_weight else 1.0
+                ),
+                "scaling": {
+                    "range_max": getattr(question, "upper_bound", None),
+                    "range_min": getattr(question, "lower_bound", None),
+                    "zero_point": getattr(question, "zero_point", None),
+                },
+                "open_upper_bound": getattr(question, "open_upper_bound", None),
+                "open_lower_bound": getattr(question, "open_lower_bound", None),
+                "inbound_outcome_count": getattr(question, "cdf_size", 201) - 1,
+                "options": getattr(question, "options", None),
+                "group_variable": getattr(question, "option_is_instance_of", None)
+                or "",
+                "label": "",  # only group questions
+                "resolution_criteria": question.resolution_criteria or "",
+                "open_time": (
+                    question.open_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.open_time
+                    else None
+                ),
+                "cp_reveal_time": (
+                    question.cp_reveal_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.cp_reveal_time
+                    else None
+                ),
+                "scheduled_close_time": (
+                    question.close_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.close_time
+                    else None
+                ),
+                "scheduled_resolve_time": (
+                    question.scheduled_resolution_time.strftime("%Y-%m-%dT%H:%M:%S")
+                    if question.scheduled_resolution_time
+                    else None
+                ),
+                "unit": getattr(question, "unit_of_measure", None) or "",
+                "fine_print": question.fine_print or "",
+                "group_rank": None,  # only group questions
+            },
+        }

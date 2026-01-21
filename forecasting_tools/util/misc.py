@@ -26,13 +26,25 @@ def raise_for_status_with_additional_info(
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
-        response_text = response.text
+        response_text = str(response.text)
         response_reason = response.reason
         try:
             response_json = response.json()
         except Exception:
             response_json = None
-        error_message = f"HTTPError. Url: {response.url}. Response reason: {response_reason}. Response text: {response_text}. Response JSON: {response_json}"
+        if "!DOCTYPE html".lower() in response_text.lower():
+            response_text = "Response text is a HTML page"
+
+        try:
+            status_code = response.status_code  # type: ignore
+        except Exception:
+            status_code = None
+
+        error_message = (
+            f"HTTPError. Url: {response.url}. Status code: {status_code}. "
+            f"Response reason: {response_reason}. Response text: {response_text}. "
+            f"Response JSON: {response_json}."
+        )
         logger.error(error_message)
         raise requests.exceptions.HTTPError(error_message) from e
 

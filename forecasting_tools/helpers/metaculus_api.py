@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import List, Literal, overload
 
 import typing_extensions
@@ -231,3 +232,24 @@ class MetaculusApi:
             error_if_question_target_missed,
             group_question_mode,
         )
+
+    ### ADMIN FUNCTIONS ###
+    @classmethod
+    def resolve_question(
+        cls, question_id: int, resolution: str | None, resolve_time: datetime
+    ) -> None:
+        return cls.METACULUS_CLIENT.resolve_question(
+            question_id, resolution, resolve_time
+        )
+
+    @classmethod
+    def unresolve_question(cls, question_id: int) -> None:
+        return cls.METACULUS_CLIENT.unresolve_question(question_id)
+
+    @classmethod
+    def create_question(cls, question: MetaculusQuestion) -> MetaculusQuestion:
+        return cls.METACULUS_CLIENT.create_question(question)
+
+    @classmethod
+    def approve_question(cls, question: MetaculusQuestion) -> None:
+        return cls.METACULUS_CLIENT.approve_question(question)

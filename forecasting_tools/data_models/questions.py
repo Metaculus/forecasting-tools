@@ -59,6 +59,15 @@ QuestionBasicType = Literal[
 ConditionalSubQuestionType = Literal["parent", "child", "yes", "no"]
 
 
+class Category(BaseModel, Jsonable):
+    id: int
+    name: str
+    slug: str | None = None
+    emoji: str | None = None
+    description: str | None = None
+    type: Literal["category"] = "category"
+
+
 class MetaculusQuestion(BaseModel, Jsonable):
     question_text: str
     id_of_post: int | None = Field(
@@ -110,6 +119,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
     custom_metadata: dict = Field(
         default_factory=dict
     )  # Additional metadata not tracked above or through the Metaculus API
+    categories: list[Category] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def add_timezone_to_dates(self) -> MetaculusQuestion:
@@ -134,11 +144,25 @@ class MetaculusQuestion(BaseModel, Jsonable):
             tournaments: list[dict] = post_api_json["projects"]["tournament"]  # type: ignore
             tournament_slugs = [str(t["slug"]) for t in tournaments]
         except KeyError:
-            tournament_slugs = []
+            try:
+                question_series: list[dict] = post_api_json["projects"]["question_series"]  # type: ignore
+                tournament_slugs = [str(q["slug"]) for q in question_series]
+            except KeyError:
+                tournament_slugs = []
 
         group_question_option = question_json.get("label", None)
         if group_question_option is not None and group_question_option.strip() == "":
             group_question_option = None
+
+        try:
+            categories_dict_list = post_api_json["projects"]["category"]
+        except KeyError:
+            categories_dict_list = []
+        categories = [
+            Category(**category_dict) for category_dict in categories_dict_list
+        ]
+
+        published_time = cls._parse_api_date(post_api_json.get("published_at"))
 
         question = MetaculusQuestion(
             # NOTE: Reminder - When adding new fields, consider if group questions
@@ -162,7 +186,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             scheduled_resolution_time=cls._parse_api_date(
                 question_json.get("scheduled_resolve_time")
             ),
-            published_time=cls._parse_api_date(post_api_json.get("published_at")),
+            published_time=published_time,
             cp_reveal_time=cls._parse_api_date(question_json.get("cp_reveal_time")),
             open_time=cls._parse_api_date(question_json.get("open_time")),
             already_forecasted=is_forecasted,
@@ -180,6 +204,7 @@ class MetaculusQuestion(BaseModel, Jsonable):
             group_question_option=group_question_option,
             api_json=post_api_json,
             conditional_type=question_json.get("conditional_type", None),
+            categories=categories,
         )
         return question
 

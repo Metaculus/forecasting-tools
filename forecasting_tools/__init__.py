@@ -112,6 +112,7 @@ from forecasting_tools.data_models.numeric_report import (
 )
 from forecasting_tools.data_models.numeric_report import NumericReport as NumericReport
 from forecasting_tools.data_models.questions import BinaryQuestion as BinaryQuestion
+from forecasting_tools.data_models.questions import Category as Category
 from forecasting_tools.data_models.questions import DateQuestion as DateQuestion
 from forecasting_tools.data_models.questions import DiscreteQuestion as DiscreteQuestion
 from forecasting_tools.data_models.questions import (
