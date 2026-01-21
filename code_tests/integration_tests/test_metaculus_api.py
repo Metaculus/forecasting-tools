@@ -1372,11 +1372,13 @@ class TestAdminFunctions:
         question_to_create.default_project_id = project_id
         question_to_create.tournament_slugs = [slug]
 
+        ### Create and approve question ###
         created_question = client.create_question(question_to_create)
         client.approve_question(created_question)
 
         assert created_question is not None
         assert created_question.id_of_post is not None
+        assert created_question.id_of_question is not None
         assert created_question.default_project_id == project_id
         assert created_question.id_of_post != question_to_create.id_of_post
         assert created_question.id_of_question != question_to_create.id_of_question
@@ -1410,16 +1412,18 @@ class TestAdminFunctions:
         assert set(created_question.tournament_slugs) == {slug}
         assert created_question.published_time == question_to_create.published_time
 
-        client.resolve_question(created_question.id_of_post, "yes", datetime.now())
+        ### Resolve question ###
+        client.resolve_question(created_question.id_of_question, "yes", datetime.now())
         resolved_question = client.get_question_by_post_id(created_question.id_of_post)
         assert resolved_question.state == QuestionState.RESOLVED
         assert resolved_question.actual_resolution_time is not None
         assert resolved_question.resolution_string == "yes"
 
-        client.unresolve_question(created_question.id_of_post)
+        ### Unresolve question ###
+        client.unresolve_question(created_question.id_of_question)
         unresolved_question = client.get_question_by_post_id(
             created_question.id_of_post
         )
-        assert resolved_question.state != QuestionState.RESOLVED
         assert unresolved_question.actual_resolution_time is None
         assert unresolved_question.resolution_string is None
+        assert unresolved_question.state != QuestionState.RESOLVED
