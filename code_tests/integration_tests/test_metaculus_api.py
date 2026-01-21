@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, timezone
 
 import pendulum
@@ -1351,3 +1352,62 @@ def assert_questions_match_filter(  # NOSONAR
             assert (
                 filter_passes
             ), f"Question {question.id_of_post} has no community prediction at access time"
+
+
+class TestAdminFunctions:
+
+    def test_create_question(self) -> None:
+        token = os.getenv("METACULUS_TOKEN")
+        if token is None:
+            raise ValueError("ADMIN_METACULUS_TOKEN is not set")
+        client = MetaculusClient(
+            base_url="https://dev.metaculus.com",
+            token=token,
+        )
+        question_to_create = client.get_question_by_url(
+            "https://dev.metaculus.com/questions/39162/"
+        )
+        project_id = 1156  # https://dev.metaculus.com/tournament/beta-testing/
+        slug = "beta-testing"
+        question_to_create.default_project_id = project_id
+        question_to_create.tournament_slugs = [slug]
+
+        created_question = client.create_question(question_to_create)
+        assert created_question is not None
+        assert created_question.id_of_post is not None
+        assert created_question.default_project_id == project_id
+        assert created_question.tournament_slugs == [slug]
+
+        assert created_question.question_text == question_to_create.question_text
+        assert (
+            created_question.resolution_criteria
+            == question_to_create.resolution_criteria
+        )
+        assert created_question.fine_print == question_to_create.fine_print
+        assert created_question.background_info == question_to_create.background_info
+        assert created_question.open_time == question_to_create.open_time
+        assert created_question.close_time == question_to_create.close_time
+        assert created_question.published_time == question_to_create.published_time
+        assert created_question.tournament_slugs == question_to_create.tournament_slugs
+        assert (
+            created_question.includes_bots_in_aggregates
+            == question_to_create.includes_bots_in_aggregates
+        )
+        assert created_question.cp_reveal_time == question_to_create.cp_reveal_time
+        assert created_question.question_weight == question_to_create.question_weight
+        assert (
+            created_question.resolution_string == question_to_create.resolution_string
+        )
+        assert created_question.conditional_type == question_to_create.conditional_type
+        assert (
+            created_question.previous_forecasts == question_to_create.previous_forecasts
+        )
+        assert created_question.categories == question_to_create.categories
+        assert created_question.is_in_main_feed == question_to_create.is_in_main_feed
+        assert created_question.id_of_question != question_to_create.id_of_question
+        assert created_question.id_of_post != question_to_create.id_of_post
+        assert created_question.date_accessed == question_to_create.date_accessed
+        assert_basic_question_attributes_not_none(
+            created_question, created_question.id_of_post
+        )
+        assert str(created_question.categories) == str(question_to_create.categories)
