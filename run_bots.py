@@ -44,6 +44,10 @@ default_for_using_summary = False
 default_num_forecasts_for_research_only_bot = 3
 structure_output_model = DEFAULT_STRUCTURE_OUTPUT_MODEL
 default_metaculus_client = MetaculusClient()
+POST_IDS_TO_SKIP = [
+    31653,  # https://www.metaculus.com/questions/31653/ is rejected by qwen3-max and is causing noisy workflow errors
+    39009,  # https://www.metaculus.com/questions/39009/ is rejected since too many MC options
+]
 
 
 class ScheduleConfig:
@@ -221,12 +225,12 @@ async def get_questions_for_allowed_tournaments(
         main_site_questions = await _get_questions_for_main_site(main_site_tourns)
         questions.extend(main_site_questions)
 
-    filtered_questions = [q for q in questions if q.id_of_post != 31653]
-    # https://www.metaculus.com/questions/31653/ is rejected by qwen3-max and is causing noisy workflow errors
-
-    questions_to_forecast = filtered_questions[:max_questions]
+    not_skipped_questions = [
+        q for q in questions if q.id_of_post not in POST_IDS_TO_SKIP
+    ]
+    questions_to_forecast = not_skipped_questions[:max_questions]
     logger.info(
-        f"Questions to forecast: {len(questions_to_forecast)}. Possible questions that need forecasting: {len(filtered_questions)}"
+        f"Questions to forecast: {len(questions_to_forecast)}. Possible questions that need forecasting: {len(not_skipped_questions)}"
     )
     return questions_to_forecast
 
@@ -907,7 +911,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning={
                         "enabled": True,
                     },
-                    timeout=3 * 60,
+                    timeout=6 * 60,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],

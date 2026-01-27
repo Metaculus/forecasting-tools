@@ -43,7 +43,6 @@ from forecasting_tools.util.misc import (
 
 logger = logging.getLogger(__name__)
 
-API_BASE_URL = os.getenv("METACULUS_API_BASE_URL", "https://www.metaculus.com/api")
 
 Q = TypeVar("Q", bound=MetaculusQuestion)
 T = TypeVar("T", bound=BaseModel)
@@ -153,13 +152,15 @@ class MetaculusClient:
 
     def __init__(
         self,
-        base_url: str = API_BASE_URL,
+        base_url: str | None = None,
         timeout: int = 30,
         sleep_seconds_between_requests: float = 3.5,
         sleep_jitter_seconds: float = 1,
         token: str | None = None,
     ):
-        self.base_url = base_url
+        self.base_url = base_url or os.getenv(
+            "METACULUS_API_BASE_URL", "https://www.metaculus.com/api"
+        )
         self.timeout = timeout
         self.sleep_time_between_requests_min = sleep_seconds_between_requests
         self.sleep_jitter_seconds = sleep_jitter_seconds
