@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_MODEL: str = (
-    "openrouter/google/gemini-2.5-pro"  # "openrouter/anthropic/claude-sonnet-4"
+    "openrouter/google/gemini-2.5-pro"  # "openrouter/anthropic/claude-sonnet-4.5.5"
 )
 MODEL_CHOICES: list[str] = [
     DEFAULT_MODEL,
@@ -70,11 +70,13 @@ MODEL_CHOICES: list[str] = [
     "openrouter/x-ai/grok-4",
     "openrouter/anthropic/claude-opus-4.1",
     "openrouter/anthropic/claude-sonnet-4",
+    "openrouter/anthropic/claude-sonnet-4.5",
     "openai/o3",
     "openai/o4-mini",
     "openai/gpt-4.1",
     "gpt-4o",
     "openrouter/google/gemini-2.5-pro-preview",
+    "openrouter/google/gemini-3-pro-preview",
 ]
 
 

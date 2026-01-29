@@ -6,6 +6,7 @@ import streamlit as st
 
 from forecasting_tools.front_end.app_pages.benchmark_page import BenchmarkPage
 from forecasting_tools.front_end.app_pages.chat_page import ChatPage
+from forecasting_tools.front_end.app_pages.congress_page import CongressPage
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 top_level_dir = os.path.abspath(os.path.join(current_dir, "../../"))
@@ -36,6 +37,7 @@ class HomePage(AppPage):
     ESTIMATOR_PAGE: type[AppPage] = EstimatorPage
     KEY_FACTORS_PAGE: type[AppPage] = KeyFactorsPage
     CSV_AGENT_PAGE: type[AppPage] = CsvAgentPage
+    CONGRESS_PAGE: type[AppPage] = CongressPage
     BENCHMARK_PAGE: type[AppPage] = BenchmarkPage
     NON_HOME_PAGES: list[type[AppPage]] = [
         CHAT_PAGE,
@@ -44,6 +46,7 @@ class HomePage(AppPage):
         BASE_RATE_PAGE,
         NICHE_LIST_RESEARCH_PAGE,
         ESTIMATOR_PAGE,
+        CONGRESS_PAGE,
         CSV_AGENT_PAGE,
     ]
 
