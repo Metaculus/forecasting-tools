@@ -257,6 +257,7 @@ class CongressPage(AppPage):
         tabs = st.tabs(
             [
                 "📊 Synthesis",
+                "📝 Blog Post",
                 "👤 Individual Proposals",
                 "🎯 Forecast Comparison",
                 "🐦 Twitter Posts",
@@ -267,12 +268,15 @@ class CongressPage(AppPage):
             cls._display_synthesis_tab(session)
 
         with tabs[1]:
-            cls._display_proposals_tab(session)
+            cls._display_blog_tab(session)
 
         with tabs[2]:
-            cls._display_forecasts_tab(session)
+            cls._display_proposals_tab(session)
 
         with tabs[3]:
+            cls._display_forecasts_tab(session)
+
+        with tabs[4]:
             cls._display_twitter_tab(session)
 
         cls._display_download_buttons(session)
@@ -290,6 +294,23 @@ class CongressPage(AppPage):
             with st.expander("⚠️ Errors During Session"):
                 for error in session.errors:
                     st.error(error)
+
+    @classmethod
+    def _display_blog_tab(cls, session: CongressSession) -> None:
+        st.subheader("Blog Post")
+        if session.blog_post:
+            cleaned = ReportDisplayer.clean_markdown(session.blog_post)
+            st.markdown(cleaned)
+
+            st.download_button(
+                label="📥 Download Blog Post (Markdown)",
+                data=session.blog_post,
+                file_name=f"congress_blog_{session.timestamp.strftime('%Y%m%d_%H%M%S')}.md",
+                mime="text/markdown",
+                key="download_blog",
+            )
+        else:
+            st.write("No blog post available.")
 
     @classmethod
     def _display_proposals_tab(cls, session: CongressSession) -> None:

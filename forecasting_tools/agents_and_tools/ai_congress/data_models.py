@@ -84,6 +84,7 @@ class CongressSession(BaseModel, Jsonable):
     members_participating: list[CongressMember]
     proposals: list[PolicyProposal]
     aggregated_report_markdown: str
+    blog_post: str = Field(default="")
     twitter_posts: list[str] = Field(default_factory=list)
     timestamp: datetime
     errors: list[str] = Field(default_factory=list)

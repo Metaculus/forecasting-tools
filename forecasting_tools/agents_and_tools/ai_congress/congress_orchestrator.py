@@ -57,10 +57,12 @@ class CongressOrchestrator:
         logger.info(f"Completed {len(proposals)} proposals with {len(errors)} errors")
 
         aggregated_report = ""
+        blog_post = ""
         twitter_posts: list[str] = []
 
         if proposals:
             aggregated_report = await self._aggregate_proposals(prompt, proposals)
+            blog_post = await self._generate_blog_post(prompt, proposals, members)
             twitter_posts = await self._generate_twitter_posts(prompt, proposals)
 
         return CongressSession(
@@ -68,6 +70,7 @@ class CongressOrchestrator:
             members_participating=members,
             proposals=proposals,
             aggregated_report_markdown=aggregated_report,
+            blog_post=blog_post,
             twitter_posts=twitter_posts,
             timestamp=datetime.now(timezone.utc),
             errors=errors,
@@ -189,6 +192,136 @@ class CongressOrchestrator:
         )
 
         return await llm.invoke(aggregation_prompt)
+
+    async def _generate_blog_post(
+        self,
+        prompt: str,
+        proposals: list[PolicyProposal],
+        members: list[CongressMember],
+    ) -> str:
+        llm = GeneralLlm(self.aggregation_model, timeout=LONG_TIMEOUT)
+
+        ai_model_members = [
+            m
+            for m in members
+            if "behaves as" in m.political_leaning.lower()
+            or "naturally" in m.political_leaning.lower()
+        ]
+        has_ai_model_comparison = len(ai_model_members) >= 2
+
+        proposals_summary = "\n\n".join(
+            [
+                f"### {p.member.name} ({p.member.role})\n"
+                f"**Political Leaning:** {p.member.political_leaning}\n"
+                f"**AI Model:** {p.member.ai_model}\n\n"
+                f"**Key Recommendations:**\n"
+                + "\n".join(f"- {rec}" for rec in p.key_recommendations[:5])
+                + "\n\n**Key Forecasts:**\n"
+                + "\n".join(
+                    f"- {f.question_title}: {f.prediction}" for f in p.forecasts[:5]
+                )
+                for p in proposals
+                if p.member
+            ]
+        )
+
+        ai_comparison_section = ""
+        if has_ai_model_comparison:
+            ai_comparison_section = clean_indents(
+                """
+                ## Special Section: AI Model Comparison
+
+                Since this congress included multiple AI models acting naturally (without
+                assigned political personas), include a dedicated analysis section:
+
+                ### How the Models Compared
+
+                For each AI model participant, analyze:
+                - What was their overall approach and tone?
+                - What priorities or values seemed most salient to them?
+                - How did their forecasts compare to other models on similar questions?
+                - Did they show any distinctive reasoning patterns?
+
+                ### Unexpected Behaviors
+
+                Highlight anything surprising:
+                - Did any model take a position you wouldn't expect?
+                - Were there cases where models with similar training diverged significantly?
+                - Did any model show unusual certainty or uncertainty?
+                - Were there any reasoning patterns that seemed distinctive to one model?
+
+                ### Model Personality Insights
+
+                What does this session reveal about each model's "personality"?
+                - Risk tolerance (cautious vs bold)
+                - Epistemic style (hedging vs confident)
+                - Value emphasis (efficiency, equity, security, etc.)
+                - Reasoning style (data-driven, principled, pragmatic)
+                """
+            )
+
+        blog_prompt = clean_indents(
+            f"""
+            # Write a Blog Post About This AI Congress Session
+
+            You are writing an engaging blog post about an AI Forecasting Congress
+            session where AI agents deliberated on the following policy question:
+
+            "{prompt}"
+
+            ## Proposals Summary
+
+            {proposals_summary}
+
+            ## Blog Post Requirements
+
+            Write a ~1500-2000 word blog post that would be engaging for a tech/policy
+            audience interested in AI capabilities and policy analysis. The post should:
+
+            ### Structure
+
+            1. **Hook** (1 paragraph): Start with the most surprising or interesting
+               finding from the session. Make readers want to continue.
+
+            2. **Context** (1-2 paragraphs): Briefly explain what the AI Forecasting
+               Congress is and what question was being deliberated.
+
+            3. **Key Insights** (3-5 paragraphs): The most important takeaways from
+               the session. What did the AI congress conclude? Where did they agree
+               and disagree? What forecasts matter most?
+
+            4. **The Good, Bad, and Ugly** (2-3 paragraphs): Highlight:
+               - The Good: Surprising consensus, innovative ideas, strong reasoning
+               - The Bad: Blind spots, weak arguments, missed considerations
+               - The Ugly: Uncomfortable tradeoffs, unresolved tensions
+
+            5. **Implications** (1-2 paragraphs): What does this mean for policymakers
+               or the public? What actions might follow from these insights?
+
+            {ai_comparison_section}
+
+            6. **Conclusion** (1 paragraph): End with a thought-provoking takeaway
+               about what this exercise reveals about AI policy analysis capabilities.
+
+            ### Style Guidelines
+
+            - Write in an engaging, accessible style (not academic)
+            - Use specific examples and quotes from the proposals
+            - Include specific forecasts with probabilities
+            - Be analytical but not dry
+            - Feel free to express opinions about which arguments were strongest
+            - Use markdown formatting with headers, bullet points, and bold text
+            - Include a catchy title at the start
+
+            Write the blog post now.
+            """
+        )
+
+        try:
+            return await llm.invoke(blog_prompt)
+        except Exception as e:
+            logger.error(f"Failed to generate blog post: {e}")
+            return ""
 
     async def _generate_twitter_posts(
         self,
