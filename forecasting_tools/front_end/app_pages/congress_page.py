@@ -24,6 +24,9 @@ from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
 logger = logging.getLogger(__name__)
 
 SESSIONS_FOLDER = "temp/congress_sessions"
+EXAMPLE_SESSION_PATH = (
+    "forecasting_tools/front_end/example_outputs/congress_page_example.json"
+)
 
 
 class CongressPage(AppPage):
@@ -44,6 +47,7 @@ class CongressPage(AppPage):
             """
         )
 
+        cls._display_example_button()
         cls._display_sidebar()
 
         session_input = await cls._get_input()
@@ -54,6 +58,16 @@ class CongressPage(AppPage):
 
         if "latest_session" in st.session_state:
             cls._display_session(st.session_state["latest_session"])
+
+    @classmethod
+    def _display_example_button(cls) -> None:
+        if st.button("📋 See Premade Example", key="load_example_btn"):
+            session = cls._load_session_from_file(EXAMPLE_SESSION_PATH)
+            if session:
+                st.session_state["latest_session"] = session
+                st.rerun()
+            else:
+                st.error("Could not load the example session.")
 
     @classmethod
     def _display_sidebar(cls) -> None:
@@ -254,6 +268,8 @@ class CongressPage(AppPage):
     def _display_session(cls, session: CongressSession) -> None:
         st.header("Congress Results")
 
+        cls._display_cost_summary(session)
+
         tabs = st.tabs(
             [
                 "📊 Synthesis",
@@ -323,21 +339,44 @@ class CongressPage(AppPage):
         for proposal in session.proposals:
             member_name = proposal.member.name if proposal.member else "Unknown"
             member_role = proposal.member.role if proposal.member else ""
+            cost_str = (
+                f" (${proposal.price_estimate:.2f})" if proposal.price_estimate else ""
+            )
 
-            with st.expander(f"**{member_name}** - {member_role}", expanded=False):
-                st.markdown("#### Decision Criteria")
+            with st.expander(
+                f"**{member_name}** - {member_role}{cost_str}", expanded=False
+            ):
+                if proposal.price_estimate:
+                    st.caption(f"💰 Cost: ${proposal.price_estimate:.2f}")
+
+                st.markdown("# Decision Criteria")
                 for i, criterion in enumerate(proposal.decision_criteria, 1):
                     st.markdown(f"{i}. {criterion}")
 
-                st.markdown("#### Key Recommendations")
+                st.markdown("# Key Recommendations")
                 for rec in proposal.key_recommendations:
                     st.markdown(f"- {rec}")
 
-                st.markdown("#### Full Proposal")
+                st.markdown("# Research Summary")
+                st.markdown(proposal.research_summary)
+
+                st.markdown("# Proposal Text")
                 cleaned = ReportDisplayer.clean_markdown(
                     proposal.get_full_markdown_with_footnotes()
                 )
                 st.markdown(cleaned)
+
+                st.markdown("# Full Forecasts")
+                for forecast in proposal.forecasts:
+                    st.markdown(
+                        f"**[^{forecast.footnote_id}] {forecast.question_title}**"
+                    )
+                    st.markdown(f"- **Prediction:** {forecast.prediction}")
+                    st.markdown(f"- **Question:** {forecast.question_text}")
+                    st.markdown(f"- **Resolution:** {forecast.resolution_criteria}")
+                    st.markdown(f"- **Reasoning:** {forecast.reasoning}")
+                    if forecast.key_sources:
+                        st.markdown(f"- **Sources:** {', '.join(forecast.key_sources)}")
 
     @classmethod
     def _display_forecasts_tab(cls, session: CongressSession) -> None:
@@ -399,6 +438,29 @@ class CongressPage(AppPage):
             st.markdown(f"**Tweet {i}** ({len(post)} chars)")
             st.info(post)
             st.button(f"📋 Copy Tweet {i}", key=f"copy_tweet_{i}")
+
+    @classmethod
+    def _display_cost_summary(cls, session: CongressSession) -> None:
+        total_cost = session.total_price_estimate
+        if total_cost is None:
+            return
+
+        proposal_costs = [
+            (p.member.name if p.member else "Unknown", p.price_estimate or 0)
+            for p in session.proposals
+        ]
+
+        with st.expander("💰 Cost Summary", expanded=False):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Total Session Cost", f"${total_cost:.2f}")
+            with col2:
+                st.metric("Members", len(session.proposals))
+
+            if proposal_costs:
+                st.markdown("**Cost by Member:**")
+                for member_name, cost in proposal_costs:
+                    st.markdown(f"- {member_name}: ${cost:.2f}")
 
     @classmethod
     def _display_download_buttons(cls, session: CongressSession) -> None:

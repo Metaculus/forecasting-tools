@@ -68,6 +68,9 @@ class PolicyProposal(BaseModel, Jsonable):
     key_recommendations: list[str] = Field(
         description="Top 3-5 actionable recommendations"
     )
+    price_estimate: float | None = Field(
+        default=None, description="Estimated cost in USD for generating this proposal"
+    )
 
     def get_full_markdown_with_footnotes(self) -> str:
         footnotes = "\n\n".join(f.as_footnote_markdown() for f in self.forecasts)
@@ -88,6 +91,9 @@ class CongressSession(BaseModel, Jsonable):
     twitter_posts: list[str] = Field(default_factory=list)
     timestamp: datetime
     errors: list[str] = Field(default_factory=list)
+    total_price_estimate: float | None = Field(
+        default=None, description="Total estimated cost in USD for the entire session"
+    )
 
     def get_all_forecasts(self) -> list[ForecastDescription]:
         all_forecasts = []

@@ -13,6 +13,9 @@ from forecasting_tools.agents_and_tools.ai_congress.data_models import (
     PolicyProposal,
 )
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
 from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
@@ -36,34 +39,47 @@ class CongressOrchestrator:
             f"Starting congress session with {len(members)} members on: {prompt[:100]}..."
         )
 
-        agents = [CongressMemberAgent(m) for m in members]
+        with MonetaryCostManager() as session_cost_manager:
+            agents = [CongressMemberAgent(m) for m in members]
 
-        results = await asyncio.gather(
-            *[self._run_member_with_error_handling(a, prompt) for a in agents],
-            return_exceptions=False,
+            results = await asyncio.gather(
+                *[self._run_member_with_error_handling(a, prompt) for a in agents],
+                return_exceptions=False,
+            )
+
+            proposals: list[PolicyProposal] = []
+            errors: list[str] = []
+
+            for result in results:
+                if isinstance(result, PolicyProposal):
+                    proposals.append(result)
+                elif isinstance(result, Exception):
+                    errors.append(str(result))
+                else:
+                    errors.append(f"Unexpected result type: {type(result)}")
+
+            logger.info(
+                f"Completed {len(proposals)} proposals with {len(errors)} errors"
+            )
+
+            aggregated_report = ""
+            blog_post = ""
+            twitter_posts: list[str] = []
+
+            if proposals:
+                aggregated_report = await self._aggregate_proposals(prompt, proposals)
+                blog_post = await self._generate_blog_post(prompt, proposals, members)
+                twitter_posts = await self._generate_twitter_posts(prompt, proposals)
+
+            total_cost = session_cost_manager.current_usage
+
+        proposal_costs = sum(
+            p.price_estimate for p in proposals if p.price_estimate is not None
         )
-
-        proposals: list[PolicyProposal] = []
-        errors: list[str] = []
-
-        for result in results:
-            if isinstance(result, PolicyProposal):
-                proposals.append(result)
-            elif isinstance(result, Exception):
-                errors.append(str(result))
-            else:
-                errors.append(f"Unexpected result type: {type(result)}")
-
-        logger.info(f"Completed {len(proposals)} proposals with {len(errors)} errors")
-
-        aggregated_report = ""
-        blog_post = ""
-        twitter_posts: list[str] = []
-
-        if proposals:
-            aggregated_report = await self._aggregate_proposals(prompt, proposals)
-            blog_post = await self._generate_blog_post(prompt, proposals, members)
-            twitter_posts = await self._generate_twitter_posts(prompt, proposals)
+        logger.info(
+            f"Completed congress session. Total cost: ${total_cost:.4f}, "
+            f"Proposal costs: ${proposal_costs:.4f}"
+        )
 
         return CongressSession(
             prompt=prompt,
@@ -74,6 +90,7 @@ class CongressOrchestrator:
             twitter_posts=twitter_posts,
             timestamp=datetime.now(timezone.utc),
             errors=errors,
+            total_price_estimate=total_cost,
         )
 
     async def _run_member_with_error_handling(
@@ -83,8 +100,13 @@ class CongressOrchestrator:
     ) -> PolicyProposal | Exception:
         try:
             logger.info(f"Starting deliberation for {agent.member.name}")
-            proposal = await agent.deliberate(prompt)
-            logger.info(f"Completed deliberation for {agent.member.name}")
+            with MonetaryCostManager() as member_cost_manager:
+                proposal = await agent.deliberate(prompt)
+                member_cost = member_cost_manager.current_usage
+            proposal.price_estimate = member_cost
+            logger.info(
+                f"Completed deliberation for {agent.member.name}, cost: ${member_cost:.4f}"
+            )
             return proposal
         except Exception as e:
             logger.error(f"Error in {agent.member.name}'s deliberation: {e}")
@@ -95,6 +117,7 @@ class CongressOrchestrator:
         prompt: str,
         proposals: list[PolicyProposal],
     ) -> str:
+        logger.info(f"Aggregating proposals for congress session: {prompt}")
         llm = GeneralLlm(self.aggregation_model, timeout=LONG_TIMEOUT)
 
         proposals_text = "\n\n---\n\n".join(
@@ -191,7 +214,9 @@ class CongressOrchestrator:
             """
         )
 
-        return await llm.invoke(aggregation_prompt)
+        result = await llm.invoke(aggregation_prompt)
+        logger.info("Completed aggregation of proposals")
+        return result
 
     async def _generate_blog_post(
         self,
@@ -199,6 +224,7 @@ class CongressOrchestrator:
         proposals: list[PolicyProposal],
         members: list[CongressMember],
     ) -> str:
+        logger.info(f"Generating blog post for congress session: {prompt}")
         llm = GeneralLlm(self.aggregation_model, timeout=LONG_TIMEOUT)
 
         ai_model_members = [
@@ -220,6 +246,10 @@ class CongressOrchestrator:
                 + "\n".join(
                     f"- {f.question_title}: {f.prediction}" for f in p.forecasts[:5]
                 )
+                + f"**Proposal Text:**\n"
+                f"```markdown\n"
+                f"{p.get_full_markdown_with_footnotes()}\n"
+                f"```\n\n"
                 for p in proposals
                 if p.member
             ]
@@ -290,6 +320,16 @@ class CongressOrchestrator:
                the session. What did the AI congress conclude? Where did they agree
                and disagree? What forecasts matter most?
 
+            4. **Paint a picture** (2-5 paragraphs): Paint a picture of the world as the AI
+            congress described it. What would it look like if the recommendations were implemented?
+            What would the world be like if the recommendations were not implemented? Start with a
+            quick preface of what this section is, then start the story with something like
+            "The date is January 1st 2027 and ..." then continue with what has happened since then,
+            assuming that the model's forecasts are correct and that the recommendations were implemented.
+            For any event, mention the relevant forecast. Make some policies succeed "X almost happened if not for Y",
+            and some policies fail "X almost happened if not for Y" (but only if the probabilities
+            make sense for this).
+
             4. **The Good, Bad, and Ugly** (2-3 paragraphs): Highlight:
                - The Good: Surprising consensus, innovative ideas, strong reasoning
                - The Bad: Blind spots, weak arguments, missed considerations
@@ -318,6 +358,7 @@ class CongressOrchestrator:
         )
 
         try:
+            logger.info(f"Generating blog post for congress session: {prompt}")
             return await llm.invoke(blog_prompt)
         except Exception as e:
             logger.error(f"Failed to generate blog post: {e}")
@@ -328,6 +369,7 @@ class CongressOrchestrator:
         prompt: str,
         proposals: list[PolicyProposal],
     ) -> list[str]:
+        logger.info(f"Generating twitter posts for congress session: {prompt}")
         llm = GeneralLlm(self.aggregation_model, timeout=LONG_TIMEOUT)
 
         proposals_summary = "\n\n".join(
@@ -390,6 +432,7 @@ class CongressOrchestrator:
 
         try:
             posts = await llm.invoke_and_return_verified_type(twitter_prompt, list[str])
+            logger.info(f"Generated {len(posts)} twitter posts")
             return [p[:280] for p in posts]
         except Exception as e:
             logger.error(f"Failed to generate twitter posts: {e}")

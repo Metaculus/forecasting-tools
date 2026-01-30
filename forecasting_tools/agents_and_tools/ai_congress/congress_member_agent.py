@@ -7,7 +7,6 @@ from forecasting_tools.agents_and_tools.ai_congress.data_models import (
     PolicyProposal,
 )
 from forecasting_tools.agents_and_tools.minor_tools import (
-    perplexity_quick_search_high_context,
     perplexity_reasoning_pro_search,
     query_asknews,
 )
@@ -31,10 +30,13 @@ class CongressMemberAgent:
         self.member = member
         self.timeout = timeout
         self.structure_output_model = structure_output_model or GeneralLlm(
-            "openrouter/openai/gpt-4.1", temperature=0.2, timeout=LONG_TIMEOUT
+            "openrouter/anthropic/claude-sonnet-4.5",
+            temperature=0.2,
+            timeout=LONG_TIMEOUT,
         )
 
     async def deliberate(self, policy_prompt: str) -> PolicyProposal:
+        logger.info(f"Deliberating on policy question: {policy_prompt[:100]}...")
         instructions = self._build_agent_instructions(policy_prompt)
 
         agent = AiAgent(
@@ -44,7 +46,6 @@ class CongressMemberAgent:
             tools=[
                 perplexity_reasoning_pro_search,
                 query_asknews,
-                perplexity_quick_search_high_context,
             ],
             handoffs=[],
         )
@@ -53,8 +54,10 @@ class CongressMemberAgent:
             agent, "Please begin your deliberation now.", max_turns=20
         )
 
+        logger.info(f"Extracting proposal from output for {self.member.name}")
         proposal = await self._extract_proposal_from_output(result.final_output)
         proposal.member = self.member
+        logger.info(f"Completed deliberation for {self.member.name}")
         return proposal
 
     async def _extract_proposal_from_output(self, agent_output: str) -> PolicyProposal:
@@ -174,15 +177,26 @@ class CongressMemberAgent:
             this policy decision. These questions should be ones where the answer
             genuinely matters for deciding what to do.
 
-            Good forecasting questions:
-            - Are about uncertain future events, not established facts
-            - Have clear resolution criteria (exactly how we'll know the answer)
-            - Have a specific time horizon (when we'll know)
-            - Are relevant to the policy decision at hand
+            Good forecasting questions follow these principles:
+            - The question should shed light on the topic and have high VOI (Value of Information)
+            - The question should be specific and not vague
+            - The question should have a resolution date
+            - Once the resolution date has passed, the question should be resolvable with 0.5-1.5hr of research
+                - Bad: "Will a research paper in a established journal find that a new knee surgery technique reduces follow up surgery with significance by Dec 31 2023?" (To resolve this you have to do extensive research into all new research in a field)
+                - Good: "Will public dataset X at URL Y show the number of follow ups to knee surgeries decrease by Z% by Dec 31 2023?" (requires only some math on a few data points at a known URL)
+            - A good resolution source exists
+                - Bad: "On 15 January 2026, will the general sentiment be generally positive for knee surgery professionals with at least 10 years of experience concerning ACL reconstruction research?" (There is no way to research this online. You would have to run a large study on knee professionals)
+                - Good: "As of 15 January 2026, how many 'recruiting study' search results will there be on ClinicalTrials.gov when searching 'ACL reconstruction' in 'intervention/treatment'?" (requires only a search on a known website)
+            - Don't forget to INCLUDE Links if you found any! Copy the links IN FULL especially to resolution sources!
+            - The questions should match any additional criteria that the superforecaster/client has given you
+            - The question should not be obvious. Consider the time range when determining this (short time ranges means things are less likely).
+                - Bad: "Will country X start a war in the next 2 weeks" (Probably not, especially if they have not said anything about this)
+                - Good: "Will country X start a war in the next year" (Could be possible, especially if there are risk factors)
             - Cover different aspects: policy effectiveness, side effects, implementation,
               political feasibility, etc.
-            - Are neither too obvious (>90% or <10%) nor too uncertain (close to 50/50
-              with no way to estimate better)
+            - Are relevant to the policy decision at hand
+            - You can find how this question resolved in the past (search for a past resolution, and consider iterating the question if you cannot find how to resolve it)
+
 
             For each question, write:
             - **Question Title**: A short descriptive title
@@ -204,32 +218,15 @@ class CongressMemberAgent:
             Now forecast each question you generated. This is the most important phase.
 
             For EACH forecasting question:
+            1. Consider what principles associated with good forecasting you plan to use in this situation, if any (e.g. base rates, bias identification, premortems, simulations, scope sensitivity, aggregation, etc)
+            2. Make a research plan
+            3. Conduct the research (iterate as needed)
+            4. Write down the main facts from the research you conducted that you will consider in your forecast
+            5. Do any analysis you need to do, and then write down your rationale for the forecast
+            6. Write down your forecast in accordance with the format requested of you
 
-            1. **Additional Research**: Use your search tools to find relevant data,
-               base rates, expert opinions, and historical analogies. Make at least 1-2
-               targeted searches per question.
-
-            2. **Base Rate Analysis**: What is the historical frequency of similar events?
-               How often do similar policies succeed or fail?
-
-            3. **Key Factors**: What specific factors push the probability up or down
-               from the base rate? List at least 3 factors in each direction.
-
-            4. **Bias Check**: Given your {self.member.political_leaning} perspective,
-               what biases might you have? How might you be over- or under-estimating?
-
-            5. **Final Prediction**: Give a specific probability (e.g., "35%") for
-               binary questions, or a distribution for numeric questions.
-
-            6. **Reasoning**: Write 4+ sentences explaining your reasoning, including
-               the key evidence and considerations.
-
-            Be calibrated: if you're genuinely uncertain, your probabilities should
-            reflect that (closer to 50%). Avoid overconfidence. Consider what you
-            might be missing.
-
-            Remember good forecasters put extra weight on the status quo outcome since
-            the world changes slowly most of the time.
+            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+            For numeric questions, you remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
 
             Write your forecasts inline as you work through each question.
 
@@ -265,6 +262,7 @@ class CongressMemberAgent:
             - State the recommendation clearly
             - Explain why you support it given your forecasts and criteria
             - Note which of your decision criteria it addresses
+            - Give a detailed implementation plan for the recommendation. What would this actually look like on the ground?
             - Reference relevant forecasts with footnotes
 
             ### Risks and Uncertainties
