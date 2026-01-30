@@ -132,7 +132,7 @@ class CongressOrchestrator:
 
         proposals_text = "\n\n---\n\n".join(
             [
-                f"## {p.member.name} ({p.member.role})\n\n{p.get_full_markdown_with_footnotes()}"
+                f"## {p.member.name} ({p.member.role})\n\n```markdown\n{p.get_full_markdown_with_footnotes()}\n```"
                 for p in proposals
                 if p.member
             ]
@@ -147,13 +147,13 @@ class CongressOrchestrator:
 
             "{prompt}"
 
-            ## Individual Proposals
+            # Individual Proposals
 
             {proposals_text}
 
             ---
 
-            ## Your Task
+            # Your Task
 
             Write a comprehensive synthesis report that helps readers understand the
             full range of perspectives and find actionable insights. Structure your
@@ -407,9 +407,6 @@ class CongressOrchestrator:
             f"- [{r['member']}] {r['recommendation']}" for r in all_recommendations
         )
 
-        future_date = datetime.now(timezone.utc).replace(year=datetime.now().year + 2)
-        future_date_str = future_date.strftime("%B %d, %Y")
-
         snapshot_prompt = clean_indents(
             f"""
             # Picture of the Future: AI Congress Scenario Generator
@@ -424,7 +421,9 @@ class CongressOrchestrator:
 
             ## Aggregate Policy Report
 
-            {aggregated_report[:8000]}
+            ```markdown
+            {aggregated_report}
+            ```
 
             ## All Forecasts from Congress Members
 
@@ -442,12 +441,15 @@ class CongressOrchestrator:
 
             ### PART 1: "THE WORLD WITH THE RECOMMENDATIONS" (Recommendations Implemented)
 
-            Start with: "The date is {future_date_str}..."
+            Start with: "The date is <date you pick>..."
 
             Write a flowing narrative in the style of a newspaper giving an annual review
             of the biggest news of the last two years. Assume:
 
-            1. The AI Congress's aggregate recommendations were implemented
+            1. The AI Congress's aggregate recommendations were implemented.
+               The date is now one you choose that would give enough time
+               for the effects of the policies to be known.
+
             2. For each forecast, you will ROLL THE DICE to determine if it happened:
                - Use the roll_forecast_dice tool for EACH forecast
                - Pass the probability from the forecast (e.g., 35 for "35%")
@@ -458,14 +460,25 @@ class CongressOrchestrator:
                marked with asterisks (*). For example: "The unemployment rate dropped to
                4.2%* (*AI-generated estimate based on historical policy impacts)."
 
-            4. Reference the original forecasts inline using this format:
-               [Forecast: "Question Title" - X% → OCCURRED/DID NOT OCCUR]
+            4. Reference the original forecasts inline using this format "(X% [^1])".
+               Make sure X% is the probability for the event that happened (so you may need to invert).
+               In the footnote, include the full forecast details including the question, resolution, prediction,
+               reasoning, sources, and outcome like this:
+                [^1] **[Question Title]**
+                - Question: [Full question]
+                - Resolution: [Resolution criteria]
+                - Prediction: [Probability]
+                - Reasoning: [Summary of reasoning]
+                - Sources: [Key sources used, can be URLs or source names]
+                - Outcome: [OCCURRED/DID NOT OCCUR]
 
             5. You MUST incorporate the majority of the policy recommendations as
                concrete events or policy changes in the timeline.
 
-            6. Use the research_topic tool to look up current facts that help ground
-               your narrative in reality (current statistics, recent events, etc.)
+            6. Consider any new forecasting questions/forecasts that would help fill in the narrative or old forecasts that would
+               now be different given the policy was enacted. If appropriate make new questions and forecasts of your own.
+               If you do mark the forecasts inline with a single asterisk and include your forecasts in a special section at
+               the bottom with an explanation that they were made by you.
 
             ### PART 2: "THE WORLD WITHOUT THE RECOMMENDATIONS" (Recommendations Rejected)
 
@@ -481,13 +494,19 @@ class CongressOrchestrator:
             ## Important Guidelines
 
             - Make the narrative vivid and engaging, like real journalism
-            - Include specific dates, names of hypothetical officials, and concrete details
+            - Include specific dates, names of real world people where relevant
+              (or fake names if they would not be known yet) and concrete details
+            - If you make up any fake people or orgs, mark these with † and then explain this in the footnotes.
             - Show cause-and-effect relationships between policies and outcomes
             - Your own estimates marked with * should be plausible extrapolations
             - The tone should be neutral/journalistic, not promotional
             - Include both positive and negative consequences where realistic
             - Each forecast should be explicitly mentioned with its dice roll outcome
             - Ground speculation in research where possible
+            - Use the aggregate policy as the source of truth for what policy is taken
+            - You are writing for an audience that may not be familiar with the subject area.
+              Make sure to include the events of the forecasts, but write in a way that they
+              will understand as much as possible.
 
             ## Format
 
