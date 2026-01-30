@@ -513,7 +513,7 @@ class TestPostEndpoint:
         assert isinstance(conditional_question.question_no, BinaryQuestion)
 
     async def test_get_previous_forecast(self) -> None:
-        client = MetaculusClient().dev()
+        client = MetaculusClient()
         for allowed_types in {"binary", "numeric"}:
             api_filter = ApiFilter(
                 allowed_types=[allowed_types],  # type: ignore
@@ -1365,10 +1365,10 @@ class TestAdminFunctions:
             token=token,
         )
         question_to_create = client.get_question_by_url(
-            "https://dev.metaculus.com/questions/39162/"
+            "https://www.metaculus.com/questions/39162/"
         )
-        project_id = 1156  # https://dev.metaculus.com/tournament/beta-testing/
-        slug = "beta-testing"
+        project_id = 32932  # https://www.metaculus.com/tournament/benta/
+        slug = "benta"  # Ben testing area
         question_to_create.default_project_id = project_id
         question_to_create.tournament_slugs = [slug]
 

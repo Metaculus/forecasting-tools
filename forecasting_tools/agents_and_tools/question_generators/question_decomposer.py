@@ -78,7 +78,7 @@ class QuestionDecomposer:
             8. Give your final answer in the requested format
 
 
-            # Question requireemnts
+            # Question requirements
             - The question should shed light on the topic and have high VOI (Value of Information)
             - The question can be forecast and will be resolvable with public information
                 - Good: "Will SpaceX launch a rocket on May 2nd 2023?"
