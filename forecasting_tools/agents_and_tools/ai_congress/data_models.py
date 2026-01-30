@@ -42,7 +42,7 @@ class ForecastDescription(BaseModel, Jsonable):
     def as_footnote_markdown(self) -> str:
         sources_str = ", ".join(self.key_sources) if self.key_sources else "N/A"
         return (
-            f"[^{self.footnote_id}] **{self.question_title}**\n"
+            f"[^{self.footnote_id}]: **{self.question_title}**\n"
             f"- Question: {self.question_text}\n"
             f"- Resolution: {self.resolution_criteria}\n"
             f"- Prediction: {self.prediction}\n"

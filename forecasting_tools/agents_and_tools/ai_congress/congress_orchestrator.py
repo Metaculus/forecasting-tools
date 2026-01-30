@@ -256,7 +256,7 @@ class CongressOrchestrator:
                 + "\n".join(
                     f"- {f.question_title}: {f.prediction}" for f in p.forecasts[:5]
                 )
-                + f"**Proposal Text:**\n"
+                + f"\n\n**Proposal Text:**\n"
                 f"```markdown\n"
                 f"{p.get_full_markdown_with_footnotes()}\n"
                 f"```\n\n"

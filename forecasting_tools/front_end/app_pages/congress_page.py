@@ -21,6 +21,10 @@ from forecasting_tools.agents_and_tools.ai_congress.member_profiles import (
 from forecasting_tools.front_end.helpers.app_page import AppPage
 from forecasting_tools.front_end.helpers.custom_auth import CustomAuth
 from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
+from forecasting_tools.util.file_manipulation import (
+    create_or_overwrite_file,
+    load_json_file,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,17 +45,24 @@ class CongressPage(AppPage):
         st.title("🏛️ AI Forecasting Congress")
         st.markdown(
             """
-            Simulate a deliberative body of AI agents with different political
-            perspectives analyzing a policy question. Each member conducts research,
-            generates forecasting questions, makes quantitative predictions, and
-            proposes policy recommendations.
+            **Simulate a world where AI makes the decisions.**
+
+            - **Policy Proposals**: Submit a policy question and watch AI congress members reason about forecasts and propose policies based on your prompt
+            - **Aggregation**: Each AI congress member creates their own policy, then another AI aggregates them into one final policy
+            - **Future Newspaper**: A journalist AI creates a newspaper from the future by:
+                - Rolling a dice for each forecast to determine whether that event happened in this simulated future
+                - Weaving the outcomes into a narrative showing what happens if policies get accepted vs. rejected
+
+            This gives a glimpse into what the world might look like if AI got to choose how things went.
             """
         )
 
-        cls._display_example_button()
         cls._display_sidebar()
 
+        st.header("Start a New Session")
+        cls._display_example_button()
         session_input = await cls._get_input()
+
         if session_input:
             session = await cls._run_congress(session_input)
             cls._save_session(session)
@@ -62,13 +73,14 @@ class CongressPage(AppPage):
 
     @classmethod
     def _display_example_button(cls) -> None:
-        if st.button("📋 See Premade Example", key="load_example_btn"):
-            session = cls._load_session_from_file(EXAMPLE_SESSION_PATH)
-            if session:
-                st.session_state["latest_session"] = session
-                st.rerun()
-            else:
-                st.error("Could not load the example session.")
+        with st.expander("📋 Load Premade Example", expanded=False):
+            if st.button("Load Example", key="load_example_btn"):
+                session = cls._load_session_from_file(EXAMPLE_SESSION_PATH)
+                if session:
+                    st.session_state["latest_session"] = session
+                    st.rerun()
+                else:
+                    st.error("Could not load the example session.")
 
     @classmethod
     def _display_sidebar(cls) -> None:
@@ -171,7 +183,6 @@ class CongressPage(AppPage):
 
     @classmethod
     async def _get_input(cls) -> CongressSessionInput | None:
-        st.header("Start a New Session")
 
         with st.expander("📋 Example Prompts", expanded=False):
             st.markdown("Click a button to use an example prompt:")
@@ -469,7 +480,6 @@ class CongressPage(AppPage):
         for i, post in enumerate(session.twitter_posts, 1):
             st.markdown(f"**Tweet {i}** ({len(post)} chars)")
             st.info(post)
-            st.button(f"📋 Copy Tweet {i}", key=f"copy_tweet_{i}")
 
     @classmethod
     def _display_cost_summary(cls, session: CongressSession) -> None:
@@ -572,16 +582,16 @@ class CongressPage(AppPage):
 
     @classmethod
     def _save_session(cls, session: CongressSession) -> None:
-        os.makedirs(SESSIONS_FOLDER, exist_ok=True)
         filename = f"{session.timestamp.strftime('%Y%m%d_%H%M%S')}.json"
         filepath = os.path.join(SESSIONS_FOLDER, filename)
 
         try:
-            with open(filepath, "w") as f:
-                json.dump(session.to_json(), f, indent=2, default=str)
+            json_str = json.dumps(session.to_json(), indent=2, default=str)
+            create_or_overwrite_file(filepath, json_str)
             logger.info(f"Saved session to {filepath}")
         except Exception as e:
             logger.error(f"Failed to save session: {e}")
+            st.error(f"Failed to save session: {e}")
 
     @classmethod
     def _load_session_from_file(cls, file_path: str) -> CongressSession | None:
@@ -590,8 +600,7 @@ class CongressPage(AppPage):
             return None
 
         try:
-            with open(file_path, "r") as f:
-                data = json.load(f)
+            data: dict = load_json_file(file_path)  # type: ignore
             session = CongressSession.from_json(data)
             return session
         except json.JSONDecodeError as e:
@@ -612,8 +621,7 @@ class CongressPage(AppPage):
             if filename.endswith(".json"):
                 filepath = os.path.join(SESSIONS_FOLDER, filename)
                 try:
-                    with open(filepath, "r") as f:
-                        data = json.load(f)
+                    data: dict = load_json_file(filepath)  # type: ignore
                     session = CongressSession.from_json(data)
                     sessions.append(session)
                 except Exception as e:

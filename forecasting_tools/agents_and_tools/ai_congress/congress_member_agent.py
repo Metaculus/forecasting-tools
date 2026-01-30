@@ -32,7 +32,7 @@ class CongressMemberAgent:
         self.structure_output_model = structure_output_model or GeneralLlm(
             "openrouter/openai/gpt-5.2",
             temperature=0.2,
-            timeout=LONG_TIMEOUT,
+            timeout=self.timeout,
         )
 
     async def deliberate(self, policy_prompt: str) -> PolicyProposal:
@@ -182,7 +182,7 @@ class CongressMemberAgent:
             - The question should be specific and not vague
             - The question should have a resolution date
             - Once the resolution date has passed, the question should be resolvable with 0.5-1.5hr of research
-                - Bad: "Will a research paper in a established journal find that a new knee surgery technique reduces follow up surgery with significance by Dec 31 2023?" (To resolve this you have to do extensive research into all new research in a field)
+                - Bad: "Will a research paper in an established journal find that a new knee surgery technique reduces follow up surgery with significance by Dec 31 2023?" (To resolve this you have to do extensive research into all new research in a field)
                 - Good: "Will public dataset X at URL Y show the number of follow ups to knee surgeries decrease by Z% by Dec 31 2023?" (requires only some math on a few data points at a known URL)
             - A good resolution source exists
                 - Bad: "On 15 January 2026, will the general sentiment be generally positive for knee surgery professionals with at least 10 years of experience concerning ACL reconstruction research?" (There is no way to research this online. You would have to run a large study on knee professionals)
