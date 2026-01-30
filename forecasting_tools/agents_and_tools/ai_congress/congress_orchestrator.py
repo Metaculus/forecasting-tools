@@ -320,16 +320,6 @@ class CongressOrchestrator:
                the session. What did the AI congress conclude? Where did they agree
                and disagree? What forecasts matter most?
 
-            4. **Paint a picture** (2-5 paragraphs): Paint a picture of the world as the AI
-            congress described it. What would it look like if the recommendations were implemented?
-            What would the world be like if the recommendations were not implemented? Start with a
-            quick preface of what this section is, then start the story with something like
-            "The date is January 1st 2027 and ..." then continue with what has happened since then,
-            assuming that the model's forecasts are correct and that the recommendations were implemented.
-            For any event, mention the relevant forecast. Make some policies succeed "X almost happened if not for Y",
-            and some policies fail "X almost happened if not for Y" (but only if the probabilities
-            make sense for this).
-
             4. **The Good, Bad, and Ugly** (2-3 paragraphs): Highlight:
                - The Good: Surprising consensus, innovative ideas, strong reasoning
                - The Bad: Blind spots, weak arguments, missed considerations

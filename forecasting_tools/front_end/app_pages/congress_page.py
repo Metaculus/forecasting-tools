@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 
 import streamlit as st
 
@@ -172,7 +173,7 @@ class CongressPage(AppPage):
     async def _get_input(cls) -> CongressSessionInput | None:
         st.header("Start a New Session")
 
-        with st.expander("📋 Example Policy Questions", expanded=False):
+        with st.expander("📋 Example Prompts", expanded=False):
             st.markdown("Click a button to use an example prompt:")
             cols = st.columns(len(cls.EXAMPLE_PROMPTS))
             for i, example in enumerate(cls.EXAMPLE_PROMPTS):
@@ -241,6 +242,7 @@ class CongressPage(AppPage):
     ) -> CongressSession:
         members = get_members_by_names(session_input.member_names)
 
+        start_time = time.time()
         with st.spinner(
             f"Congress in session with {len(members)} members... "
             "This may take 5-15 minutes."
@@ -255,6 +257,9 @@ class CongressPage(AppPage):
             )
 
             progress_text.write("Aggregating proposals and generating insights...")
+
+        elapsed_time = time.time() - start_time
+        st.session_state["session_generation_time"] = elapsed_time
 
         if session.errors:
             st.warning(
@@ -442,7 +447,12 @@ class CongressPage(AppPage):
     @classmethod
     def _display_cost_summary(cls, session: CongressSession) -> None:
         total_cost = session.total_price_estimate
-        if total_cost is None:
+        generation_time = st.session_state.get("session_generation_time")
+
+        has_cost_info = total_cost is not None
+        has_time_info = generation_time is not None
+
+        if not has_cost_info and not has_time_info:
             return
 
         proposal_costs = [
@@ -450,14 +460,24 @@ class CongressPage(AppPage):
             for p in session.proposals
         ]
 
-        with st.expander("💰 Cost Summary", expanded=False):
-            col1, col2 = st.columns(2)
+        with st.expander("📊 Session Stats", expanded=False):
+            col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric("Total Session Cost", f"${total_cost:.2f}")
+                if has_time_info:
+                    minutes = int(generation_time // 60)
+                    seconds = int(generation_time % 60)
+                    st.metric("Generation Time", f"{minutes}m {seconds}s")
+                else:
+                    st.metric("Generation Time", "N/A")
             with col2:
+                if has_cost_info:
+                    st.metric("Total Cost", f"${total_cost:.2f}")
+                else:
+                    st.metric("Total Cost", "N/A")
+            with col3:
                 st.metric("Members", len(session.proposals))
 
-            if proposal_costs:
+            if has_cost_info and proposal_costs:
                 st.markdown("**Cost by Member:**")
                 for member_name, cost in proposal_costs:
                     st.markdown(f"- {member_name}: ${cost:.2f}")
