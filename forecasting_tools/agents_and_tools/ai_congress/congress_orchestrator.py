@@ -12,6 +12,11 @@ from forecasting_tools.agents_and_tools.ai_congress.data_models import (
     CongressSession,
     PolicyProposal,
 )
+from forecasting_tools.agents_and_tools.minor_tools import (
+    perplexity_reasoning_pro_search,
+    roll_dice,
+)
+from forecasting_tools.ai_models.agent_wrappers import AgentRunner, AgentSdkLlm, AiAgent
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -64,11 +69,15 @@ class CongressOrchestrator:
 
             aggregated_report = ""
             blog_post = ""
+            future_snapshot = ""
             twitter_posts: list[str] = []
 
             if proposals:
                 aggregated_report = await self._aggregate_proposals(prompt, proposals)
                 blog_post = await self._generate_blog_post(prompt, proposals, members)
+                future_snapshot = await self._generate_future_snapshot(
+                    prompt, proposals, aggregated_report
+                )
                 twitter_posts = await self._generate_twitter_posts(prompt, proposals)
 
             total_cost = session_cost_manager.current_usage
@@ -87,6 +96,7 @@ class CongressOrchestrator:
             proposals=proposals,
             aggregated_report_markdown=aggregated_report,
             blog_post=blog_post,
+            future_snapshot=future_snapshot,
             twitter_posts=twitter_posts,
             timestamp=datetime.now(timezone.utc),
             errors=errors,
@@ -352,6 +362,157 @@ class CongressOrchestrator:
             return await llm.invoke(blog_prompt)
         except Exception as e:
             logger.error(f"Failed to generate blog post: {e}")
+            return ""
+
+    async def _generate_future_snapshot(
+        self,
+        prompt: str,
+        proposals: list[PolicyProposal],
+        aggregated_report: str,
+    ) -> str:
+        logger.info(f"Generating future snapshot for congress session: {prompt}")
+
+        all_forecasts = []
+        for proposal in proposals:
+            for forecast in proposal.forecasts:
+                all_forecasts.append(
+                    {
+                        "member": (
+                            proposal.member.name if proposal.member else "Unknown"
+                        ),
+                        "title": forecast.question_title,
+                        "question": forecast.question_text,
+                        "prediction": forecast.prediction,
+                        "resolution_criteria": forecast.resolution_criteria,
+                        "reasoning": forecast.reasoning,
+                    }
+                )
+
+        all_recommendations = []
+        for proposal in proposals:
+            if proposal.member:
+                for rec in proposal.key_recommendations:
+                    all_recommendations.append(
+                        {"member": proposal.member.name, "recommendation": rec}
+                    )
+
+        forecasts_text = "\n".join(
+            f"- **{f['title']}** ({f['member']}): {f['prediction']}\n"
+            f"  - Question: {f['question']}\n"
+            f"  - Resolution: {f['resolution_criteria']}"
+            for f in all_forecasts
+        )
+
+        recommendations_text = "\n".join(
+            f"- [{r['member']}] {r['recommendation']}" for r in all_recommendations
+        )
+
+        future_date = datetime.now(timezone.utc).replace(year=datetime.now().year + 2)
+        future_date_str = future_date.strftime("%B %d, %Y")
+
+        snapshot_prompt = clean_indents(
+            f"""
+            # Picture of the Future: AI Congress Scenario Generator
+
+            You are a journalist writing a retrospective "Year in Review" article from the
+            future, looking back at what happened after the AI Congress's recommendations
+            were either implemented or rejected.
+
+            ## Original Policy Question
+
+            "{prompt}"
+
+            ## Aggregate Policy Report
+
+            {aggregated_report[:8000]}
+
+            ## All Forecasts from Congress Members
+
+            {forecasts_text}
+
+            ## All Policy Recommendations
+
+            {recommendations_text}
+
+            ---
+
+            ## Your Task
+
+            Write TWO compelling newspaper-style narratives:
+
+            ### PART 1: "THE WORLD WITH THE RECOMMENDATIONS" (Recommendations Implemented)
+
+            Start with: "The date is {future_date_str}..."
+
+            Write a flowing narrative in the style of a newspaper giving an annual review
+            of the biggest news of the last two years. Assume:
+
+            1. The AI Congress's aggregate recommendations were implemented
+            2. For each forecast, you will ROLL THE DICE to determine if it happened:
+               - Use the roll_forecast_dice tool for EACH forecast
+               - Pass the probability from the forecast (e.g., 35 for "35%")
+               - The tool returns whether that event occurred based on the probability
+               - Incorporate the outcome naturally into your narrative
+
+            3. For any gaps in the forecasts, create your own probabilistic predictions
+               marked with asterisks (*). For example: "The unemployment rate dropped to
+               4.2%* (*AI-generated estimate based on historical policy impacts)."
+
+            4. Reference the original forecasts inline using this format:
+               [Forecast: "Question Title" - X% → OCCURRED/DID NOT OCCUR]
+
+            5. You MUST incorporate the majority of the policy recommendations as
+               concrete events or policy changes in the timeline.
+
+            6. Use the research_topic tool to look up current facts that help ground
+               your narrative in reality (current statistics, recent events, etc.)
+
+            ### PART 2: "THE WORLD WITHOUT THE RECOMMENDATIONS" (Recommendations Rejected)
+
+            After completing Part 1, write a contrasting narrative showing what the world
+            looks like if the recommendations were NOT implemented. Use the same dice
+            rolls for forecasts but show how the lack of policy action changed outcomes.
+
+            Start with: "In an alternate timeline where the AI Congress recommendations
+            were rejected..."
+
+            ---
+
+            ## Important Guidelines
+
+            - Make the narrative vivid and engaging, like real journalism
+            - Include specific dates, names of hypothetical officials, and concrete details
+            - Show cause-and-effect relationships between policies and outcomes
+            - Your own estimates marked with * should be plausible extrapolations
+            - The tone should be neutral/journalistic, not promotional
+            - Include both positive and negative consequences where realistic
+            - Each forecast should be explicitly mentioned with its dice roll outcome
+            - Ground speculation in research where possible
+
+            ## Format
+
+            Use markdown formatting with clear section headers. Aim for 1500-2500 words
+            total across both parts.
+            """
+        )
+
+        try:
+            llm_wrapper = AgentSdkLlm("openrouter/openai/gpt-5.2")
+
+            snapshot_agent = AiAgent(
+                name="Future Snapshot Writer",
+                instructions=snapshot_prompt,
+                model=llm_wrapper,
+                tools=[roll_dice, perplexity_reasoning_pro_search],
+            )
+
+            result = await AgentRunner.run(
+                snapshot_agent, "Generate the future snapshot now."
+            )
+            return result.final_output
+
+        except Exception as e:
+            logger.error(f"Failed to generate future snapshot: {e}")
             return ""
 
     async def _generate_twitter_posts(

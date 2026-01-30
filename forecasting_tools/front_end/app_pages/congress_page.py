@@ -279,6 +279,7 @@ class CongressPage(AppPage):
             [
                 "📊 Synthesis",
                 "📝 Blog Post",
+                "🔮 Picture of the Future",
                 "👤 Individual Proposals",
                 "🎯 Forecast Comparison",
                 "🐦 Twitter Posts",
@@ -292,12 +293,15 @@ class CongressPage(AppPage):
             cls._display_blog_tab(session)
 
         with tabs[2]:
-            cls._display_proposals_tab(session)
+            cls._display_future_snapshot_tab(session)
 
         with tabs[3]:
-            cls._display_forecasts_tab(session)
+            cls._display_proposals_tab(session)
 
         with tabs[4]:
+            cls._display_forecasts_tab(session)
+
+        with tabs[5]:
             cls._display_twitter_tab(session)
 
         cls._display_download_buttons(session)
@@ -332,6 +336,29 @@ class CongressPage(AppPage):
             )
         else:
             st.write("No blog post available.")
+
+    @classmethod
+    def _display_future_snapshot_tab(cls, session: CongressSession) -> None:
+        st.subheader("Picture of the Future")
+        st.caption(
+            "A simulated newspaper article from the future showing what might happen "
+            "if AI recommendations were implemented. Forecasts marked with * are "
+            "AI-generated estimates to fill gaps."
+        )
+
+        if session.future_snapshot:
+            cleaned = ReportDisplayer.clean_markdown(session.future_snapshot)
+            st.markdown(cleaned)
+
+            st.download_button(
+                label="📥 Download Future Snapshot (Markdown)",
+                data=session.future_snapshot,
+                file_name=f"congress_future_{session.timestamp.strftime('%Y%m%d_%H%M%S')}.md",
+                mime="text/markdown",
+                key="download_future_snapshot",
+            )
+        else:
+            st.write("No future snapshot available.")
 
     @classmethod
     def _display_proposals_tab(cls, session: CongressSession) -> None:

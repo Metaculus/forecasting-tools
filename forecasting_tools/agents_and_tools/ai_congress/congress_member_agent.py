@@ -30,7 +30,7 @@ class CongressMemberAgent:
         self.member = member
         self.timeout = timeout
         self.structure_output_model = structure_output_model or GeneralLlm(
-            "openrouter/anthropic/claude-sonnet-4.5",
+            "openrouter/openai/gpt-5.2",
             temperature=0.2,
             timeout=LONG_TIMEOUT,
         )
@@ -73,11 +73,11 @@ class CongressMemberAgent:
                - question_title: Short title
                - question_text: Full question
                - resolution_criteria: How it resolves
-               - prediction: The probability (e.g., "35%")
+               - prediction: The probability (e.g., "35%" or "70% Option A, 20% Option B, 10% Option C" or "10% chance less than X units, ... ,90% chance less than Y units")
                - reasoning: The reasoning explanation
                - key_sources: List of sources mentioned
             4. proposal_markdown: The full proposal section including Executive Summary,
-               Analysis, Recommendations, and Risks. Include footnote references [^1] etc.
+               Analysis, Recommendations, Risks, and any other section you see. Include footnote references [^1] etc.
             5. key_recommendations: The 3-5 main recommendations as a list of strings
 
             Be thorough in extracting all forecasts from the Forecast Appendix section.

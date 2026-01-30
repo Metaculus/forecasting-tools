@@ -88,7 +88,7 @@ class LitellmCostTracker(LitellmCustomLogger):
             logger.warning(
                 f"Litellm hidden param cost {kwarg_cost} and response object cost {obj_cost} are different."
             )
-        tracked_cost = obj_cost
+        tracked_cost = max(kwarg_cost, obj_cost)
 
         MonetaryCostManager.increase_current_usage_in_parent_managers(tracked_cost)
 
@@ -102,7 +102,7 @@ class LitellmCostTracker(LitellmCustomLogger):
                 completion_response=response_obj
             )
         except Exception as e:
-            logger.warning(f"Error calculating cost from response object: {e}")
+            logger.debug(f"Error calculating cost from response object: {e}")
             return None
 
     @classmethod

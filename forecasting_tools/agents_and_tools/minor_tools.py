@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import random
 
 from forecasting_tools.agents_and_tools.question_generators.simple_question import (
     SimpleQuestion,
@@ -179,3 +180,36 @@ def create_tool_for_forecasting_bot(
         return report.explanation
 
     return forecast_question_tool
+
+
+@agent_tool
+def roll_dice(
+    probability_as_decimal: float,
+) -> str:
+    """
+    Roll the dice to determine if an event occurred based on its probability.
+
+    This simulates whether an event with a given probability actually happened.
+    For example, if a forecast says "35% chance of X", this tool rolls the dice
+    to determine if X actually occurred in this simulated future.
+
+    Args:
+        probability_as_decimal: The probability as a decimal (e.g., 0.35 for 35%)
+
+    Returns:
+        A string indicating whether the event occurred
+    """
+    if not (0 <= probability_as_decimal <= 1):
+        raise ValueError("Probability must be between 0 and 1")
+
+    roll = random.random()
+    occurred = roll < probability_as_decimal
+
+    result_emoji = "✅" if occurred else "❌"
+    result_text = "OCCURRED" if occurred else "DID NOT OCCUR"
+
+    message = f"{result_emoji} EVENT {result_text}\n"
+    logger.info(
+        f"TOOL: Probability: {probability_as_decimal:.0%}, Roll: {roll:.0%}, Occurred: {occurred}, Message: {message}"
+    )
+    return message
