@@ -208,8 +208,8 @@ def roll_dice(
     result_emoji = "✅" if occurred else "❌"
     result_text = "OCCURRED" if occurred else "DID NOT OCCUR"
 
-    message = f"{result_emoji} EVENT {result_text}\n"
+    message = f"{result_emoji} EVENT {result_text}"
     logger.info(
-        f"TOOL: Probability: {probability_as_decimal:.0%}, Roll: {roll:.0%}, Occurred: {occurred}, Message: {message}"
+        f"TOOL: Probability: {probability_as_decimal}, Roll: {roll:.2f}, Occurred: {occurred}, Message: {message}"
     )
     return message

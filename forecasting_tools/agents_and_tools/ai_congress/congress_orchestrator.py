@@ -526,7 +526,7 @@ class CongressOrchestrator:
             )
 
             result = await AgentRunner.run(
-                snapshot_agent, "Generate the future snapshot now."
+                snapshot_agent, "Generate the future snapshot now.", max_turns=25
             )
             return result.final_output
 

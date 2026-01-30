@@ -85,8 +85,12 @@ class LitellmCostTracker(LitellmCustomLogger):
         if obj_cost is None:
             obj_cost = 0
         if abs(kwarg_cost - obj_cost) > 0.0000001:
+            logger.debug(
+                f"WARNING: Litellm hidden param cost {kwarg_cost} and response object cost {obj_cost} are different."
+            )
+        if abs(kwarg_cost - obj_cost) > 0.05:
             logger.warning(
-                f"Litellm hidden param cost {kwarg_cost} and response object cost {obj_cost} are different."
+                f"Litellm hidden param cost {kwarg_cost} and response object cost {obj_cost} are different by more than 5 cents."
             )
         tracked_cost = max(kwarg_cost, obj_cost)
 
