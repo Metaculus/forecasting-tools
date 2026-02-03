@@ -132,9 +132,12 @@ async def configure_and_run_bot(
     batch_size: int = ScheduleConfig.default_question_batch_size,
 ) -> list[ForecastReport | BaseException]:
     base_url = os.getenv("METACULUS_API_BASE_URL")
-    assert (
-        base_url is not None
-    ), "METACULUS_API_BASE_URL environment variable is not set"
+    if base_url is None:
+        raise ValueError(
+            "METACULUS_API_BASE_URL environment variable is not set. "
+            "Please set it in the environment variables."
+            "This makes sure no workflows have forgotten to set it as an input variable."
+        )
     if base_url == "":
         logger.warning(
             "METACULUS_API_BASE_URL environment variable is set to an empty string"
