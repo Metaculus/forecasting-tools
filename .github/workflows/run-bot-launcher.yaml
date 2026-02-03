@@ -11,6 +11,8 @@ on:
     secrets:
       INPUT_METACULUS_TOKEN:
         required: true
+      INPUT_METACULUS_API_BASE_URL:
+        required: false
       INPUT_OPENAI_API_KEY:
         required: false
       INPUT_ANTHROPIC_API_KEY:
@@ -114,6 +116,7 @@ jobs:
           poetry run python run_bots.py ${{ inputs.bot_name }}
         env:
           METACULUS_TOKEN: ${{ secrets.INPUT_METACULUS_TOKEN }}
+          METACULUS_API_BASE_URL: ${{ secrets.INPUT_METACULUS_API_BASE_URL }}
           ASKNEWS_CLIENT_ID: ${{ secrets.INPUT_ASKNEWS_CLIENT_ID }}
           ASKNEWS_SECRET: ${{ secrets.INPUT_ASKNEWS_SECRET }}
           ASKNEWS_CACHE_MODE: use_cache_with_fallback
