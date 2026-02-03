@@ -131,6 +131,15 @@ async def configure_and_run_bot(
     max_questions_for_run: int = ScheduleConfig.default_max_main_site_questions_per_run,
     batch_size: int = ScheduleConfig.default_question_batch_size,
 ) -> list[ForecastReport | BaseException]:
+    base_url = os.getenv("METACULUS_API_BASE_URL")
+    assert (
+        base_url is not None
+    ), "METACULUS_API_BASE_URL environment variable is not set"
+    if base_url == "":
+        logger.warning(
+            "METACULUS_API_BASE_URL environment variable is set to an empty string"
+        )
+
     bot_config = get_default_bot_dict()[mode]
     questions = await get_questions_for_config(
         bot_config, max_questions=max_questions_for_run
