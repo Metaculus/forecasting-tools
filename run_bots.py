@@ -467,6 +467,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     default_research_comparison_forecast_llm = GeneralLlm(
         model="openrouter/deepseek/deepseek-r1",
         temperature=default_temperature,
+        timeout=60 * 6,
     )
     grok_4_search_llm = GeneralLlm(
         model="xai/grok-4-latest",
@@ -485,6 +486,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     )  # https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/web-search-tool
     deepseek_r1_exa_online_llm = GeneralLlm(
         model="openrouter/deepseek/deepseek-r1:online",
+        timeout=60 * 6,
     )
     o4_mini_deep_research_llm = GeneralLlm(
         model="openai/o4-mini-deep-research",
@@ -527,6 +529,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             GeneralLlm(
                 model="openrouter/deepseek/deepseek-r1",
                 temperature=default_temperature,
+                timeout=60 * 6,
             ),
         ),
     }
