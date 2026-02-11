@@ -233,8 +233,7 @@ def _create_run_dir(
     situation_name: str,
 ) -> Path:
     safe_name = situation_name.replace(" ", "_").lower()
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    run_dir = Path(results_dir) / "simulations" / f"{safe_name}_{run_id}_{timestamp}"
+    run_dir = Path(results_dir) / f"{safe_name}_{run_id}"
     os.makedirs(run_dir, exist_ok=True)
     logger.info(f"Created run directory: {run_dir}")
     return run_dir

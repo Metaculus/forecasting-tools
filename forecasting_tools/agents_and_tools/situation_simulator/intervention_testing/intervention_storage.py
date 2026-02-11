@@ -34,7 +34,7 @@ def load_all_intervention_runs(
         logger.info(f"No intervention results directory found at {results_dir}")
         return all_runs
 
-    jsonl_files = sorted(results_path.glob("*.jsonl"))
+    jsonl_files = sorted(results_path.rglob("*.jsonl"))
     for file_path in jsonl_files:
         try:
             runs = InterventionRun.load_json_from_file_path(str(file_path))

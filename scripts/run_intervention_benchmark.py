@@ -2,7 +2,9 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import random
+from datetime import datetime
 from pathlib import Path
 
 from forecasting_tools.agents_and_tools.situation_simulator.data_models import Situation
@@ -58,7 +60,13 @@ async def run_benchmark(
         f"across {len(models)} models."
     )
 
-    total_runs = len(models) * num_interventions
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    run_folder = Path(results_dir) / f"run_{timestamp}"
+    os.makedirs(run_folder, exist_ok=True)
+    logger.info(f"All results will be saved to: {run_folder}")
+
+    situation_schedule = _build_balanced_schedule(situations, num_interventions)
+    total_runs = len(models) * len(situation_schedule)
 
     tasks: list[asyncio.Task] = []
     task_labels: list[str] = []
@@ -67,13 +75,12 @@ async def run_benchmark(
             model_name=model_name,
             cost_limit=cost_limit,
         )
-        for intervention_idx in range(num_interventions):
-            situation = random.choice(situations)
+        for intervention_idx, situation in enumerate(situation_schedule):
             label = f"[{model_name}] #{intervention_idx + 1} on '{situation.name}'"
             logger.info(f"Scheduling: {label}")
             task = asyncio.create_task(
                 _run_single_intervention(
-                    runner, situation, warmup_steps, results_dir, label
+                    runner, situation, warmup_steps, str(run_folder), label
                 )
             )
             tasks.append(task)
@@ -117,6 +124,30 @@ async def _run_single_intervention(
     except Exception as e:
         logger.error(f"Failed: {label}: {e}", exc_info=True)
         raise
+
+
+def _build_balanced_schedule(
+    situations: list[Situation],
+    num_interventions: int,
+) -> list[Situation]:
+    per_situation = num_interventions // len(situations)
+    remainder = num_interventions % len(situations)
+
+    schedule: list[Situation] = []
+    for i, situation in enumerate(situations):
+        count = per_situation + (1 if i < remainder else 0)
+        schedule.extend([situation] * count)
+
+    random.shuffle(schedule)
+
+    situation_counts = {}
+    for s in schedule:
+        situation_counts[s.name] = situation_counts.get(s.name, 0) + 1
+    logger.info(
+        f"Balanced schedule ({len(schedule)} runs): "
+        + ", ".join(f"{name}: {count}" for name, count in situation_counts.items())
+    )
+    return schedule
 
 
 def _print_summary(
