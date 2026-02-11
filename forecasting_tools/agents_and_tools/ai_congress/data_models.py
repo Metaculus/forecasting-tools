@@ -76,6 +76,9 @@ class PolicyProposal(BaseModel, Jsonable):
     price_estimate: float | None = Field(
         default=None, description="Estimated cost in USD for generating this proposal"
     )
+    delphi_round: int = Field(
+        default=1, description="Which Delphi round produced this proposal"
+    )
 
     @property
     def baseline_forecasts(self) -> list[ForecastDescription]:
@@ -111,6 +114,7 @@ class PolicyProposal(BaseModel, Jsonable):
 class CongressSessionInput(BaseModel, Jsonable):
     prompt: str
     member_names: list[str]
+    num_delphi_rounds: int = 1
 
 
 class CongressSession(BaseModel, Jsonable):
@@ -125,6 +129,13 @@ class CongressSession(BaseModel, Jsonable):
     errors: list[str] = Field(default_factory=list)
     total_price_estimate: float | None = Field(
         default=None, description="Total estimated cost in USD for the entire session"
+    )
+    num_delphi_rounds: int = Field(
+        default=1, description="Number of Delphi rounds used in this session"
+    )
+    initial_proposals: list[PolicyProposal] = Field(
+        default_factory=list,
+        description="Round 1 proposals preserved when num_delphi_rounds > 1",
     )
 
     def get_all_forecasts(self) -> list[ForecastDescription]:

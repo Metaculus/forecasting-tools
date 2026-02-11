@@ -18,6 +18,9 @@ from forecasting_tools.agents_and_tools.situation_simulator.simulator import Sim
 from forecasting_tools.agents_and_tools.situation_simulator.situation_generator import (
     SituationGenerator,
 )
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
 from forecasting_tools.front_end.helpers.app_page import AppPage
 from forecasting_tools.front_end.helpers.custom_auth import CustomAuth
 from forecasting_tools.util import file_manipulation
@@ -86,6 +89,7 @@ class SimulatorPage(AppPage):
             "sim_state": None,
             "sim_steps": [],
             "sim_running": False,
+            "sim_total_cost": 0.0,
         }
         for key, value in defaults.items():
             if key not in st.session_state:
@@ -205,8 +209,14 @@ class SimulatorPage(AppPage):
         steps: list[SimulationStep],
         state: SimulationState | None,
     ) -> None:
-        tab_slack, tab_timeline, tab_inventory, tab_trades = st.tabs(
-            ["💬 Slack", "📋 Timeline", "📦 Inventories", "🤝 Trades"]
+        tab_slack, tab_timeline, tab_inventory, tab_trades, tab_json = st.tabs(
+            [
+                "💬 Slack",
+                "📋 Timeline",
+                "📦 Inventories",
+                "🤝 Trades",
+                "📄 Situation JSON",
+            ]
         )
 
         with tab_slack:
@@ -220,6 +230,9 @@ class SimulatorPage(AppPage):
 
         with tab_trades:
             cls._display_trades(state)
+
+        with tab_json:
+            cls._display_situation_json(situation)
 
     @classmethod
     def _display_slack_view(
@@ -393,6 +406,7 @@ class SimulatorPage(AppPage):
             st.caption(situation.description)
 
             state: SimulationState | None = st.session_state.get("sim_state")
+            total_cost: float = st.session_state.get("sim_total_cost", 0.0)
             if state:
                 st.metric("Current Step", state.step_number)
                 st.metric("Messages", len(state.message_history))
@@ -400,6 +414,7 @@ class SimulatorPage(AppPage):
                     "Pending Trades",
                     len([t for t in state.pending_trades if t.status == "pending"]),
                 )
+                st.metric("Est. Cost (USD)", f"${total_cost:.4f}")
 
             st.markdown("---")
             st.subheader("Agents")
@@ -448,6 +463,9 @@ class SimulatorPage(AppPage):
                 )
                 st.markdown(f"- **#{ch.name}**: {members}")
 
+        with st.expander("Situation JSON"):
+            cls._display_situation_json(situation)
+
     # --- Simulation execution ---
 
     @classmethod
@@ -458,7 +476,9 @@ class SimulatorPage(AppPage):
             state = simulator.create_initial_state()
 
         with st.spinner(f"Running step {state.step_number + 1}..."):
-            step = asyncio.run(simulator.run_step(state))
+            with MonetaryCostManager() as cost_manager:
+                step = asyncio.run(simulator.run_step(state))
+            st.session_state["sim_total_cost"] += cost_manager.current_usage
 
         steps = st.session_state.get("sim_steps", [])
         steps.append(step)
@@ -475,10 +495,14 @@ class SimulatorPage(AppPage):
         steps = st.session_state.get("sim_steps", [])
         progress = st.progress(0)
 
-        for i in range(n):
-            progress.progress((i + 1) / n, f"Running step {state.step_number + 1}...")
-            step = asyncio.run(simulator.run_step(state))
-            steps.append(step)
+        with MonetaryCostManager() as cost_manager:
+            for i in range(n):
+                progress.progress(
+                    (i + 1) / n, f"Running step {state.step_number + 1}..."
+                )
+                step = asyncio.run(simulator.run_step(state))
+                steps.append(step)
+        st.session_state["sim_total_cost"] += cost_manager.current_usage
 
         progress.empty()
         st.session_state["sim_steps"] = steps
@@ -491,17 +515,20 @@ class SimulatorPage(AppPage):
         st.session_state["sim_situation"] = situation
         st.session_state["sim_state"] = None
         st.session_state["sim_steps"] = []
+        st.session_state["sim_total_cost"] = 0.0
 
     @classmethod
     def _reset_simulation(cls) -> None:
         st.session_state["sim_state"] = None
         st.session_state["sim_steps"] = []
+        st.session_state["sim_total_cost"] = 0.0
 
     @classmethod
     def _clear_all(cls) -> None:
         st.session_state["sim_situation"] = None
         st.session_state["sim_state"] = None
         st.session_state["sim_steps"] = []
+        st.session_state["sim_total_cost"] = 0.0
 
     @classmethod
     def _load_situation_from_file(cls, filepath: str) -> None:
@@ -533,6 +560,18 @@ class SimulatorPage(AppPage):
         st.success(f"Saved to {filename}")
 
     # --- Helpers ---
+
+    @classmethod
+    def _display_situation_json(cls, situation: Situation) -> None:
+        situation_json = json.dumps(situation.model_dump(), indent=2)
+        st.code(situation_json, language="json")
+        st.download_button(
+            label="⬇ Download Situation JSON",
+            data=situation_json,
+            file_name=f"{situation.name}.json",
+            mime="application/json",
+            key=f"download_situation_{id(situation)}",
+        )
 
     @classmethod
     def _get_agent_color_map(cls, situation: Situation) -> dict[str, str]:
