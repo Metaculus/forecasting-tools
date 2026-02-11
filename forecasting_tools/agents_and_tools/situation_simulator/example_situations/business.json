@@ -1,0 +1,155 @@
+{
+  "name": "Startup Valley",
+  "description": "A business simulation where entrepreneurs compete and collaborate to build successful companies. Players gather resources, trade, invest, and try to accumulate the most wealth.",
+  "rules_text": "Welcome to Startup Valley! You are entrepreneurs competing to build the most successful business.\n\nGAME MECHANICS:\n- Each step represents one business quarter.\n- Use 'gather_resource' to collect raw materials from the environment (limited supply).\n- Use 'invest' to convert gold into more gold via your business (risk/reward, uses dice).\n- Trade resources with other players to get what you need.\n- Use 'hire_worker' to get worker tokens that boost your gather efficiency.\n\nRESOURCE CONVERSION:\n- Players with 10+ wood AND 5+ stone automatically build 1 'product' at step end (consumes the resources).\n- Products can be sold via the 'sell_product' action for 15 gold each.\n\nWIN CONDITION: After 15 steps, the player with the most total gold wins.\n\nNEGOTIATION: Feel free to form alliances, make deals, or undercut competitors. Communication happens in #marketplace (public) or via DMs (private deals).\n\nEach player has a hidden specialty that makes them more efficient at gathering certain resources.",
+  "items": [
+    {"name": "gold_coin", "description": "Currency. The player with the most at the end wins.", "tradable": true},
+    {"name": "wood", "description": "Raw building material. Gathered from the environment.", "tradable": true},
+    {"name": "stone", "description": "Raw building material. Harder to find than wood.", "tradable": true},
+    {"name": "product", "description": "Finished product. Can be sold for gold.", "tradable": true},
+    {"name": "worker", "description": "Worker token. Each worker you have increases gather yield by 1.", "tradable": true}
+  ],
+  "agents": [
+    {
+      "name": "Marcus",
+      "persona": [
+        {"key": "Background", "value": "Former tech executive. Analytical and data-driven.", "hidden": false},
+        {"key": "Specialty", "value": "Efficient at gathering wood (gets 1 bonus wood per gather)", "hidden": true},
+        {"key": "Strategy Hint", "value": "Focus on high-volume wood production and trade stone for what you need.", "hidden": true}
+      ],
+      "starting_inventory": {"gold_coin": 20, "wood": 3},
+      "special_actions": [],
+      "inventory_rules": [
+        {
+          "name": "auto_build_product",
+          "description": "Automatically converts 10 wood + 5 stone into 1 product at step end",
+          "conditions": [
+            {"item_name": "wood", "operator": ">=", "threshold": 10},
+            {"item_name": "stone", "operator": ">=", "threshold": 5}
+          ],
+          "effects": [
+            {"type": "remove_item", "target": "actor", "item_name": "wood", "quantity": 10},
+            {"type": "remove_item", "target": "actor", "item_name": "stone", "quantity": 5},
+            {"type": "add_item", "target": "actor", "item_name": "product", "quantity": 1},
+            {"type": "message", "target": "actor", "message_text": "Your factory assembled 1 product from 10 wood and 5 stone."}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Priya",
+      "persona": [
+        {"key": "Background", "value": "Serial entrepreneur. Creative and bold risk-taker.", "hidden": false},
+        {"key": "Specialty", "value": "Efficient at gathering stone (gets 1 bonus stone per gather)", "hidden": true},
+        {"key": "Strategy Hint", "value": "Leverage stone advantage. Consider cornering the stone market.", "hidden": true}
+      ],
+      "starting_inventory": {"gold_coin": 20, "stone": 3},
+      "special_actions": [],
+      "inventory_rules": [
+        {
+          "name": "auto_build_product",
+          "description": "Automatically converts 10 wood + 5 stone into 1 product at step end",
+          "conditions": [
+            {"item_name": "wood", "operator": ">=", "threshold": 10},
+            {"item_name": "stone", "operator": ">=", "threshold": 5}
+          ],
+          "effects": [
+            {"type": "remove_item", "target": "actor", "item_name": "wood", "quantity": 10},
+            {"type": "remove_item", "target": "actor", "item_name": "stone", "quantity": 5},
+            {"type": "add_item", "target": "actor", "item_name": "product", "quantity": 1},
+            {"type": "message", "target": "actor", "message_text": "Your factory assembled 1 product from 10 wood and 5 stone."}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Jake",
+      "persona": [
+        {"key": "Background", "value": "Smooth-talking dealmaker. Excels at negotiation and partnerships.", "hidden": false},
+        {"key": "Specialty", "value": "Gets better trade deals (hidden advantage: extra 2 gold from each product sold)", "hidden": true},
+        {"key": "Strategy Hint", "value": "Focus on trading and middleman deals. Buy low, sell high.", "hidden": true}
+      ],
+      "starting_inventory": {"gold_coin": 30},
+      "special_actions": [],
+      "inventory_rules": [
+        {
+          "name": "auto_build_product",
+          "description": "Automatically converts 10 wood + 5 stone into 1 product at step end",
+          "conditions": [
+            {"item_name": "wood", "operator": ">=", "threshold": 10},
+            {"item_name": "stone", "operator": ">=", "threshold": 5}
+          ],
+          "effects": [
+            {"type": "remove_item", "target": "actor", "item_name": "wood", "quantity": 10},
+            {"type": "remove_item", "target": "actor", "item_name": "stone", "quantity": 5},
+            {"type": "add_item", "target": "actor", "item_name": "product", "quantity": 1},
+            {"type": "message", "target": "actor", "message_text": "Your factory assembled 1 product from 10 wood and 5 stone."}
+          ]
+        }
+      ]
+    }
+  ],
+  "environment": {
+    "description": "Startup Valley - a competitive business ecosystem with limited natural resources.",
+    "inventory": {"wood": 100, "stone": 60},
+    "global_actions": [
+      {
+        "name": "gather_resource",
+        "description": "Gather resources from the environment. Gets 3 units of the chosen resource (+ bonus from workers). Limited by environment supply.",
+        "parameters": [
+          {"name": "resource", "description": "Which resource to gather: 'wood' or 'stone'", "type": "item_name"}
+        ],
+        "effects": [
+          {"type": "transfer_item", "source": "environment", "target": "actor", "item_name": "{resource}", "quantity": 3}
+        ],
+        "available_to": "everyone"
+      },
+      {
+        "name": "sell_product",
+        "description": "Sell a finished product for 15 gold coins.",
+        "parameters": [],
+        "effects": [
+          {"type": "remove_item", "target": "actor", "item_name": "product", "quantity": 1},
+          {"type": "add_item", "target": "actor", "item_name": "gold_coin", "quantity": 15}
+        ],
+        "available_to": "everyone"
+      },
+      {
+        "name": "hire_worker",
+        "description": "Hire a worker for 8 gold. Workers increase your gathering output.",
+        "parameters": [],
+        "effects": [
+          {"type": "remove_item", "target": "actor", "item_name": "gold_coin", "quantity": 8},
+          {"type": "add_item", "target": "actor", "item_name": "worker", "quantity": 1}
+        ],
+        "available_to": "everyone"
+      },
+      {
+        "name": "invest",
+        "description": "Invest 10 gold for a chance at returns. Risk/reward dice roll.",
+        "parameters": [],
+        "effects": [
+          {"type": "remove_item", "target": "actor", "item_name": "gold_coin", "quantity": 10},
+          {
+            "type": "random_outcome",
+            "outcomes": [
+              {"probability": 0.2, "effects": [{"type": "message", "target": "actor", "message_text": "Investment failed! You lost your 10 gold."}], "description": "Bad investment - lost everything"},
+              {"probability": 0.3, "effects": [{"type": "add_item", "target": "actor", "item_name": "gold_coin", "quantity": 10}, {"type": "message", "target": "actor", "message_text": "Investment broke even. You got your 10 gold back."}], "description": "Break even"},
+              {"probability": 0.35, "effects": [{"type": "add_item", "target": "actor", "item_name": "gold_coin", "quantity": 15}, {"type": "message", "target": "actor", "message_text": "Good investment! You got 15 gold back (5 profit)."}], "description": "Modest return"},
+              {"probability": 0.15, "effects": [{"type": "add_item", "target": "actor", "item_name": "gold_coin", "quantity": 25}, {"type": "message", "target": "actor", "message_text": "Great investment! You got 25 gold back (15 profit)!"}], "description": "Great return"}
+            ]
+          }
+        ],
+        "available_to": "everyone"
+      }
+    ],
+    "inventory_rules": []
+  },
+  "communication": {
+    "channels": [
+      {"name": "marketplace", "members": "everyone", "description": "Public channel for announcements, offers, and general business discussion."}
+    ],
+    "dm_blacklist": []
+  },
+  "max_steps": 15
+}

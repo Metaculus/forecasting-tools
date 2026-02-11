@@ -13,6 +13,8 @@ from forecasting_tools.agents_and_tools.ai_congress.congress_orchestrator import
 from forecasting_tools.agents_and_tools.ai_congress.data_models import (
     CongressSession,
     CongressSessionInput,
+    ForecastDescription,
+    PolicyProposal,
 )
 from forecasting_tools.agents_and_tools.ai_congress.member_profiles import (
     AVAILABLE_MEMBERS,
@@ -371,6 +373,47 @@ class CongressPage(AppPage):
         else:
             st.write("No future snapshot available.")
 
+    @staticmethod
+    def _render_forecast_list(forecasts: list[ForecastDescription]) -> None:
+        for forecast in forecasts:
+            st.markdown(f"**[^{forecast.footnote_id}] {forecast.question_title}**")
+            st.markdown(f"- **Prediction:** {forecast.prediction}")
+            st.markdown(f"- **Question:** {forecast.question_text}")
+            st.markdown(f"- **Resolution:** {forecast.resolution_criteria}")
+            st.markdown(f"- **Reasoning:** {forecast.reasoning}")
+            if forecast.key_sources:
+                st.markdown(f"- **Sources:** {', '.join(forecast.key_sources)}")
+            st.markdown("---")
+
+    @classmethod
+    def _display_single_proposal(cls, proposal: PolicyProposal) -> None:
+        if proposal.price_estimate:
+            st.caption(f"💰 Cost: ${proposal.price_estimate:.2f}")
+
+        st.markdown("# Decision Criteria")
+        for i, criterion in enumerate(proposal.decision_criteria, 1):
+            st.markdown(f"{i}. {criterion}")
+
+        st.markdown("# Key Recommendations")
+        for rec in proposal.key_recommendations:
+            st.markdown(f"- {rec}")
+
+        st.markdown("# Research Summary")
+        st.markdown(proposal.research_summary)
+
+        st.markdown("# Proposal Text")
+        cleaned = ReportDisplayer.clean_markdown(
+            proposal.get_full_markdown_with_footnotes()
+        )
+        st.markdown(cleaned)
+
+        st.markdown("# Baseline Forecasts (Status Quo)")
+        cls._render_forecast_list(proposal.baseline_forecasts)
+
+        if proposal.conditional_forecasts:
+            st.markdown("# Conditional Forecasts (If Policy Implemented)")
+            cls._render_forecast_list(proposal.conditional_forecasts)
+
     @classmethod
     def _display_proposals_tab(cls, session: CongressSession) -> None:
         st.subheader("Individual Member Proposals")
@@ -389,37 +432,31 @@ class CongressPage(AppPage):
             with st.expander(
                 f"**{member_name}** - {member_role}{cost_str}", expanded=False
             ):
-                if proposal.price_estimate:
-                    st.caption(f"💰 Cost: ${proposal.price_estimate:.2f}")
+                cls._display_single_proposal(proposal)
 
-                st.markdown("# Decision Criteria")
-                for i, criterion in enumerate(proposal.decision_criteria, 1):
-                    st.markdown(f"{i}. {criterion}")
-
-                st.markdown("# Key Recommendations")
-                for rec in proposal.key_recommendations:
-                    st.markdown(f"- {rec}")
-
-                st.markdown("# Research Summary")
-                st.markdown(proposal.research_summary)
-
-                st.markdown("# Proposal Text")
-                cleaned = ReportDisplayer.clean_markdown(
-                    proposal.get_full_markdown_with_footnotes()
-                )
-                st.markdown(cleaned)
-
-                st.markdown("# Full Forecasts")
-                for forecast in proposal.forecasts:
-                    st.markdown(
-                        f"**[^{forecast.footnote_id}] {forecast.question_title}**"
-                    )
-                    st.markdown(f"- **Prediction:** {forecast.prediction}")
-                    st.markdown(f"- **Question:** {forecast.question_text}")
-                    st.markdown(f"- **Resolution:** {forecast.resolution_criteria}")
-                    st.markdown(f"- **Reasoning:** {forecast.reasoning}")
-                    if forecast.key_sources:
-                        st.markdown(f"- **Sources:** {', '.join(forecast.key_sources)}")
+    @staticmethod
+    def _build_forecast_table_data(
+        forecasts_by_member: dict[str, list[ForecastDescription]],
+    ) -> tuple[list[dict], list[dict]]:
+        baseline_data = []
+        conditional_data = []
+        for member_name, forecasts in forecasts_by_member.items():
+            for f in forecasts:
+                row = {
+                    "Member": member_name,
+                    "Question": f.question_title,
+                    "Prediction": f.prediction,
+                    "Reasoning (summary)": (
+                        f.reasoning[:100] + "..."
+                        if len(f.reasoning) > 100
+                        else f.reasoning
+                    ),
+                }
+                if f.is_conditional:
+                    conditional_data.append(row)
+                else:
+                    baseline_data.append(row)
+        return baseline_data, conditional_data
 
     @classmethod
     def _display_forecasts_tab(cls, session: CongressSession) -> None:
@@ -431,39 +468,37 @@ class CongressPage(AppPage):
             st.write("No forecasts available.")
             return
 
-        all_forecasts_data = []
-        for member_name, forecasts in forecasts_by_member.items():
-            for f in forecasts:
-                all_forecasts_data.append(
-                    {
-                        "Member": member_name,
-                        "Question": f.question_title,
-                        "Prediction": f.prediction,
-                        "Reasoning (summary)": (
-                            f.reasoning[:100] + "..."
-                            if len(f.reasoning) > 100
-                            else f.reasoning
-                        ),
-                    }
-                )
+        baseline_data, conditional_data = cls._build_forecast_table_data(
+            forecasts_by_member
+        )
 
-        if all_forecasts_data:
-            st.dataframe(all_forecasts_data, use_container_width=True)
+        st.markdown("#### Baseline Forecasts (Status Quo)")
+        if baseline_data:
+            st.dataframe(baseline_data, use_container_width=True)
+        else:
+            st.write("No baseline forecasts available.")
+
+        st.markdown("#### Conditional Forecasts (If Policy Implemented)")
+        if conditional_data:
+            st.dataframe(conditional_data, use_container_width=True)
+        else:
+            st.write("No conditional forecasts available.")
 
         st.markdown("---")
         st.markdown("#### Detailed Forecasts by Member")
 
         for member_name, forecasts in forecasts_by_member.items():
-            with st.expander(f"**{member_name}** ({len(forecasts)} forecasts)"):
-                for f in forecasts:
-                    st.markdown(f"**[^{f.footnote_id}] {f.question_title}**")
-                    st.markdown(f"- **Prediction:** {f.prediction}")
-                    st.markdown(f"- **Question:** {f.question_text}")
-                    st.markdown(f"- **Resolution:** {f.resolution_criteria}")
-                    st.markdown(f"- **Reasoning:** {f.reasoning}")
-                    if f.key_sources:
-                        st.markdown(f"- **Sources:** {', '.join(f.key_sources)}")
-                    st.markdown("---")
+            baseline_forecasts = [f for f in forecasts if not f.is_conditional]
+            conditional_forecasts = [f for f in forecasts if f.is_conditional]
+            total_count = len(forecasts)
+            with st.expander(f"**{member_name}** ({total_count} forecasts)"):
+                if baseline_forecasts:
+                    st.markdown("**Baseline Forecasts (Status Quo)**")
+                    cls._render_forecast_list(baseline_forecasts)
+
+                if conditional_forecasts:
+                    st.markdown("**Conditional Forecasts (If Policy Implemented)**")
+                    cls._render_forecast_list(conditional_forecasts)
 
     @classmethod
     def _display_twitter_tab(cls, session: CongressSession) -> None:
@@ -600,7 +635,7 @@ class CongressPage(AppPage):
             return None
 
         try:
-            data: dict = load_json_file(file_path)  # type: ignore
+            data: dict = load_json_file(file_path)[0]
             session = CongressSession.from_json(data)
             return session
         except json.JSONDecodeError as e:
@@ -621,7 +656,7 @@ class CongressPage(AppPage):
             if filename.endswith(".json"):
                 filepath = os.path.join(SESSIONS_FOLDER, filename)
                 try:
-                    data: dict = load_json_file(filepath)  # type: ignore
+                    data: dict = load_json_file(filepath)[0]
                     session = CongressSession.from_json(data)
                     sessions.append(session)
                 except Exception as e:

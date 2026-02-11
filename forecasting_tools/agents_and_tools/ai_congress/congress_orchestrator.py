@@ -184,27 +184,39 @@ class CongressOrchestrator:
               conclusions
             - Assess the crux of the disagreement
 
-            ### Forecast Comparison
+            ### Baseline Forecast Comparison
 
-            Create a summary of how forecasts differed across members:
+            Create a summary of how BASELINE forecasts (status quo predictions) differed
+            across members:
             - Note where forecasts converged (similar probabilities)
             - Highlight where forecasts diverged significantly
             - Discuss what might explain the differences (different information,
               different priors, different interpretations)
 
+            ### Conditional Forecast Comparison
+
+            Create a summary of how CONDITIONAL forecasts (predictions conditional on
+            policy being implemented) differed across members:
+            - Compare members' predictions about what their policies would achieve
+            - Highlight the most optimistic vs pessimistic conditional forecasts
+            - Note which members forecast significant unintended consequences
+            - Compare baseline vs conditional forecasts on similar topics to show
+              the expected policy impact
+
             ### Integrated Recommendations
 
             Your synthesis of the best policy path forward:
             - Draw on the strongest arguments from each perspective
+            - Use both baseline and conditional forecasts to assess expected policy impact
             - Identify low-regret actions that most members would support
             - Note high-uncertainty areas where more caution is warranted
             - Be specific and actionable
 
-            ### Combined Forecast Appendix
+            ### Combined Baseline Forecast Appendix
 
-            Compile all unique forecasts from all members into a single appendix.
-            When members made similar forecasts, group them and note the range of
-            predictions.
+            Compile all baseline (status quo) forecasts from all members into a single
+            appendix. When members made similar forecasts, group them and note the range
+            of predictions.
 
             Format each forecast as:
 
@@ -215,6 +227,20 @@ class CongressOrchestrator:
             - Reasoning: [Summary of reasoning]
 
             Number the footnotes sequentially [^1], [^2], [^3], etc.
+
+            ### Combined Conditional Forecast Appendix
+
+            Compile all conditional (policy-dependent) forecasts from all members into
+            a separate appendix. Continue the footnote numbering from the baseline
+            appendix.
+
+            Format each forecast as:
+
+            [^N] **[Question Title]** *(Conditional on policy)* (from [Member Name])
+            - Question: [Full question]
+            - Resolution: [Resolution criteria]
+            - Prediction: [Probability]
+            - Reasoning: [Summary of reasoning]
 
             ---
 
@@ -328,7 +354,9 @@ class CongressOrchestrator:
 
             3. **Key Insights** (3-5 paragraphs): The most important takeaways from
                the session. What did the AI congress conclude? Where did they agree
-               and disagree? What forecasts matter most?
+               and disagree? What forecasts matter most? How do the conditional
+               forecasts (what happens IF policies are implemented) compare to the
+               baseline forecasts (status quo predictions)?
 
             4. **The Good, Bad, and Ugly** (2-3 paragraphs): Highlight:
                - The Good: Surprising consensus, innovative ideas, strong reasoning
@@ -364,6 +392,40 @@ class CongressOrchestrator:
             logger.error(f"Failed to generate blog post: {e}")
             return ""
 
+    @staticmethod
+    def _collect_forecast_dicts(
+        proposals: list[PolicyProposal],
+    ) -> tuple[list[dict], list[dict]]:
+        baseline = []
+        conditional = []
+        for proposal in proposals:
+            member_name = proposal.member.name if proposal.member else "Unknown"
+            for forecast in proposal.forecasts:
+                forecast_dict = {
+                    "member": member_name,
+                    "title": forecast.question_title,
+                    "question": forecast.question_text,
+                    "prediction": forecast.prediction,
+                    "resolution_criteria": forecast.resolution_criteria,
+                    "reasoning": forecast.reasoning,
+                }
+                if forecast.is_conditional:
+                    conditional.append(forecast_dict)
+                else:
+                    baseline.append(forecast_dict)
+        return baseline, conditional
+
+    @staticmethod
+    def _collect_recommendations(proposals: list[PolicyProposal]) -> list[dict]:
+        recommendations = []
+        for proposal in proposals:
+            if proposal.member:
+                for rec in proposal.key_recommendations:
+                    recommendations.append(
+                        {"member": proposal.member.name, "recommendation": rec}
+                    )
+        return recommendations
+
     async def _generate_future_snapshot(
         self,
         prompt: str,
@@ -372,35 +434,21 @@ class CongressOrchestrator:
     ) -> str:
         logger.info(f"Generating future snapshot for congress session: {prompt}")
 
-        all_forecasts = []
-        for proposal in proposals:
-            for forecast in proposal.forecasts:
-                all_forecasts.append(
-                    {
-                        "member": (
-                            proposal.member.name if proposal.member else "Unknown"
-                        ),
-                        "title": forecast.question_title,
-                        "question": forecast.question_text,
-                        "prediction": forecast.prediction,
-                        "resolution_criteria": forecast.resolution_criteria,
-                        "reasoning": forecast.reasoning,
-                    }
-                )
+        all_baseline, all_conditional = self._collect_forecast_dicts(proposals)
+        all_recommendations = self._collect_recommendations(proposals)
 
-        all_recommendations = []
-        for proposal in proposals:
-            if proposal.member:
-                for rec in proposal.key_recommendations:
-                    all_recommendations.append(
-                        {"member": proposal.member.name, "recommendation": rec}
-                    )
-
-        forecasts_text = "\n".join(
+        baseline_forecasts_text = "\n".join(
             f"- **{f['title']}** ({f['member']}): {f['prediction']}\n"
             f"  - Question: {f['question']}\n"
             f"  - Resolution: {f['resolution_criteria']}"
-            for f in all_forecasts
+            for f in all_baseline
+        )
+
+        conditional_forecasts_text = "\n".join(
+            f"- **{f['title']}** *(Conditional on policy)* ({f['member']}): {f['prediction']}\n"
+            f"  - Question: {f['question']}\n"
+            f"  - Resolution: {f['resolution_criteria']}"
+            for f in all_conditional
         )
 
         recommendations_text = "\n".join(
@@ -425,9 +473,13 @@ class CongressOrchestrator:
             {aggregated_report}
             ```
 
-            ## All Forecasts from Congress Members
+            ## Baseline Forecasts (Status Quo Predictions)
 
-            {forecasts_text}
+            {baseline_forecasts_text}
+
+            ## Conditional Forecasts (If Policy Is Implemented)
+
+            {conditional_forecasts_text}
 
             ## All Policy Recommendations
 
@@ -455,6 +507,11 @@ class CongressOrchestrator:
                - Pass the probability from the forecast (e.g., 35 for "35%")
                - The tool returns whether that event occurred based on the probability
                - Incorporate the outcome naturally into your narrative
+               - For the "WITH recommendations" narrative, use the CONDITIONAL forecasts
+                 (since the policy is implemented) for policy-dependent outcomes,
+                 and baseline forecasts for background events
+               - For the "WITHOUT recommendations" narrative, use the BASELINE forecasts
+                 (since the policy is NOT implemented)
 
             3. For any gaps in the forecasts, create your own probabilistic predictions
                marked with asterisks (*). For example: "The unemployment rate dropped to

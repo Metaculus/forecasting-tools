@@ -68,7 +68,7 @@ class CongressMemberAgent:
             You must extract:
             1. research_summary: The background research section (3-5 paragraphs)
             2. decision_criteria: The list of 4-6 criteria as strings
-            3. forecasts: Each forecast from the appendix as a ForecastDescription object
+            3. forecasts: Each forecast from BOTH appendices as ForecastDescription objects
                - footnote_id: The number (1, 2, 3, etc.)
                - question_title: Short title
                - question_text: Full question
@@ -76,11 +76,19 @@ class CongressMemberAgent:
                - prediction: The probability (e.g., "35%" or "70% Option A, 20% Option B, 10% Option C" or "10% chance less than X units, ... ,90% chance less than Y units")
                - reasoning: The reasoning explanation
                - key_sources: List of sources mentioned
+               - is_conditional: Set to true for forecasts from the "Conditional Forecast
+                 Appendix" section (these are conditional on the policy being implemented).
+                 Set to false for forecasts from the regular "Forecast Appendix" (baseline
+                 forecasts about the status quo). Look for markers like
+                 "Conditional on policy", "conditional", or placement in the Conditional
+                 Forecast Appendix section.
             4. proposal_markdown: The full proposal section including Executive Summary,
                Analysis, Recommendations, Risks, and any other section you see. Include footnote references [^1] etc.
             5. key_recommendations: The 3-5 main recommendations as a list of strings
 
-            Be thorough in extracting all forecasts from the Forecast Appendix section.
+            Be thorough in extracting all forecasts from BOTH the regular Forecast Appendix
+            AND the Conditional Forecast Appendix sections. Make sure is_conditional is
+            correctly set for each forecast.
             """
         )
 
@@ -171,11 +179,12 @@ class CongressMemberAgent:
 
             ---
 
-            ## PHASE 3: Generate Forecasting Questions
+            ## PHASE 3: Generate Baseline Forecasting Questions
 
-            Identify 3-5 specific, concrete forecasting questions that would help inform
-            this policy decision. These questions should be ones where the answer
-            genuinely matters for deciding what to do.
+            Identify 3-5 specific, concrete forecasting questions about what will happen
+            under the STATUS QUO — i.e., assuming no major new policy intervention is made.
+            These are "baseline" questions that help establish what the world looks like
+            without your proposed policy changes.
 
             Good forecasting questions follow these principles:
             - The question should shed light on the topic and have high VOI (Value of Information)
@@ -209,13 +218,14 @@ class CongressMemberAgent:
             Make sure your questions reflect your unique perspective as {self.member.name}.
             {question_guidance}
 
-            Write a "## Forecasting Questions" section with your 3-5 questions.
+            Write a "## Baseline Forecasting Questions" section with your 3-5 questions.
 
             ---
 
-            ## PHASE 4: Forecast Each Question
+            ## PHASE 4: Forecast Each Baseline Question
 
-            Now forecast each question you generated. This is the most important phase.
+            Now forecast each baseline question you generated. This is one of the most
+            important phases.
 
             For EACH forecasting question:
             1. Consider what principles associated with good forecasting you plan to use in this situation, if any (e.g. base rates, bias identification, premortems, simulations, scope sensitivity, aggregation, etc)
@@ -297,6 +307,81 @@ class CongressMemberAgent:
 
             ---
 
+            ## PHASE 6: Generate Conditional Forecasting Questions
+
+            Now that you have written your policy proposal with specific recommendations,
+            generate 2-4 CONDITIONAL forecasting questions. These questions ask:
+            "IF my proposed policy recommendations are implemented, what would happen?"
+
+            These are different from your baseline questions (Phase 3) which asked about
+            the status quo trajectory. Conditional questions should:
+
+            - Be specifically about outcomes that would change IF your policy is enacted
+            - Reference your actual recommendations from Phase 5
+            - Cover both intended benefits AND potential unintended consequences
+            - Follow the same quality standards as baseline questions (specific, resolvable,
+              good resolution source, clear resolution criteria, etc.)
+            - Use the same time horizons as your baseline questions where possible, to
+              enable direct comparison
+
+            Examples of good conditional questions:
+            - "If [specific recommendation X] is enacted by [date], will [measurable
+              outcome Y] change by [amount Z] by [date]?"
+            - "Conditional on [policy X] being implemented, what is the probability that
+              [side effect Y] occurs by [date]?"
+
+            For each question, write:
+            - **Question Title**: A short descriptive title
+            - **Full Question**: The complete question, clearly stating the conditional
+            - **Resolution Criteria**: How this resolves, assuming the policy IS implemented
+            - **Time Horizon**: When will we know the answer?
+            - **Why It Matters**: What does this tell us about the policy's impact?
+
+            Write a "## Conditional Forecasting Questions" section with your 2-4 questions.
+
+            ---
+
+            ## PHASE 7: Forecast Each Conditional Question
+
+            Forecast each conditional question using the same rigorous process as Phase 4.
+
+            For EACH conditional forecasting question:
+            1. Consider what principles associated with good forecasting you plan to use
+            2. Make a research plan
+            3. Conduct the research (iterate as needed)
+            4. Write down the main facts from the research
+            5. Do your analysis and write down your rationale
+            6. Write down your forecast
+
+            IMPORTANT: These forecasts should assume the policy IS implemented. Think
+            carefully about how the policy would change outcomes compared to the baseline.
+            Consider implementation quality, timeline, political resistance, and
+            second-order effects.
+
+            Write your forecasts inline as you work through each question.
+
+            ---
+
+            ## PHASE 8: Append Conditional Forecasts to Your Proposal
+
+            Add a "### Conditional Forecast Appendix" section at the end of your proposal
+            (after the regular Forecast Appendix). Use the SAME footnote format but
+            continue numbering from where the baseline forecasts left off. Mark each one
+            clearly as conditional:
+
+            [^N] **[Question Title]** *(Conditional on policy)*
+            - Question: [Full question text]
+            - Resolution: [Resolution criteria]
+            - Prediction: [Your probability, e.g., "65%"]
+            - Reasoning: [4+ sentences explaining your reasoning]
+            - Sources: [Key sources]
+
+            Also go back and reference these conditional forecasts in your Analysis and
+            Recommendations sections where relevant, using the footnote format
+            (e.g., "If implemented, this could increase adoption by 40% [^6]").
+
+            ---
+
             # Important Reminders
 
             - You ARE {self.member.name}. Stay in character throughout.
@@ -306,6 +391,8 @@ class CongressMemberAgent:
             - Every major claim in your proposal should be backed by either research
               or a forecast with a footnote.
             - Be specific and quantitative wherever possible.
+            - You should have TWO types of forecasts: baseline (status quo) and
+              conditional (if policy is implemented). Make both clear and distinct.
 
             Begin your deliberation now. Start with Phase 1: Background Research.
             """

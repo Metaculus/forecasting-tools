@@ -1,0 +1,163 @@
+{
+  "name": "Town Council Election",
+  "description": "A political simulation where candidates campaign for town council seats while constituents decide who to vote for based on policy positions and persuasion.",
+  "rules_text": "This is a town council election simulation.\n\nPHASES:\n- Steps 1-8: Campaign phase. Candidates make promises, debate policies, and try to win over constituents.\n- Steps 9-10: Voting phase. Each constituent uses 'cast_ballot' to vote for their preferred candidate.\n\nCANDIDATES:\n- Campaign in #town-hall (public debates) and via DMs (private lobbying).\n- Can use 'make_promise' to officially commit to a policy (tracked publicly).\n- Can use 'run_ad' to spend campaign funds for visibility.\n\nCONSTITUENTS:\n- Each has 1 ballot (non-tradable). Must cast it during voting phase.\n- Have different priorities (some hidden) that influence their vote.\n- Can ask questions in #town-hall and discuss amongst themselves in #community.\n\nWIN CONDITION: The candidate with the most ballots wins the election.\n\nIMPORTANT: Constituents should vote based on their stated priorities and how well candidates address them. Candidates cannot vote for themselves.",
+  "items": [
+    {"name": "ballot", "description": "Voting ballot. Each constituent has exactly 1. Non-tradable.", "tradable": false},
+    {"name": "campaign_fund", "description": "Money for running ads and campaign activities.", "tradable": false},
+    {"name": "promise_token", "description": "Represents an official policy promise. Tracked publicly.", "tradable": false},
+    {"name": "ballot_for_chen", "description": "A ballot cast for candidate Chen.", "tradable": false},
+    {"name": "ballot_for_rivera", "description": "A ballot cast for candidate Rivera.", "tradable": false}
+  ],
+  "agents": [
+    {
+      "name": "Chen",
+      "persona": [
+        {"key": "Role", "value": "Candidate", "hidden": false},
+        {"key": "Platform", "value": "Pro-business, tax cuts, deregulation, attract tech companies to town.", "hidden": false},
+        {"key": "Background", "value": "Local business owner for 20 years. Known for job creation.", "hidden": false},
+        {"key": "Secret Weakness", "value": "His business had environmental violations 5 years ago that he hopes don't come up.", "hidden": true}
+      ],
+      "starting_inventory": {"campaign_fund": 10},
+      "special_actions": [
+        {
+          "name": "make_promise",
+          "description": "Make an official campaign promise that gets recorded publicly.",
+          "parameters": [
+            {"name": "promise", "description": "The policy promise you are making", "type": "str"}
+          ],
+          "effects": [
+            {"type": "add_item", "target": "actor", "item_name": "promise_token", "quantity": 1},
+            {"type": "message", "target": "actor", "message_text": "Official promise recorded: {promise}"}
+          ]
+        },
+        {
+          "name": "run_ad",
+          "description": "Spend campaign funds to run an advertisement. Costs 3 campaign_fund.",
+          "parameters": [],
+          "effects": [
+            {"type": "remove_item", "target": "actor", "item_name": "campaign_fund", "quantity": 3},
+            {"type": "message", "target": "actor", "message_text": "Ad campaign running! Your visibility has increased."}
+          ]
+        }
+      ],
+      "inventory_rules": []
+    },
+    {
+      "name": "Rivera",
+      "persona": [
+        {"key": "Role", "value": "Candidate", "hidden": false},
+        {"key": "Platform", "value": "Green energy, affordable housing, community programs, environmental protection.", "hidden": false},
+        {"key": "Background", "value": "Former teacher and community organizer. Popular with young voters.", "hidden": false},
+        {"key": "Secret Weakness", "value": "Has never managed a large budget. Worried about being seen as fiscally inexperienced.", "hidden": true}
+      ],
+      "starting_inventory": {"campaign_fund": 10},
+      "special_actions": [
+        {
+          "name": "make_promise",
+          "description": "Make an official campaign promise that gets recorded publicly.",
+          "parameters": [
+            {"name": "promise", "description": "The policy promise you are making", "type": "str"}
+          ],
+          "effects": [
+            {"type": "add_item", "target": "actor", "item_name": "promise_token", "quantity": 1},
+            {"type": "message", "target": "actor", "message_text": "Official promise recorded: {promise}"}
+          ]
+        },
+        {
+          "name": "run_ad",
+          "description": "Spend campaign funds to run an advertisement. Costs 3 campaign_fund.",
+          "parameters": [],
+          "effects": [
+            {"type": "remove_item", "target": "actor", "item_name": "campaign_fund", "quantity": 3},
+            {"type": "message", "target": "actor", "message_text": "Ad campaign running! Your visibility has increased."}
+          ]
+        }
+      ],
+      "inventory_rules": []
+    },
+    {
+      "name": "Sam",
+      "persona": [
+        {"key": "Role", "value": "Constituent", "hidden": false},
+        {"key": "Priorities", "value": "Cares most about job creation and economic growth. Small business owner.", "hidden": false},
+        {"key": "Hidden Leaning", "value": "Slightly favors Chen but open to being convinced by Rivera if she addresses economic concerns.", "hidden": true}
+      ],
+      "starting_inventory": {"ballot": 1},
+      "special_actions": [],
+      "inventory_rules": []
+    },
+    {
+      "name": "Maya",
+      "persona": [
+        {"key": "Role", "value": "Constituent", "hidden": false},
+        {"key": "Priorities", "value": "Passionate about environment and sustainability. Young professional.", "hidden": false},
+        {"key": "Hidden Leaning", "value": "Strongly favors Rivera but could be swayed if Chen makes credible environmental commitments.", "hidden": true}
+      ],
+      "starting_inventory": {"ballot": 1},
+      "special_actions": [],
+      "inventory_rules": []
+    },
+    {
+      "name": "Tom",
+      "persona": [
+        {"key": "Role", "value": "Constituent", "hidden": false},
+        {"key": "Priorities", "value": "Wants affordable housing and better schools. Parent of three.", "hidden": false},
+        {"key": "Hidden Leaning", "value": "Truly undecided. Will vote for whoever makes the most concrete promises addressing housing and education.", "hidden": true}
+      ],
+      "starting_inventory": {"ballot": 1},
+      "special_actions": [],
+      "inventory_rules": []
+    },
+    {
+      "name": "Linda",
+      "persona": [
+        {"key": "Role", "value": "Constituent", "hidden": false},
+        {"key": "Priorities", "value": "Retired teacher. Cares about community programs and fiscal responsibility.", "hidden": false},
+        {"key": "Hidden Leaning", "value": "Skeptical of both candidates. Will vote for the one who seems most honest and competent.", "hidden": true}
+      ],
+      "starting_inventory": {"ballot": 1},
+      "special_actions": [],
+      "inventory_rules": []
+    },
+    {
+      "name": "Alex",
+      "persona": [
+        {"key": "Role", "value": "Constituent", "hidden": false},
+        {"key": "Priorities", "value": "Tech worker who recently moved to town. Cares about internet infrastructure and modern amenities.", "hidden": false},
+        {"key": "Hidden Leaning", "value": "Leans toward Chen's pro-tech stance but concerned about environmental impact.", "hidden": true}
+      ],
+      "starting_inventory": {"ballot": 1},
+      "special_actions": [],
+      "inventory_rules": []
+    }
+  ],
+  "environment": {
+    "description": "Millfield, a growing town of 50,000 residents facing decisions about development, environment, and community investment.",
+    "inventory": {},
+    "global_actions": [
+      {
+        "name": "cast_ballot",
+        "description": "Cast your ballot for a candidate. Only usable during voting phase (steps 9-10). Costs your 1 ballot.",
+        "parameters": [
+          {"name": "candidate", "description": "Name of the candidate to vote for: 'Chen' or 'Rivera'", "type": "agent_name"}
+        ],
+        "effects": [
+          {"type": "remove_item", "target": "actor", "item_name": "ballot", "quantity": 1},
+          {"type": "add_item", "target": "environment", "item_name": "ballot_for_{candidate}", "quantity": 1},
+          {"type": "message", "target": "actor", "message_text": "You have cast your ballot for {candidate}."}
+        ],
+        "available_to": ["Sam", "Maya", "Tom", "Linda", "Alex"]
+      }
+    ],
+    "inventory_rules": []
+  },
+  "communication": {
+    "channels": [
+      {"name": "town-hall", "members": "everyone", "description": "Public forum for debates, questions, and policy discussions."},
+      {"name": "community", "members": ["Sam", "Maya", "Tom", "Linda", "Alex"], "description": "Private channel for constituents to discuss among themselves."}
+    ],
+    "dm_blacklist": []
+  },
+  "max_steps": 10
+}
