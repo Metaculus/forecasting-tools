@@ -38,11 +38,16 @@ class ForecastDescription(BaseModel, Jsonable):
         default_factory=list,
         description="URLs or source names used. Ideally both as markdown links.",
     )
+    is_conditional: bool = Field(
+        default=False,
+        description="Whether this is a conditional forecast (conditional on the member's policy being implemented)",
+    )
 
     def as_footnote_markdown(self) -> str:
         sources_str = ", ".join(self.key_sources) if self.key_sources else "N/A"
+        conditional_label = " *(Conditional on policy)*" if self.is_conditional else ""
         return (
-            f"[^{self.footnote_id}]: **{self.question_title}**\n"
+            f"[^{self.footnote_id}]: **{self.question_title}**{conditional_label}\n"
             f"- Question: {self.question_text}\n"
             f"- Resolution: {self.resolution_criteria}\n"
             f"- Prediction: {self.prediction}\n"
@@ -72,9 +77,35 @@ class PolicyProposal(BaseModel, Jsonable):
         default=None, description="Estimated cost in USD for generating this proposal"
     )
 
+    @property
+    def baseline_forecasts(self) -> list[ForecastDescription]:
+        return [f for f in self.forecasts if not f.is_conditional]
+
+    @property
+    def conditional_forecasts(self) -> list[ForecastDescription]:
+        return [f for f in self.forecasts if f.is_conditional]
+
     def get_full_markdown_with_footnotes(self) -> str:
-        footnotes = "\n\n".join(f.as_footnote_markdown() for f in self.forecasts)
-        return f"{self.proposal_markdown}\n\n---\n\n## Forecast Appendix\n\n{footnotes}"
+        baseline = self.baseline_forecasts
+        conditional = self.conditional_forecasts
+
+        sections = [self.proposal_markdown]
+
+        if baseline:
+            baseline_footnotes = "\n\n".join(f.as_footnote_markdown() for f in baseline)
+            sections.append(f"---\n\n## Forecast Appendix\n\n{baseline_footnotes}")
+
+        if conditional:
+            conditional_footnotes = "\n\n".join(
+                f.as_footnote_markdown() for f in conditional
+            )
+            sections.append(
+                f"---\n\n## Conditional Forecast Appendix\n\n"
+                f"*These forecasts are conditional on the proposed policy being implemented.*\n\n"
+                f"{conditional_footnotes}"
+            )
+
+        return "\n\n".join(sections)
 
 
 class CongressSessionInput(BaseModel, Jsonable):
@@ -102,6 +133,12 @@ class CongressSession(BaseModel, Jsonable):
             for forecast in proposal.forecasts:
                 all_forecasts.append(forecast)
         return all_forecasts
+
+    def get_all_baseline_forecasts(self) -> list[ForecastDescription]:
+        return [f for f in self.get_all_forecasts() if not f.is_conditional]
+
+    def get_all_conditional_forecasts(self) -> list[ForecastDescription]:
+        return [f for f in self.get_all_forecasts() if f.is_conditional]
 
     def get_forecasts_by_member(self) -> dict[str, list[ForecastDescription]]:
         result: dict[str, list[ForecastDescription]] = {}

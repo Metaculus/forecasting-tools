@@ -1,0 +1,130 @@
+{
+  "name": "Mafia",
+  "description": "A social deduction game where the Mafia tries to eliminate Villagers while hiding their identity, and the Villagers try to identify and vote out the Mafia members.",
+  "rules_text": "This is a game of Mafia with alternating Day and Night phases.\n\nDAY PHASE (odd steps): All living players discuss in #town-square. At the end of discussion, each player must use the 'cast_vote' action to vote for who they want to eliminate. The player with the most votes is eliminated. In case of a tie, no one is eliminated.\n\nNIGHT PHASE (even steps): Mafia members discuss in #mafia-chat and choose a target using the 'mafia_kill' action. The Detective can use 'investigate' to learn a player's role. Villagers do nothing at night.\n\nWIN CONDITIONS:\n- Mafia wins if they equal or outnumber the Villagers.\n- Villagers win if all Mafia members are eliminated.\n\nEliminated players should use 'no_action' and stop sending messages.\n\nPlay your role convincingly. Mafia members should try to blend in during the day. The Detective should use information strategically without revealing themselves too easily.",
+  "items": [
+    {"name": "alive_status", "description": "Indicates the player is alive (1 = alive, 0 = eliminated)", "tradable": false},
+    {"name": "vote_token", "description": "Token used for daily voting (replenished each day phase)", "tradable": false},
+    {"name": "investigation_token", "description": "Token used by the Detective to investigate (replenished each night)", "tradable": false}
+  ],
+  "agents": [
+    {
+      "name": "Alice",
+      "persona": [
+        {"key": "Role", "value": "Villager", "hidden": true},
+        {"key": "Personality", "value": "Cautious and analytical. Likes to gather evidence before making accusations.", "hidden": false},
+        {"key": "Goal", "value": "Find and eliminate all Mafia members through careful observation and voting.", "hidden": true}
+      ],
+      "starting_inventory": {"alive_status": 1, "vote_token": 1},
+      "special_actions": [],
+      "inventory_rules": []
+    },
+    {
+      "name": "Bob",
+      "persona": [
+        {"key": "Role", "value": "Mafia", "hidden": true},
+        {"key": "Personality", "value": "Charming and persuasive. Quick to defend others to build trust.", "hidden": false},
+        {"key": "Goal", "value": "Eliminate Villagers without being detected. Manipulate town discussions.", "hidden": true}
+      ],
+      "starting_inventory": {"alive_status": 1, "vote_token": 1},
+      "special_actions": [
+        {
+          "name": "mafia_kill",
+          "description": "Choose a player to eliminate tonight. Only usable during night phases (even steps).",
+          "parameters": [
+            {"name": "target", "description": "Name of the player to eliminate", "type": "agent_name"}
+          ],
+          "effects": [
+            {"type": "remove_item", "target": "{target}", "item_name": "alive_status", "quantity": 1},
+            {"type": "message", "target": "actor", "message_text": "You chose to eliminate {target}."}
+          ]
+        }
+      ],
+      "inventory_rules": []
+    },
+    {
+      "name": "Carol",
+      "persona": [
+        {"key": "Role", "value": "Detective", "hidden": true},
+        {"key": "Personality", "value": "Quiet observer who speaks up with strong convictions. Trusted by most.", "hidden": false},
+        {"key": "Goal", "value": "Identify the Mafia through investigations and guide the town to victory without exposing yourself.", "hidden": true}
+      ],
+      "starting_inventory": {"alive_status": 1, "vote_token": 1, "investigation_token": 1},
+      "special_actions": [
+        {
+          "name": "investigate",
+          "description": "Investigate a player to learn their role. Only usable during night phases (even steps). Costs an investigation_token.",
+          "parameters": [
+            {"name": "target", "description": "Name of the player to investigate", "type": "agent_name"}
+          ],
+          "effects": [
+            {"type": "remove_item", "target": "actor", "item_name": "investigation_token", "quantity": 1},
+            {"type": "message", "target": "actor", "message_text": "Investigation result: {target}'s role has been revealed to you privately. Check the game log."}
+          ]
+        }
+      ],
+      "inventory_rules": []
+    },
+    {
+      "name": "Dave",
+      "persona": [
+        {"key": "Role", "value": "Villager", "hidden": true},
+        {"key": "Personality", "value": "Loud and opinionated. Quick to accuse but sometimes wrong.", "hidden": false},
+        {"key": "Goal", "value": "Protect the town by finding the Mafia, even if it means making bold accusations.", "hidden": true}
+      ],
+      "starting_inventory": {"alive_status": 1, "vote_token": 1},
+      "special_actions": [],
+      "inventory_rules": []
+    },
+    {
+      "name": "Eve",
+      "persona": [
+        {"key": "Role", "value": "Mafia", "hidden": true},
+        {"key": "Personality", "value": "Strategic and patient. Prefers to let others take the lead in discussions.", "hidden": false},
+        {"key": "Goal", "value": "Work with fellow Mafia member Bob to eliminate Villagers. Stay under the radar.", "hidden": true}
+      ],
+      "starting_inventory": {"alive_status": 1, "vote_token": 1},
+      "special_actions": [
+        {
+          "name": "mafia_kill",
+          "description": "Choose a player to eliminate tonight. Only usable during night phases (even steps). Coordinate with your fellow Mafia member.",
+          "parameters": [
+            {"name": "target", "description": "Name of the player to eliminate", "type": "agent_name"}
+          ],
+          "effects": [
+            {"type": "remove_item", "target": "{target}", "item_name": "alive_status", "quantity": 1},
+            {"type": "message", "target": "actor", "message_text": "You chose to eliminate {target}."}
+          ]
+        }
+      ],
+      "inventory_rules": []
+    }
+  ],
+  "environment": {
+    "description": "A small town where some residents are secretly members of the Mafia.",
+    "inventory": {},
+    "global_actions": [
+      {
+        "name": "cast_vote",
+        "description": "Vote to eliminate a player during the day phase (odd steps). Costs a vote_token.",
+        "parameters": [
+          {"name": "target", "description": "Name of the player to vote for", "type": "agent_name"}
+        ],
+        "effects": [
+          {"type": "remove_item", "target": "actor", "item_name": "vote_token", "quantity": 1},
+          {"type": "add_item", "target": "environment", "item_name": "vote_for_{target}", "quantity": 1}
+        ],
+        "available_to": "everyone"
+      }
+    ],
+    "inventory_rules": []
+  },
+  "communication": {
+    "channels": [
+      {"name": "town-square", "members": "everyone", "description": "Public discussion channel for all players during day phases."},
+      {"name": "mafia-chat", "members": ["Bob", "Eve"], "description": "Secret channel for Mafia members to coordinate."}
+    ],
+    "dm_blacklist": []
+  },
+  "max_steps": 10
+}

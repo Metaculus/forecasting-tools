@@ -55,7 +55,11 @@ def load_json_file(project_file_path: str) -> list[dict]:
     """
     full_file_path = normalize_package_path(project_file_path)
     with open(full_file_path, "r") as file:
-        return json.load(file)
+        loaded_json = json.load(file)
+        if isinstance(loaded_json, list):
+            return loaded_json
+        else:
+            return [loaded_json]
 
 
 def load_jsonl_file(file_path_in_package: str) -> list[dict]:

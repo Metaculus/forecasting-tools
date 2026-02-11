@@ -142,9 +142,9 @@ async def configure_and_run_bot(
         logger.warning(
             "METACULUS_API_BASE_URL environment variable is set to an empty string"
         )
-    logger.info(f"Using Metaculus API base URL: {base_url}")
+    printable_base_url = " ".join(list(base_url))
+    logger.info(f"Using Metaculus API base URL: {printable_base_url}")
 
-    
     bot_config = get_default_bot_dict()[mode]
     questions = await get_questions_for_config(
         bot_config, max_questions=max_questions_for_run

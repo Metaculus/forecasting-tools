@@ -1,0 +1,146 @@
+{
+  "name": "Dungeon Crawl",
+  "description": "A simplified D&D-style dungeon crawl where a party of adventurers explores a dungeon under the guidance of a Dungeon Master.",
+  "rules_text": "This is a tabletop RPG-style dungeon crawl. The DM narrates the environment and controls NPCs/monsters.\n\nGAME FLOW:\n- Each step represents one round of play.\n- The DM describes the current scene and any events in #adventure-log.\n- Players declare their actions (attack, explore, cast spells, etc.) and roleplay in #party-chat.\n- The DM resolves actions by narrating outcomes. Players should use 'roll_d20' for contested actions.\n\nCOMBAT:\n- Players use 'roll_d20' to determine attack success. Results of 15+ are hits, 10-14 are glancing blows, below 10 are misses.\n- The DM manages monster HP narratively.\n- If a player's health_point reaches 0, they are knocked unconscious.\n\nSPELL SLOTS:\n- Casters start with spell_slot items. Casting a spell costs 1 spell_slot.\n- Spell slots do NOT regenerate in this dungeon crawl.\n\nPlayers manage their own inventory descriptions in chat. The item system tracks only HP and spell slots mechanically.",
+  "items": [
+    {"name": "health_point", "description": "Hit points. At 0 you are unconscious.", "tradable": false},
+    {"name": "spell_slot", "description": "Used to cast spells. Limited resource.", "tradable": false},
+    {"name": "gold_coin", "description": "Currency found in the dungeon.", "tradable": true},
+    {"name": "healing_potion", "description": "Restores 5 health_point when used.", "tradable": true}
+  ],
+  "agents": [
+    {
+      "name": "DungeonMaster",
+      "persona": [
+        {"key": "Role", "value": "Dungeon Master", "hidden": false},
+        {"key": "Style", "value": "Descriptive and fair. Creates dramatic tension but gives players a fighting chance. Uses vivid environmental descriptions.", "hidden": false},
+        {"key": "Secret Plot", "value": "The dungeon boss is actually a cursed king who can be freed if players find the hidden amulet in Room 3 instead of fighting.", "hidden": true}
+      ],
+      "starting_inventory": {},
+      "special_actions": [
+        {
+          "name": "deal_damage",
+          "description": "Deal damage to a player as a result of monster attacks or traps.",
+          "parameters": [
+            {"name": "target", "description": "Player receiving damage", "type": "agent_name"},
+            {"name": "amount", "description": "Amount of damage", "type": "int"}
+          ],
+          "effects": [
+            {"type": "remove_item", "target": "{target}", "item_name": "health_point", "quantity": "{amount}"},
+            {"type": "message", "target": "{target}", "message_text": "You took {amount} damage!"}
+          ]
+        },
+        {
+          "name": "grant_loot",
+          "description": "Give a player gold coins as loot.",
+          "parameters": [
+            {"name": "target", "description": "Player receiving loot", "type": "agent_name"},
+            {"name": "amount", "description": "Gold coins awarded", "type": "int"}
+          ],
+          "effects": [
+            {"type": "add_item", "target": "{target}", "item_name": "gold_coin", "quantity": "{amount}"}
+          ]
+        },
+        {
+          "name": "grant_item",
+          "description": "Give a healing potion to a player.",
+          "parameters": [
+            {"name": "target", "description": "Player receiving the item", "type": "agent_name"}
+          ],
+          "effects": [
+            {"type": "add_item", "target": "{target}", "item_name": "healing_potion", "quantity": 1}
+          ]
+        }
+      ],
+      "inventory_rules": [],
+      "ai_model": "openrouter/anthropic/claude-sonnet-4"
+    },
+    {
+      "name": "Thorin",
+      "persona": [
+        {"key": "Class", "value": "Fighter", "hidden": false},
+        {"key": "Personality", "value": "Brave dwarf warrior. Charges into battle first. Protective of the party.", "hidden": false},
+        {"key": "Secret Goal", "value": "Searching for his family's lost war hammer, rumored to be in this dungeon.", "hidden": true}
+      ],
+      "starting_inventory": {"health_point": 30, "gold_coin": 10},
+      "special_actions": [],
+      "inventory_rules": []
+    },
+    {
+      "name": "Elara",
+      "persona": [
+        {"key": "Class", "value": "Wizard", "hidden": false},
+        {"key": "Personality", "value": "Elven mage. Cautious and scholarly. Prefers to solve problems with magic and knowledge.", "hidden": false},
+        {"key": "Secret Goal", "value": "Believes ancient texts in the dungeon contain a spell to contact her missing mentor.", "hidden": true}
+      ],
+      "starting_inventory": {"health_point": 20, "spell_slot": 5, "gold_coin": 5},
+      "special_actions": [
+        {
+          "name": "cast_spell",
+          "description": "Cast a spell (describe what you cast in chat). Costs 1 spell_slot.",
+          "parameters": [],
+          "effects": [
+            {"type": "remove_item", "target": "actor", "item_name": "spell_slot", "quantity": 1},
+            {"type": "message", "target": "actor", "message_text": "You expended a spell slot."}
+          ]
+        }
+      ],
+      "inventory_rules": []
+    },
+    {
+      "name": "Finn",
+      "persona": [
+        {"key": "Class", "value": "Rogue", "hidden": false},
+        {"key": "Personality", "value": "Halfling thief. Witty and light-fingered. Checks for traps and picks locks.", "hidden": false},
+        {"key": "Secret Goal", "value": "Has a bounty on his head. Hopes to find enough gold in the dungeon to pay it off.", "hidden": true}
+      ],
+      "starting_inventory": {"health_point": 22, "gold_coin": 15},
+      "special_actions": [],
+      "inventory_rules": []
+    }
+  ],
+  "environment": {
+    "description": "A dark, ancient dungeon beneath the Stonefall Mountains. Rumors of treasure and a fearsome guardian draw adventurers from across the realm.",
+    "inventory": {},
+    "global_actions": [
+      {
+        "name": "roll_d20",
+        "description": "Roll a d20 for skill checks, attacks, or saving throws. Result: 1-5 (critical fail), 6-9 (fail), 10-14 (partial success), 15-19 (success), 20 (critical success).",
+        "parameters": [],
+        "effects": [
+          {
+            "type": "random_outcome",
+            "outcomes": [
+              {"probability": 0.25, "effects": [{"type": "message", "target": "actor", "message_text": "D20 Result: LOW (1-5). Critical failure!"}], "description": "Rolled 1-5"},
+              {"probability": 0.20, "effects": [{"type": "message", "target": "actor", "message_text": "D20 Result: BELOW AVERAGE (6-9). Failure."}], "description": "Rolled 6-9"},
+              {"probability": 0.25, "effects": [{"type": "message", "target": "actor", "message_text": "D20 Result: AVERAGE (10-14). Partial success."}], "description": "Rolled 10-14"},
+              {"probability": 0.25, "effects": [{"type": "message", "target": "actor", "message_text": "D20 Result: HIGH (15-19). Success!"}], "description": "Rolled 15-19"},
+              {"probability": 0.05, "effects": [{"type": "message", "target": "actor", "message_text": "D20 Result: NATURAL 20! Critical success!"}], "description": "Rolled 20"}
+            ]
+          }
+        ],
+        "available_to": "everyone"
+      },
+      {
+        "name": "use_healing_potion",
+        "description": "Drink a healing potion to restore 5 HP. Costs 1 healing_potion.",
+        "parameters": [],
+        "effects": [
+          {"type": "remove_item", "target": "actor", "item_name": "healing_potion", "quantity": 1},
+          {"type": "add_item", "target": "actor", "item_name": "health_point", "quantity": 5},
+          {"type": "message", "target": "actor", "message_text": "You drank a healing potion and recovered 5 HP."}
+        ],
+        "available_to": "everyone"
+      }
+    ],
+    "inventory_rules": []
+  },
+  "communication": {
+    "channels": [
+      {"name": "adventure-log", "members": "everyone", "description": "The DM narrates events here. Players can react and describe their actions."},
+      {"name": "party-chat", "members": ["Thorin", "Elara", "Finn"], "description": "Private channel for the adventuring party to strategize."}
+    ],
+    "dm_blacklist": []
+  },
+  "max_steps": 20
+}
