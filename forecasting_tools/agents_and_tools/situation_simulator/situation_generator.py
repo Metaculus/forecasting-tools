@@ -59,7 +59,8 @@ SITUATION_SCHEMA_GUIDE = clean_indents(
         "channels": [
           {"name": "string", "members": ["agent1", "agent2"] or "everyone", "description": "string"}
         ],
-        "dm_blacklist": [["agent1", "agent2"]]
+        "dm_blacklist": [["agent1", "agent2"]],
+        "max_messages_per_turn": 7
       },
       "max_steps": 50
     }
@@ -105,6 +106,12 @@ SITUATION_DESIGN_GUIDE = clean_indents(
     - Consider a narrator or moderator agent (e.g., "Fate", "News Anchor", "Game Master") whose role is to broadcast events, outcomes, and external changes. Give only this agent (and possibly a select few) permission to post in the news channel. Other agents are told in rules_text to treat these announcements as ground truth.
     - Use the "message" effect type to deliver private notifications about action outcomes.
     - Also consider channels for specific subgroups (faction chat, committee channels, regional forums).
+
+    ### Communication Bandwidth
+    - Agents have a cap on how many messages (channel posts + DMs combined) they can send per turn, controlled by max_messages_per_turn (default: 5). Tune this for the situation.
+    - A lower cap forces agents to prioritize who they talk to and what they say — use low values (2-3) for situations where communication is costly or limited (e.g., wartime, isolation scenarios, high-pressure negotiations).
+    - A higher cap (6-15) suits situations with rich public discourse (e.g., parliamentary debates, open marketplaces).
+    - This creates meaningful strategic choices about communication: who do you update, who do you lobby, who do you ignore?
 
     ### Hidden Information and Asymmetric Knowledge
     - Use hidden persona metadata extensively for secret roles, private goals, sensitive knowledge, and secret weaknesses/vulnerabilities.

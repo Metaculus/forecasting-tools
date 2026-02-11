@@ -320,6 +320,7 @@ class SimulationAgentRunner:
     def _build_response_instructions(self, situation: Situation) -> str:
         agent_names = [a.name for a in situation.agents]
         channel_names = [c.name for c in situation.communication.channels]
+        max_messages = situation.communication.max_messages_per_turn
 
         return clean_indents(
             f"""
@@ -335,7 +336,7 @@ class SimulationAgentRunner:
             5. **messages**: A list of messages to send. Each message needs either a "channel" (one of: {channel_names}) or a "recipient" (one of: {agent_names}) for DMs, and "content".
             6. **reasoning**: Brief internal reasoning (not shown to others).
 
-            You may choose exactly ONE action per turn, but you can send multiple messages.
+            You may choose exactly ONE action per turn. You can send up to {max_messages} messages per turn (channel posts and DMs combined). Any messages beyond this limit will be dropped, so prioritize your most important communications.
             Think carefully about your goals and the current state before acting.
             """
         ).strip()
@@ -437,6 +438,14 @@ class SimulationAgentRunner:
                         content=llm_msg.content,
                     )
                 )
+
+        max_messages = situation.communication.max_messages_per_turn
+        if len(messages) > max_messages:
+            logger.warning(
+                f"{agent_name} sent {len(messages)} messages but cap is "
+                f"{max_messages}. Truncating to first {max_messages}."
+            )
+            messages = messages[:max_messages]
 
         trade_proposal = None
         if parsed.action_name == "trade_propose" and parsed.trade_proposal:

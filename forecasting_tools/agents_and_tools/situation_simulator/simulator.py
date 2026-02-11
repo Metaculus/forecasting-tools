@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import json
 import logging
+import os
+from datetime import datetime
+from pathlib import Path
 
 from forecasting_tools.agents_and_tools.situation_simulator.agent_runner import (
     SimulationAgentRunner,
@@ -21,6 +25,52 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 )
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_SIMULATIONS_DIR = "temp/simulations"
+
+
+def create_run_directory(
+    situation_name: str,
+    base_dir: str = DEFAULT_SIMULATIONS_DIR,
+) -> Path:
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    safe_name = situation_name.replace(" ", "_").lower()
+    run_dir = Path(base_dir) / f"{safe_name}_{timestamp}"
+    os.makedirs(run_dir, exist_ok=True)
+    return run_dir
+
+
+def save_situation_to_file(run_dir: Path, situation: Situation) -> None:
+    situation_path = run_dir / "situation.json"
+    with open(situation_path, "w") as f:
+        json.dump(situation.model_dump(), f, indent=2)
+    logger.info(f"Saved situation to {situation_path}")
+
+
+def save_step_to_file(run_dir: Path, step: SimulationStep) -> None:
+    step_path = run_dir / f"step_{step.step_number:03d}.json"
+    with open(step_path, "w") as f:
+        json.dump(step.model_dump(), f, indent=2)
+    logger.info(f"Saved step {step.step_number} to {step_path}")
+
+
+def save_full_simulation(
+    run_dir: Path,
+    situation: Situation,
+    steps: list[SimulationStep],
+    final_state: SimulationState,
+    total_cost: float,
+) -> None:
+    result = {
+        "situation": situation.model_dump(),
+        "steps": [s.model_dump() for s in steps],
+        "final_state": final_state.model_dump(),
+        "total_cost_usd": total_cost,
+    }
+    result_path = run_dir / "full_simulation.json"
+    with open(result_path, "w") as f:
+        json.dump(result, f, indent=2)
+    logger.info(f"Saved full simulation to {result_path}")
 
 
 class Simulator:

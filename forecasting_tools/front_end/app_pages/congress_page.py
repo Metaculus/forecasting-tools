@@ -20,6 +20,9 @@ from forecasting_tools.agents_and_tools.ai_congress.member_profiles import (
     AVAILABLE_MEMBERS,
     get_members_by_names,
 )
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
 from forecasting_tools.front_end.helpers.app_page import AppPage
 from forecasting_tools.front_end.helpers.custom_auth import CustomAuth
 from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
@@ -238,9 +241,9 @@ class CongressPage(AppPage):
                 key="delphi_rounds",
             )
 
-            cost_per_member = "~$3-8"
+            cost_per_member = "~$0.5-8"
             if num_delphi_rounds > 1:
-                cost_per_member = "~$3-8 for round 1 + ~$2-5 per additional round"
+                cost_per_member = "~$0.5-8 for round 1 + ~$0.5-8 per additional round"
             st.markdown(
                 f"**Estimated Cost:** {cost_per_member} per member selected "
                 f"(depends on model and research depth)"
@@ -283,10 +286,11 @@ class CongressPage(AppPage):
             orchestrator = CongressOrchestrator(
                 num_delphi_rounds=num_rounds,
             )
-            session = await orchestrator.run_session(
-                prompt=session_input.prompt,
-                members=members,
-            )
+            with MonetaryCostManager(100):
+                session = await orchestrator.run_session(
+                    prompt=session_input.prompt,
+                    members=members,
+                )
 
             progress_text.write("Aggregating proposals and generating insights...")
 

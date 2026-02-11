@@ -90,6 +90,7 @@ class Channel(BaseModel, Jsonable):
 class CommunicationConfig(BaseModel, Jsonable):
     channels: list[Channel] = Field(default_factory=list)
     dm_blacklist: list[tuple[str, str]] = Field(default_factory=list)
+    max_messages_per_turn: int = 7
 
 
 class Environment(BaseModel, Jsonable):

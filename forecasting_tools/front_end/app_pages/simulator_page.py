@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
 from pathlib import Path
 
 import streamlit as st
@@ -14,7 +13,13 @@ from forecasting_tools.agents_and_tools.situation_simulator.data_models import (
     SimulationStep,
     Situation,
 )
-from forecasting_tools.agents_and_tools.situation_simulator.simulator import Simulator
+from forecasting_tools.agents_and_tools.situation_simulator.simulator import (
+    Simulator,
+    create_run_directory,
+    save_full_simulation,
+    save_situation_to_file,
+    save_step_to_file,
+)
 from forecasting_tools.agents_and_tools.situation_simulator.situation_generator import (
     SituationGenerator,
 )
@@ -30,7 +35,6 @@ logger = logging.getLogger(__name__)
 EXAMPLE_SITUATIONS_DIR = (
     "forecasting_tools/agents_and_tools/situation_simulator/example_situations"
 )
-SAVED_SIMULATIONS_DIR = "temp/simulations"
 
 AGENT_COLORS = [
     "#4A90D9",
@@ -90,6 +94,7 @@ class SimulatorPage(AppPage):
             "sim_steps": [],
             "sim_running": False,
             "sim_total_cost": 0.0,
+            "sim_run_dir": None,
         }
         for key, value in defaults.items():
             if key not in st.session_state:
@@ -162,7 +167,8 @@ class SimulatorPage(AppPage):
         if st.button("Generate Situation", key="gen_btn") and prompt:
             with st.spinner("Generating situation..."):
                 generator = SituationGenerator()
-                situation = asyncio.run(generator.generate(prompt))
+                with MonetaryCostManager(100):
+                    situation = asyncio.run(generator.generate(prompt))
                 cls._set_situation(situation)
                 st.success(f"Generated: {situation.name}")
                 st.rerun()
@@ -416,6 +422,10 @@ class SimulatorPage(AppPage):
                 )
                 st.metric("Est. Cost (USD)", f"${total_cost:.4f}")
 
+            run_dir: Path | None = st.session_state.get("sim_run_dir")
+            if run_dir:
+                st.caption(f"Saving to: {run_dir}")
+
             st.markdown("---")
             st.subheader("Agents")
             agent_color_map = cls._get_agent_color_map(situation)
@@ -469,16 +479,29 @@ class SimulatorPage(AppPage):
     # --- Simulation execution ---
 
     @classmethod
+    def _ensure_run_directory(cls, situation: Situation) -> Path:
+        run_dir = st.session_state.get("sim_run_dir")
+        if run_dir is None:
+            run_dir = create_run_directory(situation.name)
+            save_situation_to_file(run_dir, situation)
+            st.session_state["sim_run_dir"] = run_dir
+        return run_dir
+
+    @classmethod
     def _run_one_step(cls, situation: Situation) -> None:
         state = st.session_state.get("sim_state")
         simulator = Simulator(situation)
         if state is None:
             state = simulator.create_initial_state()
 
+        run_dir = cls._ensure_run_directory(situation)
+
         with st.spinner(f"Running step {state.step_number + 1}..."):
-            with MonetaryCostManager() as cost_manager:
+            with MonetaryCostManager(100) as cost_manager:
                 step = asyncio.run(simulator.run_step(state))
             st.session_state["sim_total_cost"] += cost_manager.current_usage
+
+        save_step_to_file(run_dir, step)
 
         steps = st.session_state.get("sim_steps", [])
         steps.append(step)
@@ -492,16 +515,18 @@ class SimulatorPage(AppPage):
         if state is None:
             state = simulator.create_initial_state()
 
+        run_dir = cls._ensure_run_directory(situation)
         steps = st.session_state.get("sim_steps", [])
         progress = st.progress(0)
 
-        with MonetaryCostManager() as cost_manager:
+        with MonetaryCostManager(100) as cost_manager:
             for i in range(n):
                 progress.progress(
                     (i + 1) / n, f"Running step {state.step_number + 1}..."
                 )
                 step = asyncio.run(simulator.run_step(state))
                 steps.append(step)
+                save_step_to_file(run_dir, step)
         st.session_state["sim_total_cost"] += cost_manager.current_usage
 
         progress.empty()
@@ -516,12 +541,14 @@ class SimulatorPage(AppPage):
         st.session_state["sim_state"] = None
         st.session_state["sim_steps"] = []
         st.session_state["sim_total_cost"] = 0.0
+        st.session_state["sim_run_dir"] = None
 
     @classmethod
     def _reset_simulation(cls) -> None:
         st.session_state["sim_state"] = None
         st.session_state["sim_steps"] = []
         st.session_state["sim_total_cost"] = 0.0
+        st.session_state["sim_run_dir"] = None
 
     @classmethod
     def _clear_all(cls) -> None:
@@ -529,6 +556,7 @@ class SimulatorPage(AppPage):
         st.session_state["sim_state"] = None
         st.session_state["sim_steps"] = []
         st.session_state["sim_total_cost"] = 0.0
+        st.session_state["sim_run_dir"] = None
 
     @classmethod
     def _load_situation_from_file(cls, filepath: str) -> None:
@@ -544,20 +572,15 @@ class SimulatorPage(AppPage):
         state = st.session_state.get("sim_state")
         situation = st.session_state.get("sim_situation")
         steps = st.session_state.get("sim_steps", [])
+        total_cost = st.session_state.get("sim_total_cost", 0.0)
 
         if not situation or not state:
             st.warning("Nothing to save.")
             return
 
-        os.makedirs(SAVED_SIMULATIONS_DIR, exist_ok=True)
-        result_dict = {
-            "situation": situation.model_dump(),
-            "steps": [s.model_dump() for s in steps],
-            "final_state": state.model_dump(),
-        }
-        filename = f"{SAVED_SIMULATIONS_DIR}/{situation.name}_{state.step_number}.json"
-        file_manipulation.write_json_file(filename, result_dict)
-        st.success(f"Saved to {filename}")
+        run_dir = cls._ensure_run_directory(situation)
+        save_full_simulation(run_dir, situation, steps, state, total_cost)
+        st.success(f"Saved full simulation to {run_dir}/full_simulation.json")
 
     # --- Helpers ---
 
