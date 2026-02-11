@@ -4,7 +4,6 @@ import logging
 
 from forecasting_tools.agents_and_tools.situation_simulator.data_models import Situation
 from forecasting_tools.ai_models.general_llm import GeneralLlm
-from forecasting_tools.helpers.structure_output import structure_output
 from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
@@ -214,14 +213,10 @@ class SituationGenerator:
         ).strip()
 
         llm = GeneralLlm(self.model, temperature=0.8, timeout=GENERATION_TIMEOUT)
-        raw_response = await llm.invoke(prompt, system_prompt=system_prompt)
-
-        cleaned_response = self._clean_json_response(raw_response)
-
-        situation = await structure_output(
-            cleaned_response,
+        situation = await llm.invoke_and_return_verified_type(
+            f"{system_prompt}\n\n---\n\nTask:\n{prompt}",
             Situation,
-            additional_instructions="Parse this JSON into a Situation object. Preserve all fields exactly.",
+            allowed_invoke_tries_for_failed_output=3,
         )
 
         logger.info(

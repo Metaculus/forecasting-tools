@@ -1,0 +1,3057 @@
+{
+    "name": "Isolated Town of Millbrook",
+    "description": "A small, isolated mountain town where resources are scarce, secrets run deep, and survival depends on both cooperation and competition among wary neighbors.",
+    "rules_text": "Welcome to Millbrook, population 11. Winter is approaching and the mountain pass will close soon, cutting off all outside contact. You must survive by trading resources, building alliances, and competing for the goodwill of your neighbors. Food is consumed automatically: every 3 steps, 1 food is deducted from your inventory. If you have no food when consumption occurs, you gain 1 hunger instead. At 3 hunger, you die and lose all objectives. Sickness reduces your effectiveness and can only be cured with medicine from Doc Henley. The Town Council will hold elections on step 15 for Mayor (needs 6+ votes to win). The Mayor controls resource distribution and emergency powers. Three major issues divide the town: 1) Whether to build the proposed Mining Operation (will bring wealth but environmental damage), 2) Whether to enforce strict Resource Rationing (equal distribution vs free market), 3) Whether to allow the Outsider Refuge (helping strangers vs protecting locals). Each person has strong opinions on these issues. Building goodwill requires helping others, but resources are limited. Some people have valuable skills, others have secrets. The Investigator can search for secrets each turn with 40% success rate. The Gossip can eavesdrop on private conversations with 30% success rate. The Reverend provides moral guidance and can inspire the community. The Hunter brings in game from the mountains but at personal risk. The Tavern is where information flows and deals are made over drinks. A newcomer from beyond the mountains has recently arrived, adding tension to the refuge debate. Trust is earned slowly and lost quickly. People remember who helped them and who didn't. Not everyone wants the same thing, and not everyone can be trusted. Weather events and emergencies will test the community. Only Fate can announce official events - treat these as absolute truth. Survival requires trade, but every trade reveals information about your resources and needs.",
+    "items": [
+      {
+        "name": "food",
+        "description": "Essential for survival, consumed automatically every 3 steps",
+        "tradable": true
+      },
+      {
+        "name": "wood",
+        "description": "Needed for fuel and construction",
+        "tradable": true
+      },
+      {
+        "name": "medicine",
+        "description": "Treats illness and injury",
+        "tradable": true
+      },
+      {
+        "name": "tools",
+        "description": "Increases resource gathering efficiency",
+        "tradable": true
+      },
+      {
+        "name": "luxury_goods",
+        "description": "Improves morale and goodwill when gifted",
+        "tradable": true
+      },
+      {
+        "name": "information",
+        "description": "Valuable secrets and knowledge",
+        "tradable": true
+      },
+      {
+        "name": "hunger",
+        "description": "Accumulates when food is not consumed on the 3-step cycle",
+        "tradable": false
+      },
+      {
+        "name": "goodwill",
+        "description": "Earned through helping others, needed for votes",
+        "tradable": false
+      },
+      {
+        "name": "vote",
+        "description": "Cast in mayoral election on step 15",
+        "tradable": false
+      },
+      {
+        "name": "alive_status",
+        "description": "Removed when hunger reaches 3",
+        "tradable": false
+      },
+      {
+        "name": "sick_status",
+        "description": "Reduces effectiveness when performing actions, cured with medicine",
+        "tradable": false
+      },
+      {
+        "name": "mining_support",
+        "description": "Public stance supporting mining operation",
+        "tradable": false
+      },
+      {
+        "name": "mining_opposition",
+        "description": "Public stance opposing mining operation",
+        "tradable": false
+      },
+      {
+        "name": "rationing_support",
+        "description": "Public stance supporting resource rationing",
+        "tradable": false
+      },
+      {
+        "name": "rationing_opposition",
+        "description": "Public stance opposing rationing",
+        "tradable": false
+      },
+      {
+        "name": "refuge_support",
+        "description": "Public stance supporting outsider refuge",
+        "tradable": false
+      },
+      {
+        "name": "refuge_opposition",
+        "description": "Public stance opposing refuge",
+        "tradable": false
+      },
+      {
+        "name": "food_timer",
+        "description": "Internal counter tracking steps until next food consumption cycle",
+        "tradable": false
+      },
+      {
+        "name": "stranger_refugees",
+        "description": "Desperate outsiders seeking shelter in Millbrook",
+        "tradable": false
+      }
+    ],
+    "agents": [
+      {
+        "name": "Martha_Ironwood",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Former mining engineer, lost her husband in a cave-in. Owns the general store and most of the town's food supply.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Practical, distrustful of outsiders, believes in self-reliance. Speaks bluntly and doesn't suffer fools.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Opposes mining (too dangerous), supports rationing (fair distribution), opposes refuge (limited resources)",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Has been secretly hoarding extra food supplies in her basement for months",
+            "hidden": true
+          },
+          {
+            "key": "objective",
+            "value": "Become mayor to control resource distribution and prevent dangerous mining. Maintain food monopoly.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 8,
+          "tools": 2,
+          "alive_status": 1,
+          "vote": 1,
+          "goodwill": 1
+        },
+        "special_actions": [
+          {
+            "name": "distribute_food",
+            "description": "Give food to another person, potentially earning goodwill",
+            "parameters": [
+              {
+                "name": "target",
+                "description": "Who to give food to",
+                "type": "agent_name"
+              },
+              {
+                "name": "amount",
+                "description": "How much food to give",
+                "type": "int"
+              }
+            ],
+            "effects": [
+              {
+                "type": "transfer_item",
+                "target": "{target}",
+                "item_name": "food",
+                "quantity": "{amount}",
+                "source": "actor",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.7,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Recipient appreciates the help"
+                  },
+                  {
+                    "probability": 0.3,
+                    "effects": [],
+                    "description": "Recipient takes it for granted"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Martha_Ironwood"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Doc_Henley",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Town doctor for 20 years. Treats everyone regardless of ability to pay. Lives alone since his wife died of illness he couldn't cure.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Compassionate but weary. Believes in helping others but frustrated by the town's divisions. Drinks to cope.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Neutral on mining (sees both sides), supports rationing (everyone deserves care), strongly supports refuge (moral obligation)",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Has been diluting medicines to make supplies last longer - some treatments are now ineffective",
+            "hidden": true
+          },
+          {
+            "key": "objective",
+            "value": "Keep everyone healthy and alive. Build support for helping outsiders in need.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 3,
+          "medicine": 6,
+          "luxury_goods": 1,
+          "alive_status": 1,
+          "vote": 1
+        },
+        "special_actions": [
+          {
+            "name": "treat_patient",
+            "description": "Use medicine to treat someone's illness or injury",
+            "parameters": [
+              {
+                "name": "target",
+                "description": "Who to treat",
+                "type": "agent_name"
+              },
+              {
+                "name": "medicine_amount",
+                "description": "How much medicine to use",
+                "type": "int"
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "medicine",
+                "quantity": "{medicine_amount}",
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.8,
+                    "effects": [
+                      {
+                        "type": "remove_item",
+                        "target": "{target}",
+                        "item_name": "sick_status",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 2,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Treatment successful, patient grateful"
+                  },
+                  {
+                    "probability": 0.2,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Treatment helps but patient still recovering"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Doc_Henley"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Jake_Morrison",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Local investigator and former sheriff. Lost his job due to a scandal. Now works odd jobs and keeps an eye on town affairs.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Suspicious, observant, holds grudges. Believes everyone has something to hide. Loyal to those who earn his trust.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Supports mining (jobs and prosperity), opposes rationing (government overreach), opposes refuge (security risk)",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Was fired for taking bribes from smugglers using the mountain pass",
+            "hidden": true
+          },
+          {
+            "key": "objective",
+            "value": "Uncover others' secrets to gain leverage. Restore his reputation and authority in town.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 3,
+          "information": 2,
+          "tools": 1,
+          "alive_status": 1,
+          "vote": 1
+        },
+        "special_actions": [
+          {
+            "name": "investigate_secrets",
+            "description": "Search for hidden information about someone",
+            "parameters": [
+              {
+                "name": "target",
+                "description": "Who to investigate",
+                "type": "agent_name"
+              }
+            ],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.4,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "information",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "message",
+                        "target": "actor",
+                        "item_name": "",
+                        "quantity": 0,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": "You discovered a secret about {target}"
+                      }
+                    ],
+                    "description": "Investigation successful"
+                  },
+                  {
+                    "probability": 0.6,
+                    "effects": [],
+                    "description": "Investigation turns up nothing useful"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Jake_Morrison"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Elena_Vasquez",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Schoolteacher and town gossip. Knows everyone's business and isn't afraid to share it. Runs the informal information network.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Talkative, manipulative, enjoys drama. Claims to care about everyone but uses information as currency.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Opposes mining (bad for children's future), supports rationing (protects the vulnerable), neutral on refuge",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Has been reading other people's mail that passes through her house (unofficial post office)",
+            "hidden": true
+          },
+          {
+            "key": "objective",
+            "value": "Control information flow in town. Gain influence through knowing everyone's business.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 2,
+          "information": 3,
+          "luxury_goods": 2,
+          "alive_status": 1,
+          "vote": 1
+        },
+        "special_actions": [
+          {
+            "name": "eavesdrop",
+            "description": "Try to overhear private conversations and gather gossip",
+            "parameters": [
+              {
+                "name": "target",
+                "description": "Who to eavesdrop on",
+                "type": "agent_name"
+              }
+            ],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.3,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "information",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "message",
+                        "target": "actor",
+                        "item_name": "",
+                        "quantity": 0,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": "You overheard something interesting about {target}"
+                      }
+                    ],
+                    "description": "Successfully gathered gossip"
+                  },
+                  {
+                    "probability": 0.7,
+                    "effects": [],
+                    "description": "Nothing interesting overheard"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Elena_Vasquez"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Big_Pete_Kowalski",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Lumberjack and handyman. Strong as an ox but not the brightest. Does most of the town's heavy labor in exchange for food and supplies.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Simple, honest, hardworking. Easily influenced by others. Gets angry when hungry or tired.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Supports mining (means work), opposes rationing (earned his keep), supports refuge (helping is right)",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Cannot read or write - has been hiding his illiteracy for years",
+            "hidden": true
+          },
+          {
+            "key": "objective",
+            "value": "Keep working and eating. Support whoever treats him fairly and with respect.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 4,
+          "wood": 6,
+          "tools": 3,
+          "alive_status": 1,
+          "vote": 1
+        },
+        "special_actions": [
+          {
+            "name": "gather_wood",
+            "description": "Use strength and tools to gather wood from the forest",
+            "parameters": [
+              {
+                "name": "effort",
+                "description": "How hard to work (1-3)",
+                "type": "int"
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "wood",
+                "quantity": "{effort}",
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.2,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "sick_status",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Overexertion causes injury"
+                  },
+                  {
+                    "probability": 0.8,
+                    "effects": [],
+                    "description": "Hard work pays off"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Big_Pete_Kowalski"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Widow_Chen",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Elderly widow who grows herbs and vegetables in her greenhouse. Lost her husband and son in the last harsh winter. Lives on a small pension.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Wise, cautious, protective of resources. Speaks little but observes much. Remembers every kindness and slight.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Opposes mining (environmental damage), strongly supports rationing (survived famines before), opposes refuge (not enough for everyone)",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Knows which plants in the area are poisonous and has been quietly cultivating them",
+            "hidden": true
+          },
+          {
+            "key": "objective",
+            "value": "Survive the winter. Ensure fair distribution of resources. Honor her family's memory.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 5,
+          "medicine": 2,
+          "alive_status": 1,
+          "vote": 1
+        },
+        "special_actions": [
+          {
+            "name": "grow_herbs",
+            "description": "Tend greenhouse to produce food and medicine",
+            "parameters": [],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.6,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "food",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Vegetables grow well"
+                  },
+                  {
+                    "probability": 0.3,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "medicine",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Medicinal herbs flourish"
+                  },
+                  {
+                    "probability": 0.1,
+                    "effects": [],
+                    "description": "Poor growing conditions"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Widow_Chen"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Tommy_Rodriguez",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Young mechanic who keeps the town's vehicles and generator running. Ambitious and eager to prove himself to the older residents.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Energetic, optimistic, sometimes reckless. Wants to modernize the town but lacks experience and wisdom.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Strongly supports mining (progress and prosperity), opposes rationing (stifles innovation), supports refuge (moral duty)",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Accidentally damaged the town's backup generator beyond repair while trying to 'improve' it",
+            "hidden": true
+          },
+          {
+            "key": "objective",
+            "value": "Gain respect from older residents. Push for modernization and economic growth.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 2,
+          "tools": 4,
+          "luxury_goods": 1,
+          "alive_status": 1,
+          "vote": 1
+        },
+        "special_actions": [
+          {
+            "name": "repair_equipment",
+            "description": "Fix tools and equipment for others",
+            "parameters": [
+              {
+                "name": "target",
+                "description": "Who to help",
+                "type": "agent_name"
+              }
+            ],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.7,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "{target}",
+                        "item_name": "tools",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Repair successful"
+                  },
+                  {
+                    "probability": 0.3,
+                    "effects": [
+                      {
+                        "type": "remove_item",
+                        "target": "actor",
+                        "item_name": "tools",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Repair fails, tools damaged"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Tommy_Rodriguez"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Reverend_Abraham_Shaw",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Town pastor for 15 years. Runs the small church and serves as the community's moral compass. Provides counsel during disputes and leads gatherings.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Charismatic, morally righteous, and sometimes judgmental. Speaks with authority on matters of conscience. Believes he represents the community's better nature.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Opposes mining (destruction of God's creation), supports rationing (charity to the least among us), strongly supports refuge (moral imperative to help strangers)",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Lost his faith years ago after his daughter died in a landslide. Preaches out of habit and fear of losing his influence in the community.",
+            "hidden": true
+          },
+          {
+            "key": "soft_objective",
+            "value": "Be seen as the town's conscience. Maintain the trust and respect people place in the church. Avoid anyone discovering his crisis of faith.",
+            "hidden": false
+          },
+          {
+            "key": "objective",
+            "value": "Win the mayoral election to implement compassionate policies. Build a coalition of morally-minded voters. Protect the vulnerable.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 3,
+          "luxury_goods": 2,
+          "goodwill": 2,
+          "alive_status": 1,
+          "vote": 1
+        },
+        "special_actions": [
+          {
+            "name": "inspire_community",
+            "description": "Deliver a sermon or moral appeal to lift spirits and earn community trust",
+            "parameters": [],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.6,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "message",
+                        "target": "actor",
+                        "item_name": "",
+                        "quantity": 0,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": "Your words resonated with the community"
+                      }
+                    ],
+                    "description": "Sermon inspires the community"
+                  },
+                  {
+                    "probability": 0.3,
+                    "effects": [],
+                    "description": "The congregation listened politely but seemed unmoved"
+                  },
+                  {
+                    "probability": 0.1,
+                    "effects": [
+                      {
+                        "type": "remove_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Sermon came across as preachy and self-righteous, losing goodwill"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Reverend_Abraham_Shaw"
+            ]
+          },
+          {
+            "name": "offer_counsel",
+            "description": "Provide moral guidance to someone, potentially earning their trust and goodwill",
+            "parameters": [
+              {
+                "name": "target",
+                "description": "Who to counsel",
+                "type": "agent_name"
+              }
+            ],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.5,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "information",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "They opened up to you and shared something personal"
+                  },
+                  {
+                    "probability": 0.5,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "They appreciated the guidance but kept their own counsel"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Reverend_Abraham_Shaw"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Silas_Blackwood",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Reclusive mountain trapper and hunter who lives at the edge of town. Knows every trail, cave, and animal den in the surrounding mountains. Trades pelts and game meat.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Fiercely independent, distrustful, and territorial. Respects strength and self-reliance. Speaks rarely but with blunt honesty. Despises weakness and dependency.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Supports mining (resource extraction benefits everyone), opposes rationing (handouts breed weakness), strongly opposes refuge (strangers are a security threat in the mountains)",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Has discovered a rich vein of gold ore in a mountain cave but hasn't told anyone, waiting to exploit it himself",
+            "hidden": true
+          },
+          {
+            "key": "soft_objective",
+            "value": "Maintain his solitary way of life. Keep the mountains and trails under his control. Be respected as someone you don't cross.",
+            "hidden": false
+          },
+          {
+            "key": "objective",
+            "value": "Prevent outsiders from accessing the mountain resources. Accumulate enough food and supplies to survive independently regardless of town politics.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 5,
+          "wood": 3,
+          "tools": 1,
+          "information": 1,
+          "alive_status": 1,
+          "vote": 1
+        },
+        "special_actions": [
+          {
+            "name": "hunt_game",
+            "description": "Go into the mountains to hunt for food, risking injury from dangerous terrain",
+            "parameters": [],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.5,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "food",
+                        "quantity": 2,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Successful hunt, brought back good game"
+                  },
+                  {
+                    "probability": 0.3,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "food",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "wood",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Small catch, but found useful firewood on the trail"
+                  },
+                  {
+                    "probability": 0.2,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "sick_status",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Injured on dangerous mountain terrain"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Silas_Blackwood"
+            ]
+          },
+          {
+            "name": "scout_mountain_pass",
+            "description": "Check conditions of the mountain pass and gather intelligence about movement in the mountains",
+            "parameters": [],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.6,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "information",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "message",
+                        "target": "actor",
+                        "item_name": "",
+                        "quantity": 0,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": "You spotted something noteworthy on the mountain trails"
+                      }
+                    ],
+                    "description": "Scouting reveals useful intelligence"
+                  },
+                  {
+                    "probability": 0.4,
+                    "effects": [],
+                    "description": "Quiet trails, nothing unusual"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Silas_Blackwood"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Nadia_Okafor",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Arrived from beyond the mountains 2 weeks ago claiming to be a traveling merchant. Carries exotic goods and knowledge of the outside world. Her presence has divided opinion in town.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Charming, resourceful, and quick to adapt. Reads social dynamics expertly and mirrors what people want to see. Guarded about her past but generous with her goods to win favor.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Strongly supports refuge (personal stake in acceptance), neutral on mining (sees potential), supports rationing (fairness for newcomers and locals alike)",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Fleeing authorities in the lowlands for embezzlement. The mountain pass closing before anyone comes looking for her would be her salvation.",
+            "hidden": true
+          },
+          {
+            "key": "soft_objective",
+            "value": "Be seen as a valuable addition to the community, not a burden. Build genuine friendships if possible, but survival comes first.",
+            "hidden": false
+          },
+          {
+            "key": "objective",
+            "value": "Gain permanent acceptance in Millbrook before the pass closes. Build enough alliances that even if her past is discovered, people will protect her.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 2,
+          "luxury_goods": 4,
+          "information": 2,
+          "alive_status": 1,
+          "vote": 1
+        },
+        "special_actions": [
+          {
+            "name": "offer_exotic_goods",
+            "description": "Gift luxury goods from beyond the mountains to earn goodwill and build alliances",
+            "parameters": [
+              {
+                "name": "target",
+                "description": "Who to gift goods to",
+                "type": "agent_name"
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "luxury_goods",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "add_item",
+                "target": "{target}",
+                "item_name": "luxury_goods",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.7,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "The gift is well received and appreciated"
+                  },
+                  {
+                    "probability": 0.3,
+                    "effects": [],
+                    "description": "They accept the gift but remain suspicious of your motives"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Nadia_Okafor"
+            ]
+          },
+          {
+            "name": "share_outside_knowledge",
+            "description": "Share valuable information about the world beyond the mountains",
+            "parameters": [
+              {
+                "name": "target",
+                "description": "Who to share with",
+                "type": "agent_name"
+              }
+            ],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.6,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "add_item",
+                        "target": "{target}",
+                        "item_name": "information",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "They found the outside news fascinating and valuable"
+                  },
+                  {
+                    "probability": 0.4,
+                    "effects": [],
+                    "description": "They listened but seemed disinterested or distrustful of outside information"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Nadia_Okafor"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Hank_Dawson",
+        "persona": [
+          {
+            "key": "background",
+            "value": "Runs The Rusty Pickaxe, the only tavern in Millbrook. Everyone passes through his doors sooner or later. Former card dealer in a bigger city who came to Millbrook to escape gambling debts.",
+            "hidden": false
+          },
+          {
+            "key": "personality",
+            "value": "Smooth-talking, opportunistic, and disarmingly charming. Plays every angle and never takes strong public positions. Treats information like currency and relationships like investments.",
+            "hidden": false
+          },
+          {
+            "key": "public_stance",
+            "value": "Neutral on mining (good for business either way), opposes rationing (government meddling hurts his trade), neutral on refuge (potential customers)",
+            "hidden": false
+          },
+          {
+            "key": "secret",
+            "value": "Has been secretly loaning resources at unfair rates, keeping several townspeople quietly in debt to him",
+            "hidden": true
+          },
+          {
+            "key": "soft_objective",
+            "value": "Be everyone's friend and no one's enemy. Maintain the tavern as the social hub where all deals pass through. Never be seen as taking sides publicly.",
+            "hidden": false
+          },
+          {
+            "key": "objective",
+            "value": "Become the power behind the throne by controlling information and social connections. Make the winning mayoral candidate owe you favors.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {
+          "food": 3,
+          "luxury_goods": 3,
+          "information": 1,
+          "goodwill": 1,
+          "alive_status": 1,
+          "vote": 1
+        },
+        "special_actions": [
+          {
+            "name": "host_gathering",
+            "description": "Host a social event at the tavern, spending luxury goods to loosen tongues and earn goodwill",
+            "parameters": [],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "luxury_goods",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.5,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 2,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "information",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Great turnout - people drank freely and talked even more freely"
+                  },
+                  {
+                    "probability": 0.35,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Decent evening, good for morale but nothing notable overheard"
+                  },
+                  {
+                    "probability": 0.15,
+                    "effects": [],
+                    "description": "Poor turnout - wasted good drinks on an empty room"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Hank_Dawson"
+            ]
+          },
+          {
+            "name": "serve_drinks",
+            "description": "Ply someone with drinks to build rapport and loosen their tongue",
+            "parameters": [
+              {
+                "name": "target",
+                "description": "Who to serve drinks to",
+                "type": "agent_name"
+              }
+            ],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.5,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "information",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      },
+                      {
+                        "type": "message",
+                        "target": "actor",
+                        "item_name": "",
+                        "quantity": 0,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": "{target} let something slip after a few drinks"
+                      }
+                    ],
+                    "description": "They relaxed and shared something valuable"
+                  },
+                  {
+                    "probability": 0.3,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "actor",
+                        "item_name": "goodwill",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Pleasant conversation but they kept their cards close"
+                  },
+                  {
+                    "probability": 0.2,
+                    "effects": [],
+                    "description": "They drank your liquor and gave you nothing in return"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Hank_Dawson"
+            ]
+          }
+        ],
+        "inventory_rules": [
+          {
+            "name": "hunger_tick",
+            "description": "Increment food timer each step",
+            "conditions": [],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "food_consumption",
+            "description": "Consume 1 food every 3 steps",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": ">=",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "starvation",
+            "description": "Gain hunger when food timer reaches 3 with no food",
+            "conditions": [
+              {
+                "item_name": "food_timer",
+                "operator": ">=",
+                "threshold": 3
+              },
+              {
+                "item_name": "food",
+                "operator": "<",
+                "threshold": 1
+              }
+            ],
+            "effects": [
+              {
+                "type": "add_item",
+                "target": "actor",
+                "item_name": "hunger",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              },
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "food_timer",
+                "quantity": 3,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          },
+          {
+            "name": "hunger_death",
+            "description": "Die if hunger reaches 3",
+            "conditions": [
+              {
+                "item_name": "hunger",
+                "operator": ">=",
+                "threshold": 3
+              }
+            ],
+            "effects": [
+              {
+                "type": "remove_item",
+                "target": "actor",
+                "item_name": "alive_status",
+                "quantity": 1,
+                "source": "",
+                "outcomes": [],
+                "message_text": ""
+              }
+            ]
+          }
+        ],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      },
+      {
+        "name": "Fate",
+        "persona": [
+          {
+            "key": "role",
+            "value": "Narrator of world events, weather, and external circumstances affecting Millbrook",
+            "hidden": false
+          },
+          {
+            "key": "purpose",
+            "value": "Create dynamic events and announce official developments. Do not compete with other agents.",
+            "hidden": false
+          }
+        ],
+        "starting_inventory": {},
+        "special_actions": [
+          {
+            "name": "weather_event",
+            "description": "Generate random weather that affects the town",
+            "parameters": [],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.3,
+                    "effects": [],
+                    "description": "Clear skies - normal conditions"
+                  },
+                  {
+                    "probability": 0.25,
+                    "effects": [
+                      {
+                        "type": "remove_item",
+                        "target": "environment",
+                        "item_name": "wood",
+                        "quantity": 2,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Heavy storm damages wood supplies"
+                  },
+                  {
+                    "probability": 0.1,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "Big_Pete_Kowalski",
+                        "item_name": "sick_status",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Cold snap - Big Pete falls ill from outdoor work"
+                  },
+                  {
+                    "probability": 0.1,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "Silas_Blackwood",
+                        "item_name": "sick_status",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Cold snap - Silas falls ill from exposure on the mountain trails"
+                  },
+                  {
+                    "probability": 0.15,
+                    "effects": [
+                      {
+                        "type": "remove_item",
+                        "target": "environment",
+                        "item_name": "food",
+                        "quantity": 2,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Early freeze damages remaining crops and stored food"
+                  },
+                  {
+                    "probability": 0.1,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "environment",
+                        "item_name": "food",
+                        "quantity": 2,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Unexpectedly mild day allows foraging"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Fate"
+            ]
+          },
+          {
+            "name": "emergency_event",
+            "description": "Create crisis situations that test the community",
+            "parameters": [],
+            "effects": [
+              {
+                "type": "random_outcome",
+                "target": "actor",
+                "item_name": "",
+                "quantity": 0,
+                "source": "",
+                "outcomes": [
+                  {
+                    "probability": 0.5,
+                    "effects": [],
+                    "description": "Quiet day in Millbrook"
+                  },
+                  {
+                    "probability": 0.2,
+                    "effects": [
+                      {
+                        "type": "remove_item",
+                        "target": "environment",
+                        "item_name": "medicine",
+                        "quantity": 2,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Medical emergency depletes supplies"
+                  },
+                  {
+                    "probability": 0.15,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "environment",
+                        "item_name": "stranger_refugees",
+                        "quantity": 2,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Desperate refugees arrive seeking shelter"
+                  },
+                  {
+                    "probability": 0.1,
+                    "effects": [
+                      {
+                        "type": "remove_item",
+                        "target": "environment",
+                        "item_name": "food",
+                        "quantity": 3,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Food spoilage crisis"
+                  },
+                  {
+                    "probability": 0.05,
+                    "effects": [
+                      {
+                        "type": "add_item",
+                        "target": "Silas_Blackwood",
+                        "item_name": "sick_status",
+                        "quantity": 1,
+                        "source": "",
+                        "outcomes": [],
+                        "message_text": ""
+                      }
+                    ],
+                    "description": "Mountain animal attack injures Silas on the trail"
+                  }
+                ],
+                "message_text": ""
+              }
+            ],
+            "available_to": [
+              "Fate"
+            ]
+          }
+        ],
+        "inventory_rules": [],
+        "ai_model": "openrouter/anthropic/claude-sonnet-4"
+      }
+    ],
+    "environment": {
+      "description": "Millbrook town resources and shared facilities",
+      "inventory": {
+        "food": 10,
+        "wood": 8,
+        "medicine": 4,
+        "tools": 3
+      },
+      "global_actions": [
+        {
+          "name": "trade_resources",
+          "description": "Trade items with another person",
+          "parameters": [
+            {
+              "name": "target",
+              "description": "Who to trade with",
+              "type": "agent_name"
+            },
+            {
+              "name": "give_item",
+              "description": "Item to give",
+              "type": "item_name"
+            },
+            {
+              "name": "give_amount",
+              "description": "Amount to give",
+              "type": "int"
+            },
+            {
+              "name": "want_item",
+              "description": "Item requested in return",
+              "type": "item_name"
+            },
+            {
+              "name": "want_amount",
+              "description": "Amount requested",
+              "type": "int"
+            }
+          ],
+          "effects": [
+            {
+              "type": "transfer_item",
+              "target": "{target}",
+              "item_name": "{give_item}",
+              "quantity": "{give_amount}",
+              "source": "actor",
+              "outcomes": [],
+              "message_text": ""
+            },
+            {
+              "type": "transfer_item",
+              "target": "actor",
+              "item_name": "{want_item}",
+              "quantity": "{want_amount}",
+              "source": "{target}",
+              "outcomes": [],
+              "message_text": ""
+            }
+          ],
+          "available_to": "everyone"
+        }
+      ],
+      "inventory_rules": []
+    },
+    "communication": {
+      "channels": [
+        {
+          "name": "town_square",
+          "members": "everyone",
+          "description": "Public forum for town discussions and announcements"
+        },
+        {
+          "name": "millbrook_news",
+          "members": "everyone",
+          "description": "Official announcements and world events - only Fate posts here"
+        },
+        {
+          "name": "trading_post",
+          "members": "everyone",
+          "description": "Resource trading and economic discussions"
+        },
+        {
+          "name": "council_chamber",
+          "members": [
+            "Martha_Ironwood",
+            "Doc_Henley",
+            "Jake_Morrison",
+            "Elena_Vasquez",
+            "Reverend_Abraham_Shaw"
+          ],
+          "description": "Private discussions among town leaders and community pillars"
+        },
+        {
+          "name": "back_room",
+          "members": [
+            "Hank_Dawson",
+            "Jake_Morrison",
+            "Silas_Blackwood",
+            "Tommy_Rodriguez",
+            "Big_Pete_Kowalski"
+          ],
+          "description": "The back room of The Rusty Pickaxe tavern where deals are made away from moral scrutiny"
+        }
+      ],
+      "dm_blacklist": [],
+      "max_messages_per_turn": 4
+    },
+    "max_steps": 20
+  }

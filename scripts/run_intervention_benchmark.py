@@ -14,6 +14,9 @@ from forecasting_tools.agents_and_tools.situation_simulator.intervention_testing
 from forecasting_tools.agents_and_tools.situation_simulator.intervention_testing.intervention_storage import (
     save_intervention_run,
 )
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
 from forecasting_tools.util.custom_logger import CustomLogger
 
 logger = logging.getLogger(__name__)
@@ -70,21 +73,23 @@ async def run_benchmark(
 
     tasks: list[asyncio.Task] = []
     task_labels: list[str] = []
-    for model_name in models:
-        runner = InterventionRunner(
-            model_name=model_name,
-            cost_limit=cost_limit,
-        )
-        for intervention_idx, situation in enumerate(situation_schedule):
-            label = f"[{model_name}] #{intervention_idx + 1} on '{situation.name}'"
-            logger.info(f"Scheduling: {label}")
-            task = asyncio.create_task(
-                _run_single_intervention(
-                    runner, situation, warmup_steps, str(run_folder), label
-                )
+    with MonetaryCostManager(cost_limit) as cost_manager:
+        for model_name in models:
+            runner = InterventionRunner(
+                model_name=model_name,
+                cost_limit=cost_limit,
             )
-            tasks.append(task)
-            task_labels.append(label)
+            for intervention_idx, situation in enumerate(situation_schedule):
+                label = f"[{model_name}] #{intervention_idx + 1} on '{situation.name}'"
+                logger.info(f"Scheduling: {label}")
+                task = asyncio.create_task(
+                    _run_single_intervention(
+                        runner, situation, warmup_steps, str(run_folder), label
+                    )
+                )
+                tasks.append(task)
+                task_labels.append(label)
+        logger.info(f"Total cost: ${cost_manager.current_usage:.2f}")
 
     logger.info(f"Launched {len(tasks)} intervention tasks concurrently")
     results = await asyncio.gather(*tasks, return_exceptions=True)
