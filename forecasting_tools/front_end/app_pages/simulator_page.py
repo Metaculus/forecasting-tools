@@ -20,6 +20,7 @@ from forecasting_tools.agents_and_tools.situation_simulator.situation_generator 
 )
 from forecasting_tools.front_end.helpers.app_page import AppPage
 from forecasting_tools.front_end.helpers.custom_auth import CustomAuth
+from forecasting_tools.util import file_manipulation
 
 logger = logging.getLogger(__name__)
 
@@ -505,8 +506,7 @@ class SimulatorPage(AppPage):
     @classmethod
     def _load_situation_from_file(cls, filepath: str) -> None:
         try:
-            with open(filepath) as f:
-                data = json.load(f)
+            data = file_manipulation.load_json_file(filepath)[0]
             situation = Situation.model_validate(data)
             cls._set_situation(situation)
         except Exception as e:
@@ -529,8 +529,7 @@ class SimulatorPage(AppPage):
             "final_state": state.model_dump(),
         }
         filename = f"{SAVED_SIMULATIONS_DIR}/{situation.name}_{state.step_number}.json"
-        with open(filename, "w") as f:
-            json.dump(result_dict, f, indent=2)
+        file_manipulation.write_json_file(filename, result_dict)
         st.success(f"Saved to {filename}")
 
     # --- Helpers ---
