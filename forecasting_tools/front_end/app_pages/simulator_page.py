@@ -14,6 +14,7 @@ from forecasting_tools.agents_and_tools.situation_simulator.data_models import (
     Situation,
 )
 from forecasting_tools.agents_and_tools.situation_simulator.simulator import (
+    DEFAULT_SIMULATIONS_DIR,
     Simulator,
     create_run_directory,
     save_full_simulation,
@@ -106,8 +107,13 @@ class SimulatorPage(AppPage):
     def _display_setup_panel(cls) -> None:
         st.header("Load or Generate a Situation")
 
-        tab_example, tab_upload, tab_generate = st.tabs(
-            ["Example Situations", "Upload JSON", "Generate from Prompt"]
+        tab_example, tab_upload, tab_resume, tab_generate = st.tabs(
+            [
+                "Example Situations",
+                "Upload JSON",
+                "Resume from Save",
+                "Generate from Prompt",
+            ]
         )
 
         with tab_example:
@@ -115,6 +121,9 @@ class SimulatorPage(AppPage):
 
         with tab_upload:
             cls._display_json_uploader()
+
+        with tab_resume:
+            cls._display_resume_loader()
 
         with tab_generate:
             cls._display_generator()
@@ -172,6 +181,210 @@ class SimulatorPage(AppPage):
                 cls._set_situation(situation)
                 st.success(f"Generated: {situation.name}")
                 st.rerun()
+
+    @classmethod
+    def _display_resume_loader(cls) -> None:
+        st.markdown(
+            "Resume a simulation from a previously saved step file or "
+            "full simulation file."
+        )
+
+        browse_tab, upload_tab = st.tabs(["Browse Local Runs", "Upload Files"])
+
+        with browse_tab:
+            cls._display_local_run_browser()
+
+        with upload_tab:
+            cls._display_resume_uploader()
+
+    @classmethod
+    def _display_local_run_browser(cls) -> None:
+        simulations_dir = Path(DEFAULT_SIMULATIONS_DIR)
+        if not simulations_dir.exists():
+            st.info("No local simulation runs found.")
+            return
+
+        run_dirs = sorted(
+            [d for d in simulations_dir.iterdir() if d.is_dir()],
+            key=lambda d: d.name,
+            reverse=True,
+        )
+        if not run_dirs:
+            st.info("No local simulation runs found.")
+            return
+
+        selected_run_name = st.selectbox(
+            "Select a simulation run",
+            options=[d.name for d in run_dirs],
+            key="resume_run_select",
+        )
+        if selected_run_name is None:
+            return
+
+        selected_run_dir = simulations_dir / selected_run_name
+        situation_path = selected_run_dir / "situation.json"
+        if not situation_path.exists():
+            st.warning("No situation.json found in this run directory.")
+            return
+
+        step_files = sorted(selected_run_dir.glob("step_*.json"))
+        full_sim_path = selected_run_dir / "full_simulation.json"
+
+        if not step_files and not full_sim_path.exists():
+            st.warning("No step files found in this run directory.")
+            return
+
+        step_options = [f.stem for f in step_files]
+        if full_sim_path.exists():
+            step_options.append("full_simulation (all steps)")
+
+        selected_step = st.selectbox(
+            "Resume from step",
+            options=step_options,
+            index=len(step_options) - 1,
+            key="resume_step_select",
+        )
+
+        if st.button("Resume Simulation", key="resume_local_btn"):
+            try:
+                situation_data = json.loads(situation_path.read_text())
+                situation = Situation.model_validate(situation_data)
+
+                if selected_step == "full_simulation (all steps)":
+                    cls._load_from_full_simulation_file(
+                        full_sim_path, run_dir=selected_run_dir
+                    )
+                else:
+                    step_path = selected_run_dir / f"{selected_step}.json"
+                    all_step_files = sorted(selected_run_dir.glob("step_*.json"))
+                    earlier_steps = [
+                        f for f in all_step_files if f.name <= step_path.name
+                    ]
+                    cls._load_from_step_files(
+                        situation,
+                        earlier_steps,
+                        run_dir=selected_run_dir,
+                    )
+                st.rerun()
+            except Exception as e:
+                st.error(f"Failed to resume simulation: {e}")
+
+    @classmethod
+    def _display_resume_uploader(cls) -> None:
+        resume_mode = st.radio(
+            "File type",
+            options=["Full simulation file", "Step file + Situation file"],
+            key="resume_upload_mode",
+        )
+
+        if resume_mode == "Full simulation file":
+            uploaded = st.file_uploader(
+                "Upload full_simulation.json",
+                type=["json"],
+                key="resume_full_upload",
+            )
+            if uploaded is not None and st.button(
+                "Resume from Full Simulation", key="resume_full_btn"
+            ):
+                try:
+                    data = json.loads(uploaded.read())
+                    cls._load_from_full_simulation_data(data)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to load full simulation: {e}")
+        else:
+            situation_file = st.file_uploader(
+                "Upload situation JSON",
+                type=["json"],
+                key="resume_situation_upload",
+            )
+            step_file = st.file_uploader(
+                "Upload step JSON (will resume from state_after)",
+                type=["json"],
+                key="resume_step_upload",
+            )
+            if (
+                situation_file is not None
+                and step_file is not None
+                and st.button("Resume from Step", key="resume_step_btn")
+            ):
+                try:
+                    situation_data = json.loads(situation_file.read())
+                    situation = Situation.model_validate(situation_data)
+                    step_data = json.loads(step_file.read())
+                    step = SimulationStep.model_validate(step_data)
+                    cls._set_situation_with_state(
+                        situation,
+                        state=step.state_after.deep_copy(),
+                        steps=[step],
+                    )
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to resume from step file: {e}")
+
+    @classmethod
+    def _load_from_full_simulation_file(
+        cls, filepath: Path, run_dir: Path | None = None
+    ) -> None:
+        data = json.loads(filepath.read_text())
+        cls._load_from_full_simulation_data(data, run_dir=run_dir)
+
+    @classmethod
+    def _load_from_full_simulation_data(
+        cls,
+        data: dict,
+        run_dir: Path | None = None,
+    ) -> None:
+        situation = Situation.model_validate(data["situation"])
+        steps = [SimulationStep.model_validate(s) for s in data.get("steps", [])]
+        final_state = SimulationState.model_validate(data["final_state"])
+        total_cost = data.get("total_cost_usd", 0.0)
+        cls._set_situation_with_state(
+            situation,
+            state=final_state,
+            steps=steps,
+            total_cost=total_cost,
+            run_dir=run_dir,
+        )
+
+    @classmethod
+    def _load_from_step_files(
+        cls,
+        situation: Situation,
+        step_files: list[Path],
+        run_dir: Path | None = None,
+    ) -> None:
+        steps: list[SimulationStep] = []
+        for step_file in step_files:
+            step_data = json.loads(step_file.read_text())
+            steps.append(SimulationStep.model_validate(step_data))
+
+        if not steps:
+            cls._set_situation(situation)
+            return
+
+        last_step = steps[-1]
+        cls._set_situation_with_state(
+            situation,
+            state=last_step.state_after.deep_copy(),
+            steps=steps,
+            run_dir=run_dir,
+        )
+
+    @classmethod
+    def _set_situation_with_state(
+        cls,
+        situation: Situation,
+        state: SimulationState,
+        steps: list[SimulationStep] | None = None,
+        total_cost: float = 0.0,
+        run_dir: Path | None = None,
+    ) -> None:
+        st.session_state["sim_situation"] = situation
+        st.session_state["sim_state"] = state
+        st.session_state["sim_steps"] = steps or []
+        st.session_state["sim_total_cost"] = total_cost
+        st.session_state["sim_run_dir"] = run_dir
 
     # --- Controls ---
 

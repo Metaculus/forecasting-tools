@@ -7,6 +7,9 @@ import streamlit as st
 from forecasting_tools.front_end.app_pages.benchmark_page import BenchmarkPage
 from forecasting_tools.front_end.app_pages.chat_page import ChatPage
 from forecasting_tools.front_end.app_pages.congress_page import CongressPage
+from forecasting_tools.front_end.app_pages.intervention_leaderboard_page import (
+    InterventionLeaderboardPage,
+)
 from forecasting_tools.front_end.app_pages.simulator_page import SimulatorPage
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +44,7 @@ class HomePage(AppPage):
     CONGRESS_PAGE: type[AppPage] = CongressPage
     SIMULATOR_PAGE: type[AppPage] = SimulatorPage
     BENCHMARK_PAGE: type[AppPage] = BenchmarkPage
+    INTERVENTION_LEADERBOARD_PAGE: type[AppPage] = InterventionLeaderboardPage
     NON_HOME_PAGES: list[type[AppPage]] = [
         CHAT_PAGE,
         FORECASTER_PAGE,
@@ -66,6 +70,7 @@ def run_forecasting_streamlit_app() -> None:
     all_pages = [HomePage] + HomePage.NON_HOME_PAGES
     if os.getenv("LOCAL_STREAMLIT_MODE", "false").lower() == "true":
         all_pages.append(HomePage.BENCHMARK_PAGE)
+        all_pages.append(HomePage.INTERVENTION_LEADERBOARD_PAGE)
     navigation = st.navigation([page.convert_to_streamlit_page() for page in all_pages])
     st.set_page_config(page_title="Forecasting-Tools", page_icon=":material/explore:")
     navigation.run()

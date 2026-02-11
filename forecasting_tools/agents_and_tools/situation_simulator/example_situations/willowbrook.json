@@ -795,5 +795,5 @@
     ],
     "dm_blacklist": []
   },
-  "max_steps": 25
+  "max_steps": 20
 }

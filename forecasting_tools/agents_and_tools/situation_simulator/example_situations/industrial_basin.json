@@ -4442,5 +4442,5 @@
     ],
     "dm_blacklist": []
   },
-  "max_steps": 9999
+  "max_steps": 20
 }
