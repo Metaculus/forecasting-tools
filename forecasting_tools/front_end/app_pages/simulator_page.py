@@ -10,7 +10,6 @@ import streamlit as st
 
 from forecasting_tools.agents_and_tools.situation_simulator.data_models import (
     Message,
-    SimulationResult,
     SimulationState,
     SimulationStep,
     Situation,
@@ -524,14 +523,14 @@ class SimulatorPage(AppPage):
             return
 
         os.makedirs(SAVED_SIMULATIONS_DIR, exist_ok=True)
-        result = SimulationResult(
-            situation=situation,
-            steps=steps,
-            final_state=state.deep_copy(),
-        )
+        result_dict = {
+            "situation": situation.model_dump(),
+            "steps": [s.model_dump() for s in steps],
+            "final_state": state.model_dump(),
+        }
         filename = f"{SAVED_SIMULATIONS_DIR}/{situation.name}_{state.step_number}.json"
         with open(filename, "w") as f:
-            json.dump(result.model_dump(), f, indent=2)
+            json.dump(result_dict, f, indent=2)
         st.success(f"Saved to {filename}")
 
     # --- Helpers ---

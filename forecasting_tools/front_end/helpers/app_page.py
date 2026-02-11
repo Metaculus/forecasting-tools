@@ -64,8 +64,6 @@ class AppPage(ABC):
         st.write(
             "Give feedback on the [Forecasting Tools Discord](https://discord.gg/Dtq4JNdXnw) or email "
             "me at ben [at] metaculus [dot com]. "
-            "Let me know what I can do to make this a tool you will want to use "
-            "every day! Let me know if you want to chat and we can find a time!"
         )
         st.write(
             "Queries made to the website are saved to a database and may be "
