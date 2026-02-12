@@ -32,8 +32,10 @@ class CongressOrchestrator:
     def __init__(
         self,
         aggregation_model: str = "openrouter/anthropic/claude-sonnet-4",
+        num_delphi_rounds: int = 1,
     ):
         self.aggregation_model = aggregation_model
+        self.num_delphi_rounds = max(1, num_delphi_rounds)
 
     async def run_session(
         self,
@@ -41,44 +43,23 @@ class CongressOrchestrator:
         members: list[CongressMember],
     ) -> CongressSession:
         logger.info(
-            f"Starting congress session with {len(members)} members on: {prompt[:100]}..."
+            f"Starting congress session with {len(members)} members, "
+            f"{self.num_delphi_rounds} Delphi round(s) on: {prompt[:100]}..."
         )
 
         with MonetaryCostManager() as session_cost_manager:
             agents = [CongressMemberAgent(m) for m in members]
+            proposals, errors = await self._run_initial_round(agents, prompt)
 
-            results = await asyncio.gather(
-                *[self._run_member_with_error_handling(a, prompt) for a in agents],
-                return_exceptions=False,
+            initial_proposals = list(proposals)
+            proposals, delphi_errors = await self._run_delphi_revisions(
+                agents, prompt, proposals
             )
+            errors.extend(delphi_errors)
 
-            proposals: list[PolicyProposal] = []
-            errors: list[str] = []
-
-            for result in results:
-                if isinstance(result, PolicyProposal):
-                    proposals.append(result)
-                elif isinstance(result, Exception):
-                    errors.append(str(result))
-                else:
-                    errors.append(f"Unexpected result type: {type(result)}")
-
-            logger.info(
-                f"Completed {len(proposals)} proposals with {len(errors)} errors"
+            aggregated_report, blog_post, future_snapshot, twitter_posts = (
+                await self._generate_outputs(prompt, proposals, members)
             )
-
-            aggregated_report = ""
-            blog_post = ""
-            future_snapshot = ""
-            twitter_posts: list[str] = []
-
-            if proposals:
-                aggregated_report = await self._aggregate_proposals(prompt, proposals)
-                blog_post = await self._generate_blog_post(prompt, proposals, members)
-                future_snapshot = await self._generate_future_snapshot(
-                    prompt, proposals, aggregated_report
-                )
-                twitter_posts = await self._generate_twitter_posts(prompt, proposals)
 
             total_cost = session_cost_manager.current_usage
 
@@ -101,7 +82,129 @@ class CongressOrchestrator:
             timestamp=datetime.now(timezone.utc),
             errors=errors,
             total_price_estimate=total_cost,
+            num_delphi_rounds=self.num_delphi_rounds,
+            initial_proposals=initial_proposals if self.num_delphi_rounds > 1 else [],
         )
+
+    async def _run_initial_round(
+        self,
+        agents: list[CongressMemberAgent],
+        prompt: str,
+    ) -> tuple[list[PolicyProposal], list[str]]:
+        results = await asyncio.gather(
+            *[self._run_member_with_error_handling(a, prompt) for a in agents],
+            return_exceptions=False,
+        )
+
+        proposals: list[PolicyProposal] = []
+        errors: list[str] = []
+        for result in results:
+            if isinstance(result, PolicyProposal):
+                proposals.append(result)
+            elif isinstance(result, Exception):
+                errors.append(str(result))
+            else:
+                errors.append(f"Unexpected result type: {type(result)}")
+
+        logger.info(
+            f"Round 1 completed: {len(proposals)} proposals with {len(errors)} errors"
+        )
+        return proposals, errors
+
+    async def _run_delphi_revisions(
+        self,
+        agents: list[CongressMemberAgent],
+        prompt: str,
+        proposals: list[PolicyProposal],
+    ) -> tuple[list[PolicyProposal], list[str]]:
+        errors: list[str] = []
+        for delphi_round in range(2, self.num_delphi_rounds + 1):
+            if len(proposals) < 2:
+                logger.warning(
+                    f"Skipping Delphi round {delphi_round}: need at least 2 "
+                    f"proposals but only have {len(proposals)}"
+                )
+                break
+
+            logger.info(
+                f"Starting Delphi round {delphi_round} with {len(proposals)} proposals"
+            )
+            revised, round_errors = await self._run_single_delphi_round(
+                agents, prompt, proposals, delphi_round
+            )
+            errors.extend(round_errors)
+
+            if revised:
+                proposals = revised
+            else:
+                logger.warning(
+                    f"Delphi round {delphi_round} produced no proposals, "
+                    f"keeping previous round's proposals"
+                )
+        return proposals, errors
+
+    async def _run_single_delphi_round(
+        self,
+        agents: list[CongressMemberAgent],
+        prompt: str,
+        proposals: list[PolicyProposal],
+        delphi_round: int,
+    ) -> tuple[list[PolicyProposal], list[str]]:
+        revision_tasks = []
+        for agent in agents:
+            own_proposal = next(
+                (
+                    p
+                    for p in proposals
+                    if p.member and p.member.name == agent.member.name
+                ),
+                None,
+            )
+            if own_proposal is None:
+                continue
+            other_proposals = [
+                p for p in proposals if p.member and p.member.name != agent.member.name
+            ]
+            revision_tasks.append(
+                self._run_revision_with_error_handling(
+                    agent, prompt, own_proposal, other_proposals, delphi_round
+                )
+            )
+
+        revision_results = await asyncio.gather(
+            *revision_tasks, return_exceptions=False
+        )
+
+        revised_proposals: list[PolicyProposal] = []
+        errors: list[str] = []
+        for result in revision_results:
+            if isinstance(result, PolicyProposal):
+                revised_proposals.append(result)
+            elif isinstance(result, Exception):
+                errors.append(f"Delphi round {delphi_round}: {result}")
+
+        logger.info(
+            f"Delphi round {delphi_round} completed: "
+            f"{len(revised_proposals)} revised proposals"
+        )
+        return revised_proposals, errors
+
+    async def _generate_outputs(
+        self,
+        prompt: str,
+        proposals: list[PolicyProposal],
+        members: list[CongressMember],
+    ) -> tuple[str, str, str, list[str]]:
+        if not proposals:
+            return "", "", "", []
+
+        aggregated_report = await self._aggregate_proposals(prompt, proposals)
+        blog_post = await self._generate_blog_post(prompt, proposals, members)
+        future_snapshot = await self._generate_future_snapshot(
+            prompt, proposals, aggregated_report
+        )
+        twitter_posts = await self._generate_twitter_posts(prompt, proposals)
+        return aggregated_report, blog_post, future_snapshot, twitter_posts
 
     async def _run_member_with_error_handling(
         self,
@@ -120,6 +223,36 @@ class CongressOrchestrator:
             return proposal
         except Exception as e:
             logger.error(f"Error in {agent.member.name}'s deliberation: {e}")
+            return e
+
+    async def _run_revision_with_error_handling(
+        self,
+        agent: CongressMemberAgent,
+        prompt: str,
+        own_proposal: PolicyProposal,
+        other_proposals: list[PolicyProposal],
+        delphi_round: int,
+    ) -> PolicyProposal | Exception:
+        try:
+            logger.info(
+                f"Starting Delphi round {delphi_round} revision for {agent.member.name}"
+            )
+            with MonetaryCostManager() as revision_cost_manager:
+                proposal = await agent.revise_proposal(
+                    prompt, own_proposal, other_proposals, delphi_round
+                )
+                revision_cost = revision_cost_manager.current_usage
+            previous_cost = own_proposal.price_estimate or 0
+            proposal.price_estimate = previous_cost + revision_cost
+            logger.info(
+                f"Completed Delphi round {delphi_round} revision for {agent.member.name}, "
+                f"revision cost: ${revision_cost:.4f}"
+            )
+            return proposal
+        except Exception as e:
+            logger.error(
+                f"Error in {agent.member.name}'s Delphi round {delphi_round} revision: {e}"
+            )
             return e
 
     async def _aggregate_proposals(

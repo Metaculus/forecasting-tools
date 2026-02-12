@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import logging
+import os
+from datetime import datetime
+from pathlib import Path
 
 from forecasting_tools.agents_and_tools.situation_simulator.agent_runner import (
     SimulationAgentRunner,
@@ -19,8 +22,52 @@ from forecasting_tools.agents_and_tools.situation_simulator.effect_engine import
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.util import file_manipulation
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_SIMULATIONS_DIR = "temp/simulations"
+
+
+def create_run_directory(
+    situation_name: str,
+    base_dir: str = DEFAULT_SIMULATIONS_DIR,
+) -> Path:
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    safe_name = situation_name.replace(" ", "_").lower()
+    run_dir = Path(base_dir) / f"{safe_name}_{timestamp}"
+    os.makedirs(run_dir, exist_ok=True)
+    return run_dir
+
+
+def save_situation_to_file(run_dir: Path, situation: Situation) -> None:
+    situation_path = run_dir / "situation.json"
+    file_manipulation.write_json_file(situation_path, situation.model_dump())
+    logger.info(f"Saved situation to {situation_path}")
+
+
+def save_step_to_file(run_dir: Path, step: SimulationStep) -> None:
+    step_path = run_dir / f"step_{step.step_number:03d}.json"
+    file_manipulation.write_json_file(step_path, step.model_dump())
+    logger.info(f"Saved step {step.step_number} to {step_path}")
+
+
+def save_full_simulation(
+    run_dir: Path,
+    situation: Situation,
+    steps: list[SimulationStep],
+    final_state: SimulationState,
+    total_cost: float,
+) -> None:
+    result = {
+        "situation": situation.model_dump(),
+        "steps": [s.model_dump() for s in steps],
+        "final_state": final_state.model_dump(),
+        "total_cost_usd": total_cost,
+    }
+    result_path = run_dir / "full_simulation.json"
+    file_manipulation.write_json_file(result_path, result)
+    logger.info(f"Saved full simulation to {result_path}")
 
 
 class Simulator:
@@ -47,7 +94,7 @@ class Simulator:
             action_log=[],
         )
 
-    async def run_step(self, state: SimulationState) -> SimulationStep:
+    async def run_step_and_update_state(self, state: SimulationState) -> SimulationStep:
         state.step_number += 1
         state_before = state.deep_copy()
 
@@ -107,7 +154,7 @@ class Simulator:
                     f"Running step {state.step_number + 1} "
                     f"(iteration {i + 1}/{steps_to_run})"
                 )
-                step = await self.run_step(state)
+                step = await self.run_step_and_update_state(state)
                 steps.append(step)
                 logger.info(
                     f"Step {step.step_number} complete. "

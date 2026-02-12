@@ -322,6 +322,86 @@ class TestEffectEngineRandomOutcome:
         assert gold == 20 or gold == 5
 
 
+class TestEffectEngineMessageEffect:
+    def test_message_effect_creates_message_in_history(self) -> None:
+        situation = _make_simple_situation()
+        state = _make_state_for_situation(situation)
+        engine = EffectEngine(state, situation)
+
+        effects = [
+            Effect(
+                type="message",
+                target="actor",
+                message_text="You discovered a hidden cave!",
+            )
+        ]
+        log = engine.apply_effects(effects, "Alice", {})
+
+        assert len(state.message_history) == 1
+        msg = state.message_history[0]
+        assert msg.sender == "System"
+        assert msg.channel is None
+        assert "Alice" in msg.recipients
+        assert "hidden cave" in msg.content
+        assert msg.step == state.step_number
+        assert "System message for Alice" in log[0]
+
+    def test_message_effect_resolves_parameter_refs(self) -> None:
+        situation = _make_simple_situation()
+        state = _make_state_for_situation(situation)
+        engine = EffectEngine(state, situation)
+
+        effects = [
+            Effect(
+                type="message",
+                target="{target}",
+                message_text="You received a subsidy of {amount} gold.",
+            )
+        ]
+        log = engine.apply_effects(effects, "Alice", {"target": "Bob", "amount": "10"})
+
+        assert len(state.message_history) == 1
+        msg = state.message_history[0]
+        assert "Bob" in msg.recipients
+        assert "10 gold" in msg.content
+        assert "System message for Bob" in log[0]
+
+    def test_message_inside_random_outcome_creates_message(self) -> None:
+        situation = _make_simple_situation()
+        state = _make_state_for_situation(situation)
+        engine = EffectEngine(state, situation)
+
+        effects = [
+            Effect(
+                type="random_outcome",
+                outcomes=[
+                    RandomOutcome(
+                        probability=1.0,
+                        effects=[
+                            Effect(
+                                type="message",
+                                target="actor",
+                                message_text="EVENT: Economic Boom!",
+                            ),
+                            Effect(
+                                type="add_item",
+                                target="actor",
+                                item_name="gold",
+                                quantity=5,
+                            ),
+                        ],
+                        description="Boom",
+                    ),
+                ],
+            )
+        ]
+        engine.apply_effects(effects, "Alice", {})
+
+        assert len(state.message_history) == 1
+        assert "Economic Boom" in state.message_history[0].content
+        assert state.inventories["Alice"]["gold"] == 15
+
+
 # --- EffectEngine: Trade resolution ---
 
 

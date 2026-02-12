@@ -20,6 +20,9 @@ from forecasting_tools.agents_and_tools.ai_congress.member_profiles import (
     AVAILABLE_MEMBERS,
     get_members_by_names,
 )
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
 from forecasting_tools.front_end.helpers.app_page import AppPage
 from forecasting_tools.front_end.helpers.custom_auth import CustomAuth
 from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
@@ -225,11 +228,25 @@ class CongressPage(AppPage):
                 key="congress_members",
             )
 
+            num_delphi_rounds = st.number_input(
+                "Delphi Rounds",
+                min_value=1,
+                max_value=3,
+                value=1,
+                help=(
+                    "Number of deliberation rounds. In round 1, members deliberate "
+                    "independently. In subsequent rounds, each member sees the others' "
+                    "proposals and revises their own. More rounds increase cost."
+                ),
+                key="delphi_rounds",
+            )
+
+            cost_per_member = "~$0.5-8"
+            if num_delphi_rounds > 1:
+                cost_per_member = "~$0.5-8 for round 1 + ~$0.5-8 per additional round"
             st.markdown(
-                """
-                **Estimated Cost:** ~$3-8 per member selected
-                (depends on model and research depth)
-                """
+                f"**Estimated Cost:** {cost_per_member} per member selected "
+                f"(depends on model and research depth)"
             )
 
             submitted = st.form_submit_button("🏛️ Convene Congress")
@@ -245,6 +262,7 @@ class CongressPage(AppPage):
                 return CongressSessionInput(
                     prompt=prompt,
                     member_names=selected_members,
+                    num_delphi_rounds=num_delphi_rounds,
                 )
 
         return None
@@ -254,20 +272,25 @@ class CongressPage(AppPage):
         cls, session_input: CongressSessionInput
     ) -> CongressSession:
         members = get_members_by_names(session_input.member_names)
+        num_rounds = session_input.num_delphi_rounds
 
         start_time = time.time()
+        rounds_str = f" ({num_rounds} Delphi rounds)" if num_rounds > 1 else ""
         with st.spinner(
-            f"Congress in session with {len(members)} members... "
+            f"Congress in session with {len(members)} members{rounds_str}... "
             "This may take 5-15 minutes."
         ):
             progress_text = st.empty()
             progress_text.write("Members are researching and deliberating...")
 
-            orchestrator = CongressOrchestrator()
-            session = await orchestrator.run_session(
-                prompt=session_input.prompt,
-                members=members,
+            orchestrator = CongressOrchestrator(
+                num_delphi_rounds=num_rounds,
             )
+            with MonetaryCostManager(100):
+                session = await orchestrator.run_session(
+                    prompt=session_input.prompt,
+                    members=members,
+                )
 
             progress_text.write("Aggregating proposals and generating insights...")
 
@@ -415,6 +438,22 @@ class CongressPage(AppPage):
             cls._render_forecast_list(proposal.conditional_forecasts)
 
     @classmethod
+    def _display_proposal_list(
+        cls,
+        proposals: list[PolicyProposal],
+        label_suffix: str = "",
+    ) -> None:
+        for proposal in proposals:
+            member_name = proposal.member.name if proposal.member else "Unknown"
+            member_role = proposal.member.role if proposal.member else ""
+            cost_str = (
+                f" (${proposal.price_estimate:.2f})" if proposal.price_estimate else ""
+            )
+            label = f"**{member_name}**{label_suffix} - {member_role}{cost_str}"
+            with st.expander(label, expanded=False):
+                cls._display_single_proposal(proposal)
+
+    @classmethod
     def _display_proposals_tab(cls, session: CongressSession) -> None:
         st.subheader("Individual Member Proposals")
 
@@ -422,17 +461,21 @@ class CongressPage(AppPage):
             st.write("No proposals available.")
             return
 
-        for proposal in session.proposals:
-            member_name = proposal.member.name if proposal.member else "Unknown"
-            member_role = proposal.member.role if proposal.member else ""
-            cost_str = (
-                f" (${proposal.price_estimate:.2f})" if proposal.price_estimate else ""
+        if session.num_delphi_rounds > 1:
+            st.info(
+                f"This session used {session.num_delphi_rounds} Delphi rounds. "
+                f"Proposals shown below are the final revised versions."
             )
 
-            with st.expander(
-                f"**{member_name}** - {member_role}{cost_str}", expanded=False
-            ):
-                cls._display_single_proposal(proposal)
+        cls._display_proposal_list(session.proposals)
+
+        if session.num_delphi_rounds > 1 and session.initial_proposals:
+            st.markdown("---")
+            st.subheader("Initial Proposals (Round 1)")
+            st.caption(
+                "These are the original proposals before Delphi revision rounds."
+            )
+            cls._display_proposal_list(session.initial_proposals, " (Round 1)")
 
     @staticmethod
     def _build_forecast_table_data(

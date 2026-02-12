@@ -60,6 +60,224 @@ class CongressMemberAgent:
         logger.info(f"Completed deliberation for {self.member.name}")
         return proposal
 
+    async def revise_proposal(
+        self,
+        policy_prompt: str,
+        own_proposal: PolicyProposal,
+        other_proposals: list[PolicyProposal],
+        delphi_round: int,
+    ) -> PolicyProposal:
+        logger.info(
+            f"Delphi round {delphi_round}: {self.member.name} revising proposal "
+            f"after reviewing {len(other_proposals)} other proposals"
+        )
+        instructions = self._build_revision_instructions(
+            policy_prompt, own_proposal, other_proposals, delphi_round
+        )
+
+        agent = AiAgent(
+            name=f"Congress Member (Revision): {self.member.name}",
+            instructions=instructions,
+            model=AgentSdkLlm(model=self.member.ai_model),
+            tools=[
+                perplexity_reasoning_pro_search,
+                query_asknews,
+            ],
+            handoffs=[],
+        )
+
+        result = await AgentRunner.run(
+            agent, "Please begin your revision now.", max_turns=15
+        )
+
+        logger.info(f"Extracting revised proposal from output for {self.member.name}")
+        proposal = await self._extract_proposal_from_output(result.final_output)
+        proposal.member = self.member
+        proposal.delphi_round = delphi_round
+        logger.info(
+            f"Completed Delphi round {delphi_round} revision for {self.member.name}"
+        )
+        return proposal
+
+    def _build_revision_instructions(
+        self,
+        policy_prompt: str,
+        own_proposal: PolicyProposal,
+        other_proposals: list[PolicyProposal],
+        delphi_round: int,
+    ) -> str:
+        other_proposals_text = self._format_other_proposals_for_review(other_proposals)
+        own_proposal_text = self._format_own_proposal_for_review(own_proposal)
+
+        return clean_indents(
+            f"""
+            # Your Identity
+
+            You are {self.member.name}, a {self.member.role}.
+
+            Political Leaning: {self.member.political_leaning}
+
+            Your Core Motivation: {self.member.general_motivation}
+
+            Areas of Expertise: {self.member.expertise_string}
+
+            Personality Traits: {self.member.traits_string}
+
+            ---
+
+            # Delphi Round {delphi_round}: Revise Your Proposal
+
+            You are participating in a Delphi deliberation process in the AI Forecasting
+            Congress. In round 1, you and other congress members independently created
+            policy proposals for the following question:
+
+            "{policy_prompt}"
+
+            You have now received the other members' proposals. Your task is to review
+            their recommendations and forecasts, then revise your own proposal. You may:
+
+            - **Keep** recommendations you still believe in after seeing other perspectives
+            - **Modify** recommendations based on new arguments or evidence from others
+            - **Drop** recommendations that other members convincingly argued against
+            - **Add** new recommendations inspired by other members' proposals
+            - **Adjust** your forecasts based on other members' reasoning and predictions
+
+            ---
+
+            # Your Original Proposal (Round {delphi_round - 1})
+
+            {own_proposal_text}
+
+            ---
+
+            # Other Members' Proposals
+
+            {other_proposals_text}
+
+            ---
+
+            # Your Revision Task
+
+            ## STEP 1: Review and Reflect
+
+            For each other member's proposal:
+            - What are their strongest arguments?
+            - Where do you agree? Where do you disagree and why?
+            - Did they surface evidence, forecasts, or considerations you missed?
+            - Are there any forecasts where their probability differs significantly
+              from yours? If so, should you update your own?
+
+            ## STEP 2: Identify Changes
+
+            Based on your review, note:
+            - Which of your recommendations you want to keep, modify, or drop
+            - Any new recommendations you want to add
+            - Any forecast adjustments you want to make
+            - Any new research you want to conduct to address gaps
+
+            You may use your search tools if you want to investigate any new claims
+            or evidence raised by other members.
+
+            ## STEP 3: Write Your Revised Proposal
+
+            Write a complete revised policy proposal using the SAME format as before:
+
+            ### Executive Summary
+
+            A 2-3 sentence summary of your main recommendation.
+
+            ### Analysis
+
+            Your revised analysis (3-5 paragraphs). Reference forecasts with
+            footnotes [^1], [^2], etc.
+
+            ### Recommendations
+
+            Your revised top 3-5 specific, actionable policy recommendations.
+            For each recommendation, note if it was kept from round 1, modified
+            based on Delphi feedback, or newly added.
+
+            ### Risks and Uncertainties
+
+            What could go wrong? Include any new risks surfaced by other members.
+
+            ### Forecast Appendix
+
+            Your revised baseline forecasts in the standard format:
+
+            [^1] **[Question Title]**
+            - Question: [Full question text]
+            - Resolution: [Resolution criteria]
+            - Prediction: [Your probability]
+            - Reasoning: [Reasoning, noting if updated based on Delphi feedback]
+            - Sources: [Sources]
+
+            ### Conditional Forecast Appendix
+
+            Your revised conditional forecasts (conditional on policy being
+            implemented) in the standard format:
+
+            [^N] **[Question Title]** *(Conditional on policy)*
+            - Question: [Full question text]
+            - Resolution: [Resolution criteria]
+            - Prediction: [Your probability]
+            - Reasoning: [Reasoning, noting if updated based on Delphi feedback]
+            - Sources: [Sources]
+
+            ---
+
+            # Important Reminders
+
+            - You ARE {self.member.name}. Stay in character throughout.
+            - Be genuinely open to updating your views based on good arguments,
+              but don't abandon your core perspective without strong reason.
+            - When you adjust a forecast, briefly explain what changed your mind.
+            - Produce a COMPLETE revised proposal, not just a list of changes.
+            """
+        )
+
+    @staticmethod
+    def _format_other_proposals_for_review(
+        other_proposals: list[PolicyProposal],
+    ) -> str:
+        sections = []
+        for proposal in other_proposals:
+            if not proposal.member:
+                continue
+            member = proposal.member
+            recommendations_text = "\n".join(
+                f"  - {rec}" for rec in proposal.key_recommendations
+            )
+            forecasts_text = "\n".join(
+                f"  - **{f.question_title}**: {f.prediction} — {f.reasoning[:200]}"
+                for f in proposal.forecasts
+            )
+            sections.append(
+                f"## {member.name} ({member.role})\n"
+                f"**Leaning:** {member.political_leaning}\n\n"
+                f"**Key Recommendations:**\n{recommendations_text}\n\n"
+                f"**Forecasts:**\n{forecasts_text}\n\n"
+                f"**Full Proposal:**\n```markdown\n"
+                f"{proposal.get_full_markdown_with_footnotes()}\n```"
+            )
+        return "\n\n---\n\n".join(sections)
+
+    @staticmethod
+    def _format_own_proposal_for_review(proposal: PolicyProposal) -> str:
+        recommendations_text = "\n".join(
+            f"  - {rec}" for rec in proposal.key_recommendations
+        )
+        forecasts_text = "\n".join(
+            f"  - **{f.question_title}**: {f.prediction} — {f.reasoning[:200]}"
+            for f in proposal.forecasts
+        )
+        return (
+            f"**Key Recommendations:**\n{recommendations_text}\n\n"
+            f"**Forecasts:**\n{forecasts_text}\n\n"
+            f"**Full Proposal:**\n```markdown\n"
+            f"{proposal.get_full_markdown_with_footnotes()}\n```"
+        )
+
     async def _extract_proposal_from_output(self, agent_output: str) -> PolicyProposal:
         extraction_instructions = clean_indents(
             """
