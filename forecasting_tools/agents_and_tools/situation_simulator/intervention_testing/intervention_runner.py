@@ -159,7 +159,7 @@ class InterventionRunner:
         state = simulator.create_initial_state()
         for i in range(warmup_steps):
             logger.info(f"Warmup step {i + 1}/{warmup_steps}")
-            await simulator.run_step(state)
+            await simulator.run_step_and_update_state(state)
         return state
 
     async def _run_policy_agent(

@@ -94,7 +94,7 @@ class Simulator:
             action_log=[],
         )
 
-    async def run_step(self, state: SimulationState) -> SimulationStep:
+    async def run_step_and_update_state(self, state: SimulationState) -> SimulationStep:
         state.step_number += 1
         state_before = state.deep_copy()
 
@@ -154,7 +154,7 @@ class Simulator:
                     f"Running step {state.step_number + 1} "
                     f"(iteration {i + 1}/{steps_to_run})"
                 )
-                step = await self.run_step(state)
+                step = await self.run_step_and_update_state(state)
                 steps.append(step)
                 logger.info(
                     f"Step {step.step_number} complete. "

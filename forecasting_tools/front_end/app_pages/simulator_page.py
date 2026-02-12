@@ -976,7 +976,7 @@ class SimulatorPage(AppPage):
 
         with st.spinner(f"Running step {state.step_number + 1}..."):
             with MonetaryCostManager(100) as cost_manager:
-                step = asyncio.run(simulator.run_step(state))
+                step = asyncio.run(simulator.run_step_and_update_state(state))
             st.session_state["sim_total_cost"] += cost_manager.current_usage
 
         save_step_to_file(run_dir, step)
@@ -1002,7 +1002,7 @@ class SimulatorPage(AppPage):
                 progress.progress(
                     (i + 1) / n, f"Running step {state.step_number + 1}..."
                 )
-                step = asyncio.run(simulator.run_step(state))
+                step = asyncio.run(simulator.run_step_and_update_state(state))
                 steps.append(step)
                 save_step_to_file(run_dir, step)
         st.session_state["sim_total_cost"] += cost_manager.current_usage

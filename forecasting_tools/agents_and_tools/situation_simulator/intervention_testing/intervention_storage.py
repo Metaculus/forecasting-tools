@@ -19,7 +19,7 @@ def save_intervention_run(
     results_dir: str = INTERVENTION_RESULTS_DIR,
 ) -> str:
     safe_model_name = run.model_name.replace("/", "_")
-    file_path = f"{results_dir}{safe_model_name}.jsonl"
+    file_path = f"{results_dir.strip('/')}/{safe_model_name}.jsonl"
     add_to_jsonl_file(file_path, run.to_json())
     logger.info(f"Saved intervention run {run.run_id} to {file_path}")
     return file_path

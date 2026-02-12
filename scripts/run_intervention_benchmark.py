@@ -88,10 +88,10 @@ async def run_benchmark(
                 )
                 tasks.append(task)
                 task_labels.append(label)
-        logger.info(f"Total cost: ${cost_manager.current_usage:.2f}")
 
-    logger.info(f"Launched {len(tasks)} intervention tasks concurrently")
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+        logger.info(f"Launched {len(tasks)} intervention tasks concurrently")
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        logger.info(f"Total cost: ${cost_manager.current_usage:.2f}")
 
     completed = sum(1 for r in results if not isinstance(r, BaseException))
     failed = sum(1 for r in results if isinstance(r, BaseException))

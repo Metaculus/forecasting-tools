@@ -107,7 +107,7 @@ SITUATION_DESIGN_GUIDE = clean_indents(
     - Also consider channels for specific subgroups (faction chat, committee channels, regional forums).
 
     ### Communication Bandwidth
-    - Agents have a cap on how many messages (channel posts + DMs combined) they can send per turn, controlled by max_messages_per_turn (default: 5). Tune this for the situation.
+    - Agents have a cap on how many messages (channel posts + DMs combined) they can send per turn, controlled by max_messages_per_turn (default: 7). Tune this for the situation.
     - A lower cap forces agents to prioritize who they talk to and what they say — use low values (2-3) for situations where communication is costly or limited (e.g., wartime, isolation scenarios, high-pressure negotiations).
     - A higher cap (6-15) suits situations with rich public discourse (e.g., parliamentary debates, open marketplaces).
     - This creates meaningful strategic choices about communication: who do you update, who do you lobby, who do you ignore?

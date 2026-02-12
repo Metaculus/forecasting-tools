@@ -24,10 +24,7 @@ logger = logging.getLogger(__name__)
 
 def load_situation_from_file(filepath: str) -> Situation:
     data = file_manipulation.load_json_file(filepath)
-    if len(data) != 1:
-        raise ValueError(
-            f"Situation file must contain exactly one situation, but found {len(data)}"
-        )
+    assert len(data) == 1, "Situation file must contain exactly one situation"
     return Situation.model_validate(data[0])
 
 
@@ -58,7 +55,7 @@ async def run_simulation(
                 f"(iteration {i + 1}/{steps_to_run}) ---"
             )
 
-            step = await simulator.run_step(state)
+            step = await simulator.run_step_and_update_state(state)
             all_steps.append(step)
 
             save_step_to_file(run_dir, step)
@@ -70,8 +67,8 @@ async def run_simulation(
                 f"Cost so far: ${cost_manager.current_usage:.4f}"
             )
 
-    total_cost = cost_manager.current_usage
-    save_full_simulation(run_dir, situation, all_steps, state, total_cost)
+        total_cost = cost_manager.current_usage
+        save_full_simulation(run_dir, situation, all_steps, state, total_cost)
 
     logger.info(
         f"Simulation complete. {len(all_steps)} steps run. "
