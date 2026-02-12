@@ -144,7 +144,7 @@ class InterventionRunner:
             f"[Run {run_id}] Complete. "
             f"Forecasts: {len(resolved_forecasts)}, "
             f"Resolved: {len(run.resolved_forecasts)}, "
-            f"Avg Brier: {avg_brier:.4f if avg_brier is not None else 'N/A'}, "
+            f"Avg Brier: {f'{avg_brier:.4f}' if avg_brier is not None else 'N/A'}, "
             f"Cost: ${total_cost:.2f}"
         )
 

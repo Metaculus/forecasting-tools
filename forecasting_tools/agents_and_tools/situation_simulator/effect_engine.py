@@ -7,6 +7,7 @@ import random
 from forecasting_tools.agents_and_tools.situation_simulator.data_models import (
     Effect,
     InventoryCondition,
+    Message,
     SimulationState,
     Situation,
     TradeProposal,
@@ -153,6 +154,14 @@ class EffectEngine:
 
         elif effect.type == "message":
             resolved_message = self._resolve_param_refs(effect.message_text, params)
+            system_message = Message(
+                step=self.state.step_number,
+                sender="System",
+                channel=None,
+                recipients=[resolved_target],
+                content=resolved_message,
+            )
+            self.state.message_history.append(system_message)
             return [f"System message for {resolved_target}: {resolved_message}"]
 
         return []

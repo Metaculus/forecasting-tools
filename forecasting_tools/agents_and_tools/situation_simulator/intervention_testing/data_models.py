@@ -30,7 +30,10 @@ class InterventionForecast(BaseModel, Jsonable):
         default=False,
         description="True = forecast under intervention, False = forecast under status quo",
     )
-    category: ForecastCategory
+    category: ForecastCategory = Field(
+        default=ForecastCategory.QUALITATIVE,
+        description="'hard_metric' for inventory-based forecasts, 'qualitative' for event-based",
+    )
     hard_metric_criteria: HardMetricCriteria | None = Field(
         default=None,
         description="Structured criteria for auto-resolving hard metric forecasts",

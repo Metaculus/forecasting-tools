@@ -8,6 +8,7 @@ from pathlib import Path
 import streamlit as st
 
 from forecasting_tools.agents_and_tools.situation_simulator.data_models import (
+    AgentAction,
     Message,
     SimulationState,
     SimulationStep,
@@ -199,9 +200,20 @@ class SimulatorPage(AppPage):
 
     @classmethod
     def _display_local_run_browser(cls) -> None:
-        simulations_dir = Path(DEFAULT_SIMULATIONS_DIR)
+        browse_dir = st.text_input(
+            "Simulations folder",
+            value=DEFAULT_SIMULATIONS_DIR,
+            key="resume_browse_dir",
+            help="Change this to browse a different folder for saved simulations.",
+        )
+        simulations_dir = (
+            Path(browse_dir.strip())
+            if browse_dir.strip()
+            else Path(DEFAULT_SIMULATIONS_DIR)
+        )
+
         if not simulations_dir.exists():
-            st.info("No local simulation runs found.")
+            st.info(f"Directory not found: `{simulations_dir}`")
             return
 
         run_dirs = sorted(
@@ -210,7 +222,7 @@ class SimulatorPage(AppPage):
             reverse=True,
         )
         if not run_dirs:
-            st.info("No local simulation runs found.")
+            st.info("No simulation runs found in this directory.")
             return
 
         selected_run_name = st.selectbox(
@@ -428,14 +440,17 @@ class SimulatorPage(AppPage):
         steps: list[SimulationStep],
         state: SimulationState | None,
     ) -> None:
-        tab_slack, tab_timeline, tab_inventory, tab_trades, tab_json = st.tabs(
-            [
-                "💬 Slack",
-                "📋 Timeline",
-                "📦 Inventories",
-                "🤝 Trades",
-                "📄 Situation JSON",
-            ]
+        tab_slack, tab_timeline, tab_player, tab_inventory, tab_trades, tab_json = (
+            st.tabs(
+                [
+                    "💬 Slack",
+                    "📋 Timeline",
+                    "👤 Player View",
+                    "📦 Inventories",
+                    "🤝 Trades",
+                    "📄 Situation JSON",
+                ]
+            )
         )
 
         with tab_slack:
@@ -443,6 +458,9 @@ class SimulatorPage(AppPage):
 
         with tab_timeline:
             cls._display_timeline(steps)
+
+        with tab_player:
+            cls._display_player_view(situation, steps, state)
 
         with tab_inventory:
             cls._display_inventories(situation, state)
@@ -546,6 +564,253 @@ class SimulatorPage(AppPage):
         st.markdown("**Triggered effects:**")
         for log_entry in step.triggered_effects_log:
             st.caption(f"  ⚡ {log_entry}")
+
+    @classmethod
+    def _display_player_view(
+        cls,
+        situation: Situation,
+        steps: list[SimulationStep],
+        state: SimulationState | None,
+    ) -> None:
+        if state is None:
+            st.info("No simulation state yet.")
+            return
+
+        agent_names = [a.name for a in situation.agents]
+        selected_agent = st.selectbox(
+            "Select a player",
+            options=agent_names,
+            key="player_view_agent",
+        )
+        if selected_agent is None:
+            return
+
+        agent_color_map = cls._get_agent_color_map(situation)
+        color = agent_color_map.get(selected_agent, "#666")
+
+        agent_def = next(
+            (a for a in situation.agents if a.name == selected_agent), None
+        )
+        if agent_def:
+            public_persona = [m for m in agent_def.persona if not m.hidden]
+            persona_text = ", ".join(f"{m.key}: {m.value}" for m in public_persona)
+            st.markdown(
+                f'<div style="padding: 8px; border-left: 3px solid {color}; '
+                f'background: rgba(0,0,0,0.03); border-radius: 4px; margin-bottom: 12px;">'
+                f'<strong style="color: {color};">{selected_agent}</strong><br/>'
+                f'<span style="font-size: 0.85em;">{persona_text}</span></div>',
+                unsafe_allow_html=True,
+            )
+
+        (
+            action_tab,
+            msg_tab,
+            inv_tab,
+            trade_tab,
+        ) = st.tabs(
+            [
+                "🎬 Actions",
+                "💬 Messages",
+                "📦 Inventory History",
+                "🤝 Trades",
+            ]
+        )
+
+        with action_tab:
+            cls._render_player_actions(selected_agent, steps, color)
+
+        with msg_tab:
+            cls._render_player_messages(selected_agent, state, agent_color_map)
+
+        with inv_tab:
+            cls._render_player_inventory_history(selected_agent, steps, state)
+
+        with trade_tab:
+            cls._render_player_trades(selected_agent, state)
+
+    @classmethod
+    def _render_player_actions(
+        cls,
+        agent_name: str,
+        steps: list[SimulationStep],
+        color: str,
+    ) -> None:
+        player_actions: list[tuple[int, AgentAction]] = []
+        for step in steps:
+            for action in step.agent_actions:
+                if action.agent_name == agent_name:
+                    player_actions.append((step.step_number, action))
+
+        if not player_actions:
+            st.info(f"No actions recorded for {agent_name}.")
+            return
+
+        st.markdown(f"**{len(player_actions)} actions across {len(steps)} steps**")
+
+        for step_number, action in reversed(player_actions):
+            action_label = action.action_name
+            if action.parameters:
+                params_str = ", ".join(f"{k}={v}" for k, v in action.parameters.items())
+                action_label += f" ({params_str})"
+
+            with st.expander(f"Step {step_number} — {action_label}"):
+                st.markdown(f"**Action:** {action.action_name}")
+                if action.parameters:
+                    st.markdown("**Parameters:**")
+                    for k, v in action.parameters.items():
+                        st.text(f"  {k}: {v}")
+
+                if action.messages_to_send:
+                    st.markdown("**Messages sent:**")
+                    for msg in action.messages_to_send:
+                        target = f"#{msg.channel}" if msg.channel else "DM"
+                        recipients = ", ".join(msg.recipients) if msg.recipients else ""
+                        target_label = (
+                            f"{target} → {recipients}" if recipients else target
+                        )
+                        st.markdown(
+                            f'<div style="margin: 4px 0; padding: 6px; '
+                            f"border-left: 2px solid {color}; "
+                            f'background: rgba(0,0,0,0.02); border-radius: 3px;">'
+                            f'<span style="color: #888; font-size: 0.8em;">'
+                            f"{target_label}</span><br/>"
+                            f"{msg.content}</div>",
+                            unsafe_allow_html=True,
+                        )
+
+                if action.trade_proposal:
+                    tp = action.trade_proposal
+                    offering = ", ".join(f"{v} {k}" for k, v in tp.offering.items())
+                    requesting = ", ".join(f"{v} {k}" for k, v in tp.requesting.items())
+                    st.markdown(
+                        f"**Trade proposed:** offering {offering} " f"for {requesting}"
+                    )
+
+                if action.trade_acceptance_id:
+                    st.markdown(
+                        f"**Accepted trade:** {action.trade_acceptance_id[:8]}..."
+                    )
+
+    @classmethod
+    def _render_player_messages(
+        cls,
+        agent_name: str,
+        state: SimulationState,
+        agent_color_map: dict[str, str],
+    ) -> None:
+        sent_messages = [m for m in state.message_history if m.sender == agent_name]
+        received_messages = [
+            m
+            for m in state.message_history
+            if agent_name in m.recipients and m.sender != agent_name
+        ]
+
+        sent_tab, received_tab = st.tabs(
+            [
+                f"Sent ({len(sent_messages)})",
+                f"Received ({len(received_messages)})",
+            ]
+        )
+
+        with sent_tab:
+            if not sent_messages:
+                st.caption(f"No messages sent by {agent_name}.")
+            else:
+                cls._render_messages(sent_messages, agent_color_map)
+
+        with received_tab:
+            if not received_messages:
+                st.caption(f"No messages received by {agent_name}.")
+            else:
+                cls._render_messages(received_messages, agent_color_map)
+
+    @classmethod
+    def _render_player_inventory_history(
+        cls,
+        agent_name: str,
+        steps: list[SimulationStep],
+        state: SimulationState,
+    ) -> None:
+        current_inventory = state.inventories.get(agent_name, {})
+        if current_inventory:
+            st.markdown(f"**Current inventory (Step {state.step_number}):**")
+            for item_name, qty in current_inventory.items():
+                st.text(f"  {item_name}: {qty}")
+        else:
+            st.caption("Current inventory is empty.")
+
+        if not steps:
+            return
+
+        st.markdown("---")
+        st.markdown("**Inventory changes by step:**")
+
+        for step in reversed(steps):
+            before = step.state_before.inventories.get(agent_name, {})
+            after = step.state_after.inventories.get(agent_name, {})
+            all_items = sorted(set(before.keys()) | set(after.keys()))
+            changes: list[str] = []
+            for item in all_items:
+                qty_before = before.get(item, 0)
+                qty_after = after.get(item, 0)
+                diff = qty_after - qty_before
+                if diff != 0:
+                    sign = "+" if diff > 0 else ""
+                    changes.append(f"{item}: {qty_before} → {qty_after} ({sign}{diff})")
+
+            if changes:
+                with st.expander(f"Step {step.step_number} — {len(changes)} change(s)"):
+                    for change in changes:
+                        st.text(f"  {change}")
+            else:
+                st.caption(f"Step {step.step_number} — no inventory changes")
+
+    @classmethod
+    def _render_player_trades(
+        cls,
+        agent_name: str,
+        state: SimulationState,
+    ) -> None:
+        player_pending = [
+            t
+            for t in state.pending_trades
+            if t.status == "pending"
+            and (t.proposer == agent_name or agent_name in t.eligible_acceptors)
+        ]
+        player_trade_records = [
+            r
+            for r in state.trade_history
+            if r.from_agent == agent_name or r.to_agent == agent_name
+        ]
+
+        if player_pending:
+            st.subheader("Pending Trades")
+            for trade in player_pending:
+                role = "proposed" if trade.proposer == agent_name else "can accept"
+                offering = ", ".join(f"{v} {k}" for k, v in trade.offering.items())
+                requesting = ", ".join(f"{v} {k}" for k, v in trade.requesting.items())
+                st.markdown(
+                    f"**{trade.proposer}** ({role}): offers {offering} "
+                    f"for {requesting} "
+                    f"(expires step {trade.expires_at_step})"
+                )
+
+        if player_trade_records:
+            st.subheader("Trade History")
+            for record in reversed(player_trade_records[-20:]):
+                direction = "sent" if record.from_agent == agent_name else "received"
+                other = (
+                    record.to_agent
+                    if record.from_agent == agent_name
+                    else record.from_agent
+                )
+                st.caption(
+                    f"Step {record.step}: {direction} {record.quantity} "
+                    f"{record.item_name} {'to' if direction == 'sent' else 'from'} "
+                    f"{other} (trade {record.trade_id[:8]}...)"
+                )
+        elif not player_pending:
+            st.info(f"No trade activity for {agent_name}.")
 
     @classmethod
     def _display_inventories(

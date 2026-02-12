@@ -123,7 +123,7 @@ async def _run_single_intervention(
         logger.info(
             f"Completed: {label} | run_id={run.run_id}, "
             f"{len(run.resolved_forecasts)}/{len(run.forecasts)} resolved, "
-            f"avg Brier={avg_brier:.4f if avg_brier is not None else 'N/A'}, "
+            f"avg Brier={f'{avg_brier:.4f}' if avg_brier is not None else 'N/A'}, "
             f"cost=${run.total_cost:.2f}"
         )
     except Exception as e:
@@ -215,8 +215,8 @@ def main() -> None:
     parser.add_argument(
         "--results-dir",
         type=str,
-        default="logs/intervention_benchmarks/",
-        help="Directory to save results (default: logs/intervention_benchmarks/).",
+        default="temp/intervention_benchmarks/",
+        help="Directory to save results (default: temp/intervention_benchmarks/).",
     )
     args = parser.parse_args()
 

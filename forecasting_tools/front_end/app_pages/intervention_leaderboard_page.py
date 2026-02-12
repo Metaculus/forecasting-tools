@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from pathlib import Path
 
 import pandas as pd
 import plotly.graph_objs as go
@@ -11,13 +12,14 @@ from forecasting_tools.agents_and_tools.situation_simulator.intervention_testing
     InterventionRun,
 )
 from forecasting_tools.agents_and_tools.situation_simulator.intervention_testing.intervention_storage import (
+    list_run_folders,
     load_all_intervention_runs,
 )
 from forecasting_tools.front_end.helpers.app_page import AppPage
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_RESULTS_DIR = "logs/intervention_benchmarks/"
+DEFAULT_RESULTS_BASE = "temp/intervention_benchmarks/"
 
 
 class InterventionLeaderboardPage(AppPage):
@@ -28,21 +30,23 @@ class InterventionLeaderboardPage(AppPage):
 
     @classmethod
     async def _async_main(cls) -> None:
-        run_intervention_leaderboard_page(DEFAULT_RESULTS_DIR)
+        run_intervention_leaderboard_page(DEFAULT_RESULTS_BASE)
 
 
-def run_intervention_leaderboard_page(results_dir: str) -> None:
+def run_intervention_leaderboard_page(results_base: str) -> None:
     st.title("Intervention Forecast Leaderboard")
     st.markdown(
         "Compare model performance on conditional intervention forecasts "
         "from simulation scenarios."
     )
 
+    results_dir = _display_folder_picker(results_base)
+
     all_runs = _load_runs_cached(results_dir)
     if not all_runs:
         st.warning(
-            "No intervention benchmark results found. "
-            f"Run the benchmark script to generate results in `{results_dir}`."
+            "No intervention benchmark results found in the selected folder. "
+            "Run the benchmark script to generate results."
         )
         return
 
@@ -60,6 +64,35 @@ def run_intervention_leaderboard_page(results_dir: str) -> None:
     _display_hard_metric_details(all_runs)
     st.markdown("---")
     _display_run_details(all_runs)
+
+
+def _display_folder_picker(results_base: str) -> str:
+    with st.sidebar:
+        st.subheader("Select Run Folder")
+
+        available_folders = list_run_folders(results_base)
+        folder_display_names = [Path(f).name for f in available_folders]
+
+        load_all_label = f"All runs in {results_base}"
+        options = [load_all_label] + folder_display_names
+
+        selected = st.selectbox("Run folder", options)
+
+        if selected == load_all_label:
+            active_dir = results_base
+        else:
+            selected_idx = folder_display_names.index(selected)
+            active_dir = available_folders[selected_idx]
+
+        custom_path = st.text_input(
+            "Or enter a custom folder path",
+            placeholder="e.g. temp/intervention_benchmarks/run_2026-...",
+        )
+        if custom_path.strip():
+            active_dir = custom_path.strip()
+
+        st.caption(f"Loading from: `{active_dir}`")
+    return active_dir
 
 
 @st.cache_data(ttl=60)

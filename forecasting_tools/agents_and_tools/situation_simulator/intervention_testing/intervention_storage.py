@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import json
 import logging
-import os
 from pathlib import Path
 
 from forecasting_tools.agents_and_tools.situation_simulator.intervention_testing.data_models import (
@@ -11,7 +11,7 @@ from forecasting_tools.util.file_manipulation import add_to_jsonl_file
 
 logger = logging.getLogger(__name__)
 
-INTERVENTION_RESULTS_DIR = "logs/intervention_benchmarks/"
+INTERVENTION_RESULTS_DIR = "temp/intervention_benchmarks/"
 
 
 def save_intervention_run(
@@ -28,49 +28,58 @@ def save_intervention_run(
 def load_all_intervention_runs(
     results_dir: str = INTERVENTION_RESULTS_DIR,
 ) -> list[InterventionRun]:
-    all_runs: list[InterventionRun] = []
     results_path = Path(results_dir)
     if not results_path.exists():
         logger.info(f"No intervention results directory found at {results_dir}")
-        return all_runs
+        return []
 
-    jsonl_files = sorted(results_path.rglob("*.jsonl"))
-    for file_path in jsonl_files:
+    all_runs: list[InterventionRun] = []
+    all_runs.extend(_load_from_jsonl_files(results_path))
+    all_runs.extend(_load_from_run_summary_files(results_path))
+
+    seen_ids: set[str] = set()
+    deduped: list[InterventionRun] = []
+    for run in all_runs:
+        if run.run_id not in seen_ids:
+            seen_ids.add(run.run_id)
+            deduped.append(run)
+
+    logger.info(f"Loaded {len(deduped)} unique intervention runs from {results_dir}")
+    return deduped
+
+
+def list_run_folders(base_dir: str = INTERVENTION_RESULTS_DIR) -> list[str]:
+    base_path = Path(base_dir)
+    if not base_path.exists():
+        return []
+    folders = []
+    for entry in sorted(base_path.iterdir()):
+        if entry.is_dir():
+            folders.append(str(entry))
+    return folders
+
+
+def _load_from_jsonl_files(results_path: Path) -> list[InterventionRun]:
+    runs: list[InterventionRun] = []
+    for file_path in sorted(results_path.rglob("*.jsonl")):
         try:
-            runs = InterventionRun.load_json_from_file_path(str(file_path))
-            all_runs.extend(runs)
-            logger.info(f"Loaded {len(runs)} runs from {file_path}")
+            loaded = InterventionRun.load_json_from_file_path(str(file_path))
+            runs.extend(loaded)
+            logger.info(f"Loaded {len(loaded)} runs from {file_path}")
         except Exception as e:
-            logger.error(f"Error loading {file_path}: {e}")
-
-    logger.info(f"Loaded {len(all_runs)} total intervention runs")
-    return all_runs
+            logger.error(f"Error loading JSONL {file_path}: {e}")
+    return runs
 
 
-def load_intervention_runs_for_model(
-    model_name: str,
-    results_dir: str = INTERVENTION_RESULTS_DIR,
-) -> list[InterventionRun]:
-    safe_model_name = model_name.replace("/", "_")
-    file_path = f"{results_dir}{safe_model_name}.jsonl"
-    if not os.path.exists(file_path):
-        logger.info(f"No results file found for model '{model_name}' at {file_path}")
-        return []
-    try:
-        return InterventionRun.load_json_from_file_path(file_path)
-    except Exception as e:
-        logger.error(f"Error loading results for model '{model_name}': {e}")
-        return []
-
-
-def get_available_model_names(
-    results_dir: str = INTERVENTION_RESULTS_DIR,
-) -> list[str]:
-    results_path = Path(results_dir)
-    if not results_path.exists():
-        return []
-    model_names = []
-    for file_path in sorted(results_path.glob("*.jsonl")):
-        model_name = file_path.stem.replace("_", "/")
-        model_names.append(model_name)
-    return model_names
+def _load_from_run_summary_files(results_path: Path) -> list[InterventionRun]:
+    runs: list[InterventionRun] = []
+    for file_path in sorted(results_path.rglob("run_summary.json")):
+        try:
+            with open(file_path, "r") as f:
+                data = json.load(f)
+            run = InterventionRun.from_json(data)
+            runs.append(run)
+            logger.info(f"Loaded run {run.run_id} from {file_path}")
+        except Exception as e:
+            logger.error(f"Error loading run_summary {file_path}: {e}")
+    return runs
