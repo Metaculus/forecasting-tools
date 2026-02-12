@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 import random
@@ -32,6 +31,7 @@ from forecasting_tools.agents_and_tools.situation_simulator.simulator import (
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.util import file_manipulation
 
 logger = logging.getLogger(__name__)
 
@@ -250,8 +250,7 @@ def _save_simulation_result(
         "final_state": result.final_state.model_dump(),
     }
     filepath = run_dir / filename
-    with open(filepath, "w") as f:
-        json.dump(data, f, indent=2)
+    file_manipulation.write_json_file(filepath, data)
     logger.info(f"Saved simulation to {filepath}")
 
 
@@ -260,8 +259,7 @@ def _save_policy_result(
     policy_result: PolicyAgentResult,
 ) -> None:
     filepath = run_dir / "policy_result.json"
-    with open(filepath, "w") as f:
-        json.dump(policy_result.to_json(), f, indent=2)
+    file_manipulation.write_json_file(filepath, policy_result.to_json())
     logger.info(f"Saved policy result to {filepath}")
 
 
@@ -270,6 +268,5 @@ def _save_run_summary(
     run: InterventionRun,
 ) -> None:
     filepath = run_dir / "run_summary.json"
-    with open(filepath, "w") as f:
-        json.dump(run.to_json(), f, indent=2)
+    file_manipulation.write_json_file(filepath, run.to_json())
     logger.info(f"Saved run summary to {filepath}")

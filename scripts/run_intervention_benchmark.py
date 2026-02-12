@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import json
 import logging
 import os
 import random
@@ -17,6 +16,7 @@ from forecasting_tools.agents_and_tools.situation_simulator.intervention_testing
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.util import file_manipulation
 from forecasting_tools.util.custom_logger import CustomLogger
 
 logger = logging.getLogger(__name__)
@@ -34,8 +34,7 @@ def load_all_situations(situations_dir: str) -> list[Situation]:
     situations: list[Situation] = []
     for json_file in sorted(situations_path.glob("*.json")):
         try:
-            with open(json_file, "r") as f:
-                data = json.load(f)
+            data = file_manipulation.load_json_file(str(json_file))[0]
             situation = Situation.model_validate(data)
             situations.append(situation)
             logger.info(f"Loaded situation: {situation.name} from {json_file}")

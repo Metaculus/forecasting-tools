@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import json
 import logging
 
 from forecasting_tools.agents_and_tools.situation_simulator.data_models import (
@@ -17,15 +16,19 @@ from forecasting_tools.agents_and_tools.situation_simulator.simulator import (
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.util import file_manipulation
 from forecasting_tools.util.custom_logger import CustomLogger
 
 logger = logging.getLogger(__name__)
 
 
 def load_situation_from_file(filepath: str) -> Situation:
-    with open(filepath, "r") as f:
-        data = json.load(f)
-    return Situation.model_validate(data)
+    data = file_manipulation.load_json_file(filepath)
+    if len(data) != 1:
+        raise ValueError(
+            f"Situation file must contain exactly one situation, but found {len(data)}"
+        )
+    return Situation.model_validate(data[0])
 
 
 async def run_simulation(

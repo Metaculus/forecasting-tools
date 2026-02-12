@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 
 from forecasting_tools.agents_and_tools.situation_simulator.intervention_testing.data_models import (
     InterventionRun,
 )
+from forecasting_tools.util import file_manipulation
 from forecasting_tools.util.file_manipulation import add_to_jsonl_file
 
 logger = logging.getLogger(__name__)
@@ -75,8 +75,7 @@ def _load_from_run_summary_files(results_path: Path) -> list[InterventionRun]:
     runs: list[InterventionRun] = []
     for file_path in sorted(results_path.rglob("run_summary.json")):
         try:
-            with open(file_path, "r") as f:
-                data = json.load(f)
+            data = file_manipulation.load_json_file(str(file_path))[0]
             run = InterventionRun.from_json(data)
             runs.append(run)
             logger.info(f"Loaded run {run.run_id} from {file_path}")

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import logging
 import os
 from datetime import datetime
@@ -23,6 +22,7 @@ from forecasting_tools.agents_and_tools.situation_simulator.effect_engine import
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.util import file_manipulation
 
 logger = logging.getLogger(__name__)
 
@@ -42,15 +42,13 @@ def create_run_directory(
 
 def save_situation_to_file(run_dir: Path, situation: Situation) -> None:
     situation_path = run_dir / "situation.json"
-    with open(situation_path, "w") as f:
-        json.dump(situation.model_dump(), f, indent=2)
+    file_manipulation.write_json_file(situation_path, situation.model_dump())
     logger.info(f"Saved situation to {situation_path}")
 
 
 def save_step_to_file(run_dir: Path, step: SimulationStep) -> None:
     step_path = run_dir / f"step_{step.step_number:03d}.json"
-    with open(step_path, "w") as f:
-        json.dump(step.model_dump(), f, indent=2)
+    file_manipulation.write_json_file(step_path, step.model_dump())
     logger.info(f"Saved step {step.step_number} to {step_path}")
 
 
@@ -68,8 +66,7 @@ def save_full_simulation(
         "total_cost_usd": total_cost,
     }
     result_path = run_dir / "full_simulation.json"
-    with open(result_path, "w") as f:
-        json.dump(result, f, indent=2)
+    file_manipulation.write_json_file(result_path, result)
     logger.info(f"Saved full simulation to {result_path}")
 
 
