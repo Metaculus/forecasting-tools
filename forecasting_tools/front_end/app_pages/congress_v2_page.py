@@ -35,6 +35,10 @@ from forecasting_tools.util.file_manipulation import (
 logger = logging.getLogger(__name__)
 
 SESSIONS_FOLDER = "temp/congress_v2_sessions"
+EXAMPLE_SESSION_PATH = (
+    "forecasting_tools/front_end/example_outputs/congress_v2_page_example.json"
+)
+V2_PASSPHRASE = f"metac {CustomAuth.DEFAULT_PASSPHRASE}"
 
 
 class CongressV2Page(AppPage):
@@ -88,7 +92,7 @@ class CongressV2Page(AppPage):
     ]
 
     @classmethod
-    @CustomAuth.add_access_control()
+    @CustomAuth.add_access_control(allowed_passphrases=[V2_PASSPHRASE])
     async def _async_main(cls) -> None:
         st.title("🏛️ AI Forecasting Congress V2")
         st.markdown(
@@ -124,7 +128,13 @@ class CongressV2Page(AppPage):
     @classmethod
     def _display_example_button(cls) -> None:
         with st.expander("Load Premade Example", expanded=False):
-            st.info("No example session available yet. Run a session to create one.")
+            if st.button("Load Example", key="v2_load_example_btn"):
+                session = cls._load_session_from_file(EXAMPLE_SESSION_PATH)
+                if session:
+                    st.session_state["latest_v2_session"] = session
+                    st.rerun()
+                else:
+                    st.error("Could not load the example session.")
 
     @classmethod
     def _display_sidebar(cls) -> None:
