@@ -75,7 +75,7 @@ class LlmMessage(BaseModel, Jsonable):
 class SimulationAgentRunner:
     def __init__(
         self,
-        default_model: str = "openrouter/anthropic/claude-sonnet-4",
+        default_model: str = "openrouter/anthropic/claude-sonnet-4.5",
         timeout: int = AGENT_TURN_TIMEOUT,
     ) -> None:
         self.default_model = default_model

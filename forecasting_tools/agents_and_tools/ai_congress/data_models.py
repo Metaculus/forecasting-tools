@@ -14,7 +14,7 @@ class CongressMember(BaseModel, Jsonable):
     general_motivation: str
     expertise_areas: list[str]
     personality_traits: list[str]
-    ai_model: str = "openrouter/anthropic/claude-sonnet-4"
+    ai_model: str = "openrouter/anthropic/claude-sonnet-4.5"
 
     @property
     def expertise_string(self) -> str:
@@ -74,10 +74,12 @@ class PolicyProposal(BaseModel, Jsonable):
         description="Top 3-5 actionable recommendations"
     )
     price_estimate: float | None = Field(
-        default=None, description="Estimated cost in USD for generating this proposal"
+        default=None,
+        description="Estimated cost in USD for generating this proposal. If you are an AI, leave this None as you don't know the value.",
     )
-    delphi_round: int = Field(
-        default=1, description="Which Delphi round produced this proposal"
+    delphi_round: int | None = Field(
+        default=1,
+        description="Which Delphi round produced this proposal. None if unknown.",
     )
 
     @property

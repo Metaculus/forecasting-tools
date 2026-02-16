@@ -7,6 +7,7 @@ import streamlit as st
 from forecasting_tools.front_end.app_pages.benchmark_page import BenchmarkPage
 from forecasting_tools.front_end.app_pages.chat_page import ChatPage
 from forecasting_tools.front_end.app_pages.congress_page import CongressPage
+from forecasting_tools.front_end.app_pages.congress_v2_page import CongressV2Page
 from forecasting_tools.front_end.app_pages.intervention_leaderboard_page import (
     InterventionLeaderboardPage,
 )
@@ -42,6 +43,7 @@ class HomePage(AppPage):
     KEY_FACTORS_PAGE: type[AppPage] = KeyFactorsPage
     CSV_AGENT_PAGE: type[AppPage] = CsvAgentPage
     CONGRESS_PAGE: type[AppPage] = CongressPage
+    CONGRESS_V2_PAGE: type[AppPage] = CongressV2Page
     SIMULATOR_PAGE: type[AppPage] = SimulatorPage
     BENCHMARK_PAGE: type[AppPage] = BenchmarkPage
     INTERVENTION_LEADERBOARD_PAGE: type[AppPage] = InterventionLeaderboardPage
@@ -53,6 +55,7 @@ class HomePage(AppPage):
         NICHE_LIST_RESEARCH_PAGE,
         ESTIMATOR_PAGE,
         CONGRESS_PAGE,
+        CONGRESS_V2_PAGE,
         SIMULATOR_PAGE,
         CSV_AGENT_PAGE,
     ]
