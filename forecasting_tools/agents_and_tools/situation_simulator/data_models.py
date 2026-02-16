@@ -78,7 +78,7 @@ class AgentDefinition(BaseModel, Jsonable):
     starting_inventory: dict[str, int] = Field(default_factory=dict)
     special_actions: list[ActionDefinition] = Field(default_factory=list)
     inventory_rules: list[InventoryRule] = Field(default_factory=list)
-    ai_model: str = "openrouter/anthropic/claude-sonnet-4"
+    ai_model: str = "openrouter/anthropic/claude-sonnet-4.5"
 
 
 class Channel(BaseModel, Jsonable):

@@ -1,4 +1,4 @@
-from forecasting_tools.agents_and_tools.ai_congress.data_models import CongressMember
+from forecasting_tools.agents_and_tools.ai_congress_v2.data_models import CongressMember
 
 # =============================================================================
 # POLITICAL VALUE-BASED MEMBERS
