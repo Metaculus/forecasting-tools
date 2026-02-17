@@ -447,7 +447,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_3_pro = "openrouter/google/gemini-3-pro-preview"
     gemini_default_timeout = 5 * 60
-    deepnews_model = "asknews/deep-research/medium-depth/claude-sonnet-4-5-20250929"  # Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
+    deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-5-20250929"  # Switched to high depth Feb 16th 2026. Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
 
     roughly_sonnet_4_cost = 0.25190
     roughly_gpt_5_high_cost = 0.37868
@@ -560,6 +560,81 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     mode_base_bot_mapping = {
         # "METAC_GROK_4_1_HIGH": {} # TODO: Add these bots to github workflow. Its not yet released via API as of Dec 21st, 2025
         # "METAC_GROK_4_1": {}
+        ############################ Bots started in February 2026 ############################
+        "METAC_CLAUDE_OPUS_4_6_HIGH_32K": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 1.3,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-opus-4-6",
+                    **claude_thinking_settings_32k,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_CLAUDE_OPUS_4_6": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-opus-4-6",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.NONE,
+        },
+        "METAC_CLAUDE_HAIKU_4_5": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-haiku-4-5",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_QWEN3_MAX_THINKING": {
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/qwen/qwen3-max-thinking",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_MINIMAX_M2_5": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/minimax/minimax-m2.5",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_KIMI_K2_5_HIGH": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/moonshotai/kimi-k2.5",
+                    temperature=default_temperature,
+                    reasoning={
+                        "effort": "high",
+                    },
+                    timeout=kimi_k2_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GLM_5": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/z-ai/glm-5",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ Bots started in December 2025 ############################
         "METAC_CLAUDE_OPUS_4_5_HIGH_32K": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 1.3,
