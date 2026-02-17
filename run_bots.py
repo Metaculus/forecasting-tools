@@ -447,7 +447,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_3_pro = "openrouter/google/gemini-3-pro-preview"
     gemini_default_timeout = 5 * 60
-    deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-5-20250929"  # Switch to opus 4.6 and high depth Feb 16th 2026. Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
+    deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-5-20250929"  # Switched to high depth Feb 16th 2026. Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
 
     roughly_sonnet_4_cost = 0.25190
     roughly_gpt_5_high_cost = 0.37868
