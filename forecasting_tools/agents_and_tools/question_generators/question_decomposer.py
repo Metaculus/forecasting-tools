@@ -72,7 +72,7 @@ class QuestionDecomposer:
             3. Iteratively run searches (run multiple at a time if you can) until you feel ready to make questions. Don't go through more than 5 iterations on this.
             4. Come up with {number_of_questions} question ideas and run (in parallel) a quick search on each of them asking:
             > "How has [question] resolved in the past? Please provide a link to how to find this value or if you cannot find an exact resolution source, to suggest another question".
-            5. Ask yourself if the question matches the criteria, and if you have a valid past resolution..
+            5. Ask yourself if the question matches the criteria, and if you have a valid past resolution.
             6. Iterate until you have a list of high VOI questions that match all the criteria, and how they have resolved in the past. Feel free to change directions if you cannot find a resolution source. Don't go through more than 4 iterations on this step (run parallel searches on multiple questions at once to fit them all into 4 iterations)
             7. Pick your top questions
             8. Give your final answer in the requested format
