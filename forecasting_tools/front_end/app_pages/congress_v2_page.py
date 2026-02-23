@@ -42,7 +42,7 @@ V2_PASSPHRASE = f"metac {CustomAuth.DEFAULT_PASSPHRASE}"
 
 
 class CongressV2Page(AppPage):
-    PAGE_DISPLAY_NAME: str = "🏛️ AI Congress V2 (Scenarios)"
+    PAGE_DISPLAY_NAME: str = "🏛️ AI Congress V2"
     URL_PATH: str = "/ai-congress-v2"
     IS_DEFAULT_PAGE: bool = False
 
