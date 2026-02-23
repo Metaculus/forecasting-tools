@@ -13,6 +13,7 @@ except ImportError:
     pass
 
 try:
+    from asknews_sdk.api.chat import DeepNewsModel
     from asknews_sdk.dto.deepnews import CreateDeepNewsResponse
 except ImportError:
     pass
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 class AskNewsSearcher:
     _default_search_depth = 1
     _default_max_depth = 1
-    _default_model = "deepseek-basic"
+    _default_model = "deepseek-basic"  # NOTE: As of Feb 23rd, 2026 this routes to the best open source model available in the background (not specifcially deepseek)
     _default_sources = ["asknews"]
     _default_rate_limit = 12
 
@@ -217,10 +218,7 @@ class AskNewsSearcher:
         self,
         query: str,
         sources: list[str] | None = None,
-        model: (
-            Literal["deepseek", "deepseek-basic", "claude-3-7-sonnet-latest", "o3-mini"]
-            | str
-        ) = _default_model,
+        model: DeepNewsModel | str = _default_model,
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
         filter_params: dict[str, bool] | None = None,

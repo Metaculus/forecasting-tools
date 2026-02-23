@@ -38,7 +38,7 @@ async def structure_output(
     for i, sample in enumerate(samples):
         if sample != first_sample:
             raise ValueError(
-                f"Sampled outputs are not the same:\nFirst Sample:\n{first_sample}\n\nSample {i + 1}:\n{sample}"
+                f"Sampled outputs from structure_output are not the same. There is ambiguity in the text being structured:\nFirst Sample:\n{first_sample}\n\nSample {i + 1}:\n{sample}."
             )
     return first_sample
 
