@@ -40,11 +40,11 @@ def _all_tests() -> list[ModelTest]:
             test_data.get_cheap_user_message(),
         ),
         ModelTest(
-            GeneralLlm(model="claude-3-7-sonnet-latest"),
+            GeneralLlm(model="claude-4-6-sonnet"),
             test_data.get_cheap_user_message(),
         ),
         ModelTest(
-            GeneralLlm(model="claude-3-7-sonnet-latest"),
+            GeneralLlm(model="claude-4-6-sonnet"),
             test_data.get_cheap_vision_message_data(),
         ),
         ModelTest(
