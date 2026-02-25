@@ -689,7 +689,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=0,  # 0 is recommended for this model in non-reasoning mode
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # No longer available via OpenRouter as of Feb 25th, 2026
         },
         "METAC_GEMINI_3_FLASH": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost * 2,
