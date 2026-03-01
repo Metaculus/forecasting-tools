@@ -2,7 +2,7 @@
 
 # Install pipx (https://pipx.pypa.io/stable/installation/)
 sudo apt update -y
-sudo apt install -y pipx
+sudo apt install -y pipx ripgrep
 
 # Install poetry using pipx (https://python-poetry.org/docs/#installation)
 pipx install poetry
