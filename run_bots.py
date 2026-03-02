@@ -611,7 +611,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=1 * 60,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Removed since it timed out the workflow a lot
         },
         "METAC_KIMI_K2_5_HIGH": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
