@@ -48,6 +48,7 @@ POST_IDS_TO_SKIP = [
     31653,  # https://www.metaculus.com/questions/31653/ is rejected by qwen3-max and is causing noisy workflow errors
     39009,  # https://www.metaculus.com/questions/39009/ is rejected since too many MC options
     41362,  # https://www.metaculus.com/questions/41362/ is rejected because common cause of errors (confusion on units?)
+    42495,  # https://www.metaculus.com/questions/42495/ is rejected since too many MC options
 ]
 
 
