@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import random
+from datetime import datetime
 
 from forecasting_tools.agents_and_tools.question_generators.simple_question import (
     SimpleQuestion,
@@ -29,6 +30,61 @@ async def query_asknews(topic: str) -> str:
     """
     logger.info(f"TOOL: Querying AskNews for topic: {topic}")
     return await AskNewsSearcher().get_formatted_news_async(topic)
+
+
+def create_date_filtered_asknews_tool(
+    cutoff_date: datetime | None = None,
+) -> AgentTool:
+    """Factory that returns an AskNews search tool filtered to a date cutoff.
+
+    The returned tool only surfaces articles published **before**
+    ``cutoff_date``, preventing false positives from events that occurred
+    after a question's context window closed.
+
+    If ``cutoff_date`` is ``None`` the tool falls back to the standard
+    unfiltered AskNews search.
+
+    Args:
+        cutoff_date: Only return articles published before this datetime.
+            Typically set to the question's ``close_time``.
+
+    Returns:
+        An ``@agent_tool``-decorated async function suitable for inclusion
+        in an agent's ``tools`` list.
+    """
+    if cutoff_date is not None:
+        date_str = cutoff_date.strftime("%Y-%m-%d")
+        description = (
+            f"Search international news articles using AskNews. "
+            f"Results are automatically filtered to only include articles "
+            f"published BEFORE {date_str} (the question's close date) to "
+            f"avoid false positives from events that occurred after the "
+            f"question's context window. Returns ~16 article summaries with "
+            f"title, summary, URL, and publication date."
+        )
+    else:
+        description = (
+            "Search international news articles using AskNews. "
+            "Returns ~16 article summaries with title, summary, URL, and "
+            "publication date. Can search international news from other "
+            "languages."
+        )
+
+    @agent_tool(description_override=description)
+    async def query_asknews_date_filtered(topic: str) -> str:
+        logger.info(
+            f"TOOL: Querying AskNews for topic: {topic}"
+            + (f" (before {date_str})" if cutoff_date else "")
+        )
+        searcher = AskNewsSearcher()
+        if cutoff_date is not None:
+            return await searcher.get_formatted_news_before_date_async(
+                topic, cutoff_date
+            )
+        else:
+            return await searcher.get_formatted_news_async(topic)
+
+    return query_asknews_date_filtered
 
 
 @agent_tool

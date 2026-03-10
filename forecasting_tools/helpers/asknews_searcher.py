@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from asknews_sdk import AsyncAskNewsSDK
@@ -135,6 +136,84 @@ class AskNewsSearcher:
 
             self.cache.set(query, formatted_articles)
             return formatted_articles
+
+    async def get_formatted_news_before_date_async(
+        self,
+        query: str,
+        before_date: datetime,
+    ) -> str:
+        """Search AskNews for articles published before a specific date.
+
+        This is designed for resolution contexts where news published after
+        a question's close date should not influence the resolution. It uses
+        the AskNews ``end_timestamp`` parameter filtered on ``pub_date`` to
+        ensure only articles published before the cutoff are returned.
+
+        Args:
+            query: Natural language search query.
+            before_date: Only return articles published before this datetime.
+
+        Returns:
+            Formatted string of matching news articles.
+        """
+        cache_key = f"{query}__before__{before_date.isoformat()}"
+        cached_result = self.cache.get(cache_key)
+        if cached_result is not None:
+            logger.info(f"Found cached result for date-filtered query: {query}")
+            return cached_result
+
+        end_ts = int(before_date.timestamp())
+        now_utc = datetime.now(timezone.utc)
+        cutoff_is_recent = (now_utc - before_date) < timedelta(hours=48)
+
+        async with AsyncAskNewsSDK(
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            api_key=self.api_key,
+            scopes=set(["news"]),
+        ) as ask:
+            # If cutoff is within the last 48h, also search the hot database
+            hot_articles = []
+            if cutoff_is_recent:
+                hot_response = await ask.news.search_news(
+                    query=query,
+                    n_articles=6,
+                    return_type="both",
+                    strategy="default",
+                    end_timestamp=end_ts,
+                    time_filter="pub_date",
+                    historical=False,
+                )
+                hot_articles = hot_response.as_dicts or []
+                await asyncio.sleep(self._default_rate_limit)
+
+            # Search the historical archive (back to 2023)
+            historical_response = await ask.news.search_news(
+                query=query,
+                n_articles=10,
+                return_type="both",
+                strategy="default",
+                end_timestamp=end_ts,
+                time_filter="pub_date",
+                historical=True,
+            )
+            historical_articles = historical_response.as_dicts or []
+
+        formatted_articles = (
+            f"Here are the relevant news articles "
+            f"(filtered to articles published before "
+            f"{before_date.strftime('%Y-%m-%d')}):\n\n"
+        )
+
+        if hot_articles:
+            formatted_articles += self._format_articles(hot_articles)
+        if historical_articles:
+            formatted_articles += self._format_articles(historical_articles)
+        if not hot_articles and not historical_articles:
+            formatted_articles += "No articles were found.\n\n"
+
+        self.cache.set(cache_key, formatted_articles)
+        return formatted_articles
 
     def _format_articles(self, articles: list[SearchResponseDictItem]) -> str:
         formatted_articles = ""
