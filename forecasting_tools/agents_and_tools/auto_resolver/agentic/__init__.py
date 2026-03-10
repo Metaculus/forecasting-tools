@@ -17,6 +17,8 @@ Architecture:
 import logging
 from typing import AsyncGenerator, Optional, Callable
 
+import pendulum
+
 from openai.types.responses import ResponseTextDeltaEvent
 
 from forecasting_tools.data_models.questions import (
@@ -26,7 +28,10 @@ from forecasting_tools.data_models.questions import (
 )
 from forecasting_tools import MetaculusQuestion, BinaryQuestion
 from forecasting_tools.agents_and_tools.auto_resolver.agentic.instructions import *
-from forecasting_tools.agents_and_tools.auto_resolver.resolution_models import BinaryResolutionResult
+from forecasting_tools.agents_and_tools.auto_resolver.resolution_models import (
+    BinaryResolutionResult,
+    DeadlineCheckResult,
+)
 from forecasting_tools.agents_and_tools.auto_resolver import AutoResolver
 from forecasting_tools.agents_and_tools.minor_tools import (
     create_date_filtered_asknews_tool,
@@ -85,11 +90,145 @@ class AgenticResolver(AutoResolver):
        self.model_for_researcher = model_for_researcher
        self.model_for_rephraser = model_for_rephraser
        self.timeout = timeout
-       
-           
+
+    # ------------------------------------------------------------------
+    # Deadline checking (two-tier)
+    # ------------------------------------------------------------------
+
+    _DEADLINE_CHECK_MODEL = "openrouter/openai/gpt-4.1-mini"
+
+    def _is_before_scheduled_deadline(self, question: MetaculusQuestion) -> bool:
+        """Tier 1 (instant, free): check the metadata ``scheduled_resolution_time``.
+
+        Returns ``True`` if the field is set and still in the future, meaning
+        the question's scheduled resolution has not yet arrived.  Returns
+        ``False`` when the field is ``None`` or the date has already passed.
+        """
+        if question.scheduled_resolution_time is None:
+            return False
+        now = pendulum.now("UTC")
+        return now < question.scheduled_resolution_time
+
+    async def _check_implicit_deadline(
+        self, question: MetaculusQuestion
+    ) -> tuple[bool, str | None]:
+        """Tier 2 (cheap LLM call): analyse the question text for an implicit deadline.
+
+        Returns:
+            A tuple of ``(should_skip, reason)``.  ``should_skip`` is ``True``
+            when the LLM found a deadline that has **not** yet passed.
+            ``reason`` is a human-readable explanation (or ``None``).
+        """
+        prompt = deadline_check_instructions(question)
+        llm = GeneralLlm(model=self._DEADLINE_CHECK_MODEL, temperature=0.0)
+
+        try:
+            raw_response = await llm.invoke(prompt)
+            result = await structure_output(
+                raw_response,
+                DeadlineCheckResult,
+                model=self._DEADLINE_CHECK_MODEL,
+            )
+        except Exception as e:
+            logger.warning(
+                "Implicit deadline check failed — allowing resolution to "
+                "proceed.  Error: %s",
+                e,
+                exc_info=True,
+            )
+            return False, None
+
+        if not result.has_deadline or result.deadline_date is None:
+            logger.info(
+                "No implicit deadline found for question %s: %s",
+                question.id_of_post,
+                result.reasoning,
+            )
+            return False, None
+
+        # Parse the deadline date and compare to now
+        try:
+            parsed = pendulum.parse(result.deadline_date, tz="UTC")
+            if not isinstance(parsed, pendulum.DateTime):
+                raise ValueError(
+                    f"Expected a DateTime, got {type(parsed).__name__}"
+                )
+            deadline = parsed
+        except Exception as e:
+            logger.warning(
+                "Could not parse deadline date '%s' from LLM response — "
+                "allowing resolution to proceed.  Error: %s",
+                result.deadline_date,
+                e,
+            )
+            return False, None
+
+        now = pendulum.now("UTC")
+        if now < deadline:
+            reason = (
+                f"Implicit deadline {result.deadline_date} has not yet passed "
+                f"(current date: {now.format('YYYY-MM-DD')}). "
+                f"{result.reasoning}"
+            )
+            logger.info(
+                "Question %s: implicit deadline not reached — skipping resolution. %s",
+                question.id_of_post,
+                reason,
+            )
+            return True, reason
+
+        logger.info(
+            "Question %s: implicit deadline %s has passed. %s",
+            question.id_of_post,
+            result.deadline_date,
+            result.reasoning,
+        )
+        return False, None
+
+    async def _should_skip_resolution(
+        self, question: MetaculusQuestion
+    ) -> tuple[bool, str | None]:
+        """Decide whether to skip resolution entirely because the deadline has not passed.
+
+        Tier 1 — free, instant check of ``scheduled_resolution_time``.
+        Tier 2 — cheap LLM analysis of the question text for an implicit deadline.
+
+        Returns:
+            ``(should_skip, reason)`` where *reason* is a human-readable
+            explanation when *should_skip* is ``True``, or ``None`` otherwise.
+        """
+        # Tier 1: metadata field
+        if self._is_before_scheduled_deadline(question):
+            reason = (
+                f"Scheduled resolution time ({question.scheduled_resolution_time}) "
+                f"has not yet passed."
+            )
+            logger.info(
+                "Question %s: %s  Skipping resolution.",
+                question.id_of_post,
+                reason,
+            )
+            return True, reason
+
+        # Tier 2: LLM-based implicit deadline analysis
+        return await self._check_implicit_deadline(question)
+
+    # ------------------------------------------------------------------
+    # Public resolution entry points
+    # ------------------------------------------------------------------
+
     async def resolve_question(
         self, question: MetaculusQuestion
     ) -> Optional[ResolutionType]:
+        should_skip, reason = await self._should_skip_resolution(question)
+        if should_skip:
+            logger.info(
+                "Question %s — skipping resolution: %s",
+                question.id_of_post,
+                reason,
+            )
+            return None
+
         if isinstance(question, BinaryQuestion):
             return await self._resolve_binary(question)
         else:
@@ -266,6 +405,25 @@ class AgenticResolver(AutoResolver):
         """
         if not isinstance(question, BinaryQuestion):
             yield ("error", f"Unsupported question type: {type(question).__name__}")
+            return
+
+        yield ("status", "Checking whether the question deadline has passed...")
+        should_skip, reason = await self._should_skip_resolution(question)
+        if should_skip:
+            now = pendulum.now("UTC")
+            yield (
+                "status",
+                f"Deadline has not yet passed. Skipping resolution. {reason}",
+            )
+            yield (
+                "result",
+                f"Resolution: NOT_YET_RESOLVABLE\n"
+                f"Reasoning: {reason}\n"
+                f"Key Evidence:\n"
+                f"  - {reason}\n"
+                f"  - Current time: {now}\n"
+                f"  - Deadline has not yet passed",
+            )
             return
 
         # Step 1: Rephrase if needed

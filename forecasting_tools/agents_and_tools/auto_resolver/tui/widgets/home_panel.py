@@ -19,13 +19,18 @@ from forecasting_tools.agents_and_tools.auto_resolver.tui.widgets.feed_panel imp
 )
 
 
+def _normalize_for_compare(s: str) -> str:
+    """Normalize a resolution string for comparison (uppercase, underscores for spaces)."""
+    return s.strip().upper().replace(" ", "_")
+
+
 def _match_str(predicted: str | None, ground_truth: str | None) -> str:
     """Return a match indicator comparing predicted and ground truth."""
     if predicted is None or ground_truth is None:
         return "-"
-    p = predicted.strip().upper()
-    g = ground_truth.strip().upper()
-    if p in ("PENDING", "RESOLVING...", "NOT_YET_RESOLVABLE"):
+    p = _normalize_for_compare(predicted)
+    g = _normalize_for_compare(ground_truth)
+    if p in ("PENDING", "RESOLVING..."):
         return "-"
     if g in ("", "NONE", "-"):
         return "-"
@@ -106,7 +111,7 @@ class HomePanel(Vertical):
 
             predicted = item.resolution_display
             gt_raw = item.question.resolution_string
-            gt = _normalize_ground_truth(gt_raw) if gt_raw else "-"
+            gt = _normalize_ground_truth(gt_raw) if gt_raw else "Not Yet Resolvable"
             match = _match_str(predicted, gt)
 
             if item.status == "completed":
@@ -136,8 +141,10 @@ class HomePanel(Vertical):
             + report.n_np + report.n_nn + report.n_nc
             + report.n_cp + report.n_cn + report.n_cc
             + report.n_xp + report.n_xn + report.n_xc
+            + report.n_nyr_p + report.n_nyr_n + report.n_nyr_c
+            + report.n_nyr_nyr
         )
-        matrix_correct = report.n_pp + report.n_nn + report.n_cc
+        matrix_correct = report.n_pp + report.n_nn + report.n_cc + report.n_nyr_nyr
         matrix_accuracy = (matrix_correct / matrix_total * 100) if matrix_total > 0 else 0
 
         matrix_display = (

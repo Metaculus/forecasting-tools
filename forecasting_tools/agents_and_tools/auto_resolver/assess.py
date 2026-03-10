@@ -48,8 +48,14 @@ class ResolutionAssessmentReport:
     cc: list[int] = field(default_factory=list)  
 
     xp: list[int] = field(default_factory=list)  
-    xn: list[int] = field(default_factory=list)  
+    xn: list[int] = field(default_factory=list)
     xc: list[int] = field(default_factory=list)
+    
+    nyr_p: list[int] = field(default_factory=list)
+    nyr_n: list[int] = field(default_factory=list)
+    nyr_c: list[int] = field(default_factory=list)
+    nyr_nyr: list[int] = field(default_factory=list)
+    nyr_x: list[int] = field(default_factory=list)
     
     question_results: dict[int, QuestionAssessmentResult] = field(default_factory=dict)
 
@@ -100,27 +106,48 @@ class ResolutionAssessmentReport:
     @property
     def n_xc(self) -> int:
         return len(self.xc)
+
+    @property
+    def n_nyr_p(self) -> int:
+        return len(self.nyr_p)
+
+    @property
+    def n_nyr_n(self) -> int:
+        return len(self.nyr_n)
+
+    @property
+    def n_nyr_c(self) -> int:
+        return len(self.nyr_c)
+
+    @property
+    def n_nyr_nyr(self) -> int:
+        return len(self.nyr_nyr)
+
+    @property
+    def n_nyr_x(self) -> int:
+        return len(self.nyr_x)
     
     def binary_results_table(self) -> str:
         """
         Returns a markdown table representation of the binary assessment report.
 
         Columns represent predicted resolutions, rows represent actual resolutions.
-        The "Not Answered" column contains cases where the resolver returned None
+        Then "Not Answered" column contains cases where the resolver returned None
         or an unexpected value (logged as warnings for debugging).
 
         Returns:
             str: A markdown formatted confusion matrix table
         """
         corner_label = "Actual \\ Predicted"
-        col_headers = ["Positive", "Negative", "Cancelled", "Not Answered"]
-        row_labels = ["Positive", "Negative", "Cancelled"]
-        # Rows ordered: actual Positive, actual Negative, actual Cancelled
-        # Columns ordered: predicted Positive, predicted Negative, predicted Cancelled, predicted Not Answered
+        col_headers = ["Positive", "Negative", "Cancelled", "Not Yet Resolvable", "Not Answered"]
+        row_labels = ["Positive", "Negative", "Cancelled", "Not Yet Resolvable"]
+        # Rows ordered: actual Positive, actual Negative, actual Cancelled, actual Not Yet Resolvable
+        # Columns ordered: predicted Positive, predicted Negative, predicted Cancelled, predicted Not Yet Resolvable, predicted Not Answered
         data = [
-            [str(self.n_pp), str(self.n_np), str(self.n_cp), str(self.n_xp)],
-            [str(self.n_pn), str(self.n_nn), str(self.n_cn), str(self.n_xn)],
-            [str(self.n_pc), str(self.n_nc), str(self.n_cc), str(self.n_xc)],
+            [str(self.n_pp), str(self.n_np), str(self.n_cp), str(self.n_nyr_p), str(self.n_xp)],
+            [str(self.n_pn), str(self.n_nn), str(self.n_cn), str(self.n_nyr_n), str(self.n_xn)],
+            [str(self.n_pc), str(self.n_nc), str(self.n_cc), str(self.n_nyr_c), str(self.n_xc)],
+            [str(self.n_nyr_p), str(self.n_nyr_n), str(self.n_nyr_c), str(self.n_nyr_nyr), str(self.n_nyr_x)],
         ]
 
         # Compute column widths dynamically
@@ -167,11 +194,15 @@ class ResolutionAssessmentReport:
         lines.append("")
 
         # Results calculation
-        total = self.n_pp + self.n_pn + self.n_pc + \
-                self.n_np + self.n_nn + self.n_nc + \
-                self.n_cp + self.n_cn + self.n_cc + \
-                self.n_xp + self.n_xn + self.n_xc
-        correct = self.n_pp + self.n_nn + self.n_cc
+        total = (
+            self.n_pp + self.n_pn + self.n_pc
+            + self.n_np + self.n_nn + self.n_nc
+            + self.n_cp + self.n_cn + self.n_cc
+            + self.n_xp + self.n_xn + self.n_xc
+            + self.n_nyr_p + self.n_nyr_n + self.n_nyr_c
+            + self.n_nyr_nyr
+        )
+        correct = self.n_pp + self.n_nn + self.n_cc + self.n_nyr_nyr
         accuracy = (correct / total * 100) if total > 0 else 0
 
         lines.append(f"**Total Questions:** {total}")
@@ -250,7 +281,7 @@ class ResolutionAssessmentReport:
     def _resolution_to_str(resolution: Optional[ResolutionType]) -> str:
         """Convert a resolution to a human-readable string."""
         if resolution is None:
-            return "None (Unresolvable)"
+            return "NOT_YET_RESOLVABLE"
         elif isinstance(resolution, bool):
             return "TRUE" if resolution else "FALSE"
         elif isinstance(resolution, CanceledResolution):

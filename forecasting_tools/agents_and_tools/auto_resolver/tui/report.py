@@ -29,7 +29,7 @@ from forecasting_tools.data_models.questions import (
 def _status_str_to_resolution(status: str | None) -> Optional[ResolutionType]:
     """Convert a resolution_status_str (e.g. 'TRUE') to a typed resolution."""
     if status is None:
-        return None
+        return 
     s = status.strip().upper()
     if s == "TRUE":
         return True
@@ -40,8 +40,6 @@ def _status_str_to_resolution(status: str | None) -> Optional[ResolutionType]:
     elif s == "ANNULLED":
         return CanceledResolution.ANNULLED
     elif s == "NOT_YET_RESOLVABLE":
-        return None
-    else:
         return None
 
 
@@ -127,8 +125,26 @@ def build_report_from_items(
                 case _:
                     report.xc.append(post_id)
                     outcome_category = "Unmatched - Cancelled"
+
+        elif true_resolution is None:
+            match predicted_resolution:
+                case True:
+                    report.nyr_p.append(post_id)
+                    outcome_category = "Not Yet Resolvable Predicted as Positive"
+                case False:
+                    report.nyr_n.append(post_id)
+                    outcome_category = "Not Yet Resolvable Predicted as Negative"
+                case CanceledResolution():
+                    report.nyr_c.append(post_id)
+                    outcome_category = "Not Yet Resolvable Predicted as Cancelled"
+                case None:
+                    report.nyr_nyr.append(post_id)
+                    outcome_category = "Correct Not Yet Resolvable"
+                case _:
+                    report.nyr_x.append(post_id)
+                    outcome_category = "Unmatched - Not Yet Resolvable"
         else:
-            # No ground truth (unresolved question) — skip from matrix
+            # Unknown resolution type — skip from matrix
             continue
 
         question_result = QuestionAssessmentResult(
@@ -171,8 +187,10 @@ def generate_markdown_report(items: dict[int, QuestionItem]) -> str:
         + report.n_np + report.n_nn + report.n_nc
         + report.n_cp + report.n_cn + report.n_cc
         + report.n_xp + report.n_xn + report.n_xc
+        + report.n_nyr_p + report.n_nyr_n + report.n_nyr_c
+        + report.n_nyr_nyr
     )
-    correct = report.n_pp + report.n_nn + report.n_cc
+    correct = report.n_pp + report.n_nn + report.n_cc + report.n_nyr_nyr
     accuracy = (correct / total * 100) if total > 0 else 0
 
     lines.append(f"**Total Questions:** {total}")

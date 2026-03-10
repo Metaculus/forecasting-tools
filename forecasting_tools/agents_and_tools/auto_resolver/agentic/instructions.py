@@ -4,7 +4,83 @@ To avoid clogging the code file (__init__.py), instruction generation functions 
 
 import pendulum
 
-from forecasting_tools import clean_indents, BinaryQuestion
+from forecasting_tools import clean_indents, BinaryQuestion, MetaculusQuestion
+
+
+def deadline_check_instructions(question: MetaculusQuestion) -> str:
+    """Build instructions for the LLM-based implicit deadline analysis.
+
+    This prompt asks the LLM to examine the question text, resolution
+    criteria, fine print, and scheduled resolution date to identify the
+    effective deadline — the date by which the question's event must have
+    occurred for it to be resolvable.
+
+    Args:
+        question: The question to analyze for an implicit deadline.
+
+    Returns:
+        Formatted instruction string.
+    """
+    today_string = pendulum.now(tz="UTC").strftime("%Y-%m-%d")
+    scheduled_resolution = (
+        question.scheduled_resolution_time.strftime("%Y-%m-%d")
+        if question.scheduled_resolution_time
+        else "Not specified"
+    )
+
+    return clean_indents(
+        f"""
+        # Your Task
+
+        You are a deadline analyst for a forecasting resolution system. Your job
+        is to determine the **effective deadline** of a forecasting question —
+        the date by which the described event must have occurred for the question
+        to be resolvable.
+
+        # The Question
+
+        {question.question_text}
+
+        # Additional Context
+
+        Resolution criteria: {question.resolution_criteria}
+
+        Fine print: {question.fine_print}
+
+        Background information: {question.background_info}
+
+        Scheduled resolution date (from platform metadata): {scheduled_resolution}
+
+        Today's date (UTC): {today_string}
+
+        # Instructions
+
+        1. Examine the question text, resolution criteria, fine print, and
+           background information to identify any explicit or implicit deadlines.
+        2. The deadline is the date by which the event or condition described in
+           the question must have occurred. For example:
+           - "Will X happen by March 2026?" → deadline is 2026-03-31
+           - "Will X happen before January 1, 2027?" → deadline is 2026-12-31
+           - "Will X happen in 2025?" → deadline is 2025-12-31
+           - "Will X happen by the end of Q2 2026?" → deadline is 2026-06-30
+        3. If the question text contains a specific deadline, use that — it takes
+           precedence over the platform's scheduled resolution date.
+        4. If the question text does NOT contain a specific deadline but a
+           scheduled resolution date is provided, use the scheduled resolution
+           date as the effective deadline.
+        5. If you cannot identify any deadline at all, set has_deadline to false.
+
+        # Output Format
+
+        Return a JSON object with these fields:
+        - "has_deadline": true/false — whether the question has a discernible deadline
+        - "deadline_date": "YYYY-MM-DD" — the effective deadline date, or null if none found
+        - "reasoning": "..." — 1-2 sentences explaining how you determined the deadline
+
+        Return ONLY the JSON object. No additional text.
+        """
+    )
+
 
 def researcher_instructions(question: BinaryQuestion) -> str:
     """Build detailed instructions for the researcher agent.
@@ -15,6 +91,40 @@ def researcher_instructions(question: BinaryQuestion) -> str:
     Returns:
         Formatted instruction string
     """
+    open_time_str = (
+        question.open_time.strftime("%Y-%m-%d")
+        if question.open_time
+        else None
+    )
+    close_time_str = (
+        question.close_time.strftime("%Y-%m-%d")
+        if question.close_time
+        else None
+    )
+
+    if open_time_str:
+        end_date = close_time_str or "its close/resolution date"
+        temporal_section = clean_indents(
+            f"""
+            # Temporal Window — CRITICAL
+
+            This question was opened on **{open_time_str}**. Only events that
+            occurred **on or after {open_time_str}** are relevant for resolution.
+
+            If your research finds that the described event occurred *before* the
+            question was opened, that evidence must be clearly flagged as
+            **pre-question** and should NOT be treated as satisfying the resolution
+            criteria. The question is asking whether the event occurs during the
+            question's active period ({open_time_str} to {end_date}), not whether
+            it ever happened historically.
+
+            When searching, focus on events between {open_time_str} and
+            {end_date}. Always note the exact date of any event you find and
+            whether it falls inside or outside this window.
+            """
+        )
+    else:
+        temporal_section = ""
 
     return clean_indents(
         f"""
@@ -36,6 +146,8 @@ def researcher_instructions(question: BinaryQuestion) -> str:
         4. **Verification**: Cross-check information from multiple sources
         5. **Edge Cases**: Look for any ambiguities, disputes, or complications
         6. **Validity Check**: Investigate whether the question's subject is valid/possible (for potential annulment)
+
+        {temporal_section}
 
         # Available Tools
 
@@ -212,6 +324,38 @@ def question_rephraser_instructions(question: BinaryQuestion) -> str:
 
 
 def binary_resolver_instructions(question: BinaryQuestion) -> str:
+    open_time_str = (
+        question.open_time.strftime("%Y-%m-%d")
+        if question.open_time
+        else None
+    )
+
+    if open_time_str:
+        temporal_rule = clean_indents(
+            f"""
+            # Temporal Window Rule — CRITICAL
+
+            This question was opened on **{open_time_str}**. Only events that
+            occurred **on or after {open_time_str}** count toward resolution.
+
+            If the research shows the event happened *before* the question was
+            opened, that is **NOT** sufficient for a TRUE resolution. The question
+            is asking whether the event occurs during the question's active period,
+            not whether it ever happened historically.
+
+            **Example**: If the question asks "Will event X happen before Jan 1,
+            2025?" and the question was opened on April 1, 2024, only evidence of
+            event X occurring on or after April 1, 2024 is relevant. An occurrence
+            on March 3, 2024 (before the question opened) would NOT make this
+            resolve TRUE.
+
+            When evaluating evidence, always check the date of each event against
+            the question's open date ({open_time_str}) and disregard any events
+            that predate it.
+            """
+        )
+    else:
+        temporal_rule = ""
 
     return clean_indents(
         f"""
@@ -262,6 +406,8 @@ def binary_resolver_instructions(question: BinaryQuestion) -> str:
         3. **Assess the evidence**: Is it strong enough for a definitive resolution?
         4. **Consider ambiguity**: Is the outcome clear or disputed?
         5. **Be conservative**: If uncertain, return NOT_YET_RESOLVABLE
+
+        {temporal_rule}
 
         # Critical Distinctions
 

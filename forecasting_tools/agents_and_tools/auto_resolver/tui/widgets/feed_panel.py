@@ -22,14 +22,16 @@ def _resolution_color(value: str) -> str:
         return "green"
     elif v == "FALSE":
         return "red"
-    elif v in ("NOT_YET_RESOLVABLE", "RESOLVING...", "PENDING"):
+    elif v in ("NOT_YET_RESOLVABLE", "NOT YET RESOLVABLE", "RESOLVING...", "PENDING"):
         return "yellow"
     else:
         return "cyan"  # AMBIGUOUS, ANNULLED, errors, etc.
 
 
-def _normalize_ground_truth(raw: str) -> str:
+def _normalize_ground_truth(raw: str | None) -> str:
     """Convert Metaculus ground-truth strings to True/False style."""
+    if raw is None:
+        return "Not Yet Resolvable"
     lowered = raw.strip().lower()
     if lowered == "yes":
         return "True"
@@ -78,12 +80,11 @@ class ResolutionHeader(Static):
         )
 
         # Ground truth (normalised and colour-coded)
-        if item.question.resolution_string:
-            gt_normalized = _normalize_ground_truth(item.question.resolution_string)
-            gt_color = _resolution_color(gt_normalized)
-            parts.append(
-                f"Ground Truth: [{gt_color}]{gt_normalized}[/{gt_color}]"
-            )
+        gt_normalized = _normalize_ground_truth(item.question.resolution_string)
+        gt_color = _resolution_color(gt_normalized)
+        parts.append(
+            f"Ground Truth: [{gt_color}]{gt_normalized}[/{gt_color}]"
+        )
 
         # Cost
         if item.cost > 0:

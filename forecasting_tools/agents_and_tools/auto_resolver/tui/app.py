@@ -37,9 +37,6 @@ from forecasting_tools.agents_and_tools.auto_resolver.tui.widgets.feed_panel imp
 from forecasting_tools.agents_and_tools.auto_resolver.tui.widgets.home_panel import (
     HomePanel,
 )
-from forecasting_tools.agents_and_tools.auto_resolver.tui.widgets.log_panel import (
-    LogPanel,
-)
 from forecasting_tools.agents_and_tools.auto_resolver.tui.report import (
     generate_markdown_report,
 )
@@ -58,7 +55,6 @@ class AutoResolverApp(App):
         t  -- Add questions from a tournament
         r  -- Re-run resolution on the selected question
         e  -- Export report to markdown
-        l  -- Toggle log panel (captured logging + stderr)
         q  -- Quit
     """
 
@@ -78,7 +74,6 @@ class AutoResolverApp(App):
         Binding("t", "add_tournament", "Add Tournament", show=True),
         Binding("r", "rerun", "Re-run Selected", show=True),
         Binding("e", "export_report", "Export Report", show=True),
-        Binding("l", "toggle_logs", "Logs", show=True),
         Binding("q", "quit", "Quit", show=True),
     ]
 
@@ -97,7 +92,6 @@ class AutoResolverApp(App):
         self._initial_tournaments = initial_tournaments or []
         self._initial_questions = initial_questions or []
         self._original_stderr = sys.stderr
-        self._view_before_logs: Literal["home", "feed"] = "home"
 
     # ------------------------------------------------------------------
     # Layout
@@ -109,7 +103,6 @@ class AutoResolverApp(App):
             yield Sidebar(id="sidebar")
             yield HomePanel(id="home-panel")
             yield FeedPanel(id="feed-panel")
-            yield LogPanel(id="log-panel")
         yield Footer()
 
     @property
@@ -124,9 +117,6 @@ class AutoResolverApp(App):
     def home_panel(self) -> HomePanel:
         return self.query_one("#home-panel", HomePanel)
 
-    @property
-    def log_panel(self) -> LogPanel:
-        return self.query_one("#log-panel", LogPanel)
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -136,7 +126,6 @@ class AutoResolverApp(App):
         """Load any questions / tournaments passed via CLI."""
         # Start with home panel visible, feed/log panels hidden
         self.feed_panel.display = False
-        self.log_panel.display = False
         self.home_panel.display = True
 
         # Redirect sys.stderr so that non-logging stderr writes (e.g.
@@ -157,14 +146,12 @@ class AutoResolverApp(App):
         """Switch to the home overview panel."""
         self.home_panel.display = True
         self.feed_panel.display = False
-        self.log_panel.display = False
         self.home_panel.refresh_table(self._items)
 
     def _show_feed(self, item: QuestionItem | None) -> None:
         """Switch to the feed panel for a specific question."""
         self.home_panel.display = False
         self.feed_panel.display = True
-        self.log_panel.display = False
         self.feed_panel.show_question(item)
 
     # ------------------------------------------------------------------
@@ -200,24 +187,6 @@ class AutoResolverApp(App):
         filepath.write_text(report, encoding="utf-8")
         self.notify(f"Report exported to {filepath}")
 
-    def action_toggle_logs(self) -> None:
-        """Toggle between the log panel and the previous view."""
-        if self.log_panel.display:
-            # Return to whichever view was active before
-            if self._view_before_logs == "feed":
-                item = self._items.get(self._selected_post_id)  # type: ignore[arg-type]
-                self._show_feed(item)
-            else:
-                self._show_home()
-        else:
-            # Remember which view is currently active, then show logs
-            if self.feed_panel.display:
-                self._view_before_logs = "feed"
-            else:
-                self._view_before_logs = "home"
-            self.home_panel.display = False
-            self.feed_panel.display = False
-            self.log_panel.display = True
 
     # ------------------------------------------------------------------
     # Message handlers

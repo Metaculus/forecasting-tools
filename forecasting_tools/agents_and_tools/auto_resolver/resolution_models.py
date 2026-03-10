@@ -9,6 +9,31 @@ from pydantic import BaseModel, Field
 from typing import Literal, Optional
 
 
+class DeadlineCheckResult(BaseModel):
+    """Structured output from the LLM-based implicit deadline analysis.
+
+    Used to determine whether a question's effective deadline (as described
+    in its text, resolution criteria, or fine print) has already passed.
+
+    Attributes:
+        has_deadline: Whether the question contains a discernible deadline.
+        deadline_date: The effective deadline as an ISO-8601 date string
+            (YYYY-MM-DD), or None if no deadline was found.
+        reasoning: Brief explanation of how the deadline was determined.
+    """
+
+    has_deadline: bool = Field(
+        description="Whether the question contains a discernible deadline or time-bound condition"
+    )
+    deadline_date: Optional[str] = Field(
+        default=None,
+        description="The effective deadline in YYYY-MM-DD format, or null if no deadline found",
+    )
+    reasoning: str = Field(
+        description="1-2 sentence explanation of how the deadline was identified"
+    )
+
+
 class BinaryResolutionResult(BaseModel):
     """Structured output for binary question resolution.
 
