@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import random
 import sys
 from datetime import datetime
@@ -48,81 +47,6 @@ from forecasting_tools.agents_and_tools.auto_resolver.tui.widgets.input_modal im
     AddIdRequested,
     InputModal,
 )
-
-logger = logging.getLogger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Logging / stderr capture helpers
-# ---------------------------------------------------------------------------
-
-_LOG_LEVEL_STYLES: dict[int, tuple[str, str]] = {
-    logging.DEBUG: ("dim", "dim"),
-    logging.INFO: ("", ""),
-    logging.WARNING: ("yellow", "yellow"),
-    logging.ERROR: ("bold red", "bold red"),
-    logging.CRITICAL: ("bold white on red", "bold white on red"),
-}
-
-
-class TuiLoggingHandler(logging.Handler):
-    """Routes Python log records into the TUI :class:`LogPanel`.
-
-    Uses :meth:`App.call_from_thread` so that records emitted from
-    background threads (litellm cost callbacks, ``asyncio.to_thread``
-    workers, etc.) are safely delivered to the Textual event loop.
-    """
-
-    def __init__(self, app: "AutoResolverApp") -> None:
-        super().__init__()
-        self._app = app
-
-    def emit(self, record: logging.LogRecord) -> None:
-        try:
-            msg = self.format(record)
-            self._app.call_from_thread(
-                self._app._append_log, msg, record.levelno
-            )
-        except Exception:
-            self.handleError(record)
-
-
-class _StderrCapture:
-    """File-like replacement for ``sys.stderr`` that routes writes into the
-    TUI :class:`LogPanel` instead of the real terminal stderr.
-
-    Any write that fails (e.g. the app is not yet mounted or is shutting
-    down) falls back to the real stderr so output is never silently lost.
-    """
-
-    def __init__(self, app: "AutoResolverApp") -> None:
-        self._app = app
-        self._real_stderr = sys.__stderr__
-
-    def write(self, text: str) -> int:
-        if not text or not text.strip():
-            return len(text) if text else 0
-        try:
-            self._app.call_from_thread(
-                self._app._append_log, text.rstrip(), logging.WARNING
-            )
-        except Exception:
-            if self._real_stderr:
-                self._real_stderr.write(text)
-        return len(text)
-
-    def flush(self) -> None:
-        pass
-
-    # Some libraries check for these attributes on file-like objects.
-    @property
-    def encoding(self) -> str:
-        return "utf-8"
-
-    def isatty(self) -> bool:
-        return False
-
-
 class AutoResolverApp(App):
     """TUI application for interactive agentic question resolution.
 
@@ -163,8 +87,7 @@ class AutoResolverApp(App):
         max_concurrency: int = 3,
         initial_tournaments: list[int | str] | None = None,
         initial_questions: list[int] | None = None,
-        log_level: int = logging.WARNING,
-    ) -> None:
+      ) -> None:
         super().__init__()
         self._resolver = AgenticResolver()
         self._client = MetaculusClient()
@@ -173,8 +96,6 @@ class AutoResolverApp(App):
         self._concurrency_sem = asyncio.Semaphore(max_concurrency)
         self._initial_tournaments = initial_tournaments or []
         self._initial_questions = initial_questions or []
-        self._log_level = log_level
-        self._tui_log_handler: TuiLoggingHandler | None = None
         self._original_stderr = sys.stderr
         self._view_before_logs: Literal["home", "feed"] = "home"
 
@@ -218,28 +139,11 @@ class AutoResolverApp(App):
         self.log_panel.display = False
         self.home_panel.display = True
 
-        # Install the TUI logging handler on the root logger so ALL
-        # Python logging records (ours + third-party) are captured.
-        self._tui_log_handler = TuiLoggingHandler(self)
-        self._tui_log_handler.setLevel(self._log_level)
-        self._tui_log_handler.setFormatter(
-            logging.Formatter("%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
-                              datefmt="%H:%M:%S")
-        )
-        root = logging.getLogger()
-        # Remove any pre-existing stderr handlers that basicConfig may
-        # have installed before us (defensive).
-        for h in list(root.handlers):
-            if isinstance(h, logging.StreamHandler) and getattr(h, "stream", None) is sys.stderr:
-                root.removeHandler(h)
-        root.addHandler(self._tui_log_handler)
-
         # Redirect sys.stderr so that non-logging stderr writes (e.g.
         # from C extensions, Python warnings, litellm debug output) are
         # also captured instead of corrupting the TUI display.
         self._original_stderr = sys.stderr
-        sys.stderr = _StderrCapture(self)  # type: ignore[assignment]
-
+    
         for tid in self._initial_tournaments:
             self._schedule_load_tournament(tid)
         for qid in self._initial_questions:
@@ -314,37 +218,6 @@ class AutoResolverApp(App):
             self.home_panel.display = False
             self.feed_panel.display = False
             self.log_panel.display = True
-
-    # ------------------------------------------------------------------
-    # Log panel helpers
-    # ------------------------------------------------------------------
-
-    def _append_log(self, text: str, level: int = logging.INFO) -> None:
-        """Append a formatted log line to the :class:`LogPanel`.
-
-        Called from :class:`TuiLoggingHandler` and :class:`_StderrCapture`
-        via ``call_from_thread``.  Must only be called on the Textual
-        event-loop thread.
-        """
-        open_tag, close_tag = "", ""
-        for threshold in sorted(_LOG_LEVEL_STYLES, reverse=True):
-            if level >= threshold:
-                style_open, _ = _LOG_LEVEL_STYLES[threshold]
-                if style_open:
-                    open_tag = f"[{style_open}]"
-                    close_tag = f"[/{style_open}]"
-                break
-        self.log_panel.append_log(f"{open_tag}{text}{close_tag}")
-
-    def _teardown_logging(self) -> None:
-        """Remove our logging handler and restore stderr."""
-        if self._tui_log_handler is not None:
-            logging.getLogger().removeHandler(self._tui_log_handler)
-            self._tui_log_handler = None
-        sys.stderr = self._original_stderr
-
-    async def on_unmount(self) -> None:
-        self._teardown_logging()
 
     # ------------------------------------------------------------------
     # Message handlers

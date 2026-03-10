@@ -104,7 +104,8 @@ class AgenticResolver(AutoResolver):
 
         # Create agents
         researcher = self._create_researcher(question)
-        resolver = self._create_resolver_agent(question)
+        annulled_ambiguous_resolver = self._create_annulled_ambiguous_resolver_agent(question)
+        resolver = self._create_resolver_agent(question, annulled_ambiguous_resolver)
         orchestrator = self._create_orchestrator_agent(researcher, resolver)
 
         # Run the workflow (non-streaming)
@@ -192,10 +193,20 @@ class AgenticResolver(AutoResolver):
             handoffs=[],
         )
 
-    def _create_resolver_agent(self, question: BinaryQuestion) -> AiAgent:
+    def _create_resolver_agent(self, question: BinaryQuestion, annulled_ambiguous_resolver: AiAgent) -> AiAgent:
         instructions = binary_resolver_instructions(question)
         return AiAgent(
             name="resolver",
+            instructions=instructions,
+            model=AgentSdkLlm(model=self.model_for_resolver),
+            tools=[],  # No tools - only analyzes research
+            handoffs=[annulled_ambiguous_resolver],  # Can hand off to specialized agent
+        )
+
+    def _create_annulled_ambiguous_resolver_agent(self, question: BinaryQuestion) -> AiAgent:
+        instructions = annulled_ambiguous_resolver_instructions(question)
+        return AiAgent(
+            name="annulled_ambiguous_resolver",
             instructions=instructions,
             model=AgentSdkLlm(model=self.model_for_resolver),
             tools=[],  # No tools - only analyzes research
@@ -265,7 +276,8 @@ class AgenticResolver(AutoResolver):
         # Step 2: Create agents
         yield ("status", "Creating resolution agents...")
         researcher = self._create_researcher(question)
-        resolver = self._create_resolver_agent(question)
+        annulled_ambiguous_resolver = self._create_annulled_ambiguous_resolver_agent(question)
+        resolver = self._create_resolver_agent(question, annulled_ambiguous_resolver)
         orchestrator = self._create_orchestrator_agent(researcher, resolver)
 
         # Step 3: Run streamed workflow

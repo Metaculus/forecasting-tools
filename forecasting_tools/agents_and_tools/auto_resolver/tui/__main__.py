@@ -9,7 +9,6 @@ Usage:
 """
 
 import argparse
-import logging
 
 from dotenv import load_dotenv
 
@@ -54,14 +53,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    log_level = logging.DEBUG if args.verbose else logging.WARNING
-
-    # Do NOT call logging.basicConfig() here -- it would install a
-    # StreamHandler on sys.stderr which corrupts the Textual TUI display.
-    # Instead, set the root logger level and let the App install a custom
-    # handler that routes records into a TUI log panel.
-    logging.getLogger().setLevel(log_level)
-
+  
     from forecasting_tools.agents_and_tools.auto_resolver.tui.app import (
         AutoResolverApp,
     )
@@ -70,7 +62,6 @@ def main() -> None:
         max_concurrency=args.concurrency,
         initial_tournaments=args.tournament,
         initial_questions=args.question,
-        log_level=log_level,
     )
     app.run()
 

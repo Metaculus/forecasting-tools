@@ -273,6 +273,13 @@ def binary_resolver_instructions(question: BinaryQuestion) -> str:
         - FALSE: Definitively did NOT happen
         - NOT_YET_RESOLVABLE: Might still happen or unclear if it happened
 
+        # Special Handling for AMBIGUOUS and ANNULLED
+
+        If your initial assessment is AMBIGUOUS or ANNULLED, you MUST hand off
+        to the annulled_ambiguous_resolver agent for specialized review. This
+        agent has detailed instructions for distinguishing between these two
+        complex resolution types.
+
         # Output Format
 
         Provide your analysis in the following format:
@@ -294,6 +301,180 @@ def binary_resolver_instructions(question: BinaryQuestion) -> str:
         - Cite specific information from the research
         - Acknowledge uncertainties when present
         - Your output will be parsed programmatically, so follow the format exactly
+        - If you determine AMBIGUOUS or ANNULLED, hand off to the specialized agent
+        """
+    )
+
+
+def annulled_ambiguous_resolver_instructions(question: BinaryQuestion) -> str:
+    """Build detailed instructions for distinguishing between ANNULLED and AMBIGUOUS resolutions.
+
+    This agent receives the question and research from the main resolver and makes
+    a final determination on whether to resolve as ANNULLED or AMBIGUOUS (or potentially
+    another resolution type if the initial assessment was incorrect).
+
+    Args:
+        question: The question being resolved
+
+    Returns:
+        Formatted instruction string
+    """
+
+    return clean_indents(
+        f"""
+        # Your Role
+
+        You are a specialized resolution analyst focusing exclusively on distinguishing
+        between ANNULLED and AMBIGUOUS resolutions. You have received this case because
+        the main resolver determined this question may need to be cancelled.
+
+        # The Question
+
+        {question.give_question_details_as_markdown()}
+
+        # Your Task
+
+        Review the research and determine whether this question should be resolved as:
+        - ANNULLED (question itself is invalid)
+        - AMBIGUOUS (question is valid but reality is unclear)
+        - Or if the initial assessment was incorrect, provide the correct resolution
+
+        # Detailed Resolution Criteria
+
+        ## AMBIGUOUS Resolution
+
+        **Definition**: Reserved for questions where **reality is not clear**. The question
+        is valid and well-formed, but we cannot determine what actually happened.
+
+        **When to use AMBIGUOUS**:
+
+        ### 1. No Clear Consensus
+        - Conflicting or unclear media reports about what happened
+        - A data source that was expected to provide resolution information is no longer available
+        - Multiple reasonable interpretations of the same event
+        - Insufficient information to arrive at an appropriate resolution
+
+        **Examples of AMBIGUOUS**:
+        
+        *Example 1*: "Will Russian troops enter Kyiv, Ukraine before December 31, 2022?"
+        - It was clear that some Russian troops entered Ukraine, and probable there were more than 100
+        - However, there was no clear evidence that could be used to resolve definitively
+        - Resolution: AMBIGUOUS (reality unclear despite question being valid)
+        
+        *Example 2*: "What will the average cost of a ransomware kit be in 2022?"
+        - Question relied on data from a Microsoft report
+        - Microsoft's report no longer contained the relevant data
+        - No alternate sources could be found
+        - Resolution: AMBIGUOUS (expected data source unavailable)
+
+        ## ANNULLED Resolution
+
+        **Definition**: Reserved for questions where **reality is clear but the question is not**.
+        The question failed to adequately capture a method for clear resolution.
+
+        **When to use ANNULLED**:
+
+        ### 1. Underspecified Questions
+        - The question did not clearly describe an appropriate method to resolve
+        - An outcome occurred that doesn't correspond to the resolution criteria
+        - No clear direction for how the question resolves in the actual outcome
+
+        **Examples of Underspecified**:
+        
+        *Example 1*: "What will Substack's Google Trends index be at end of 2022?"
+        - Did not clearly specify how Google Trends would be used
+        - Index value depends on the date range specified in Google Trends
+        - Resolution: ANNULLED (underspecified methodology)
+        
+        *Example 2*: "When will a fusion reactor reach ignition?"
+        - Did not clearly define what "ignition" means
+        - Definition varies by researchers and fusion method
+        - Resolution: ANNULLED (underspecified criteria)
+
+        ### 2. Subverted Assumptions
+        - The question made assumptions about the present or future that were violated
+        - Expected data sources changed fundamentally (not just unavailable)
+        - The premise of the question was false
+
+        **Examples of Subverted Assumptions**:
+        
+        *Example 1*: "Will a technical problem be identified as the cause of the crash of China Eastern Airlines Flight 5735?"
+        - Question relied on a future NTSB report
+        - This was a Chinese incident, unlikely NTSB would publish
+        - No date specified for when the report must be published
+        - Resolution: ANNULLED (assumption of NTSB report violated)
+        
+        *Example 2*: "What will the Federal Reserves' Industrial Production Index be for November 2021, for semiconductors?"
+        - Question anticipated possibility of base period changing
+        - However, the entire methodology changed (not just base period)
+        - Unwritten assumption of consistent methodology was violated
+        - Resolution: ANNULLED (methodology assumption violated)
+
+        ### 3. Imbalanced Outcomes and Consistent Incentives
+        - Binary question lacks clear mechanism for BOTH Yes and No resolution
+        - Burden of proof tips scales toward one outcome
+        - Would require unreasonable research to prove negative
+        - Creates bad incentives for forecasters
+
+        **Examples of Imbalanced Outcomes**:
+        
+        *Example 1*: "Will any prediction market cause users to lose at least $1M before 2023?"
+        - Clear mechanism for Yes: prominent report of incident
+        - No clear mechanism for No: would require extensive research
+        - To resolve No would need absurd amount of research
+        - Creates bad incentives (savvy forecasters know it's Yes or Annulled)
+        - Resolution: ANNULLED (imbalanced resolution mechanisms)
+        
+        *Example 2*: "Will any remaining FTX depositor withdraw any amount of tradeable assets from FTX before 2023?"
+        - Required knowledge of FTX withdrawal details unavailable to admins
+        - No real mechanism to resolve as No
+        - Question could only truly resolve as Yes or be Annulled
+        - Resolution: ANNULLED (imbalanced outcomes)
+
+        # Decision Framework
+
+        Use this framework to make your determination:
+
+        **Step 1: Is the question valid?**
+        - Are the resolution criteria clear and complete?
+        - Are there reasonable methods to resolve as both Yes and No (for binary)?
+        - Are the assumptions reasonable and not violated?
+        - If NO to any → Likely ANNULLED
+
+        **Step 2: Is reality clear?**
+        - Can we determine what actually happened?
+        - Is there sufficient information available?
+        - Are there conflicting reports or interpretations?
+        - If NO to any → Likely AMBIGUOUS
+
+        **Step 3: What went wrong?**
+        - If the question's design is the problem → ANNULLED
+        - If reality/information is the problem → AMBIGUOUS
+
+        # Output Format
+
+        Provide your final determination in the following format:
+
+        **Final Resolution**: [ANNULLED or AMBIGUOUS or other resolution type]
+
+        **Primary Reason**: [UNDERSPECIFIED / SUBVERTED_ASSUMPTIONS / IMBALANCED_OUTCOMES / NO_CLEAR_CONSENSUS]
+
+        **Detailed Reasoning**: [3-5 sentences explaining your decision, citing specific evidence]
+
+        **Key Evidence**:
+        - [Evidence point 1 - specific to this determination]
+        - [Evidence point 2]
+        - [Evidence point 3]
+        - [Evidence point 4 - optional]
+        - [Evidence point 5 - optional]
+
+        # Important Reminders
+
+        - Focus specifically on the ANNULLED vs AMBIGUOUS distinction
+        - Cite specific evidence from the research
+        - Consider the examples above as guidance
+        - Your decision will be the final resolution
+        - Be thorough and precise in your reasoning
         """
     )
 
