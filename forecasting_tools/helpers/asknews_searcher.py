@@ -14,6 +14,7 @@ except ImportError:
     pass
 
 try:
+    from asknews_sdk.api.chat import DeepNewsModel
     from asknews_sdk.dto.deepnews import CreateDeepNewsResponse
 except ImportError:
     pass
@@ -30,9 +31,10 @@ logger = logging.getLogger(__name__)
 class AskNewsSearcher:
     _default_search_depth = 1
     _default_max_depth = 1
-    _default_model = "deepseek-basic"
+    _default_model = "deepseek-basic"  # NOTE: As of Feb 23rd, 2026 this routes to the best open source model available in the background (not specifcially deepseek)
     _default_sources = ["asknews"]
     _default_rate_limit = 12
+    _default_try_cache = "1h"  # Length answers from asknews are cached in case you use the same query multiple times in a row.
 
     def __init__(
         self,
@@ -103,6 +105,7 @@ class AskNewsSearcher:
                 n_articles=6,  # control the number of articles to include in the context, originally 5
                 return_type="both",
                 strategy="latest news",  # enforces looking at the latest news only
+                try_cache=self._default_try_cache,
             )
 
             await asyncio.sleep(
@@ -115,6 +118,7 @@ class AskNewsSearcher:
                 n_articles=10,
                 return_type="both",
                 strategy="news knowledge",  # looks for relevant news within the past 160 days
+                try_cache=self._default_try_cache,
             )
 
             hot_articles = hot_response.as_dicts
@@ -296,10 +300,7 @@ class AskNewsSearcher:
         self,
         query: str,
         sources: list[str] | None = None,
-        model: (
-            Literal["deepseek", "deepseek-basic", "claude-3-7-sonnet-latest", "o3-mini"]
-            | str
-        ) = _default_model,
+        model: DeepNewsModel | str = _default_model,
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
         filter_params: dict[str, bool] | None = None,

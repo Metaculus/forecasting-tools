@@ -47,6 +47,8 @@ default_metaculus_client = MetaculusClient()
 POST_IDS_TO_SKIP = [
     31653,  # https://www.metaculus.com/questions/31653/ is rejected by qwen3-max and is causing noisy workflow errors
     39009,  # https://www.metaculus.com/questions/39009/ is rejected since too many MC options
+    41362,  # https://www.metaculus.com/questions/41362/ is rejected because common cause of errors (confusion on units?)
+    42495,  # https://www.metaculus.com/questions/42495/ is rejected since too many MC options
 ]
 
 
@@ -447,7 +449,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_3_pro = "openrouter/google/gemini-3-pro-preview"
     gemini_default_timeout = 5 * 60
-    deepnews_model = "asknews/deep-research/high-depth/claude-sonnet-4-5-20250929"  # Switched to high depth Feb 16th 2026. Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
+    deepnews_model = "asknews/deep-research/high-depth/claude-opus-4-6"  # Switched to opus 4.6 Feb 23rd. Switched to high depth Feb 16th 2026. Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
 
     roughly_sonnet_4_cost = 0.25190
     roughly_gpt_5_high_cost = 0.37868
@@ -607,9 +609,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/minimax/minimax-m2.5",
                     temperature=default_temperature,
+                    timeout=1 * 60,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Removed since it timed out the workflow a lot
         },
         "METAC_KIMI_K2_5_HIGH": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
@@ -687,7 +690,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=0,  # 0 is recommended for this model in non-reasoning mode
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # No longer available via OpenRouter as of Feb 25th, 2026
         },
         "METAC_GEMINI_3_FLASH": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost * 2,
