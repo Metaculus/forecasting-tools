@@ -905,3 +905,5 @@ Also it's helpful to use the log file that is automatically placed at `logs/late
 - Open an issue for bugs or feature requests
 
 Thank you for helping improve forecasting-tools!
+
+---
