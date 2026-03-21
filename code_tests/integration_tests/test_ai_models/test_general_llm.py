@@ -40,11 +40,15 @@ def _all_tests() -> list[ModelTest]:
             test_data.get_cheap_user_message(),
         ),
         ModelTest(
-            GeneralLlm(model="claude-4-6-sonnet"),
+            GeneralLlm(model="claude-sonnet-4-6"),
             test_data.get_cheap_user_message(),
         ),
         ModelTest(
-            GeneralLlm(model="claude-4-6-sonnet"),
+            GeneralLlm(model="anthropic/claude-sonnet-4-6"),
+            test_data.get_cheap_user_message(),
+        ),
+        ModelTest(
+            GeneralLlm(model="anthropic/claude-sonnet-4-6"),
             test_data.get_cheap_vision_message_data(),
         ),
         ModelTest(
@@ -72,9 +76,14 @@ def _all_tests() -> list[ModelTest]:
                 model="openai/gpt-5",
                 responses_api=True,
                 tools=[{"type": "web_search"}],
-                reasoning_effort="minimal",
             ),
             "What is the latest News on the Middle East? Do a single very quick search. Go as fast as you can. I just want headlines.",
+        ),
+        ModelTest(
+            GeneralLlm(
+                model="openai/gpt-5",
+            ),
+            test_data.get_cheap_user_message(),
         ),
     ]
 
@@ -89,7 +98,7 @@ def all_tests_with_names() -> list[tuple[str, ModelTest]]:
 
 
 @pytest.mark.parametrize("test_name, test", all_tests_with_names())
-def test_general_llm_instances_run(
+def test_general_llm_instances_run_and_track_cost(
     test_name: str,
     test: ModelTest,
 ) -> None:
@@ -159,18 +168,31 @@ def test_litellm_params_work() -> None:
     )
 
 
-def test_citations_are_populated() -> None:
-    model = GeneralLlm(model="openrouter/perplexity/sonar", populate_citations=True)
-    response = asyncio.run(model.invoke("When did Abraham Lincoln die?"))
+@pytest.mark.parametrize(
+    "model_name, populate_citations",
+    [
+        ("openrouter/perplexity/sonar-reasoning-pro", True),
+        ("perplexity/sonar-reasoning-pro", True),
+        ("openrouter/perplexity/sonar", True),
+        ("perplexity/sonar", True),
+        ("openrouter/perplexity/sonar", False),
+    ],
+)
+def test_citations_are_populated(model_name: str, populate_citations: bool) -> None:
+    model = GeneralLlm(model=model_name, populate_citations=populate_citations)
+    response = asyncio.run(
+        model.invoke(
+            "When did Abraham Lincoln die? Howd did he die? Where is the great barrier reef located?"
+        )
+    )
     logger.info(f"Response: {response}")
     assert response, "Response is empty"
-    assert "http" in response or "www." in response, "Citations are not populated"
-
-    model = GeneralLlm(model="openrouter/perplexity/sonar", populate_citations=False)
-    response = asyncio.run(model.invoke("When did Abraham Lincoln die?"))
-    logger.info(f"Response: {response}")
-    assert response, "Response is empty"
-    assert "http" not in response and "www." not in response, "Citations are populated"
+    if populate_citations:
+        assert "http" in response or "www." in response, "Citations are not populated"
+    else:
+        assert (
+            "http" not in response and "www." not in response
+        ), "Citations are populated"
 
 
 async def test_exa_errors_with_prompt_too_long() -> None:

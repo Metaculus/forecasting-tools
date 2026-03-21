@@ -172,7 +172,7 @@ class PolicyProposal(BaseModel, Jsonable):
         description="Full proposal with footnote references [^1], [^2], etc."
     )
     key_recommendations: list[str] = Field(
-        description="Top 3-5 actionable recommendations"
+        description="Topdescription 3-5 actionable recommendations"
     )
     robustness_analysis: str = Field(
         default="",

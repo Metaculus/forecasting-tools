@@ -34,6 +34,8 @@ nvm install --lts # Consider version 18 if we want a consistent version rather t
 nvm use --lts
 npm install -g @anthropic-ai/claude-code
 
+curl https://cursor.com/install -fsS | bash
+
 git config --global --add safe.directory /workspaces/auto-questions
 
 # Activate virtual environment
