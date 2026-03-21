@@ -23,7 +23,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - id: setup-python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12.3"
       - name: Install poetry
@@ -39,7 +40,6 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
       - name: "Run the unit tests"
         if: ${{ !cancelled() }}
