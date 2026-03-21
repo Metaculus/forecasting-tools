@@ -169,8 +169,6 @@ class GeneralLlm(
 
         metaculus_prefix = "metaculus/"
         exa_prefix = "exa/"
-        openai_prefix = "openai/"
-        anthropic_prefix = "anthropic/"
         asknews_prefix = "asknews/"
         self._use_metaculus_proxy = model.startswith(metaculus_prefix)
         self._use_exa = model.startswith(exa_prefix)
@@ -178,8 +176,6 @@ class GeneralLlm(
         prefixes_in_operational_order = [
             metaculus_prefix,
             exa_prefix,
-            openai_prefix,
-            anthropic_prefix,
         ]
 
         # prefix removal is to help with matching with model cost lists
@@ -341,14 +337,12 @@ class GeneralLlm(
             self._litellm_model, observed_no_cost=observed_no_cost
         )
 
-        if (
-            response.model_extra
-            and "citations" in response.model_extra
-            and self.populate_citations
-        ):
-            citations = response.model_extra.get("citations")
-            citations = typeguard.check_type(citations, list[str])
-            answer = fill_in_citations(citations, answer, use_citation_brackets=False)
+        if self.populate_citations:
+            citations = self._extract_citations(response, choices)
+            if citations:
+                answer = fill_in_citations(
+                    citations, answer, use_citation_brackets=False
+                )
             # TODO: Add citation support for Gemini - https://ai.google.dev/gemini-api/docs/google-search#attributing_sources_with_inline_citations
 
         await asyncio.sleep(
@@ -365,6 +359,51 @@ class GeneralLlm(
         )
 
         return response
+
+    @staticmethod
+    def _extract_citations(
+        response: ModelResponse, choices: list[Choices]
+    ) -> list[str]:
+        if response.model_extra and "citations" in response.model_extra:
+            citations = response.model_extra.get("citations")
+            return typeguard.check_type(citations, list[str])
+
+        # OpenRouter returns Perplexity citations as url_citation annotations
+        # rather than in model_extra["citations"]. The annotations are the
+        # flat source URL list duplicated (once with titles, once without),
+        # NOT one-per-occurrence. All start_index/end_index are 0.
+        # We deduplicate to reconstruct the original indexed list where
+        # urls[i] corresponds to citation [i+1] in the text.
+        message = choices[0].message
+        annotations = getattr(message, "annotations", None)
+        if not annotations:
+            return []
+        all_urls: list[str] = []
+        for annotation in annotations:
+            if not isinstance(annotation, dict):
+                continue
+            if annotation.get("type") != "url_citation":
+                continue
+            url_info = annotation.get("url_citation", {})
+            url = url_info.get("url", "")
+            if url:
+                all_urls.append(url)
+
+        seen: set[str] = set()
+        unique_urls: list[str] = []
+        for url in all_urls:
+            if url not in seen:
+                seen.add(url)
+                unique_urls.append(url)
+
+        num_unique = len(unique_urls)
+        num_total = len(all_urls)
+        if num_total != num_unique and num_total != num_unique * 2:
+            raise ValueError(
+                f"Expected annotations to contain each URL once or twice, "
+                f"but got {num_total} total URLs and {num_unique} unique URLs"
+            )
+        return unique_urls
 
     def _normalize_response(
         self, raw_response: ResponsesAPIResponse, model_response: ModelResponse

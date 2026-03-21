@@ -1027,6 +1027,14 @@ class ForecastBot(ABC):
         else:
             parser = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
 
+        if researcher == "openai/gpt-4o-search-preview" or (
+            isinstance(researcher, GeneralLlm)
+            and researcher.model == "openai/gpt-4o-search-preview"
+        ):
+            logger.warning(
+                "Using gpt-4o-search-preview as default researcher. This can be expensive, it is recommended you explicitlyset the researcher yourself to a different model."
+            )
+
         return {
             "default": main_default_llm,
             "summarizer": summarizer,
