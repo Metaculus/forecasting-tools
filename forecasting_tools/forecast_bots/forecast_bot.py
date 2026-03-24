@@ -12,7 +12,6 @@ from typing import Any, Coroutine, Literal, Sequence, TypeVar, cast, overload
 from exceptiongroup import ExceptionGroup
 from pydantic import BaseModel
 
-from forecasting_tools.ai_models.agent_wrappers import general_trace_or_span
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -338,20 +337,17 @@ class ForecastBot(ABC):
     async def _run_individual_question_with_error_propagation(
         self, question: MetaculusQuestion
     ) -> ForecastReport:
-        with general_trace_or_span(
-            f"{self.__class__.__name__} - Question: {question.page_url}"
-        ):
-            try:
-                return await self._run_individual_question(question)
-            except Exception as e:
-                error_message = (
-                    f"Error while processing question url: '{question.page_url}'"
-                )
-                logger.error(f"{error_message}: {e}")
-                self._reraise_exception_with_prepended_message(e, error_message)
-                assert (
-                    False
-                ), "This is to satisfy type checker. The previous function should raise an exception"
+        try:
+            return await self._run_individual_question(question)
+        except Exception as e:
+            error_message = (
+                f"Error while processing question url: '{question.page_url}'"
+            )
+            logger.error(f"{error_message}: {e}")
+            self._reraise_exception_with_prepended_message(e, error_message)
+            assert (
+                False
+            ), "This is to satisfy type checker. The previous function should raise an exception"
 
     async def _run_individual_question(
         self, question: MetaculusQuestion

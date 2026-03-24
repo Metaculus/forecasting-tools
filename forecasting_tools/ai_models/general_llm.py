@@ -21,7 +21,6 @@ from openai.types.responses import (
     ResponseReasoningItem,
 )
 
-from forecasting_tools.ai_models.agent_wrappers import track_generation
 from forecasting_tools.ai_models.ai_utils.openai_utils import (
     OpenAiUtils,
     VisionMessageData,
@@ -251,16 +250,7 @@ class GeneralLlm(
     ) -> Any:
         logger.debug(f"Invoking model with prompt: {prompt}")
 
-        with track_generation(
-            input=self.model_input_to_message(prompt),
-            model=self.model,
-        ) as span:
-            direct_call_response = await self._mockable_direct_call_to_model(prompt)
-            answer = direct_call_response.data
-            span.span_data.output = [{"role": "assistant", "content": answer}]
-            # span.span_data.usage = usage.model_dump()
-            span.span_data.model = self.model
-            span.span_data.model_config = self.litellm_kwargs
+        direct_call_response = await self._mockable_direct_call_to_model(prompt)
 
         logger.debug(f"Model responded with: {direct_call_response}")
         return direct_call_response
