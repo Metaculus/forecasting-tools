@@ -1,27 +1,11 @@
 import asyncio
 import logging
-import os
-import time
-from typing import Any
 
 import nest_asyncio
-from agents import (
-    Agent,
-    CodeInterpreterTool,
-    FunctionTool,
-    Runner,
-    Span,
-    Trace,
-    custom_span,
-)
+from agents import Agent, CodeInterpreterTool, FunctionTool, Runner
 from agents import function_tool as ft
-from agents import generation_span, trace
 from agents.extensions.models.litellm_model import LitellmModel
-from agents.run import RunConfig
 from agents.stream_events import StreamEvent
-from agents.tracing.setup import GLOBAL_TRACE_PROVIDER
-from agents.tracing.span_data import CustomSpanData, GenerationSpanData
-from agents.tracing.traces import TraceImpl
 
 from forecasting_tools.ai_models.model_tracker import ModelTracker
 
@@ -45,66 +29,11 @@ class AgentSdkLlm(LitellmModel):
         return response
 
 
-class NoOpContextManager:
-    """A context manager that does nothing when used in with statements"""
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return False
-
-    @property
-    def trace_id(self) -> str:
-        return "no-op-trace-id"
-
-
-def _current_trace_exists() -> bool:
-    try:
-        if GLOBAL_TRACE_PROVIDER is not None:
-            current_trace = GLOBAL_TRACE_PROVIDER.get_current_trace()
-        else:
-            raise ValueError("GLOBAL_TRACE_PROVIDER is not set")
-    except Exception as e:
-        logger.warning(f"Error getting current trace: {e}")
-        current_trace = None
-    return current_trace is not None
-
-
-def _disable_tracing_based_if_not_configured() -> None:
-    if not os.getenv("OPENAI_API_KEY") and not os.getenv(
-        "OPENAI_AGENTS_DISABLE_TRACING"
-    ):
-        disable_value = "1"
-        os.environ["OPENAI_AGENTS_DISABLE_TRACING"] = disable_value
-        RunConfig.tracing_disabled = True
-
-
-def general_trace_or_span(
-    name: str, data: dict[str, Any] | None = None, **kwargs
-) -> Span[CustomSpanData] | Trace:
-    _disable_tracing_based_if_not_configured()
-    if _current_trace_exists():
-        return custom_span(name, data, **kwargs)
-    else:
-        return trace(workflow_name=name, metadata=data, **kwargs)
-
-
-def track_generation(*args, **kwargs) -> Span[GenerationSpanData]:
-    _disable_tracing_based_if_not_configured()
-    if _current_trace_exists():
-        return generation_span(*args, **kwargs)
-    else:
-        with trace("One Off Generation"):
-            return generation_span(*args, **kwargs)
-
-
 AgentRunner = Runner  # Alias for Runner for later extension
 AgentTool = FunctionTool  # Alias for FunctionTool for later extension
 AiAgent = Agent  # Alias for Agent for later extension
 CodingTool = CodeInterpreterTool  # Alias for CodeInterpreterTool for later extension
 agent_tool = ft  # Alias for function_tool for later extension
-ImplementedTrace = TraceImpl  # Alias for TraceImpl for later extension
 
 
 def event_to_tool_message(event: StreamEvent) -> str | None:
@@ -144,69 +73,3 @@ def event_to_tool_message(event: StreamEvent) -> str | None:
     if text == "":
         return None
     return text
-
-
-if __name__ == "__main__":
-    # Test tracing/spans. See https://platform.openai.com/traces for visual confirmation
-    with trace("Test Trace A"):
-        with track_generation(
-            model="gpt-4o-mini",
-            input=[{"role": "user", "content": "Test Input"}],
-        ):
-            time.sleep(1)
-        with track_generation(
-            model="gpt-4o-mini",
-            input=[{"role": "user", "content": "Test Input"}],
-        ):
-            time.sleep(1)
-            with track_generation(
-                model="gpt-4o-mini",
-                input=[{"role": "user", "content": "Test Input"}],
-            ):
-                time.sleep(1)
-        with custom_span("Test Span 2"):
-            time.sleep(1)
-
-    with custom_span("Test Span 3"):
-        with track_generation(
-            model="gpt-4o-mini",
-            input=[{"role": "user", "content": "Test Input"}],
-        ):
-            time.sleep(1)
-
-    with general_trace_or_span("Test Trace B"):
-        with track_generation(
-            model="gpt-4o-mini",
-            input=[{"role": "user", "content": "Test Input"}],
-        ):
-            time.sleep(1)
-        with track_generation(
-            model="gpt-4o-mini",
-            input=[{"role": "user", "content": "Test Input"}],
-        ):
-            time.sleep(1)
-            with track_generation(
-                model="gpt-4o-mini",
-                input=[{"role": "user", "content": "Test Input"}],
-            ):
-                time.sleep(1)
-                with general_trace_or_span("Test Span 2"):
-                    time.sleep(1)
-
-    with trace("Test Trace C"):
-        with general_trace_or_span("Test Span 1"):
-            with track_generation(
-                model="gpt-4o-mini",
-                input=[{"role": "user", "content": "Test Input"}],
-            ):
-                time.sleep(1)
-            with track_generation(
-                model="gpt-4o-mini",
-                input=[{"role": "user", "content": "Test Input"}],
-            ):
-                time.sleep(1)
-                with track_generation(
-                    model="gpt-4o-mini",
-                    input=[{"role": "user", "content": "Test Input"}],
-                ):
-                    time.sleep(1)
