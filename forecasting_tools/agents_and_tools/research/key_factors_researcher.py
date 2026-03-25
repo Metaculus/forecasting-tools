@@ -222,7 +222,7 @@ class KeyFactorsResearcher:
             # Grading Scale for {ScoreCardGrade.__class__.__name__}
             - {ScoreCardGrade.VERY_BAD.value}: Generally poor quality
             - {ScoreCardGrade.BAD.value}: Below average quality
-            - {ScoreCardGrade.OK.value}: Below average quality
+            - {ScoreCardGrade.OK.value}: Average quality
             - {ScoreCardGrade.GOOD.value}: Above average quality
             - {ScoreCardGrade.VERY_GOOD.value}: Exceptional quality
 
