@@ -9,12 +9,7 @@ from pydantic import BaseModel, Field
 from forecasting_tools.agents_and_tools.minor_tools import (
     perplexity_reasoning_pro_search,
 )
-from forecasting_tools.ai_models.agent_wrappers import (
-    AgentRunner,
-    AgentSdkLlm,
-    AiAgent,
-    general_trace_or_span,
-)
+from forecasting_tools.ai_models.agent_wrappers import AgentRunner, AgentSdkLlm, AiAgent
 from forecasting_tools.auto_optimizers.prompt_data_models import PromptIdea
 from forecasting_tools.helpers.structure_output import structure_output
 from forecasting_tools.util.misc import clean_indents, retry_async_function
@@ -112,63 +107,57 @@ class PromptOptimizer:
             )
 
     async def create_optimized_prompt(self) -> OptimizationRun:
-        with general_trace_or_span("Prompt Optimizer"):
-            return await self._create_optimized_prompt()
+        return await self._create_optimized_prompt()
 
     async def _create_optimized_prompt(self) -> OptimizationRun:
         iteration_num = 0
-        with general_trace_or_span("Initial Population Generation (Iteration 1)"):
-            iteration_num += 1
-            logger.info(
-                f"Generating initial prompt population of size {self.initial_prompt_population_size}"
+        iteration_num += 1
+        logger.info(
+            f"Generating initial prompt population of size {self.initial_prompt_population_size}"
+        )
+        seed_prompt = ImplementedPrompt(
+            text=self.initial_prompt,
+            idea=PromptIdea(
+                short_name="Initial Seed",
+                full_text="The user-provided initial prompt",
+            ),
+            originating_ideas=[],
+        )
+        starting_prompts: list[ImplementedPrompt] = [seed_prompt]
+        prompts_still_needed = self.initial_prompt_population_size - len(
+            starting_prompts
+        )
+        if prompts_still_needed > 0:
+            additional_initial_prompts = await self._mutate_prompt(
+                starting_prompts[0],
+                prompts_still_needed,
             )
-            seed_prompt = ImplementedPrompt(
-                text=self.initial_prompt,
-                idea=PromptIdea(
-                    short_name="Initial Seed",
-                    full_text="The user-provided initial prompt",
-                ),
-                originating_ideas=[],
-            )
-            starting_prompts: list[ImplementedPrompt] = [seed_prompt]
-            prompts_still_needed = self.initial_prompt_population_size - len(
-                starting_prompts
-            )
-            if prompts_still_needed > 0:
-                additional_initial_prompts = await self._mutate_prompt(
-                    starting_prompts[0],
-                    prompts_still_needed,
-                )
-                starting_prompts.extend(additional_initial_prompts)
+            starting_prompts.extend(additional_initial_prompts)
 
-            offspring_prompts: list[ImplementedPrompt] = starting_prompts
-            assert (
-                seed_prompt in offspring_prompts
-            ), "Seed prompt not found in offspring prompts"
-            all_evaluated_prompts: list[ScoredPrompt] = (
-                await self._evaluate_new_members(offspring_prompts)
-            )
-            survivors = await self._kill_the_weak(all_evaluated_prompts)
+        offspring_prompts: list[ImplementedPrompt] = starting_prompts
+        assert (
+            seed_prompt in offspring_prompts
+        ), "Seed prompt not found in offspring prompts"
+        all_evaluated_prompts: list[ScoredPrompt] = await self._evaluate_new_members(
+            offspring_prompts
+        )
+        survivors = await self._kill_the_weak(all_evaluated_prompts)
 
         while iteration_num < self.iterations:
             iteration_num += 1
-            with general_trace_or_span(
-                f"Prompt Optimizer Iteration {iteration_num + 1}",
-                data={"survivors": [s.model_dump() for s in survivors]},
-            ):
-                logger.info(
-                    f"Starting iteration {iteration_num + 1}/{self.iterations} - Current population size: {len(offspring_prompts)}"
-                )
+            logger.info(
+                f"Starting iteration {iteration_num + 1}/{self.iterations} - Current population size: {len(offspring_prompts)}"
+            )
 
-                offspring_prompts = await self._generate_new_prompts(survivors)
+            offspring_prompts = await self._generate_new_prompts(survivors)
 
-                evaluated_prompts = await self._evaluate_new_members(offspring_prompts)
-                all_evaluated_prompts.extend(evaluated_prompts)
-                updated_population = survivors + evaluated_prompts
+            evaluated_prompts = await self._evaluate_new_members(offspring_prompts)
+            all_evaluated_prompts.extend(evaluated_prompts)
+            updated_population = survivors + evaluated_prompts
 
-                survivors = await self._kill_the_weak(updated_population)
+            survivors = await self._kill_the_weak(updated_population)
 
-                self._log_duplicate_prompts(all_evaluated_prompts)
+            self._log_duplicate_prompts(all_evaluated_prompts)
 
         return OptimizationRun(scored_prompts=all_evaluated_prompts)
 

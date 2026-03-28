@@ -569,3 +569,321 @@ def check_distribution_variations(
     )
     # Let the model validator do most the asserts
     assert cdf_distribution.cdf_size == cdf_size
+
+
+class TestGetPercentilesAtTargetHeights:
+    def _make_distribution(
+        self,
+        percentiles: list[Percentile],
+        lower_bound: float = 0.0,
+        upper_bound: float = 100.0,
+        open_lower_bound: bool = False,
+        open_upper_bound: bool = False,
+    ) -> NumericDistribution:
+        return NumericDistribution(
+            declared_percentiles=percentiles,
+            open_upper_bound=open_upper_bound,
+            open_lower_bound=open_lower_bound,
+            upper_bound=upper_bound,
+            lower_bound=lower_bound,
+            zero_point=None,
+            standardize_cdf=False,
+        )
+
+    def test_basic_interpolation(self) -> None:
+        percentiles = [
+            Percentile(value=10.0, percentile=0.1),
+            Percentile(value=50.0, percentile=0.5),
+            Percentile(value=90.0, percentile=0.9),
+        ]
+        dist = self._make_distribution(percentiles)
+        result = dist.get_percentiles_at_target_heights([0.1, 0.5, 0.9])
+        assert result[0].value == pytest.approx(10.0)
+        assert result[1].value == pytest.approx(50.0)
+        assert result[2].value == pytest.approx(90.0)
+        assert result[0].percentile == pytest.approx(0.1)
+        assert result[1].percentile == pytest.approx(0.5)
+        assert result[2].percentile == pytest.approx(0.9)
+
+    def test_interpolation_between_declared_points(self) -> None:
+        percentiles = [
+            Percentile(value=0.0, percentile=0.0),
+            Percentile(value=100.0, percentile=1.0),
+        ]
+        dist = self._make_distribution(percentiles)
+        result = dist.get_percentiles_at_target_heights([0.25, 0.5, 0.75])
+        assert result[0].value == pytest.approx(25.0)
+        assert result[1].value == pytest.approx(50.0)
+        assert result[2].value == pytest.approx(75.0)
+
+    def test_default_target_heights(self) -> None:
+        percentiles = [
+            Percentile(value=0.0, percentile=0.0),
+            Percentile(value=100.0, percentile=1.0),
+        ]
+        dist = self._make_distribution(percentiles)
+        result = dist.get_percentiles_at_target_heights()
+        assert len(result) == 6
+        expected_heights = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
+        for r, h in zip(result, expected_heights):
+            assert r.percentile == pytest.approx(h)
+
+    def test_clamping_beyond_range(self) -> None:
+        percentiles = [
+            Percentile(value=30.0, percentile=0.3),
+            Percentile(value=70.0, percentile=0.7),
+        ]
+        dist = self._make_distribution(percentiles)
+        result = dist.get_percentiles_at_target_heights([0.1, 0.5, 0.9])
+        assert result[0].value == pytest.approx(30.0)
+        assert result[1].value == pytest.approx(50.0)
+        assert result[2].value == pytest.approx(70.0)
+
+
+class TestAggregateReadablePrediction:
+    def _make_question(
+        self,
+        lower_bound: float = 0.0,
+        upper_bound: float = 100_000_000_000.0,
+        open_lower_bound: bool = True,
+        open_upper_bound: bool = True,
+    ) -> NumericQuestion:
+        return NumericQuestion(
+            id_of_post=1,
+            id_of_question=1,
+            question_text="Test question",
+            background_info="Test background",
+            resolution_criteria="Test criteria",
+            fine_print="Test fine print",
+            state=QuestionState.OPEN,
+            upper_bound=upper_bound,
+            lower_bound=lower_bound,
+            open_upper_bound=open_upper_bound,
+            open_lower_bound=open_lower_bound,
+            zero_point=None,
+        )
+
+    def _make_forecaster_distribution(
+        self,
+        percentile_values: list[tuple[float, float]],
+        question: NumericQuestion,
+    ) -> NumericDistribution:
+        percentiles = [Percentile(percentile=p, value=v) for p, v in percentile_values]
+        return NumericDistribution.from_question(percentiles, question)
+
+    async def test_aggregate_readable_matches_forecaster_format(self) -> None:
+        """
+        Reproduces the bug from NVIDIA forward guidance question where
+        the aggregate showed weird percentile values like 5.04%, 78.24%
+        instead of clean values like 10%, 20%, 40%, 60%, 80%, 90%.
+        """
+        question = self._make_question()
+        forecaster_percentile_values = [
+            [
+                (0.1, 55e9),
+                (0.2, 58e9),
+                (0.4, 61e9),
+                (0.6, 63e9),
+                (0.8, 66e9),
+                (0.9, 70e9),
+            ],
+            [
+                (0.1, 54e9),
+                (0.2, 57e9),
+                (0.4, 60e9),
+                (0.6, 62.5e9),
+                (0.8, 65.5e9),
+                (0.9, 69e9),
+            ],
+            [
+                (0.1, 55e9),
+                (0.2, 58e9),
+                (0.4, 61e9),
+                (0.6, 62.5e9),
+                (0.8, 65e9),
+                (0.9, 68e9),
+            ],
+            [
+                (0.1, 55e9),
+                (0.2, 58e9),
+                (0.4, 60e9),
+                (0.6, 62e9),
+                (0.8, 65e9),
+                (0.9, 68e9),
+            ],
+        ]
+        predictions = [
+            self._make_forecaster_distribution(pvs, question)
+            for pvs in forecaster_percentile_values
+        ]
+
+        aggregated = await NumericReport.aggregate_predictions(predictions, question)
+        readable = NumericReport.make_readable_prediction(aggregated)
+
+        assert "10.00%" in readable
+        assert "20.00%" in readable
+        assert "40.00%" in readable
+        assert "60.00%" in readable
+        assert "80.00%" in readable
+        assert "90.00%" in readable
+        assert "5.04%" not in readable
+
+    async def test_aggregate_readable_values_are_reasonable(self) -> None:
+        """
+        The interpolated values at standard percentile heights should be
+        close to the median of individual forecasters' values at those heights.
+        """
+        question = self._make_question()
+        predictions = [
+            self._make_forecaster_distribution(
+                [
+                    (0.1, 10e9),
+                    (0.2, 20e9),
+                    (0.4, 40e9),
+                    (0.6, 60e9),
+                    (0.8, 80e9),
+                    (0.9, 90e9),
+                ],
+                question,
+            ),
+            self._make_forecaster_distribution(
+                [
+                    (0.1, 12e9),
+                    (0.2, 22e9),
+                    (0.4, 42e9),
+                    (0.6, 62e9),
+                    (0.8, 82e9),
+                    (0.9, 92e9),
+                ],
+                question,
+            ),
+        ]
+
+        aggregated = await NumericReport.aggregate_predictions(predictions, question)
+        result = aggregated.get_percentiles_at_target_heights()
+        for p in result:
+            assert p.percentile in [
+                pytest.approx(h) for h in [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
+            ]
+        tenth_percentile_value = result[0].value
+        assert 9e9 < tenth_percentile_value < 15e9
+
+    async def test_aggregate_with_identical_forecasters(self) -> None:
+        question = self._make_question()
+        same_pvs = [
+            (0.1, 30e9),
+            (0.2, 40e9),
+            (0.4, 50e9),
+            (0.6, 60e9),
+            (0.8, 70e9),
+            (0.9, 80e9),
+        ]
+        predictions = [
+            self._make_forecaster_distribution(same_pvs, question) for _ in range(4)
+        ]
+
+        aggregated = await NumericReport.aggregate_predictions(predictions, question)
+        result = aggregated.get_percentiles_at_target_heights()
+        assert result[0].value == pytest.approx(30e9, rel=0.1)
+        assert result[2].value == pytest.approx(50e9, rel=0.1)
+        assert result[5].value == pytest.approx(80e9, rel=0.1)
+
+    async def test_aggregate_with_spread_out_forecasters(self) -> None:
+        """
+        Even with very different forecasters, the aggregate should display
+        with clean percentile heights.
+        """
+        question = self._make_question()
+        predictions = [
+            self._make_forecaster_distribution(
+                [
+                    (0.1, 5e9),
+                    (0.2, 10e9),
+                    (0.4, 20e9),
+                    (0.6, 30e9),
+                    (0.8, 40e9),
+                    (0.9, 50e9),
+                ],
+                question,
+            ),
+            self._make_forecaster_distribution(
+                [
+                    (0.1, 50e9),
+                    (0.2, 60e9),
+                    (0.4, 70e9),
+                    (0.6, 80e9),
+                    (0.8, 90e9),
+                    (0.9, 95e9),
+                ],
+                question,
+            ),
+        ]
+
+        aggregated = await NumericReport.aggregate_predictions(predictions, question)
+        readable = NumericReport.make_readable_prediction(aggregated)
+        assert "10.00%" in readable
+        assert "90.00%" in readable
+
+    def test_individual_forecaster_readable_unchanged(self) -> None:
+        """Individual forecasters with <=10 percentiles still show all their values."""
+        percentiles = [
+            Percentile(value=10.0, percentile=0.1),
+            Percentile(value=20.0, percentile=0.2),
+            Percentile(value=40.0, percentile=0.4),
+            Percentile(value=60.0, percentile=0.6),
+            Percentile(value=80.0, percentile=0.8),
+            Percentile(value=90.0, percentile=0.9),
+        ]
+        dist = NumericDistribution(
+            declared_percentiles=percentiles,
+            open_upper_bound=False,
+            open_lower_bound=False,
+            upper_bound=100.0,
+            lower_bound=0.0,
+            zero_point=None,
+            standardize_cdf=False,
+        )
+        readable = NumericReport.make_readable_prediction(dist)
+        assert "10.00%" in readable
+        assert "20.00%" in readable
+        assert "40.00%" in readable
+        assert "60.00%" in readable
+        assert "80.00%" in readable
+        assert "90.00%" in readable
+        assert readable.count("chance of value below") == 6
+
+    async def test_aggregate_readable_with_narrow_distribution(self) -> None:
+        """
+        When all forecasters predict a very narrow range relative to the question bounds,
+        the aggregate should still show clean percentiles (not weird values from x-axis spacing).
+        """
+        question = self._make_question(lower_bound=0.0, upper_bound=1_000_000_000_000.0)
+        predictions = [
+            self._make_forecaster_distribution(
+                [
+                    (0.1, 99e9),
+                    (0.2, 99.5e9),
+                    (0.4, 100e9),
+                    (0.6, 100.5e9),
+                    (0.8, 101e9),
+                    (0.9, 101.5e9),
+                ],
+                question,
+            ),
+            self._make_forecaster_distribution(
+                [
+                    (0.1, 99e9),
+                    (0.2, 99.5e9),
+                    (0.4, 100e9),
+                    (0.6, 100.5e9),
+                    (0.8, 101e9),
+                    (0.9, 101.5e9),
+                ],
+                question,
+            ),
+        ]
+
+        aggregated = await NumericReport.aggregate_predictions(predictions, question)
+        readable = NumericReport.make_readable_prediction(aggregated)
+        assert "10.00%" in readable
+        assert "90.00%" in readable
