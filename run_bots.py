@@ -447,7 +447,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     sonnet_4_name = "anthropic/claude-sonnet-4-20250514"
     sonnet_4_5_name = "anthropic/claude-sonnet-4-5-20250929"
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
-    gemini_3_pro = "openrouter/google/gemini-3-pro-preview"
     gemini_default_timeout = 5 * 60
     deepnews_model = "asknews/deep-research/high-depth/claude-opus-4-6"  # Switched to opus 4.6 Feb 23rd. Switched to high depth Feb 16th 2026. Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
 
@@ -761,18 +760,18 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "tournaments": TournConfig.aib_and_site,
         },
         # "METAC_GEMINI_3_PRO_HIGH": {} # The default for regular gemini 3 pro is "high" so no need to make a separate version
-        "METAC_GEMINI_3_PRO": {
-            "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost * 1.3,
-            "bot": create_bot(
-                GeneralLlm(
-                    model=gemini_3_pro,
-                    reasoning_effort="high",  # This should be default (as of Nov 24th, 2025) even without specifying "high"
-                    temperature=1.0,
-                    timeout=gemini_default_timeout,
-                ),
-            ),
-            "tournaments": TournConfig.aib_and_site,
-        },
+        # "METAC_GEMINI_3_PRO": {
+        #     "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost * 1.3,
+        #     "bot": create_bot(
+        #         GeneralLlm(
+        #             model="openrouter/google/gemini-3-pro-preview",
+        #             reasoning_effort="high",  # This should be default (as of Nov 24th, 2025) even without specifying "high"
+        #             temperature=1.0,
+        #             timeout=gemini_default_timeout,
+        #         ),
+        #     ),
+        #     "tournaments": TournConfig.aib_and_site,
+        # },
         "METAC_GROK_4_1_FAST_HIGH": {
             "estimated_cost_per_question": guess_at_deepseek_v3_1_cost * 1.2,
             "bot": create_bot(
