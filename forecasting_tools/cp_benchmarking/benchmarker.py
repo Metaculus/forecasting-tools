@@ -5,7 +5,6 @@ from typing import Sequence
 
 import typeguard
 
-from forecasting_tools.ai_models.agent_wrappers import general_trace_or_span
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
@@ -80,50 +79,44 @@ class Benchmarker:
         self.code_to_snapshot = additional_code_to_snapshot
 
     async def run_benchmark(self) -> list[BenchmarkForBot]:
-        with general_trace_or_span("Benchmarker"):
-            if self.questions_to_use is None:
-                assert (
-                    self.number_of_questions_to_use is not None
-                ), "number_of_questions_to_use must be provided if questions_to_use is not provided"
-                chosen_questions = MetaculusApi.get_benchmark_questions(
-                    self.number_of_questions_to_use,
-                )
-            else:
-                chosen_questions = self.questions_to_use
-
-            chosen_questions = typeguard.check_type(
-                chosen_questions, list[MetaculusQuestion]
+        if self.questions_to_use is None:
+            assert (
+                self.number_of_questions_to_use is not None
+            ), "number_of_questions_to_use must be provided if questions_to_use is not provided"
+            chosen_questions = MetaculusApi.get_benchmark_questions(
+                self.number_of_questions_to_use,
             )
+        else:
+            chosen_questions = self.questions_to_use
 
-            if self.number_of_questions_to_use is not None:
-                assert len(chosen_questions) == self.number_of_questions_to_use
+        chosen_questions = typeguard.check_type(
+            chosen_questions, list[MetaculusQuestion]
+        )
 
-            benchmarks: list[BenchmarkForBot] = self._initialize_benchmarks(
-                self.forecast_bots, chosen_questions
+        if self.number_of_questions_to_use is not None:
+            assert len(chosen_questions) == self.number_of_questions_to_use
+
+        benchmarks: list[BenchmarkForBot] = self._initialize_benchmarks(
+            self.forecast_bots, chosen_questions
+        )
+
+        batches = self._batch_questions(
+            self.forecast_bots,
+            benchmarks,
+            chosen_questions,
+            self.concurrent_question_batch_size,
+        )
+        try:
+            for i, batch in enumerate(batches):
+                await self._run_a_batch(batch)
+                if batch.is_last_batch_for_benchmark:
+                    self._append_benchmarks_to_jsonl_if_configured([batch.benchmark])
+        except KeyboardInterrupt:
+            logger.warning(
+                "KeyboardInterrupt detected, saving current benchmark progress."
             )
-
-            batches = self._batch_questions(
-                self.forecast_bots,
-                benchmarks,
-                chosen_questions,
-                self.concurrent_question_batch_size,
-            )
-            try:
-                for i, batch in enumerate(batches):
-                    with general_trace_or_span(
-                        f"{batch.benchmark.name} - Batch {i+1} of {len(batches)}"
-                    ):
-                        await self._run_a_batch(batch)
-                    if batch.is_last_batch_for_benchmark:
-                        self._append_benchmarks_to_jsonl_if_configured(
-                            [batch.benchmark]
-                        )
-            except KeyboardInterrupt:
-                logger.warning(
-                    "KeyboardInterrupt detected, saving current benchmark progress."
-                )
-                self._append_benchmarks_to_jsonl_if_configured([batch.benchmark])
-                raise
+            self._append_benchmarks_to_jsonl_if_configured([batch.benchmark])
+            raise
         return benchmarks
 
     async def _run_a_batch(self, batch: QuestionBatch) -> None:

@@ -314,6 +314,22 @@ class NumericDistribution(BaseModel):
         ]
         return representative_percentiles
 
+    def get_percentiles_at_target_heights(
+        self, target_heights: list[float] | None = None
+    ) -> list[Percentile]:
+        if target_heights is None:
+            target_heights = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
+
+        heights = [p.percentile for p in self.declared_percentiles]
+        values = [p.value for p in self.declared_percentiles]
+
+        result = []
+        for target in target_heights:
+            interpolated_value = float(np.interp(target, heights, values))
+            result.append(Percentile(percentile=target, value=interpolated_value))
+
+        return result
+
     @property
     @typing_extensions.deprecated(
         "NumericDistribution.cdf (property) will be replaced with NumericDistribution.get_cdf (method). Please switch.",
@@ -633,12 +649,9 @@ class NumericReport(ForecastReport):
     def make_readable_prediction(cls, prediction: NumericDistribution) -> str:
         num_percentiles = len(prediction.declared_percentiles)
         if num_percentiles > 10:
-            num_display_percentiles = 5
+            representative_percentiles = prediction.get_percentiles_at_target_heights()
         else:
-            num_display_percentiles = num_percentiles
-        representative_percentiles = prediction.get_representative_percentiles(
-            num_display_percentiles
-        )
+            representative_percentiles = prediction.declared_percentiles
         readable = "Probability distribution:\n"
         for percentile in representative_percentiles:
             if prediction.is_date:

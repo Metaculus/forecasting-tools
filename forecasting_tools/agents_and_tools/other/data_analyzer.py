@@ -12,7 +12,6 @@ from forecasting_tools.ai_models.agent_wrappers import (
     CodingTool,
     agent_tool,
     event_to_tool_message,
-    general_trace_or_span,
 )
 from forecasting_tools.util.misc import clean_indents
 
@@ -119,10 +118,9 @@ class DataAnalyzer:
 
 
 if __name__ == "__main__":
-    with general_trace_or_span("Test Span 1"):
-        answer = asyncio.run(
-            DataAnalyzer().run_data_analysis(
-                instructions="Please multiple 52.675 x 6.547 x 9867.5476 x 4356.5",
-            )
+    answer = asyncio.run(
+        DataAnalyzer().run_data_analysis(
+            instructions="Please multiple 52.675 x 6.547 x 9867.5476 x 4356.5",
         )
+    )
     print(answer)

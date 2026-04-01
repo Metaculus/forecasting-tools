@@ -20,7 +20,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
+      - id: setup-python
+        uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 

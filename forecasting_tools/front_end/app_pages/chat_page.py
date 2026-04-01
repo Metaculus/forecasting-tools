@@ -43,7 +43,6 @@ from forecasting_tools.ai_models.agent_wrappers import (
     AgentTool,
     AiAgent,
     event_to_tool_message,
-    general_trace_or_span,
 )
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -84,7 +83,6 @@ class ChatSession(BaseModel, Jsonable):
     name: str
     messages: list[dict]
     model_choice: str = DEFAULT_MODEL
-    trace_id: str | None = None
     last_chat_cost: float | None = None
     last_chat_duration: float | None = None
     time_stamp: datetime = Field(default_factory=datetime.now)
@@ -235,11 +233,6 @@ class ChatPage(AppPage):
                 st.markdown(
                     f"**Last Chat Duration:** {st.session_state.last_chat_duration:.2f} seconds"
                 )
-            if "trace_id" in st.session_state.keys():
-                trace_id = st.session_state.trace_id
-                st.markdown(
-                    f"**Conversation in Foresight Project:** [link](https://platform.openai.com/traces/trace?trace_id={trace_id})"
-                )
 
     @classmethod
     def display_premade_examples(cls) -> None:
@@ -265,8 +258,6 @@ class ChatPage(AppPage):
                     if st.button(session.name, key=session.name):
                         st.session_state.messages = session.messages
                         st.session_state.model_choice = session.model_choice
-                        if session.trace_id:
-                            st.session_state.trace_id = session.trace_id
                         if session.last_chat_cost:
                             st.session_state.last_chat_cost = session.last_chat_cost
                         if session.last_chat_duration:
@@ -299,7 +290,6 @@ class ChatPage(AppPage):
                         name=st.session_state["chat_save_name"],
                         model_choice=st.session_state["model_choice"],
                         messages=st.session_state.messages,
-                        trace_id=st.session_state.trace_id,
                         last_chat_cost=st.session_state.last_chat_cost,
                         last_chat_duration=st.session_state.last_chat_duration,
                     )
@@ -464,29 +454,27 @@ class ChatPage(AppPage):
             handoffs=[],
         )
 
-        with general_trace_or_span("Chat App") as chat_trace:
-            result = AgentRunner.run_streamed(
-                agent, st.session_state.messages, max_turns=20
-            )
-            streamed_text = ""
-            with st.chat_message("assistant"):
-                placeholder = st.empty()
-            with st.spinner("Thinking..."):
-                async for event in result.stream_events():
-                    if event.type == "raw_response_event" and isinstance(
-                        event.data, ResponseTextDeltaEvent
-                    ):
-                        streamed_text += event.data.delta
-                    placeholder.write(streamed_text)
+        result = AgentRunner.run_streamed(
+            agent, st.session_state.messages, max_turns=20
+        )
+        streamed_text = ""
+        with st.chat_message("assistant"):
+            placeholder = st.empty()
+        with st.spinner("Thinking..."):
+            async for event in result.stream_events():
+                if event.type == "raw_response_event" and isinstance(
+                    event.data, ResponseTextDeltaEvent
+                ):
+                    streamed_text += event.data.delta
+                placeholder.write(streamed_text)
 
-                    new_reasoning = event_to_tool_message(event)
-                    if new_reasoning:
-                        st.sidebar.write(new_reasoning)
+                new_reasoning = event_to_tool_message(event)
+                if new_reasoning:
+                    st.sidebar.write(new_reasoning)
 
-            # logger.info(f"Chat finished with output: {streamed_text}")
-            st.session_state.messages = result.to_input_list()
-            st.session_state.trace_id = chat_trace.trace_id
-            cls._update_last_message_if_gemini_bug(model_choice)
+        # logger.info(f"Chat finished with output: {streamed_text}")
+        st.session_state.messages = result.to_input_list()
+        cls._update_last_message_if_gemini_bug(model_choice)
 
         ForecastDatabaseManager.add_general_report_to_database(
             question_text=prompt_input,
@@ -519,7 +507,6 @@ class ChatPage(AppPage):
     @classmethod
     def clear_chat_history(cls) -> None:
         st.session_state.messages = [cls.DEFAULT_MESSAGE]
-        st.session_state.trace_id = None
         st.session_state.chat_files = []
 
 
