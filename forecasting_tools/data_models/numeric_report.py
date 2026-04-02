@@ -84,8 +84,11 @@ class DatePercentile(BaseModel):
 
 class NumericDistribution(BaseModel):
     declared_percentiles: list[Percentile]
-    open_upper_bound: bool
-    open_lower_bound: bool
+    open_upper_bound: bool  # If False, cdf[-1] must be 1.0 (no mass above upper bound)
+    open_lower_bound: bool  # If False, cdf[0] must be 0.0 (no mass strictly below lower
+    # bound). Note: cdf[0] = P(outcome < lower_bound), so a closed lower bound does not
+    # prevent assigning probability to the outcome equalling lower_bound exactly —
+    # that mass goes in the first inbound bucket: cdf[1] - cdf[0].
     upper_bound: float
     lower_bound: float
     zero_point: float | None
@@ -344,12 +347,22 @@ class NumericDistribution(BaseModel):
         between upper and lower bound (taking into account probability assigned above and below the bounds)
         that is compatible with Metaculus questions.
 
-        cdf stands for 'continuous distribution function'
+        cdf stands for 'cumulative distribution function'
 
         At Metaculus CDFs are often represented with 201 points. Each point has:
-        - percentile ("X% of values are below this point". This is the y axis of the cdf graph)
+        - percentile (the y axis of the cdf graph — see boundary notes below)
         - 'value' or 'nominal location' (The real world number that answers the question)
         - cdf location (a number between 0 and 1 representing where the point is on the cdf x axis, where 0 is range min, and 1 is range max)
+
+        Important boundary semantics (note the asymmetry):
+        - cdf[0].percentile  = P(outcome < lower_bound)  — strictly less than (not equal to)
+        - cdf[-1].percentile = P(outcome <= upper_bound) — less than or equal to
+        For questions with a closed lower bound, cdf[0].percentile must be 0.0 because
+        outcomes strictly below the lower bound are impossible. This does NOT mean zero
+        probability at the lower bound itself — probability of the outcome equalling
+        lower_bound belongs in the first inbound bucket: cdf[1].percentile - cdf[0].percentile.
+        For example, to express an 80% chance the outcome is exactly lower_bound, set
+        cdf[1].percentile = 0.8 (and cdf[0].percentile = 0.0).
         """
 
         cdf_size = self.cdf_size or NumericDefaults.DEFAULT_CDF_SIZE
@@ -527,6 +540,11 @@ class NumericDistribution(BaseModel):
         - caps the maximum growth to 0.2
 
         Note, thresholds change with different `inbound_outcome_count`s
+
+        Boundary convention: cdf[0] is P(outcome < lower_bound) — strictly less than.
+        For closed lower bounds this is forced to 0.0 after standardization; probability
+        of landing exactly on lower_bound belongs in the first inbound bucket (cdf[1]).
+        cdf[-1] is P(outcome <= upper_bound) — less than or equal to (standard convention).
         """
 
         lower_open = self.open_lower_bound
