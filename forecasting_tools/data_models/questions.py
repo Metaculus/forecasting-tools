@@ -474,8 +474,10 @@ class DateQuestion(MetaculusQuestion, BoundedQuestionMixin):
     question_type: Literal["date"] = "date"
     upper_bound: datetime
     lower_bound: datetime
-    open_upper_bound: bool
-    open_lower_bound: bool
+    open_upper_bound: bool  # If False, cdf[-1] must be 1.0 (no mass above upper bound)
+    open_lower_bound: bool  # If False, cdf[0] must be 0.0. Note: cdf[0] = P(outcome <
+    # lower_bound) strictly, so probability of landing exactly on lower_bound belongs
+    # in the first inbound bucket (cdf[1]), not in cdf[0].
     zero_point: float | None = None
     cdf_size: int = 201
 
@@ -530,8 +532,10 @@ class NumericQuestion(MetaculusQuestion, BoundedQuestionMixin):
     question_type: Literal["numeric"] = "numeric"
     upper_bound: float
     lower_bound: float
-    open_upper_bound: bool
-    open_lower_bound: bool
+    open_upper_bound: bool  # If False, cdf[-1] must be 1.0 (no mass above upper bound)
+    open_lower_bound: bool  # If False, cdf[0] must be 0.0. Note: cdf[0] = P(outcome <
+    # lower_bound) strictly, so probability of landing exactly on lower_bound belongs
+    # in the first inbound bucket (cdf[1]), not in cdf[0].
     zero_point: float | None = None
     cdf_size: int = (
         201  # Normal numeric questions have 201 points, but discrete questions have fewer
