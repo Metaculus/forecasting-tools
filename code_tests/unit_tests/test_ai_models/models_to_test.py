@@ -4,9 +4,6 @@ from forecasting_tools.ai_models.ai_utils.openai_utils import VisionMessageData
 from forecasting_tools.ai_models.deprecated_model_classes.deepseek_r1 import DeepSeekR1
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4o import Gpt4o
 from forecasting_tools.ai_models.deprecated_model_classes.gpt4ovision import Gpt4oVision
-from forecasting_tools.ai_models.deprecated_model_classes.metaculus4o import (
-    Gpt4oMetaculusProxy,
-)
 from forecasting_tools.ai_models.deprecated_model_classes.perplexity import Perplexity
 from forecasting_tools.ai_models.exa_searcher import ExaSearcher
 from forecasting_tools.ai_models.general_llm import GeneralLlm, ModelInputType
@@ -37,7 +34,7 @@ class ModelsToTest:
 
     ALL_MODELS = [
         Gpt4o,
-        Gpt4oMetaculusProxy,
+        # Gpt4oMetaculusProxy,
         Gpt4oVision,
         # GptO1Preview,
         # GptO1,
