@@ -49,6 +49,7 @@ POST_IDS_TO_SKIP = [
     39009,  # https://www.metaculus.com/questions/39009/ is rejected since too many MC options
     41362,  # https://www.metaculus.com/questions/41362/ is rejected because common cause of errors (confusion on units?)
     42495,  # https://www.metaculus.com/questions/42495/ is rejected since too many MC options
+    42557,  # https://www.metaculus.com/questions/42557/ is rejected since too many group question options that lower quality models fail at
 ]
 
 
