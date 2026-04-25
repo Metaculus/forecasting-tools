@@ -119,20 +119,16 @@ jobs:
           if [ -n "$RAW_TOKEN" ]; then
             echo "METACULUS_TOKEN=$RAW_TOKEN" >> $GITHUB_ENV
           else
-            TOKEN=$(python3 -c "
-import json, os, sys
-tokens = json.loads(os.environ.get('TOKENS_JSON') or '{}')
-token = tokens.get(os.environ['BOT_NAME'], '')
-if not token:
-    print(f'ERROR: No token found for {os.environ[\"BOT_NAME\"]} in METACULUS_TOKENS', file=sys.stderr)
-    sys.exit(1)
-print(token)
-")
+            TOKEN=$(echo "$METACULUS_TOKENS" | jq -r --arg key "$BOT_NAME" '.[$key] // empty')
+            if [ -z "$TOKEN" ]; then
+              echo "ERROR: No token found for $BOT_NAME in METACULUS_TOKENS" >&2
+              exit 1
+            fi
             echo "METACULUS_TOKEN=$TOKEN" >> $GITHUB_ENV
           fi
         env:
           RAW_TOKEN: ${{ secrets.INPUT_METACULUS_TOKEN }}
-          TOKENS_JSON: ${{ secrets.INPUT_METACULUS_TOKENS }}
+          METACULUS_TOKENS: ${{ secrets.INPUT_METACULUS_TOKENS }}
           BOT_NAME: ${{ inputs.bot_name }}
 
       - name: Run bot
