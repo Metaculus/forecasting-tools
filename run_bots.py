@@ -125,6 +125,7 @@ class RunBotConfig(BaseModel):
     bot: ForecastBot | None
     estimated_cost_per_question: float | None
     tournaments: list[AllowedTourn]
+    metac_name: str | None = None  # Metaculus username for this bot (key in METACULUS_TOKENS)
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -562,6 +563,100 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     mode_base_bot_mapping = {
         # "METAC_GROK_4_1_HIGH": {} # TODO: Add these bots to github workflow. Its not yet released via API as of Dec 21st, 2025
         # "METAC_GROK_4_1": {}
+        ############################ Bots started in April 2026 ############################
+        "METAC_CLAUDE_SONNET_4_6": {
+            "estimated_cost_per_question": roughly_sonnet_4_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-sonnet-4-6",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+            "metac_name": "metac-claude-sonnet-4-6",
+        },
+        "METAC_QWEN_3_5": {
+            "estimated_cost_per_question": roughly_sonnet_3_5_cost / 2,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/qwen/qwen3.5-397b-a17b",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+            "metac_name": "metac-qwen-3-5",
+        },
+        "METAC_GEMINI_3_1_PRO": {
+            "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/google/gemini-3.1-pro-preview",
+                    temperature=default_temperature,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+            "metac_name": "metac-gemini-3-1-pro",
+        },
+        "METAC_GPT_5_5": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.5",
+                    temperature=None,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+            "metac_name": "metac-gpt-5-5",
+        },
+        "METAC_GPT_5_4": {
+            "estimated_cost_per_question": roughly_gpt_5_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.4",
+                    temperature=default_temperature,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+            "metac_name": "metac-gpt-5-4",
+        },
+        "METAC_GPT_5_4_MINI": {
+            "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.4-mini",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+            "metac_name": "metac-gpt-5-4-mini",
+        },
+        "METAC_GPT_5_4_NANO": {
+            "estimated_cost_per_question": roughly_gpt_4o_mini_cost / 2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.4-nano",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+            "metac_name": "metac-gpt-5-4-nano",
+        },
+        # "METAC_GPT_5_3": {} -> Not yet available in OpenAI API as of April 2026
+        # "METAC_GPT_5_3_INSTANT": {} -> Not yet available in OpenAI API as of April 2026
+        "METAC_MINIMAX_M2_7": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/minimax/minimax-m2.7",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+            "metac_name": "metac-minimax-m2-7",
+        },
         ############################ Bots started in February 2026 ############################
         "METAC_CLAUDE_OPUS_4_6_HIGH_32K": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 1.3,
