@@ -43,3 +43,7 @@ source .venv/bin/activate
 
 # Show which Python interpreter is being used
 which python
+
+# Coderabbit
+curl -fsSL https://cli.coderabbit.ai/install.sh | sh
+# Then `cr auth login`

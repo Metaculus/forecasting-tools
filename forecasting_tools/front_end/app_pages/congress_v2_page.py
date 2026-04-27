@@ -92,7 +92,6 @@ class CongressV2Page(AppPage):
     ]
 
     @classmethod
-    @CustomAuth.add_access_control(allowed_passphrases=[V2_PASSPHRASE])
     async def _async_main(cls) -> None:
         st.title("🏛️ AI Forecasting Congress V2")
         st.markdown(
