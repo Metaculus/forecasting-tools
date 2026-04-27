@@ -359,16 +359,15 @@ class GeneralLlm(
             return typeguard.check_type(citations, list[str])
 
         # OpenRouter returns Perplexity citations as url_citation annotations
-        # rather than in model_extra["citations"]. The annotations are the
-        # flat source URL list duplicated (once with titles, once without),
-        # NOT one-per-occurrence. All start_index/end_index are 0.
-        # We deduplicate to reconstruct the original indexed list where
-        # urls[i] corresponds to citation [i+1] in the text.
+        # rather than in model_extra["citations"]. URLs may be duplicated
+        # (e.g. once with titles, once without). We deduplicate while
+        # preserving first-seen order so urls[i] corresponds to [i+1].
         message = choices[0].message
         annotations = getattr(message, "annotations", None)
         if not annotations:
             return []
-        all_urls: list[str] = []
+        seen: set[str] = set()
+        unique_urls: list[str] = []
         for annotation in annotations:
             if not isinstance(annotation, dict):
                 continue
@@ -376,23 +375,9 @@ class GeneralLlm(
                 continue
             url_info = annotation.get("url_citation", {})
             url = url_info.get("url", "")
-            if url:
-                all_urls.append(url)
-
-        seen: set[str] = set()
-        unique_urls: list[str] = []
-        for url in all_urls:
-            if url not in seen:
+            if url and url not in seen:
                 seen.add(url)
                 unique_urls.append(url)
-
-        num_unique = len(unique_urls)
-        num_total = len(all_urls)
-        if num_total != num_unique and num_total != num_unique * 2:
-            raise ValueError(
-                f"Expected annotations to contain each URL once or twice, "
-                f"but got {num_total} total URLs and {num_unique} unique URLs"
-            )
         return unique_urls
 
     def _normalize_response(
