@@ -1,0 +1,2 @@
+# Don't leak data used in notebook
+*.csv
