@@ -1545,6 +1545,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_UNIFORM_PROBABILITY_BOT_TOKEN"
+      metac_name: "metac-uniform-probability-bot"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
