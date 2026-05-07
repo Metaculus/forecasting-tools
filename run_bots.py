@@ -125,7 +125,6 @@ class RunBotConfig(BaseModel):
     bot: ForecastBot | None
     estimated_cost_per_question: float | None
     tournaments: list[AllowedTourn]
-    metac_name: str | None = None  # Metaculus username for this bot (key in METACULUS_TOKENS)
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -573,7 +572,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
-            "metac_name": "metac-claude-sonnet-4-6",
         },
         "METAC_QWEN_3_5": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost / 2,
@@ -584,7 +582,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
-            "metac_name": "metac-qwen-3-5",
         },
         "METAC_GEMINI_3_1_PRO": {
             "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
@@ -596,7 +593,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
-            "metac_name": "metac-gemini-3-1-pro",
         },
         "METAC_GPT_5_5": {
             "estimated_cost_per_question": roughly_gpt_5_high_cost,
@@ -608,7 +604,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
-            "metac_name": "metac-gpt-5-5",
         },
         "METAC_GPT_5_4": {
             "estimated_cost_per_question": roughly_gpt_5_cost,
@@ -620,7 +615,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
-            "metac_name": "metac-gpt-5-4",
         },
         "METAC_GPT_5_4_MINI": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
@@ -631,7 +625,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
-            "metac_name": "metac-gpt-5-4-mini",
         },
         "METAC_GPT_5_4_NANO": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost / 2,
@@ -642,7 +635,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
-            "metac_name": "metac-gpt-5-4-nano",
         },
         # "METAC_GPT_5_3": {} -> Not yet available in OpenAI API as of April 2026
         # "METAC_GPT_5_3_INSTANT": {} -> Not yet available in OpenAI API as of April 2026
@@ -655,7 +647,6 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
-            "metac_name": "metac-minimax-m2-7",
         },
         ############################ Bots started in February 2026 ############################
         "METAC_CLAUDE_OPUS_4_6_HIGH_32K": {
