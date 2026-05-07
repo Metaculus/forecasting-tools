@@ -42,9 +42,7 @@ class ConstantShiftAdjuster(CalibrationAdjuster):
         if self.shift is None:
             raise RuntimeError("call train() before adjusting forecasts")
         if not 0.0 <= prediction <= 1.0:
-            raise ValueError(
-                f"prediction must be in [0, 1], got {prediction}"
-            )
+            raise ValueError(f"prediction must be in [0, 1], got {prediction}")
         return float(np.clip(prediction + self.shift, self.EPS, 1.0 - self.EPS))
 
     def adjust_multiple_choice_forecast(
@@ -54,9 +52,7 @@ class ConstantShiftAdjuster(CalibrationAdjuster):
             raise RuntimeError("call train() before adjusting forecasts")
         preds = list(predictions)
         if any(not 0.0 <= p <= 1.0 for p in preds):
-            raise ValueError(
-                "all predictions must be in [0, 1]"
-            )
+            raise ValueError("all predictions must be in [0, 1]")
         shifted = np.array(preds, dtype=np.float64) + self.shift
         clipped = np.clip(shifted, self.EPS, 1.0 - self.EPS)
         total = clipped.sum()

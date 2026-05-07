@@ -23,7 +23,7 @@ def extract_bernoulli_observations(
         (p_option_i, 1.0 if resolution==option_i else 0.0)
 
     Rows that are not resolved binary or multiple-choice are skipped.
-    Malformed rows (missing probability, unparseable JSON, length
+    Malformed rows (missing probability, unparsable JSON, length
     mismatches between options and probabilities) are also skipped.
 
     Returns:
@@ -53,9 +53,7 @@ def extract_bernoulli_observations(
             "No usable resolved binary or multiple-choice rows in DataFrame"
         )
 
-    return np.array(predictions, dtype=np.float64), np.array(
-        outcomes, dtype=np.float64
-    )
+    return np.array(predictions, dtype=np.float64), np.array(outcomes, dtype=np.float64)
 
 
 def _process_binary_row(
@@ -97,7 +95,9 @@ def _process_mc_row(
 
     try:
         probs = json.loads(raw_probs) if isinstance(raw_probs, str) else raw_probs
-        options = json.loads(raw_options) if isinstance(raw_options, str) else raw_options
+        options = (
+            json.loads(raw_options) if isinstance(raw_options, str) else raw_options
+        )
     except (json.JSONDecodeError, TypeError):
         return
 

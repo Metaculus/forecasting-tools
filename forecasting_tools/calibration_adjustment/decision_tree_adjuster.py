@@ -111,9 +111,7 @@ class DecisionTreeAdjuster(CalibrationAdjuster):
     def adjust_binary_forecast(self, prediction: float) -> float:
         self._require_fitted()
         if not 0.0 <= prediction <= 1.0:
-            raise ValueError(
-                f"prediction must be in [0, 1], got {prediction}"
-            )
+            raise ValueError(f"prediction must be in [0, 1], got {prediction}")
         assert self._tree is not None and self._leaf_deltas is not None
         leaf_id = int(self._tree.apply(np.array([[prediction]]))[0])
         delta = self._leaf_deltas[leaf_id]

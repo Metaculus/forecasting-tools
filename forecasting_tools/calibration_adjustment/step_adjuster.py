@@ -62,9 +62,7 @@ class StepAdjuster(CalibrationAdjuster):
         if n_buckets is not None and n_buckets < 1:
             raise ValueError(f"n_buckets must be >= 1, got {n_buckets}")
         if not 0.0 < test_split < 1.0:
-            raise ValueError(
-                f"test_split must be in (0, 1), got {test_split}"
-            )
+            raise ValueError(f"test_split must be in (0, 1), got {test_split}")
         if max_buckets < 1:
             raise ValueError(f"max_buckets must be >= 1, got {max_buckets}")
 
@@ -81,16 +79,12 @@ class StepAdjuster(CalibrationAdjuster):
         if self.n_buckets is None:
             self.n_buckets = self._select_n_buckets(predictions, outcomes)
 
-        shifts, global_shift = self._fit_shifts(
-            predictions, outcomes, self.n_buckets
-        )
+        shifts, global_shift = self._fit_shifts(predictions, outcomes, self.n_buckets)
         self._shifts = shifts
         self._global_shift = global_shift
 
     @staticmethod
-    def _bucket_index(
-        p: np.ndarray | float, n: int
-    ) -> np.ndarray:
+    def _bucket_index(p: np.ndarray | float, n: int) -> np.ndarray:
         """Map probabilities in [0, 1] to bucket index in [0, n-1].
 
         ``p == 1.0`` is placed in the last bucket rather than overflowing.
@@ -119,14 +113,10 @@ class StepAdjuster(CalibrationAdjuster):
         for k in range(n):
             mask = idx == k
             if mask.any():
-                shifts[k] = float(
-                    np.mean(outcomes[mask] - predictions[mask])
-                )
+                shifts[k] = float(np.mean(outcomes[mask] - predictions[mask]))
         return shifts, global_shift
 
-    def _select_n_buckets(
-        self, predictions: np.ndarray, outcomes: np.ndarray
-    ) -> int:
+    def _select_n_buckets(self, predictions: np.ndarray, outcomes: np.ndarray) -> int:
         """Pick N minimizing Brier score on a held-out split.
 
         Uses a single train/test split on the Bernoulli pairs. For each
@@ -154,9 +144,7 @@ class StepAdjuster(CalibrationAdjuster):
         for n in range(1, self.max_buckets + 1):
             shifts, _ = self._fit_shifts(p_tr, y_tr, n)
             idx = self._bucket_index(p_te, n)
-            adjusted = np.clip(
-                p_te + shifts[idx], self.EPS, 1.0 - self.EPS
-            )
+            adjusted = np.clip(p_te + shifts[idx], self.EPS, 1.0 - self.EPS)
             score = float(np.mean((adjusted - y_te) ** 2))
             if score < best_score:
                 best_score = score
@@ -170,16 +158,10 @@ class StepAdjuster(CalibrationAdjuster):
     def adjust_binary_forecast(self, prediction: float) -> float:
         self._require_fitted()
         if not 0.0 <= prediction <= 1.0:
-            raise ValueError(
-                f"prediction must be in [0, 1], got {prediction}"
-            )
+            raise ValueError(f"prediction must be in [0, 1], got {prediction}")
         assert self._shifts is not None and self.n_buckets is not None
         k = int(self._bucket_index(prediction, self.n_buckets))
-        return float(
-            np.clip(
-                prediction + self._shifts[k], self.EPS, 1.0 - self.EPS
-            )
-        )
+        return float(np.clip(prediction + self._shifts[k], self.EPS, 1.0 - self.EPS))
 
     def adjust_multiple_choice_forecast(
         self, predictions: Sequence[float]
@@ -193,9 +175,7 @@ class StepAdjuster(CalibrationAdjuster):
         assert self._shifts is not None and self.n_buckets is not None
         arr = np.array(preds, dtype=np.float64)
         idx = self._bucket_index(arr, self.n_buckets)
-        adjusted = np.clip(
-            arr + self._shifts[idx], self.EPS, 1.0 - self.EPS
-        )
+        adjusted = np.clip(arr + self._shifts[idx], self.EPS, 1.0 - self.EPS)
         total = adjusted.sum()
         if total == 0:
             n = len(adjusted)

@@ -76,9 +76,7 @@ class KMeansAdjuster(CalibrationAdjuster):
         if k is not None and k < 1:
             raise ValueError(f"k must be >= 1, got {k}")
         if not 0.0 < test_split < 1.0:
-            raise ValueError(
-                f"test_split must be in (0, 1), got {test_split}"
-            )
+            raise ValueError(f"test_split must be in (0, 1), got {test_split}")
         if max_k < 1:
             raise ValueError(f"max_k must be >= 1, got {max_k}")
         if n_init < 1:
@@ -169,16 +167,12 @@ class KMeansAdjuster(CalibrationAdjuster):
         for i in range(k):
             mask = labels == i
             if mask.any():
-                shifts[i] = float(
-                    np.mean(outcomes[mask] - predictions[mask])
-                )
+                shifts[i] = float(np.mean(outcomes[mask] - predictions[mask]))
 
         return centers_sorted, shifts, global_shift
 
     @staticmethod
-    def _assign(
-        p: np.ndarray | float, centers: np.ndarray
-    ) -> np.ndarray:
+    def _assign(p: np.ndarray | float, centers: np.ndarray) -> np.ndarray:
         """Vectorized nearest-center assignment for sorted 1-D centers.
 
         Returns an integer array of cluster indices with the same shape
@@ -191,9 +185,7 @@ class KMeansAdjuster(CalibrationAdjuster):
         idx = np.searchsorted(boundaries, arr, side="right")
         return idx.astype(np.int64)
 
-    def _select_k(
-        self, predictions: np.ndarray, outcomes: np.ndarray
-    ) -> int:
+    def _select_k(self, predictions: np.ndarray, outcomes: np.ndarray) -> int:
         """Pick K minimizing Brier score on a held-out split.
 
         Mirrors :meth:`StepAdjuster._select_n_buckets`: a single
@@ -229,9 +221,7 @@ class KMeansAdjuster(CalibrationAdjuster):
                 n_init=self.n_init,
             )
             idx = self._assign(p_te, centers)
-            adjusted = np.clip(
-                p_te + shifts[idx], self.EPS, 1.0 - self.EPS
-            )
+            adjusted = np.clip(p_te + shifts[idx], self.EPS, 1.0 - self.EPS)
             score = float(np.mean((adjusted - y_te) ** 2))
             if score < best_score:
                 best_score = score
@@ -239,19 +229,13 @@ class KMeansAdjuster(CalibrationAdjuster):
         return best_k
 
     def _require_fitted(self) -> None:
-        if (
-            self._centers is None
-            or self._shifts is None
-            or self.k is None
-        ):
+        if self._centers is None or self._shifts is None or self.k is None:
             raise RuntimeError("call train() before adjusting forecasts")
 
     def adjust_binary_forecast(self, prediction: float) -> float:
         self._require_fitted()
         if not 0.0 <= prediction <= 1.0:
-            raise ValueError(
-                f"prediction must be in [0, 1], got {prediction}"
-            )
+            raise ValueError(f"prediction must be in [0, 1], got {prediction}")
         assert self._centers is not None and self._shifts is not None
         idx = int(self._assign(prediction, self._centers)[0])
         return float(
@@ -274,9 +258,7 @@ class KMeansAdjuster(CalibrationAdjuster):
         assert self._centers is not None and self._shifts is not None
         arr = np.array(preds, dtype=np.float64)
         idx = self._assign(arr, self._centers)
-        adjusted = np.clip(
-            arr + self._shifts[idx], self.EPS, 1.0 - self.EPS
-        )
+        adjusted = np.clip(arr + self._shifts[idx], self.EPS, 1.0 - self.EPS)
         total = adjusted.sum()
         if total == 0:
             n = len(adjusted)
