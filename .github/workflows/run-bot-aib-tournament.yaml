@@ -121,7 +121,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_CLAUDE_SONNET_4_6"
-      metac_name: "metac-claude-sonnet-4-6"
+      metac_name: "metac-claude-sonnet-4-6+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
@@ -136,7 +136,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_QWEN_3_5"
-      metac_name: "metac-qwen-3-5"
+      metac_name: "metac-qwen-3-5+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
@@ -150,7 +150,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_GEMINI_3_1_PRO"
-      metac_name: "metac-gemini-3-1-pro"
+      metac_name: "metac-gemini-3-1-pro+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
@@ -164,7 +164,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_GPT_5_5"
-      metac_name: "metac-gpt-5-5"
+      metac_name: "metac-gpt-5-5+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
@@ -178,7 +178,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_GPT_5_4"
-      metac_name: "metac-gpt-5-4"
+      metac_name: "metac-gpt-5-4+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
@@ -192,7 +192,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_GPT_5_4_MINI"
-      metac_name: "metac-gpt-5-4-mini"
+      metac_name: "metac-gpt-5-4-mini+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
@@ -206,7 +206,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_GPT_5_4_NANO"
-      metac_name: "metac-gpt-5-4-nano"
+      metac_name: "metac-gpt-5-4-nano+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
@@ -220,7 +220,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_GPT_5_3"
-      metac_name: "metac-gpt-5-3"
+      metac_name: "metac-gpt-5-3+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
@@ -234,7 +234,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_GPT_5_3_INSTANT"
-      metac_name: "metac-gpt-5-3-instant"
+      metac_name: "metac-gpt-5-3-instant+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
@@ -248,7 +248,7 @@ jobs:
     uses: ./.github/workflows/run-bot-launcher.yaml
     with:
       bot_name: "METAC_MINIMAX_M2_7"
-      metac_name: "metac-minimax-m2-7"
+      metac_name: "metac-minimax-m2-7+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
       INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
