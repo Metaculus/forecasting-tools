@@ -147,9 +147,7 @@ class CalibrationAdjuster(ABC):
 
         return float(np.mean(scores))
 
-    def _score_binary_row(
-        self, row: pd.Series, resolution: str
-    ) -> float | None:
+    def _score_binary_row(self, row: pd.Series, resolution: str) -> float | None:
         if resolution not in _VALID_BINARY_RESOLUTIONS:
             return None
 
@@ -169,9 +167,7 @@ class CalibrationAdjuster(ABC):
         y = 1.0 if resolution == "yes" else 0.0
         return float((adjusted - y) ** 2)
 
-    def _score_mc_row(
-        self, row: pd.Series, resolution: str
-    ) -> float | None:
+    def _score_mc_row(self, row: pd.Series, resolution: str) -> float | None:
         raw_probs = row.get("probability_yes_per_category")
         raw_options = row.get("options")
 
@@ -179,13 +175,9 @@ class CalibrationAdjuster(ABC):
             return None
 
         try:
-            probs = (
-                json.loads(raw_probs) if isinstance(raw_probs, str) else raw_probs
-            )
+            probs = json.loads(raw_probs) if isinstance(raw_probs, str) else raw_probs
             options = (
-                json.loads(raw_options)
-                if isinstance(raw_options, str)
-                else raw_options
+                json.loads(raw_options) if isinstance(raw_options, str) else raw_options
             )
         except (json.JSONDecodeError, TypeError):
             return None

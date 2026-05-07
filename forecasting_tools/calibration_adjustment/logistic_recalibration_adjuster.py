@@ -103,9 +103,7 @@ class LogisticRecalibrationAdjuster(CalibrationAdjuster):
     def adjust_binary_forecast(self, prediction: float) -> float:
         self._require_fitted()
         if not 0.0 <= prediction <= 1.0:
-            raise ValueError(
-                f"prediction must be in [0, 1], got {prediction}"
-            )
+            raise ValueError(f"prediction must be in [0, 1], got {prediction}")
         z = self._safe_logit(np.array([prediction]))[0]
         adjusted = float(expit((z - self.bias) / self.confidence))
         return float(np.clip(adjusted, self.EPS, 1.0 - self.EPS))
