@@ -86,34 +86,6 @@ jobs:
 
   # NOTE: don't remove any of the open source models, since these are the best option for a long term baseline (other models get deprecated)
 
-  bot_grok_4_1_high: # TODO: Not yet released via API as of Dec 21st, 2025
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_GROK_4_1_HIGH"
-      metac_name: "metac-grok-4-1-high+asknews"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_1_HIGH }}
-      INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-
-  bot_grok_4_1: # TODO: Not yet released via API as of Dec 21st, 2025
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_GROK_4_1"
-      metac_name: "metac-grok-4-1+asknews"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_1 }}
-      INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-
   #################################### April 2026 new bots ####################################
 
   bot_claude_sonnet_4_6:
