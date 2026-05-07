@@ -1521,7 +1521,7 @@ jobs:
       bot_name: "METAC_UNIFORM_PROBABILITY_BOT_TOKEN"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
