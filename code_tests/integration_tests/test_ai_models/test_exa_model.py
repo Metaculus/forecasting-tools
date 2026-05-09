@@ -70,6 +70,35 @@ async def test_invoke_for_highlights_in_relevance_order(mocker: Mock) -> None:
         ), f"Highlights not in descending order at index {i}"
 
 
+async def test_invoke_for_highlights_with_missing_scores(mocker: Mock) -> None:
+    mock_return_value = [
+        ExaSource(
+            original_query="test query",
+            auto_prompt_string=None,
+            title="Test Title",
+            url="https://example.com",
+            text="Test text",
+            author=None,
+            published_date=None,
+            score=0.9,
+            highlights=["Highlight A", "Highlight B"],
+            highlight_scores=[],
+        ),
+    ]
+    AiModelMockManager.mock_ai_model_direct_call_with_value(
+        mocker, ExaSearcher, mock_return_value
+    )
+
+    searcher = ExaSearcher()
+    cheap_input = searcher._get_cheap_input_for_invoke()
+    result = await searcher.invoke_for_highlights_in_relevance_order(cheap_input)
+
+    assert len(result) == 2
+    for quote in result:
+        assert isinstance(quote, ExaHighlightQuote)
+        assert quote.score == 1.0
+
+
 async def test_general_invoke() -> None:
     num_results = 2
     model = ExaSearcher(
