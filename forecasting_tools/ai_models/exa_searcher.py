@@ -144,7 +144,8 @@ class ExaSearcher(RequestLimitedModel, RetryableModel, TimeLimitedModel, IncursC
         sources = await self.invoke(search_query_or_strategy)
         all_highlights = []
         for source in sources:
-            for highlight, score in zip(source.highlights, source.highlight_scores):
+            scores = source.highlight_scores or [1.0] * len(source.highlights)
+            for highlight, score in zip(source.highlights, scores):
                 all_highlights.append(
                     ExaHighlightQuote(
                         highlight_text=highlight, score=score, source=source
