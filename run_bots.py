@@ -418,7 +418,8 @@ def make_claude_adaptive_thinking_settings(
     return {
         "temperature": 1,
         "thinking": {"type": "adaptive"},
-        "extra_body": {"output_config": {"effort": effort}},
+        "output_config": {"effort": effort},
+        "allowed_openai_params": ["output_config"],
         "max_tokens": max_tokens,
         "timeout": 160,
     }
