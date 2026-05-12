@@ -412,6 +412,18 @@ def make_claude_thinking_settings(thinking_tokens: int, max_tokens: int) -> dict
     }
 
 
+def make_claude_adaptive_thinking_settings(
+    effort: Literal["low", "medium", "high"], max_tokens: int
+) -> dict:
+    return {
+        "temperature": 1,
+        "thinking": {"type": "adaptive"},
+        "extra_body": {"output_config": {"effort": effort}},
+        "max_tokens": max_tokens,
+        "timeout": 160,
+    }
+
+
 def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     """
     Each entry in the dict has a key which is the environment variable set in the project secrets, and also used in the Workflows that run the bots.
@@ -465,6 +477,9 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     )
     claude_thinking_settings_32k: dict = make_claude_thinking_settings(
         thinking_tokens=32000, max_tokens=64000
+    )
+    claude_adaptive_thinking_settings_high: dict = (
+        make_claude_adaptive_thinking_settings(effort="high", max_tokens=64000)
     )
     gpt_5_timeout = 15 * 60
 
@@ -655,7 +670,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="anthropic/claude-opus-4-7",
-                    **claude_thinking_settings_32k,
+                    **claude_adaptive_thinking_settings_high,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
