@@ -86,6 +86,208 @@ jobs:
 
   # NOTE: don't remove any of the open source models, since these are the best option for a long term baseline (other models get deprecated)
 
+  #################################### May 2026 new bots ####################################
+
+  bot_gpt_5_5_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GPT_5_5_HIGH"
+      metac_name: "metac-gpt-5-5-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gpt_5_5_instant:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GPT_5_5_INSTANT"
+      metac_name: "metac-gpt-5-5-instant+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gpt_5_4_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GPT_5_4_HIGH"
+      metac_name: "metac-gpt-5-4-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gemini_3_1_pro_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GEMINI_3_1_PRO_HIGH"
+      metac_name: "metac-gemini-3-1-pro-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gemini_3_1_flash_lite:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GEMINI_3_1_FLASH_LITE"
+      metac_name: "metac-gemini-3-1-flash-lite+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_qwen_3_6_plus:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_QWEN_3_6_PLUS"
+      metac_name: "metac-qwen-3-6-plus+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gemma_4:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GEMMA_4"
+      metac_name: "metac-gemma-4+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_glm_5_1:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GLM_5_1"
+      metac_name: "metac-glm-5-1+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_claude_opus_4_7_high_32k:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_CLAUDE_OPUS_4_7_HIGH_32K"
+      metac_name: "metac-claude-opus-4-7-high-32k+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+
+  bot_kimi_k2_6:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_KIMI_K2_6"
+      metac_name: "metac-kimi-k2-6+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_deepseek_v4_pro_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_DEEPSEEK_V4_PRO_HIGH"
+      metac_name: "metac-deepseek-v4-pro-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_grok_4_3_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GROK_4_3_HIGH"
+      metac_name: "metac-grok-4-3-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_grok_4_20:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GROK_4_20"
+      metac_name: "metac-grok-4-20+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_grok_4_20_multi_agent:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GROK_4_20_MULTI_AGENT"
+      metac_name: "metac-grok-4-20-multi-agent+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
   #################################### April 2026 new bots ####################################
 
   bot_claude_sonnet_4_6:

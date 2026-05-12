@@ -560,8 +560,162 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
-        # "METAC_GROK_4_1_HIGH": {} # TODO: Add these bots to github workflow. Its not yet released via API as of Dec 21st, 2025
-        # "METAC_GROK_4_1": {}
+        ############################ Bots started in May 2026 ############################
+        "METAC_GPT_5_5_HIGH": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost * 2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.5",
+                    reasoning_effort="high",
+                    temperature=None,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GPT_5_5_INSTANT": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.5",
+                    reasoning_effort="minimal",
+                    temperature=None,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GPT_5_4_HIGH": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.4",
+                    reasoning_effort="high",
+                    temperature=default_temperature,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GEMINI_3_1_PRO_HIGH": {
+            "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost * 1.3,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/google/gemini-3.1-pro-preview",
+                    reasoning_effort="high",
+                    temperature=default_temperature,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GEMINI_3_1_FLASH_LITE": {
+            "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/google/gemini-3.1-flash-lite",
+                    temperature=default_temperature,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_QWEN_3_6_PLUS": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/qwen/qwen3.6-plus",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GEMMA_4": {
+            "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/google/gemma-4-31b-it",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GLM_5_1": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/z-ai/glm-5.1",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_CLAUDE_OPUS_4_7_HIGH_32K": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 1.5,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-opus-4-7",
+                    **claude_thinking_settings_32k,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_KIMI_K2_6": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/moonshotai/kimi-k2.6",
+                    temperature=default_temperature,
+                    timeout=kimi_k2_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_DEEPSEEK_V4_PRO_HIGH": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/deepseek/deepseek-v4-pro",
+                    temperature=default_temperature,
+                    reasoning={
+                        "effort": "high",
+                    },
+                    timeout=5 * 60,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GROK_4_3_HIGH": {
+            "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_llm,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/x-ai/grok-4.3",
+                    reasoning_effort="high",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GROK_4_20": {
+            "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_llm,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/x-ai/grok-4.20",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GROK_4_20_MULTI_AGENT": {
+            "estimated_cost_per_question": 10 * roughly_one_call_to_grok_4_llm,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/x-ai/grok-4.20-multi-agent",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ Bots started in April 2026 ############################
         "METAC_CLAUDE_SONNET_4_6": {
             "estimated_cost_per_question": roughly_sonnet_4_cost,
