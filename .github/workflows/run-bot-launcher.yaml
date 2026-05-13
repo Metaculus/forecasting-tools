@@ -4,6 +4,10 @@ on:
       bot_name:
         required: true
         type: string
+      metac_name:
+        required: false
+        type: string
+        default: ""
       cache_key:
         required: false
         type: string
@@ -119,9 +123,9 @@ jobs:
           if [ -n "$RAW_TOKEN" ]; then
             echo "METACULUS_TOKEN=$RAW_TOKEN" >> $GITHUB_ENV
           else
-            TOKEN=$(echo "$METACULUS_TOKENS" | jq -r --arg key "$BOT_NAME" '.[$key] // empty')
+            TOKEN=$(echo "$METACULUS_TOKENS" | jq -r --arg key "$METAC_NAME" '.[$key] // empty')
             if [ -z "$TOKEN" ]; then
-              echo "ERROR: No token found for $BOT_NAME in METACULUS_TOKENS" >&2
+              echo "ERROR: No token found for $METAC_NAME in METACULUS_TOKENS" >&2
               exit 1
             fi
             echo "METACULUS_TOKEN=$TOKEN" >> $GITHUB_ENV
@@ -129,7 +133,7 @@ jobs:
         env:
           RAW_TOKEN: ${{ secrets.INPUT_METACULUS_TOKEN }}
           METACULUS_TOKENS: ${{ secrets.INPUT_METACULUS_TOKENS }}
-          BOT_NAME: ${{ inputs.bot_name }}
+          METAC_NAME: ${{ inputs.metac_name }}
 
       - name: Run bot
         run: |
