@@ -20,11 +20,9 @@ This repository contains forecasting and research tools built with Python and St
 Here are the tools most likely to be useful to you:
 - 🎯 **Forecasting Bot:** General forecaster that integrates with the Metaculus AI benchmarking competition and provides a number of utilities. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the aggregation/API code, etc)
 - 🔌 **Metaculus API Wrapper:** for interacting with questions and tournaments
-- 📊 **Benchmarking:** Randomly sample quality questions from Metaculus and run your bot against them so you can get an early sense of how your bot is doing by comparing to the community prediction and expected baseline scores.
 - 🤖 **In-House Metaculus Bots**: You can see all the bots that Metaculus is running on their site in `run_bots.py`
 
 Here are some other features of the project (not all are documented yet):
-- **Smart Searcher:** A custom AI-powered internet-informed llm powered by Exa.ai and GPT. It is more configurable than Perplexity AI, allowing you to use any AI model, instruct the AI to decide on filters, get citations linking to exact paragraphs, etc.
 - **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
 - **Base Rate Researcher:** for calculating event probabilities (still experimental)
 - **Niche List Researcher:** for analyzing very specific lists of past events or items (still experimental)
@@ -294,104 +292,8 @@ Whether running locally or through Github actions, you will need to set environm
 
 # Important Utilities
 
-## Benchmarking
-Below is an example of how to run the benchmarker
-
-
-```python
-from forecasting_tools import Benchmarker, TemplateBot, BenchmarkForBot
-
-class CustomBot(TemplateBot):
-    ...
-
-# Run benchmark on multiple bots
-bots = [TemplateBot(), CustomBot()]  # Add your custom bots here
-benchmarker = Benchmarker(
-    forecast_bots=bots,
-    number_of_questions_to_use=2,  # Recommended 100+ for meaningful results
-    file_path_to_save_reports="benchmarks/",
-        # It will create a file name for you if given a folder.
-        # If a file name is given, and the file already exists, it will overwrite it.
-    concurrent_question_batch_size=5,
-)
-benchmarks: list[BenchmarkForBot] = await benchmarker.run_benchmark()
-
-# View results
-for benchmark in benchmarks[:2]:
-    print("--------------------------------")
-    print(f"Bot: {benchmark.name}")
-    print(f"Score: {benchmark.average_expected_baseline_score}") # Higher is better
-    print(f"Num reports in benchmark: {len(benchmark.forecast_reports)}")
-    print(f"Time: {benchmark.time_taken_in_minutes}min")
-    print(f"Cost: ${benchmark.total_cost}")
-```
-
-    --------------------------------
-    Bot: TemplateBot
-    Score: 53.24105782939477
-    Num reports in benchmark: 2
-    Time: 0.23375582297643024min
-    Cost: $0.03020605
-    --------------------------------
-    Bot: CustomBot
-    Score: 53.24105782939476
-    Num reports in benchmark: 2
-    Time: 0.20734789768854778min
-    Cost: $0.019155650000000003
-
-
-The ideal number of questions to get a good sense of whether one bot is better than another can vary. 100+ should tell your something decent. See [this analysis](https://forum.effectivealtruism.org/posts/DzqSh7akX28JEHf9H/comparing-two-forecasters-in-an-ideal-world) for exploration of the numbers. With too few questions, the results could just be statistical noise, though how many questions you need depends highly on the difference in skill of your bot versions.
-
-If you use the average expected baseline score, higher score is better. The scoring measures the expected value of your score without needing an actual resolution by assuming that the community prediction is the 'true probability'. Under this assumption, expected baseline scores are a proper score (see analysis in `scripts/simulate_a_tournament.ipynb`)
-
-As of May 29, 2025 the benchmarker automatically selects a random set of questions from Metaculus that:
-- Are binary questions (yes/no)
-- Are currently open
-- Opened within the last year
-- Have at least 30 forecasters
-- Have a community prediction
-- Are not part of a group question
-
-Note that sometimes there are not many questions matching these filters (e.g. at the beginning of a new year when a majority of open questions were just resolved). As of last edit there are plans to expand this to numeric and multiple choice, but right now it just benchmarks binary questions.
-
-You can grab these questions without using the Benchmarker by running the below
-
-
-
-```python
-from forecasting_tools import MetaculusApi
-
-questions = MetaculusApi.get_benchmark_questions(
-    num_of_questions_to_return=100,
-)
-```
-
-You can also save/load benchmarks to/from json
-
-
-```python
-from forecasting_tools import BenchmarkForBot
-
-# Load
-file_path = "benchmarks/benchmark.json"
-benchmarks: list[BenchmarkForBot] = BenchmarkForBot.load_json_from_file_path(file_path)
-
-# Save
-new_benchmarks: list[BenchmarkForBot] = benchmarks
-BenchmarkForBot.save_object_list_to_file_path(new_benchmarks, file_path) # Will overwrite the file if it already exists
-
-# To/From Json String
-single_benchmark = benchmarks[0]
-json_object: dict = single_benchmark.to_json()
-new_benchmark: BenchmarkForBot = BenchmarkForBot.from_json(json_object)
-```
-
-Once you have benchmark files in your project directory you can run `streamlit run forecasting_tools/benchmarking/benchmark_displayer.py` to get a UI with the benchmarks. You can also put `forecasting-tools.run_benchmark_streamlit_page()` into a new file, and run this file with streamlit to achieve the same results. This will allow you to see metrics side by side, explore code of past bots, see the actual bot responses, etc. It will pull in any files in your directory that contain "bench" in the name and are json. Results may take a while to load for large benchmark files.
-
-![Benchmark Displayer Top](./docs/images/benchmark_top_screen.png)
-![Benchmark Displayer Bottom](./docs/images/benchmark_bottom_screen.png)
-
 ## Metaculus API
+
 The Metaculus API wrapper helps interact with Metaculus questions and tournaments. Grabbing questions returns a pydantic object, and supports important information for Binary, Multiple Choice, Numeric,and Date questions.
 
 
@@ -465,75 +367,33 @@ print("Posted comment")
     Posted comment
 
 
+### Group Questions
+
+Several of the methods above accept a `group_question_mode` parameter that controls how Metaculus group questions (e.g. "How many people will die of coronavirus in [period]?") are handled:
+- `"exclude"` — drop group questions from the result.
+- `"unpack_subquestions"` — turn each subquestion into a separate normal question.
+
+For backwards compatibility, the default is `"exclude"` for `get_question_by_post_id`, `get_question_by_url`, `ApiFilter` (used by `get_questions_matching_filter`), and `get_benchmark_questions` — so group questions don't get overweighted in benchmarks. The exception is `get_all_open_questions_from_tournament`, which defaults to `"unpack_subquestions"` so all subquestions are forecasted as normal questions.
+
+```python
+from forecasting_tools import MetaculusApi, ApiFilter
+
+# Unpack a group question into its subquestions
+result = MetaculusApi.get_question_by_post_id(
+    post_id=...,  # a group-question post
+    group_question_mode="unpack_subquestions",
+)  # returns list[MetaculusQuestion] for group posts
+
+# Same option on a filtered query
+api_filter = ApiFilter(
+    allowed_statuses=["open"],
+    group_question_mode="unpack_subquestions",
+)
+questions = await MetaculusApi.get_questions_matching_filter(api_filter=api_filter)
+```
+
+
 # AI Research Tools/Agents
-
-## Smart Searcher
-The Smart Searcher acts like an LLM with internet access. It works a lot like Perplexity.ai API, except:
-- It has clickable citations that highlights and links directly to the paragraph cited using text fragments
-- You can ask the AI to use filters for domain, date, and keywords
-- There are options for structured output (Pydantic objects, lists, dict, list\[dict\], etc.)
-- Concurrent search execution for faster results
-- Optional detailed works cited list
-
-
-```python
-
-searcher = SmartSearcher(
-    temperature=0,
-    num_searches_to_run=2,
-    num_sites_per_search=10,  # Results returned per search
-    include_works_cited_list=False  # Add detailed citations at the end
-)
-
-response = await searcher.invoke(
-    "What is the recent news for Apple?"
-)
-
-print(response)
-```
-
-Example output:
-> Recent news about Apple includes several significant developments:
->
-> 1. **Expansion in India**: Apple is planning to open four more stores in India, with two in Delhi and Mumbai, and two in Bengaluru and Pune. This decision follows record revenues in India for the September 2024 quarter, driven by strong iPhone sales. Tim Cook, Apple's CEO, highlighted the enthusiasm and growth in the Indian market during the company's earnings call \[[1](https://telecomtalk.info/tim-cook-makes-major-announcement-for-apple-in-india/984260/#:~:text=This%20is%20not%20a%20new,first%20time%20Apple%20confirmed%20it.)\]\[[4](https://telecomtalk.info/tim-cook-makes-major-announcement-for-apple-in-india/984260/#:~:text=This%20is%20not%20a%20new,set%20an%20all%2Dtime%20revenue%20record.)\]\[[5](https://telecomtalk.info/tim-cook-makes-major-announcement-for-apple-in-india/984260/#:~:text=Previously%2C%20Diedre%20O%27Brien%2C%20Apple%27s%20senior,East%2C%20India%20and%20South%20Asia.)\]\[[8](https://telecomtalk.info/tim-cook-makes-major-announcement-for-apple-in-india/984260/#:~:text=At%20the%20company%27s%20earnings%20call,four%20new%20stores%20in%20India.)\].
->
-> 2. **Product Launches**: Apple is set to launch new iMac, Mac mini, and MacBook Pro models with M4 series chips on November 8, 2024. Additionally, the Vision Pro headset will be available in South Korea and the United Arab Emirates starting November 15, 2024. The second season of the Apple TV+ sci-fi series "Silo" will also premiere on November 15, 2024 \[[2](https://www.macrumors.com/2024/11/01/what-to-expect-from-apple-this-november/#:~:text=And%20the%20Vision%20Pro%20launches,the%20App%20Store%2C%20and%20more.)\]\[[12](https://www.macrumors.com/2024/11/01/what-to-expect-from-apple-this-november/#:~:text=As%20for%20hardware%2C%20the%20new,announcements%20in%20store%20this%20November.)\].
->
-> ... etc ...
-
-You can also use structured outputs by providing a Pydantic model (or any other simpler type hint) and using the schema formatting helper:
-
-
-```python
-from pydantic import BaseModel, Field
-from forecasting_tools import SmartSearcher
-
-class Company(BaseModel):
-    name: str = Field(description="Full company name")
-    market_cap: float = Field(description="Market capitalization in billions USD")
-    key_products: list[str] = Field(description="Main products or services")
-    relevance: str = Field(description="Why this company is relevant to the search")
-
-searcher = SmartSearcher(temperature=0, num_searches_to_run=4, num_sites_per_search=10)
-
-schema_instructions = searcher.get_schema_format_instructions_for_pydantic_type(Company)
-prompt = f"""Find companies that are leading the development of autonomous vehicles.
-Return as a list of companies with their details. Remember to give me a list of the schema provided.
-
-{schema_instructions}"""
-
-companies = await searcher.invoke_and_return_verified_type(prompt, list[Company])
-
-for company in companies:
-    print(f"\n{company.name} (${company.market_cap}B)")
-    print(f"Relevance: {company.relevance}")
-    print("Key Products:")
-    for product in company.key_products:
-        print(f"- {product}")
-```
-
-The schema instructions will format the Pydantic model into clear instructions for the AI about the expected output format and field descriptions.
-
 
 ## Key Factors Researcher
 The Key Factors Researcher helps identify and analyze key factors that should be considered for a forecasting question. As of last update, this is the most reliable of the tools, and gives something useful and accurate almost every time. It asks a lot of questions, turns search results into a long list of bullet points, rates each bullet point on ~8 criteria, and returns the top results.
@@ -695,7 +555,7 @@ The `GeneralLlm` class is a wrapper around around litellm's acompletion function
 
 
 ```python
-
+prompt = "What is the weather in Tokyo?"
 result = await GeneralLlm(model="gpt-4o").invoke(prompt)
 result = await GeneralLlm(model="claude-3-5-sonnet-20241022").invoke(prompt)
 result = await GeneralLlm(model="metaculus/claude-3-5-sonnet-20241022").invoke(prompt) # Adding 'metaculus' Calls the Metaculus proxy
@@ -808,7 +668,7 @@ The `MonetaryCostManager` helps to track AI and API costs. It tracks expenses an
 ```python
 from forecasting_tools import MonetaryCostManager
 from forecasting_tools import (
-    ExaSearcher, SmartSearcher, GeneralLlm
+    ExaSearcher, GeneralLlm
 )
 
 max_cost = 5.00
@@ -816,7 +676,6 @@ max_cost = 5.00
 with MonetaryCostManager(max_cost) as cost_manager:
     prompt = "What is the weather in Tokyo?"
     result = await GeneralLlm(model="gpt-4o").invoke(prompt)
-    result = await SmartSearcher(model="claude-3-5-sonnet-20241022").invoke(prompt)
     result = await ExaSearcher().invoke(prompt)
     # ... etc ...
 

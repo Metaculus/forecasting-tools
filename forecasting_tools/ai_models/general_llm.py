@@ -331,7 +331,10 @@ class GeneralLlm(
             citations = self._extract_citations(response, choices)
             if citations:
                 answer = fill_in_citations(
-                    citations, answer, use_citation_brackets=False
+                    citations,
+                    answer,
+                    use_citation_brackets=False,
+                    append_unused_as_footer=True,
                 )
             # TODO: Add citation support for Gemini - https://ai.google.dev/gemini-api/docs/google-search#attributing_sources_with_inline_citations
 

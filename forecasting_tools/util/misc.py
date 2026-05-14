@@ -141,9 +141,13 @@ def make_text_fragment_url(quote: str, url: str) -> str:
 
 
 def fill_in_citations(
-    urls_for_citations: list[str], text: str, use_citation_brackets: bool
+    urls_for_citations: list[str],
+    text: str,
+    use_citation_brackets: bool,
+    append_unused_as_footer: bool = False,
 ) -> str:
     final_text = text
+    any_replaced = False
     for i, url in enumerate(urls_for_citations):
         citation_num = i + 1
         if use_citation_brackets:
@@ -160,7 +164,17 @@ def fill_in_citations(
         # [1](some text)
         # \[[1]\]
         # \[[1](some text)\]
-        final_text = pattern.sub(markdown_url, final_text)
+        final_text, replacements = pattern.subn(markdown_url, final_text)
+        if replacements:
+            any_replaced = True
+
+    # Perplexity reasoning models (and occasionally sonar) return answers
+    # without inline [N] markers, so the citations would otherwise be lost.
+    if append_unused_as_footer and urls_for_citations and not any_replaced:
+        footer = "\n\n**Sources:**\n" + "\n".join(
+            f"- [{i+1}]({url})" for i, url in enumerate(urls_for_citations)
+        )
+        final_text = final_text + footer
     return final_text
 
 
