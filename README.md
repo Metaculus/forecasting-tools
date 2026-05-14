@@ -555,7 +555,7 @@ The `GeneralLlm` class is a wrapper around around litellm's acompletion function
 
 
 ```python
-
+prompt = "What is the weather in Tokyo?"
 result = await GeneralLlm(model="gpt-4o").invoke(prompt)
 result = await GeneralLlm(model="claude-3-5-sonnet-20241022").invoke(prompt)
 result = await GeneralLlm(model="metaculus/claude-3-5-sonnet-20241022").invoke(prompt) # Adding 'metaculus' Calls the Metaculus proxy
@@ -668,7 +668,7 @@ The `MonetaryCostManager` helps to track AI and API costs. It tracks expenses an
 ```python
 from forecasting_tools import MonetaryCostManager
 from forecasting_tools import (
-    ExaSearcher, SmartSearcher, GeneralLlm
+    ExaSearcher, GeneralLlm
 )
 
 max_cost = 5.00
@@ -676,7 +676,6 @@ max_cost = 5.00
 with MonetaryCostManager(max_cost) as cost_manager:
     prompt = "What is the weather in Tokyo?"
     result = await GeneralLlm(model="gpt-4o").invoke(prompt)
-    result = await SmartSearcher(model="claude-3-5-sonnet-20241022").invoke(prompt)
     result = await ExaSearcher().invoke(prompt)
     # ... etc ...
 
