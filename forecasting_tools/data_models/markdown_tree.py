@@ -30,6 +30,9 @@ class MarkdownTree(BaseModel):
         report_sections: list[MarkdownTree],
         top_heading_level: int | None = None,
     ) -> str:
+        if not report_sections:
+            return ""
+
         if top_heading_level is None:
             return "\n".join(
                 [section.text_of_section_and_subsections for section in report_sections]
