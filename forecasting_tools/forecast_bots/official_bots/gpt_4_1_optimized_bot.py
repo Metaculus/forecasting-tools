@@ -20,7 +20,6 @@ class GPT41OptimizedBot(FallTemplateBot2025):
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
-            research = ""
             researcher = self.get_llm("researcher")
             if researcher != "asknews/news-summaries":
                 logger.warning(

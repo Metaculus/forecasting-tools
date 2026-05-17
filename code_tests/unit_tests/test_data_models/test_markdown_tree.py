@@ -431,6 +431,12 @@ Another main content"""
 
 class TestReportSectionsToMarkdown:
 
+    def test_report_sections_to_markdown_empty_list_no_heading_adjust(self) -> None:
+        assert MarkdownTree.report_sections_to_markdown([], None) == ""
+
+    def test_report_sections_to_markdown_empty_list_with_heading_level(self) -> None:
+        assert MarkdownTree.report_sections_to_markdown([], 3) == ""
+
     @pytest.mark.parametrize(
         "top_heading_level, expected_output",
         [
