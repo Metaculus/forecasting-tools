@@ -135,7 +135,7 @@ class MetaculusClient:
         32921  # https://www.metaculus.com/tournament/metaculus-cup-spring-2026/
     )
     METACULUS_CUP_SUMMER_2026_ID = (
-        32726  # https://www.metaculus.com/tournament/metaculus-cup-summer-2025/
+        33021  # https://www.metaculus.com/tournament/metaculus-cup-summer-2026/
     )
 
     Q3_2025_MARKET_PULSE_ID = "market-pulse-25q3"
