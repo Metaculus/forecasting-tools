@@ -50,9 +50,8 @@ They both have roughly the same parameters. See below on how to use the Template
 
 
 ```python
-from forecasting_tools import TemplateBot, MetaculusApi, GeneralLlm
+from forecasting_tools import TemplateBot, MetaculusClient, GeneralLlm
 
-# Initialize the bot
 bot = TemplateBot(
     research_reports_per_question=3,  # Number of separate research attempts per question
     predictions_per_research_report=5,  # Number of predictions to make per research report
@@ -65,10 +64,10 @@ bot = TemplateBot(
     }
 )
 
-TOURNAMENT_ID = MetaculusApi.CURRENT_QUARTERLY_CUP_ID
+TOURNAMENT_ID = MetaculusClient.CURRENT_METACULUS_CUP_ID
 reports = await bot.forecast_on_tournament(TOURNAMENT_ID)
 
-# Print results (if the tournament is not active, no reports will be returned)
+# If the tournament is not active, no reports will be returned
 for report in reports:
     print(f"\nQuestion: {report.question.question_text}")
     print(f"Prediction: {report.prediction}")
@@ -93,19 +92,18 @@ for report in reports:
 from forecasting_tools import (
     TemplateBot,
     BinaryQuestion,
-    MetaculusApi,
-    DataOrganizer
+    MetaculusClient,
+    DataOrganizer,
 )
 
-# Initialize the bot
 bot = TemplateBot(
     research_reports_per_question=3,
     predictions_per_research_report=5,
     publish_reports_to_metaculus=False,
 )
 
-# Get and forecast a specific question
-question1 = MetaculusApi.get_question_by_url(
+metaculus_client = MetaculusClient()
+question1 = metaculus_client.get_question_by_url(
     "https://www.metaculus.com/questions/578/human-extinction-by-2100/"
 )
 question2 = BinaryQuestion(
@@ -117,17 +115,14 @@ question2 = BinaryQuestion(
 
 reports = await bot.forecast_questions([question1, question2])
 
-
-# Print results
 for report in reports:
     print(f"Question: {report.question.question_text}")
     print(f"Prediction: {report.prediction}")
     shortened_explanation = report.explanation.replace('\n', ' ')[:100]
     print(f"Reasoning: {shortened_explanation}...")
 
-# You can also save and load questions and reports
 file_path = "temp/reports.json"
-DataOrganizer.save_reports_to_file_path(reports, file_path) # This will overwrite the file if it already exists
+DataOrganizer.save_reports_to_file_path(reports, file_path) # Overwrites the file if it already exists
 loaded_reports = DataOrganizer.load_reports_from_file_path(file_path)
 ```
 
@@ -150,7 +145,7 @@ Note: You'll need to have your environment variables set up (see the section bel
 
 ## Customizing the Bot
 ### General Customization
-Generally all you have to do to make your own bot is inherit from the TemplateBot and override any combination of the 3 forecasting methods and the 1 research method. This saves you the headache of interacting with the Metaculus API, implementing aggregation of predictions, creating benchmarking interfaces, etc. Below is an example. It may also be helpful to look at the TemplateBot code (forecasting_tools/forecasting/forecast_bots/template_bot.py) for a more complete example.
+Generally all you have to do to make your own bot is inherit from the TemplateBot and override any combination of the 3 forecasting methods and the 1 research method. This saves you the headache of interacting with the Metaculus API, implementing aggregation of predictions, creating benchmarking interfaces, etc. Below is an example. It may also be helpful to look at the `TemplateBot` code (`forecasting_tools/forecast_bots/template_bot.py`) for a more complete example.
 
 
 ```python
@@ -164,9 +159,9 @@ from forecasting_tools import (
     PredictedOptionList,
     NumericDistribution,
     SmartSearcher,
-    MetaculusApi,
+    MetaculusClient,
     GeneralLlm,
-    PredictionExtractor
+    PredictionExtractor,
 )
 from forecasting_tools.util.misc import clean_indents
 
@@ -219,7 +214,7 @@ class MyCustomBot(TemplateBot):
         ...
 
 custom_bot = MyCustomBot()
-question = MetaculusApi.get_question_by_url(
+question = MetaculusClient().get_question_by_url(
     "https://www.metaculus.com/questions/578/human-extinction-by-2100/"
 )
 report = await custom_bot.forecast_question(question)
@@ -287,30 +282,29 @@ Whether running locally or through Github actions, you will need to set environm
 
 # Important Utilities
 
-## Metaculus API
-The Metaculus API wrapper helps interact with Metaculus questions and tournaments. Grabbing questions returns a pydantic object, and supports important information for Binary, Multiple Choice, Numeric,and Date questions.
+## Metaculus Client
+The `MetaculusClient` wraps the Metaculus API for interacting with questions and tournaments. Grabbing questions returns a pydantic object that supports the important fields for Binary, Multiple Choice, Numeric, and Date questions. Instantiate the client once and reuse it (it picks up `METACULUS_TOKEN` from the environment by default).
 
 
 ```python
-from forecasting_tools import MetaculusApi, ApiFilter, DataOrganizer
+from forecasting_tools import MetaculusClient, ApiFilter, DataOrganizer
 from datetime import datetime
 
+metaculus_client = MetaculusClient()
 
-# Get a question by post id
-question = MetaculusApi.get_question_by_post_id(578)
+question = metaculus_client.get_question_by_post_id(578)
 print(f"Question found with url: {question.page_url}")
 
-# Get a question by url
-question = MetaculusApi.get_question_by_url("https://www.metaculus.com/questions/578/human-extinction-by-2100/")
+question = metaculus_client.get_question_by_url(
+    "https://www.metaculus.com/questions/578/human-extinction-by-2100/"
+)
 print(f"Question found with url: {question.page_url}")
 
-# Get all open questions from a tournament
-questions = MetaculusApi.get_all_open_questions_from_tournament(
-    tournament_id=MetaculusApi.CURRENT_QUARTERLY_CUP_ID
+questions = metaculus_client.get_all_open_questions_from_tournament(
+    tournament_id=MetaculusClient.CURRENT_METACULUS_CUP_ID
 )
 print(f"Num tournament questions: {len(questions)}")
 
-# Get questions matching a filter
 api_filter = ApiFilter(
     num_forecasters_gte=40,
     close_time_gt=datetime(2023, 12, 31),
@@ -319,35 +313,31 @@ api_filter = ApiFilter(
     allowed_types=["binary", "multiple_choice", "numeric", "date"],
     allowed_statuses=["resolved"],
 )
-questions = await MetaculusApi.get_questions_matching_filter(
+questions = await metaculus_client.get_questions_matching_filter(
     api_filter=api_filter,
     num_questions=50, # Remove this field to make it not error if you don't get 50 questions. However it will only go through one page of questions which may miss questions matching the ApiFilter since some filters are handled locally.
-    randomly_sample=False
+    randomly_sample=False,
 )
 print(f"Num filtered questions: {len(questions)}")
 
-# Load and save questions/reports
 file_path = "temp/questions.json"
-DataOrganizer.save_questions_to_file_path(questions, file_path) # Will overwrite the file if it already exists
+DataOrganizer.save_questions_to_file_path(questions, file_path) # Overwrites the file if it already exists
 questions = DataOrganizer.load_questions_from_file_path(file_path)
 
-# Get benchmark questions
-benchmark_questions = MetaculusApi.get_benchmark_questions(
+benchmark_questions = metaculus_client.get_benchmark_questions(
     num_of_questions_to_return=20
 )
 print(f"Num benchmark questions: {len(benchmark_questions)}")
 
-# Post a prediction
-MetaculusApi.post_binary_question_prediction(
+metaculus_client.post_binary_question_prediction(
     question_id=578, # Note that the question ID is not always the same as the post ID
-    prediction_in_decimal=0.012  # Must be between 0.01 and 0.99
+    prediction_in_decimal=0.012,  # Must be between 0.001 and 0.999
 )
 print("Posted prediction")
 
-# Post a comment
-MetaculusApi.post_question_comment(
+metaculus_client.post_question_comment(
     post_id=578,
-    comment_text="Here's example reasoning for testing... This will be a private comment..."
+    comment_text="Here's example reasoning for testing... This will be a private comment...",
 )
 print("Posted comment")
 ```
@@ -370,10 +360,12 @@ Several of the methods above accept a `group_question_mode` parameter that contr
 For backwards compatibility, the default is `"exclude"` for `get_question_by_post_id`, `get_question_by_url`, `ApiFilter` (used by `get_questions_matching_filter`), and `get_benchmark_questions` — so group questions don't get overweighted in benchmarks. The exception is `get_all_open_questions_from_tournament`, which defaults to `"unpack_subquestions"` so all subquestions are forecasted as normal questions.
 
 ```python
-from forecasting_tools import MetaculusApi, ApiFilter
+from forecasting_tools import MetaculusClient, ApiFilter
+
+metaculus_client = MetaculusClient()
 
 # Unpack a group question into its subquestions
-result = MetaculusApi.get_question_by_post_id(
+result = metaculus_client.get_question_by_post_id(
     post_id=...,  # a group-question post
     group_question_mode="unpack_subquestions",
 )  # returns list[MetaculusQuestion] for group posts
@@ -383,11 +375,11 @@ api_filter = ApiFilter(
     allowed_statuses=["open"],
     group_question_mode="unpack_subquestions",
 )
-questions = await MetaculusApi.get_questions_matching_filter(api_filter=api_filter)
+questions = await metaculus_client.get_questions_matching_filter(api_filter=api_filter)
 ```
 
 ## General LLM
-The `GeneralLlm` class is a wrapper around around litellm's acompletion function that adds some functionality like retry logic, calling the metaculus proxy, and cost callback handling. Litellm supports every model, most every parameter, and acts as one interface for every provider. See the litellm's acompletion function for a full list of parameters. Not all models will support all parameters. Additionally the Metaculus proxy doesn't support all models.
+The `GeneralLlm` class is a wrapper around litellm's acompletion function that adds some functionality like retry logic, calling the metaculus proxy, and cost callback handling. Litellm supports every model, most every parameter, and acts as one interface for every provider. See the litellm's acompletion function for a full list of parameters. Not all models will support all parameters. Additionally the Metaculus proxy doesn't support all models.
 
 
 ```python
