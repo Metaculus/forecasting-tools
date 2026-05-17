@@ -23,13 +23,8 @@ Here are the tools most likely to be useful to you:
 - 🤖 **In-House Metaculus Bots**: You can see all the bots that Metaculus is running on their site in `run_bots.py`
 
 Here are some other features of the project (not all are documented yet):
-- **Key Factor Analysis:** Key Factors Analysis for scoring, ranking, and prioritizing important variables in forecasting questions
-- **Base Rate Researcher:** for calculating event probabilities (still experimental)
-- **Niche List Researcher:** for analyzing very specific lists of past events or items (still experimental)
-- **Fermi Estimator:** for breaking down numerical estimates (still experimental)
+- **General LLM Wrapper:** A unified interface around litellm with retry logic, the Metaculus proxy, structured outputs, and cost tracking
 - **Monetary Cost Manager:** for tracking AI and API expenses
-- **Prompt Optimizer:** for letting AI iterate through 100+ forecasting bot prompts
-- **Question Decomposer/Operationalizer:** To turn a question or topic into relevant forecastable sub-questions
 - **Other experimental tools:** See the demo site for other AI forecasting tools that this project supports (not all are documented). Also see the `scripts` folder for other common workflows and entry points into the code.
 
 All the examples below are in a Jupyter Notebook called `README.ipynb` which you can run locally to test the package (make sure to run the first cell though).
@@ -269,9 +264,9 @@ class NotepadBot(TemplateBot):
         notepad = await self._get_notepad(question)
 
         if notepad.total_predictions_attempted % 2 == 0:
-            model = "metaculus/gpt-4o"
+            model = "openrouter/openai/gpt-4o"
         else:
-            model = "metaculus/claude-3-5-sonnet-20240620"
+            model = "anthropic/claude-3-5-sonnet-20240620"
 
         personality = notepad.note_entries["personality"]
         prompt = f"You are a {personality}. Forecast this question: {question.question_text}. The last thing you write is your final answer as: 'Probability: ZZ%', 0-100"
@@ -293,7 +288,6 @@ Whether running locally or through Github actions, you will need to set environm
 # Important Utilities
 
 ## Metaculus API
-
 The Metaculus API wrapper helps interact with Metaculus questions and tournaments. Grabbing questions returns a pydantic object, and supports important information for Binary, Multiple Choice, Numeric,and Date questions.
 
 
@@ -391,164 +385,6 @@ api_filter = ApiFilter(
 )
 questions = await MetaculusApi.get_questions_matching_filter(api_filter=api_filter)
 ```
-
-
-# AI Research Tools/Agents
-
-## Key Factors Researcher
-The Key Factors Researcher helps identify and analyze key factors that should be considered for a forecasting question. As of last update, this is the most reliable of the tools, and gives something useful and accurate almost every time. It asks a lot of questions, turns search results into a long list of bullet points, rates each bullet point on ~8 criteria, and returns the top results.
-
-
-```python
-from forecasting_tools import (
-    KeyFactorsResearcher,
-    BinaryQuestion,
-    ScoredKeyFactor
-)
-
-# Consider using MetaculusApi.get_question_by_id or MetaculusApi.get_question_by_url instead
-question = BinaryQuestion(
-    question_text="Will YouTube be blocked in Russia?",
-    background_info="...", # Or 'None'
-    resolution_criteria="...", # Or 'None'
-    fine_print="...", # Or 'None'
-)
-
-# Find key factors
-key_factors = await KeyFactorsResearcher.find_and_sort_key_factors(
-    metaculus_question=question,
-    num_key_factors_to_return=5,  # Number of final factors to return
-    num_questions_to_research_with=26  # Number of research questions to generate
-)
-
-print(ScoredKeyFactor.turn_key_factors_into_markdown_list(key_factors))
-```
-
-Example output:
-> - The Russian authorities have slowed YouTube speeds to near unusable levels, indicating a potential groundwork for a future ban. [Source Published on 2024-09-12](https://meduza.io/en/feature/2024/09/12/the-russian-authorities-slowed-youtube-speeds-to-near-unusable-levels-so-why-are-kremlin-critics-getting-more-views#:~:text=Kolezev%20attributed%20this%20to%20the,suddenly%20stopped%20working%20in%20Russia.)
-> - Russian lawmaker Alexander Khinshtein stated that YouTube speeds would be deliberately slowed by up to 70% due to Google's non-compliance with Russian demands, indicating escalating measures against YouTube. [Source Published on 2024-07-25](https://www.yahoo.com/news/russia-slow-youtube-speeds-google-180512830.html#:~:text=Russia%20will%20deliberately%20slow%20YouTube,forces%20and%20promoting%20extremist%20content.)
-> - The press secretary of President Vladimir Putin, Dmitry Peskov, denied that the authorities intended to block YouTube, attributing access issues to outdated equipment due to sanctions. [Source Published on 2024-08-17](https://www.wsws.org/en/articles/2024/08/17/pbyj-a17.html#:~:text=%5BAP%20Photo%2FAP%20Photo%5D%20On%20July,two%20years%20due%20to%20sanctions.)
-> - YouTube is currently the last Western social media platform still operational in Russia, with over 93 million users in the country. [Source Published on 2024-07-26](https://www.techradar.com/pro/vpn/youtube-is-getting-throttled-in-russia-heres-how-to-unblock-it#:~:text=If%20you%27re%20in%20Russia%20and,platform%20to%20work%20in%20Russia.)
-> - Russian users reported mass YouTube outages amid growing official criticism, with reports of thousands of glitches in August 2024. [Source Published on 2024-08-09](https://www.aljazeera.com/news/2024/8/9/russian-users-report-mass-youtube-outage-amid-growing-official-criticism?traffic_source=rss#:~:text=Responding%20to%20this%2C%20a%20YouTube,reported%20about%20YouTube%20in%20Russia.)
-
-
-The simplified pydantic structure of the scored key factors is:
-```python
-class ScoredKeyFactor():
-    text: str
-    factor_type: KeyFactorType (Pro, Con, or Base_Rate)
-    citation: str
-    source_publish_date: datetime | None
-    url: str
-    score_card: ScoreCard
-    score: int
-    display_text: str
-```
-
-## Base Rate Researcher
-The Base Rate Researcher helps calculate historical base rates for events. As of last update, it gives decent results around 50% of the time. It orchestrates the Niche List Researcher and the Fermi Estimator to find base rate.
-
-
-```python
-from forecasting_tools import BaseRateResearcher
-
-# Initialize researcher
-researcher = BaseRateResearcher(
-    "How often has Apple been successfully sued for patent violations?"
-)
-
-# Get base rate analysis
-report = await researcher.make_base_rate_report()
-
-print(f"Historical rate: {report.historical_rate:.2%}")
-print(report.markdown_report)
-```
-
-## Niche List Researcher
-The Niche List Researcher helps analyze specific lists of events or items. The researcher will:
-1. Generate a comprehensive list of potential matches
-2. Remove duplicates
-3. Fact check each item against multiple criteria
-4. Return only validated items (unless include_incorrect_items=True)
-
-
-```python
-from forecasting_tools import NicheListResearcher
-
-researcher = NicheListResearcher(
-    type_of_thing_to_generate="Times Apple was successfully sued for patent violations between 2000-2024"
-)
-
-fact_checked_items = await researcher.research_niche_reference_class(
-    return_invalid_items=False
-)
-
-for item in fact_checked_items:
-    print(item)
-```
-
-The simplified pydantic structure of the fact checked items is:
-```python
-class FactCheckedItem():
-    item_name: str
-    description: str
-    is_uncertain: bool | None = None
-    initial_citations: list[str] | None = None
-    fact_check: FactCheck
-    type_description: str
-    is_valid: bool
-    supporting_urls: list[str]
-    one_line_fact_check_summary: str
-
-class FactCheck(BaseModel):
-    criteria_assessments: list[CriteriaAssessment]
-    is_valid: bool
-
-class CriteriaAssessment():
-    short_name: str
-    description: str
-    validity_assessment: str
-    is_valid_or_unknown: bool | None
-    citation_proving_assessment: str | None
-    url_proving_assessment: str | None:
-```
-
-## Fermi Estimator
-The Fermi Estimator helps break down numerical estimates using Fermi estimation techniques.
-
-
-
-```python
-from forecasting_tools import Estimator
-
-estimator = Estimator(
-    type_of_thing_to_estimate="books published worldwide each year",
-    previous_research=None  # Optional: Pass in existing research
-)
-
-size, explanation = await estimator.estimate_size()
-
-print(f"Estimate: {size:,}")
-print(explanation)
-```
-
-Example output (Fake data with links not added):
-> I estimate that there are 2,750,000 'books published worldwide each year'.
->
-> **Facts**:
-> - Traditional publishers release approximately 500,000 new titles annually in English-speaking countries [1]
-> - China publishes around 450,000 new books annually [2]
-> - The global book market was valued at $92.68 billion in 2023 [3]
-> - Self-published titles have grown by 264% in the last 5 years [4]
-> - Non-English language markets account for about 50% of global publishing [5]
->
-> **Estimation Steps and Assumptions**:
-> 1. Start with traditional English publishing: 500,000 titles
-> 2. Add Chinese market: 500,000 + 450,000 = 950,000
-> 3. Account for other major languages (50% of market): 950,000 * 2 = 1,900,000
-> 4. Add self-published titles (estimated 45% of total): 1,900,000 * 1.45 = 2,755,000
->
-> **Background Research**: [Additional research details...]
 
 ## General LLM
 The `GeneralLlm` class is a wrapper around around litellm's acompletion function that adds some functionality like retry logic, calling the metaculus proxy, and cost callback handling. Litellm supports every model, most every parameter, and acts as one interface for every provider. See the litellm's acompletion function for a full list of parameters. Not all models will support all parameters. Additionally the Metaculus proxy doesn't support all models.
