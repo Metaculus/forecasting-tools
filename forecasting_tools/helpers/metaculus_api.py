@@ -26,38 +26,34 @@ class MetaculusApi:
     AI_WARMUP_TOURNAMENT_ID = (
         3294  # https://www.metaculus.com/tournament/ai-benchmarking-warmup/
     )
-    AI_COMPETITION_ID_Q3 = 3349  # https://www.metaculus.com/tournament/aibq3/
-    AI_COMPETITION_ID_Q4 = 32506  # https://www.metaculus.com/tournament/aibq4/
-    AI_COMPETITION_ID_Q1 = 32627  # https://www.metaculus.com/tournament/aibq1/
-    AI_COMPETITION_ID_Q2 = 32721  # https://www.metaculus.com/tournament/aibq2/
-    AIB_FALL_2025_ID = 32813  # https://www.metaculus.com/tournament/fall-aib-2025/
-    PRO_COMPARISON_TOURNAMENT_Q1 = 32631
-    PRO_COMPARISON_TOURNAMENT_Q2 = (
-        32761  # https://www.metaculus.com/tournament/pro-benchmark-q22025
-    )
-    ACX_2025_TOURNAMENT = 32564
-    Q3_2024_QUARTERLY_CUP = 3366
-    Q4_2024_QUARTERLY_CUP = 3672
-    Q1_2025_QUARTERLY_CUP = 32630
-    METACULUS_CUP_2025_1_ID = 32726  # Summer cup 2025
-    METACULUS_CUP_FALL_2025_ID = 32828
-    AI_2027_TOURNAMENT_ID = "ai-2027"
+    AI_COMPETITION_ID_Q3 = MetaculusClient.AI_COMPETITION_ID_Q3
+    AI_COMPETITION_ID_Q4 = MetaculusClient.AI_COMPETITION_ID_Q4
+    AI_COMPETITION_ID_Q1 = MetaculusClient.AI_COMPETITION_ID_Q1
+    AI_COMPETITION_ID_Q2 = MetaculusClient.AI_COMPETITION_ID_Q2
+    AIB_FALL_2025_ID = MetaculusClient.AIB_FALL_2025_ID
+    PRO_COMPARISON_TOURNAMENT_Q1 = MetaculusClient.PRO_COMPARISON_TOURNAMENT_Q1
+    PRO_COMPARISON_TOURNAMENT_Q2 = MetaculusClient.PRO_COMPARISON_TOURNAMENT_Q2
+    ACX_2025_TOURNAMENT = MetaculusClient.ACX_2025_TOURNAMENT
+    Q3_2024_QUARTERLY_CUP = MetaculusClient.Q3_2024_QUARTERLY_CUP
+    Q4_2024_QUARTERLY_CUP = MetaculusClient.Q4_2024_QUARTERLY_CUP
+    Q1_2025_QUARTERLY_CUP = MetaculusClient.Q1_2025_QUARTERLY_CUP
+    METACULUS_CUP_2025_1_ID = MetaculusClient.METACULUS_CUP_2025_1_ID
+    METACULUS_CUP_FALL_2025_ID = MetaculusClient.METACULUS_CUP_FALL_2025_ID
+    AI_2027_TOURNAMENT_ID = MetaculusClient.AI_2027_TOURNAMENT_ID
     # MAIN_FEED = 144 # site_main
 
-    Q3_2025_MARKET_PULSE_ID = "market-pulse-25q3"
-    Q4_2025_MARKET_PULSE_ID = "market-pulse-25q4"
+    Q3_2025_MARKET_PULSE_ID = MetaculusClient.Q3_2025_MARKET_PULSE_ID
+    Q4_2025_MARKET_PULSE_ID = MetaculusClient.Q4_2025_MARKET_PULSE_ID
 
-    CURRENT_METACULUS_CUP_ID = METACULUS_CUP_FALL_2025_ID
-    CURRENT_QUARTERLY_CUP_ID = CURRENT_METACULUS_CUP_ID  # Consider this parameter deprecated since quarterly cup is no longer active
-    CURRENT_AI_COMPETITION_ID = AIB_FALL_2025_ID
-    CURRENT_MINIBENCH_ID = "minibench"
-    CURRENT_MARKET_PULSE_ID = Q4_2025_MARKET_PULSE_ID
+    CURRENT_METACULUS_CUP_ID = MetaculusClient.CURRENT_METACULUS_CUP_ID
+    CURRENT_QUARTERLY_CUP_ID = (
+        MetaculusClient.CURRENT_QUARTERLY_CUP_ID
+    )  # Consider this parameter deprecated since quarterly cup is no longer active
+    CURRENT_AI_COMPETITION_ID = MetaculusClient.CURRENT_AI_COMPETITION_ID
+    CURRENT_MINIBENCH_ID = MetaculusClient.CURRENT_MINIBENCH_ID
+    CURRENT_MARKET_PULSE_ID = MetaculusClient.CURRENT_MARKET_PULSE_ID
 
-    TEST_QUESTION_URLS = [
-        "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
-        "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
-        "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
-    ]
+    TEST_QUESTION_URLS = MetaculusClient.TEST_QUESTION_URLS
 
     METACULUS_CLIENT = MetaculusClient()
 
