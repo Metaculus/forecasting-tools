@@ -172,6 +172,9 @@ from forecasting_tools.forecast_bots.official_bots.template_bot_2025_fall import
 from forecasting_tools.forecast_bots.official_bots.template_bot_2026_spring import (
     SpringTemplateBot2026 as SpringTemplateBot2026,
 )
+from forecasting_tools.forecast_bots.official_bots.template_bot_2026_summer import (
+    SummerTemplateBot2026 as SummerTemplateBot2026,
+)
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot as UniformProbabilityBot,
 )

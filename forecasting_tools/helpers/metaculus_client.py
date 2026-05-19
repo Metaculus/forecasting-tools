@@ -149,11 +149,9 @@ class MetaculusClient:
     CURRENT_MINIBENCH_ID = "minibench"
     CURRENT_MARKET_PULSE_ID = Q2_2026_MARKET_PULSE_ID
 
-    TEST_QUESTION_URLS = [
-        "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
-        "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
-        "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
-    ]
+    TEST_QUESTION_URLS = (
+        []
+    )  # Going forward, please use the https://metaculus.com/tournament/bot-testing-area/ questions for testing
 
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
 
