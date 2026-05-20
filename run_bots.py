@@ -579,6 +579,17 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     mode_base_bot_mapping = {
         ############################ Bots started in May 2026 ############################
+        "METAC_GEMINI_3_5_FLASH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost / 2,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/google/gemini-3.5-flash",
+                    temperature=default_temperature,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+        },
         "METAC_GPT_5_5_HIGH": {
             "estimated_cost_per_question": roughly_gpt_5_high_cost * 2,
             "bot": create_bot(
