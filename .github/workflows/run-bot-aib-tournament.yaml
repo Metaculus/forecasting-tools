@@ -1867,19 +1867,19 @@ jobs:
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
-  bot_qwen_2_5_max:
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_QWEN_2_5_MAX_TOKEN"
-      metac_name: "metac-qwen-2-5-max+asknews"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_QWEN_2_5_MAX_TOKEN }}
-      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+  # bot_qwen_2_5_max:
+  #   needs: precache_asknews
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: "METAC_QWEN_2_5_MAX_TOKEN"
+  #     metac_name: "metac-qwen-2-5-max+asknews"
+  #     cache_key: asknews-cache-${{ github.run_id }}
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_QWEN_2_5_MAX_TOKEN }}
+  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+  #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
   bot_deepseek_r1:
     needs: precache_asknews
