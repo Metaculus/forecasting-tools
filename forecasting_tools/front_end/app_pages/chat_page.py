@@ -60,22 +60,25 @@ from forecasting_tools.util.misc import clean_indents
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_MODEL: str = (
-    "openrouter/google/gemini-2.5-pro"  # "openrouter/anthropic/claude-sonnet-4.5.5"
-)
+DEFAULT_MODEL: str = "openrouter/google/gemini-2.5-pro"
 MODEL_CHOICES: list[str] = [
     DEFAULT_MODEL,
+    "openrouter/anthropic/claude-sonnet-4.6",
+    "openrouter/anthropic/claude-opus-4.7",
+    "gemini/gemini-3.1-pro-preview",
+    "openai/gpt-5.2",
+    "xai/grok-4.20",
+    "openrouter/anthropic/claude-sonnet-4.5",
     "openai/gpt-5",
     "openrouter/x-ai/grok-4",
     "openrouter/anthropic/claude-opus-4.1",
     "openrouter/anthropic/claude-sonnet-4",
-    "openrouter/anthropic/claude-sonnet-4.5",
     "openai/o3",
     "openai/o4-mini",
     "openai/gpt-4.1",
     "gpt-4o",
-    "openrouter/google/gemini-2.5-pro-preview",
     "openrouter/google/gemini-3-pro-preview",
+    "openrouter/google/gemini-2.5-pro-preview",
 ]
 
 
@@ -502,7 +505,7 @@ class ChatPage(AppPage):
                 output = message["output"]
                 last_message["content"][0][
                     "text"
-                ] += f"\n\n---\n\nNOTICE: There is a bug in gemini tool calling in OpenAI agents SDK, here is the content. Consider using openrouter/anthropic/claude-sonnet-4:\n\n {output}."
+                ] += f"\n\n---\n\nNOTICE: There is a bug in gemini tool calling in OpenAI agents SDK, here is the content. Consider using openrouter/anthropic/claude-sonnet-4.6:\n\n {output}."
 
     @classmethod
     def clear_chat_history(cls) -> None:

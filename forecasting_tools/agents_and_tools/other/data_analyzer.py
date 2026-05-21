@@ -98,7 +98,7 @@ class DataAnalyzer:
     def data_analysis_tool(
         instruction: str,
         additional_context: str | None = None,
-        files: list | None = None,
+        files: list[AvailableFile] | None = None,
     ) -> str:
         """
         This tool attempts to use code to achieve the user's instructions.
@@ -109,7 +109,7 @@ class DataAnalyzer:
         Format files as a list of dicts with the following format: {"file_name": "string", "file_id": "string"}
         """
         data_analysis = DataAnalyzer()
-        available_files = [AvailableFile(**file) for file in files] if files else []
+        available_files = list(files) if files else []
         return asyncio.run(
             data_analysis.run_data_analysis(
                 instruction, additional_context, available_files

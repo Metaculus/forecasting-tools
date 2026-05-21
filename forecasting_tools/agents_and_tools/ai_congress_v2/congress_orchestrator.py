@@ -32,7 +32,7 @@ LONG_TIMEOUT = 480
 class CongressOrchestrator:
     def __init__(
         self,
-        aggregation_model: str = "openrouter/anthropic/claude-sonnet-4",
+        aggregation_model: str = "openrouter/anthropic/claude-sonnet-4.6",
         num_delphi_rounds: int = 1,
     ):
         self.aggregation_model = aggregation_model

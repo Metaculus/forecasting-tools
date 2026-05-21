@@ -41,7 +41,7 @@ INTERVENTION_ADVISOR_NAME = "Intervention Advisor"
 class InterventionRunner:
     def __init__(
         self,
-        model_name: str = "openrouter/anthropic/claude-sonnet-4",
+        model_name: str = "openrouter/anthropic/claude-sonnet-4.6",
         cost_limit: float = 100.0,
     ) -> None:
         self.model_name = model_name

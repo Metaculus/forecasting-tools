@@ -45,7 +45,7 @@ SITUATION_SCHEMA_GUIDE = clean_indents(
               "effects": [<Effect objects>]
             }
           ],
-          "ai_model": "openrouter/anthropic/claude-sonnet-4.5"
+          "ai_model": "openrouter/anthropic/claude-sonnet-4.6"
         }
       ],
       "environment": {
@@ -186,7 +186,7 @@ SITUATION_DESIGN_GUIDE = clean_indents(
 class SituationGenerator:
     def __init__(
         self,
-        model: str = "openrouter/anthropic/claude-sonnet-4.5",
+        model: str = "openrouter/anthropic/claude-sonnet-4.6",
     ) -> None:
         self.model = model
 

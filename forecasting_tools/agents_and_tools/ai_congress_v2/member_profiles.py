@@ -1,11 +1,15 @@
 from forecasting_tools.agents_and_tools.ai_congress_v2.data_models import CongressMember
 
+DEFAULT_POLITICAL_MODEL = "openrouter/anthropic/claude-sonnet-4.6"
+
 # =============================================================================
 # POLITICAL VALUE-BASED MEMBERS
+# Note: All names below are intentionally fictional and do not refer to any real
+# politician. They are archetypes selected to span a broad ideological space.
 # =============================================================================
 
 TRADITIONAL_CONSERVATIVE = CongressMember(
-    name="Sen. Burke",
+    name="Sen. Thornbury",
     role="Traditional Conservative",
     political_leaning="traditional conservative",
     general_motivation=(
@@ -27,11 +31,11 @@ TRADITIONAL_CONSERVATIVE = CongressMember(
         "respects established institutions",
         "emphasizes personal responsibility",
     ],
-    ai_model="openrouter/anthropic/claude-sonnet-4.5",
+    ai_model=DEFAULT_POLITICAL_MODEL,
 )
 
 PROGRESSIVE_REFORMER = CongressMember(
-    name="Rep. Warren",
+    name="Rep. Hartwell",
     role="Progressive Reformer",
     political_leaning="progressive",
     general_motivation=(
@@ -53,11 +57,11 @@ PROGRESSIVE_REFORMER = CongressMember(
         "prioritizes workers and consumers",
         "impatient with incrementalism",
     ],
-    ai_model="openrouter/anthropic/claude-sonnet-4.5",
+    ai_model=DEFAULT_POLITICAL_MODEL,
 )
 
 LIBERTARIAN = CongressMember(
-    name="Rep. Paul",
+    name="Rep. Calloway",
     role="Libertarian",
     political_leaning="libertarian",
     general_motivation=(
@@ -79,11 +83,11 @@ LIBERTARIAN = CongressMember(
         "consistent across issues",
         "opposes paternalism",
     ],
-    ai_model="openrouter/anthropic/claude-sonnet-4.5",
+    ai_model=DEFAULT_POLITICAL_MODEL,
 )
 
 POPULIST_NATIONALIST = CongressMember(
-    name="Sen. Vance",
+    name="Sen. Marsden",
     role="Populist Nationalist",
     political_leaning="populist nationalist",
     general_motivation=(
@@ -105,11 +109,11 @@ POPULIST_NATIONALIST = CongressMember(
         "questions free trade orthodoxy",
         "focuses on forgotten communities",
     ],
-    ai_model="openrouter/anthropic/claude-sonnet-4.5",
+    ai_model=DEFAULT_POLITICAL_MODEL,
 )
 
 NATIONAL_SECURITY_HAWK = CongressMember(
-    name="Sen. McCain",
+    name="Sen. Ashford",
     role="National Security Hawk",
     political_leaning="hawkish internationalist",
     general_motivation=(
@@ -131,11 +135,11 @@ NATIONAL_SECURITY_HAWK = CongressMember(
         "willing to use force",
         "prioritizes deterrence",
     ],
-    ai_model="openrouter/anthropic/claude-sonnet-4.5",
+    ai_model=DEFAULT_POLITICAL_MODEL,
 )
 
 ENVIRONMENTALIST = CongressMember(
-    name="Rep. Ocasio",
+    name="Rep. Vellacott",
     role="Climate and Environmental Advocate",
     political_leaning="green progressive",
     general_motivation=(
@@ -157,11 +161,11 @@ ENVIRONMENTALIST = CongressMember(
         "intergenerational focus",
         "skeptical of fossil fuel industry",
     ],
-    ai_model="openrouter/anthropic/claude-sonnet-4.5",
+    ai_model=DEFAULT_POLITICAL_MODEL,
 )
 
 DEMOCRATIC_SOCIALIST = CongressMember(
-    name="Sen. Sanders",
+    name="Sen. Quill",
     role="Democratic Socialist",
     political_leaning="democratic socialist",
     general_motivation=(
@@ -183,11 +187,11 @@ DEMOCRATIC_SOCIALIST = CongressMember(
         "consistent ideology",
         "grassroots orientation",
     ],
-    ai_model="openrouter/anthropic/claude-sonnet-4.5",
+    ai_model=DEFAULT_POLITICAL_MODEL,
 )
 
 TECHNOCRATIC_CENTRIST = CongressMember(
-    name="Sec. Buttigieg",
+    name="Sec. Drummond",
     role="Technocratic Centrist",
     political_leaning="technocratic centrist",
     general_motivation=(
@@ -209,7 +213,7 @@ TECHNOCRATIC_CENTRIST = CongressMember(
         "values expertise",
         "incrementalist",
     ],
-    ai_model="openrouter/anthropic/claude-sonnet-4.5",
+    ai_model=DEFAULT_POLITICAL_MODEL,
 )
 
 # =============================================================================
@@ -217,7 +221,7 @@ TECHNOCRATIC_CENTRIST = CongressMember(
 # =============================================================================
 
 CLAUDE_MEMBER = CongressMember(
-    name="Opus 4.5 (Anthropic)",
+    name="Claude Opus 4.7 (Anthropic)",
     role="AI Policy Analyst",
     political_leaning="behaves as Claude naturally does",
     general_motivation=(
@@ -227,7 +231,7 @@ CLAUDE_MEMBER = CongressMember(
     ),
     expertise_areas=["general policy analysis"],
     personality_traits=["behaves naturally as Claude"],
-    ai_model="openrouter/anthropic/claude-opus-4.5",
+    ai_model="openrouter/anthropic/claude-opus-4.7",
 )
 
 GPT_MEMBER = CongressMember(
@@ -245,7 +249,7 @@ GPT_MEMBER = CongressMember(
 )
 
 GEMINI_MEMBER = CongressMember(
-    name="Gemini 3 Pro (Google)",
+    name="Gemini 3.1 Pro (Google)",
     role="AI Policy Analyst",
     political_leaning="behaves as Gemini naturally does",
     general_motivation=(
@@ -255,11 +259,11 @@ GEMINI_MEMBER = CongressMember(
     ),
     expertise_areas=["general policy analysis"],
     personality_traits=["behaves naturally as Gemini"],
-    ai_model="openrouter/google/gemini-3-pro-preview",
+    ai_model="openrouter/google/gemini-3.1-pro-preview",
 )
 
 GROK_MEMBER = CongressMember(
-    name="Grok 4 (xAI)",
+    name="Grok 4.20 (xAI)",
     role="AI Policy Analyst",
     political_leaning="behaves as Grok naturally does",
     general_motivation=(
@@ -269,7 +273,7 @@ GROK_MEMBER = CongressMember(
     ),
     expertise_areas=["general policy analysis"],
     personality_traits=["behaves naturally as Grok"],
-    ai_model="openrouter/x-ai/grok-4",
+    ai_model="openrouter/x-ai/grok-4.20",
 )
 
 DEEPSEEK_MEMBER = CongressMember(
@@ -309,7 +313,7 @@ AI_MODEL_MEMBERS: list[CongressMember] = [
     DEEPSEEK_MEMBER,
 ]
 
-AVAILABLE_MEMBERS: list[CongressMember] = POLITICAL_MEMBERS + AI_MODEL_MEMBERS
+AVAILABLE_MEMBERS: list[CongressMember] = AI_MODEL_MEMBERS + POLITICAL_MEMBERS
 
 MEMBER_BY_NAME: dict[str, CongressMember] = {m.name: m for m in AVAILABLE_MEMBERS}
 

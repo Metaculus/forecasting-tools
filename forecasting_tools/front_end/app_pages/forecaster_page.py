@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 
@@ -7,6 +8,8 @@ from pydantic import BaseModel
 
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.questions import BinaryQuestion
+from forecasting_tools.forecast_bots.bot_lists import get_all_important_bot_classes
+from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.main_bot import MainBot
 from forecasting_tools.front_end.helpers.report_displayer import ReportDisplayer
 from forecasting_tools.front_end.helpers.tool_page import ToolPage
@@ -33,7 +36,6 @@ class ForecasterPage(ToolPage):
         "forecasting_tools/front_end/example_outputs/forecast_page_examples.json"
     )
 
-    # Form input keys
     QUESTION_TEXT_BOX = "question_text_box"
     RESOLUTION_CRITERIA_BOX = "resolution_criteria_box"
     FINE_PRINT_BOX = "fine_print_box"
@@ -42,13 +44,91 @@ class ForecasterPage(ToolPage):
     NUM_BASE_RATE_QUESTIONS_BOX = "num_base_rate_questions_box"
     METACULUS_URL_INPUT = "metaculus_url_input"
     FETCH_BUTTON = "fetch_button"
+    BOT_CHOICE_KEY = "forecaster_bot_choice"
+    DEFAULT_BOT_NAME = MainBot.__name__
 
     @classmethod
     async def _display_intro_text(cls) -> None:
-        # st.write(
-        #     "Enter the information for your question. Exa.ai is used to gather up to date information. Each citation attempts to link to a highlight of the a ~4 sentence quote found with Exa.ai. This project is in beta some inaccuracies are expected."
-        # )
-        pass
+        cls._display_bot_selector_and_config()
+
+    @classmethod
+    def _get_available_bot_classes(cls) -> list[type[ForecastBot]]:
+        bot_classes = get_all_important_bot_classes()
+        ordered: list[type[ForecastBot]] = []
+        for bot_class in bot_classes:
+            if bot_class is MainBot:
+                ordered.insert(0, bot_class)
+            elif bot_class not in ordered:
+                ordered.append(bot_class)
+        if MainBot not in ordered:
+            ordered.insert(0, MainBot)
+        return ordered
+
+    @classmethod
+    def _get_selected_bot_class(cls) -> type[ForecastBot]:
+        bot_classes = cls._get_available_bot_classes()
+        bot_class_by_name = {bot.__name__: bot for bot in bot_classes}
+        chosen_name = st.session_state.get(cls.BOT_CHOICE_KEY, cls.DEFAULT_BOT_NAME)
+        return bot_class_by_name.get(chosen_name, MainBot)
+
+    @classmethod
+    def _display_bot_selector_and_config(cls) -> None:
+        bot_classes = cls._get_available_bot_classes()
+        bot_names = [bot.__name__ for bot in bot_classes]
+        if cls.BOT_CHOICE_KEY not in st.session_state:
+            st.session_state[cls.BOT_CHOICE_KEY] = cls.DEFAULT_BOT_NAME
+
+        default_index = (
+            bot_names.index(st.session_state[cls.BOT_CHOICE_KEY])
+            if st.session_state[cls.BOT_CHOICE_KEY] in bot_names
+            else 0
+        )
+        st.selectbox(
+            "Forecasting Bot",
+            options=bot_names,
+            index=default_index,
+            key=cls.BOT_CHOICE_KEY,
+            help=(
+                "The bot used to forecast. "
+                f"`{cls.DEFAULT_BOT_NAME}` is the default and the verified "
+                "highest-accuracy bot."
+            ),
+        )
+
+        bot_class = cls._get_selected_bot_class()
+        with st.expander("Bot Configuration", expanded=False):
+            cls._render_bot_config(bot_class)
+
+    @classmethod
+    def _render_bot_config(cls, bot_class: type[ForecastBot]) -> None:
+        try:
+            bot_instance = bot_class(
+                research_reports_per_question=1,
+                predictions_per_research_report=5,
+                publish_reports_to_metaculus=False,
+                folder_to_save_reports_to=None,
+            )
+        except Exception as exception:
+            st.error(f"Could not instantiate {bot_class.__name__}: {exception}")
+            return
+
+        docstring = (bot_class.__doc__ or "").strip()
+        if docstring:
+            st.markdown(f"**Description:** {docstring}")
+        st.markdown(f"**Bot Class:** `{bot_class.__name__}`")
+        st.markdown(
+            f"**Research Reports per Question:** "
+            f"{bot_instance.research_reports_per_question}"
+        )
+        st.markdown(
+            f"**Predictions per Research Report:** "
+            f"{bot_instance.predictions_per_research_report}"
+        )
+        st.markdown("**LLM Configuration:**")
+        st.code(
+            json.dumps(bot_instance.make_llm_dict(), indent=2, default=str),
+            language="json",
+        )
 
     @classmethod
     async def _get_input(cls) -> ForecastInput | None:
@@ -87,8 +167,12 @@ class ForecasterPage(ToolPage):
 
     @classmethod
     async def _run_tool(cls, input: ForecastInput) -> BinaryReport:
-        with st.spinner("Forecasting... This may take a minute or two..."):
-            report = await MainBot(
+        bot_class = cls._get_selected_bot_class()
+        with st.spinner(
+            f"Forecasting with `{bot_class.__name__}`... "
+            "This may take a minute or two..."
+        ):
+            report = await bot_class(
                 research_reports_per_question=1,
                 predictions_per_research_report=5,
                 publish_reports_to_metaculus=False,
