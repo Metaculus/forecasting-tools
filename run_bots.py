@@ -1877,7 +1877,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_TOKEN": {
             **deepseek_r1_bot,
