@@ -418,15 +418,17 @@ class TestMemberProfiles:
             assert len(member.search_model) > 0
 
     def test_get_member_by_name_valid(self) -> None:
-        member = get_member_by_name("Opus 4.5 (Anthropic)")
-        assert member.name == "Opus 4.5 (Anthropic)"
+        member = get_member_by_name("Claude Opus 4.7 (Anthropic)")
+        assert member.name == "Claude Opus 4.7 (Anthropic)"
 
     def test_get_member_by_name_invalid(self) -> None:
         with pytest.raises(ValueError):
             get_member_by_name("Nonexistent Member")
 
     def test_get_members_by_names(self) -> None:
-        members = get_members_by_names(["Opus 4.5 (Anthropic)", "GPT 5.2 (OpenAI)"])
+        members = get_members_by_names(
+            ["Claude Opus 4.7 (Anthropic)", "GPT 5.2 (OpenAI)"]
+        )
         assert len(members) == 2
 
 

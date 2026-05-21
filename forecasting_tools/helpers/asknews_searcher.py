@@ -53,23 +53,18 @@ class AskNewsSearcher:
         self.client_secret = client_secret or os.getenv("ASKNEWS_SECRET")
         self.api_key = api_key or os.getenv("ASKNEWS_API_KEY")
 
-        # Check if both authentication methods are defined
         has_oauth = bool(self.client_id and self.client_secret)
         has_api_key = bool(self.api_key)
 
         if has_oauth and has_api_key:
-            raise ValueError(
-                "Cannot use both OAuth (client_id/client_secret) and API key authentication. "
-                "Please provide either ASKNEWS_CLIENT_ID + ASKNEWS_SECRET or ASKNEWS_API_KEY, not both."
+            logger.warning(
+                "Both AskNews OAuth (ASKNEWS_CLIENT_ID + ASKNEWS_SECRET) and "
+                "ASKNEWS_API_KEY were provided. Preferring OAuth and ignoring the "
+                "API key."
             )
+            self.api_key = None
+            has_api_key = False
 
-        # Validate OAuth credentials
-        if has_oauth and (not self.client_id or not self.client_secret):
-            raise ValueError(
-                "Incomplete OAuth credentials. Both ASKNEWS_CLIENT_ID and ASKNEWS_SECRET must be set."
-            )
-
-        # Validate that at least one authentication method is provided
         if not has_oauth and not has_api_key:
             raise ValueError(
                 "No authentication credentials provided. "

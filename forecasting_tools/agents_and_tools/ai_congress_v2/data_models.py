@@ -23,7 +23,7 @@ class CongressMember(BaseModel, Jsonable):
     general_motivation: str
     expertise_areas: list[str]
     personality_traits: list[str]
-    ai_model: str = "openrouter/anthropic/claude-sonnet-4"
+    ai_model: str = "openrouter/anthropic/claude-sonnet-4.6"
     search_model: str = "openrouter/perplexity/sonar-reasoning-pro"
 
     @property

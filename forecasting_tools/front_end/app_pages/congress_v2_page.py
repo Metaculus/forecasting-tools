@@ -38,7 +38,6 @@ SESSIONS_FOLDER = "temp/congress_v2_sessions"
 EXAMPLE_SESSION_PATH = (
     "forecasting_tools/front_end/example_outputs/congress_v2_page_example.json"
 )
-V2_PASSPHRASE = f"metac {CustomAuth.DEFAULT_PASSPHRASE}"
 
 
 class CongressV2Page(AppPage):
@@ -92,6 +91,7 @@ class CongressV2Page(AppPage):
     ]
 
     @classmethod
+    @CustomAuth.add_access_control()
     async def _async_main(cls) -> None:
         st.title("🏛️ AI Forecasting Congress V2")
         st.markdown(
@@ -215,10 +215,10 @@ class CongressV2Page(AppPage):
 
             member_names = [m.name for m in AVAILABLE_MEMBERS]
             default_members = [
-                "Opus 4.5 (Anthropic)",
+                "Claude Opus 4.7 (Anthropic)",
                 "GPT 5.2 (OpenAI)",
-                "Gemini 3 Pro (Google)",
-                "Grok 4 (xAI)",
+                "Gemini 3.1 Pro (Google)",
+                "Grok 4.20 (xAI)",
                 "DeepSeek V3.2 (DeepSeek)",
             ]
             selected_members = st.multiselect(

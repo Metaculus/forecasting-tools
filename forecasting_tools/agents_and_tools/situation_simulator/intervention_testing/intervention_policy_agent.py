@@ -22,7 +22,7 @@ POLICY_AGENT_TIMEOUT = 300
 class InterventionPolicyAgent:
     def __init__(
         self,
-        model_name: str = "openrouter/anthropic/claude-sonnet-4",
+        model_name: str = "openrouter/anthropic/claude-sonnet-4.6",
         timeout: int = POLICY_AGENT_TIMEOUT,
         structure_output_model: GeneralLlm | None = None,
     ) -> None:
