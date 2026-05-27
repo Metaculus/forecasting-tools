@@ -173,9 +173,7 @@ class QuestionDecomposer:
         model: str | GeneralLlm | None = None,
     ) -> DecompositionResult:
         if model is None:
-            model = GeneralLlm.search_context_model(
-                "openrouter/perplexity/sonar"
-            )
+            model = GeneralLlm.search_context_model("openrouter/perplexity/sonar")
         llm = GeneralLlm.to_llm(model)
 
         prompt = clean_indents(
