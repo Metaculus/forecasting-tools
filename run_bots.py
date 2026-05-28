@@ -689,6 +689,16 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             ),
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
         },
+        "METAC_CLAUDE_OPUS_4_8_HIGH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 1.5,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-opus-4-8",
+                    **claude_adaptive_thinking_settings_high,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+        },
         "METAC_KIMI_K2_6": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
             "bot": create_bot(
