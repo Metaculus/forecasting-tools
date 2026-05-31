@@ -49,6 +49,10 @@ class ForecasterPage(ToolPage):
 
     @classmethod
     async def _display_intro_text(cls) -> None:
+        st.info(
+            "This page only supports Yes/No binary questions. "
+            "To forecast numeric questions, use the Chatbot page."
+        )
         cls._display_bot_selector_and_config()
 
     @classmethod

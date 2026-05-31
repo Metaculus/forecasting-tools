@@ -242,9 +242,9 @@ class CongressV2Page(AppPage):
                 key="v2_delphi_rounds",
             )
 
-            cost_per_member = "~$1-12"
+            cost_per_member = "$0.5-$3"
             if num_delphi_rounds > 1:
-                cost_per_member = "~$1-12 for round 1 + ~$1-12 per additional round"
+                cost_per_member = "$0.5-$3 for round 1 + $0.5-$3 per additional round"
             st.markdown(
                 f"**Estimated Cost:** {cost_per_member} per member selected "
                 "(depends on model, research depth, and number of forecasts)"

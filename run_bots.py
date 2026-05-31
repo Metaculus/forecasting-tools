@@ -52,6 +52,7 @@ POST_IDS_TO_SKIP = [
     42557,  # https://www.metaculus.com/questions/42557/ is rejected since too many group question options that lower quality models fail at
     43310,  # https://www.metaculus.com/questions/43310/ is rejected since too many MC options
     40280,  # https://www.metaculus.com/questions/40280/ is rejected since noisy workflow errors
+    39138,  # https://www.metaculus.com/questions/39138/ is rejected the best value is way out of bounds, and bots are constrained to not be able to make these forecasts
 ]
 
 
