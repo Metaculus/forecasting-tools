@@ -3,7 +3,7 @@ name: Run Bot for Metaculus AI Benchmark Tournament
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *" # Runs every 30 minutes
+    - cron: "13,43 * * * *" # every 30 min, avoiding peak traffic (at top of hour)
 
 # Add concurrency group to prevent parallel runs
 concurrency:
