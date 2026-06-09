@@ -579,6 +579,48 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        ############################ Bots started in June 2026 ############################
+        "METAC_CLAUDE_FABLE_5_HIGH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-fable-5",
+                    **claude_adaptive_thinking_settings_high,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+        },
+        "METAC_NEMOTRON_3_ULTRA": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/nvidia/nemotron-3-ultra-550b-a55b",
+                    temperature=default_temperature,
+                    timeout=kimi_k2_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_QWEN_3_7_PLUS": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/qwen/qwen3.7-plus",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_MINIMAX_M3": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/minimax/minimax-m3",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ Bots started in May 2026 ############################
         "METAC_GEMINI_3_5_FLASH": {
             "estimated_cost_per_question": roughly_opus_4_5_cost / 2,
