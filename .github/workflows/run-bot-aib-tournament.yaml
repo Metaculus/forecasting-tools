@@ -86,6 +86,65 @@ jobs:
 
   # NOTE: don't remove any of the open source models, since these are the best option for a long term baseline (other models get deprecated)
 
+  #################################### June 2026 new bots ####################################
+
+  bot_claude_fable_5_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_CLAUDE_FABLE_5_HIGH"
+      metac_name: "metac-claude-fable-5-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+
+  bot_nemotron_3_ultra:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_NEMOTRON_3_ULTRA"
+      metac_name: "metac-nemotron-3-ultra+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_qwen_3_7_plus:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_QWEN_3_7_PLUS"
+      metac_name: "metac-qwen-3-7-plus+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_minimax_m3:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_MINIMAX_M3"
+      metac_name: "metac-minimax-m3+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
   #################################### May 2026 new bots ####################################
 
   bot_gemini_3_5_flash:
