@@ -23,6 +23,9 @@ from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
     GPT41OptimizedBot,
 )
+from forecasting_tools.forecast_bots.official_bots.no_research_one_shot_bot import (
+    NoResearchOneShotBot,
+)
 from forecasting_tools.forecast_bots.official_bots.research_only_bot_2025_fall import (
     FallResearchOnlyBot2025,
 )
@@ -357,9 +360,28 @@ def create_bot(
     llm: GeneralLlm,
     researcher: str | GeneralLlm = "asknews/news-summaries",
     predictions_per_research_report: int | None = None,
-    bot_type: Literal["template", "gpt_4_1_optimized", "research_only"] = "template",
+    bot_type: Literal[
+        "template", "gpt_4_1_optimized", "research_only", "no_research_one_shot"
+    ] = "template",
 ) -> ForecastBot:
     default_summarizer = "openrouter/openai/gpt-4.1-mini"
+
+    if bot_type == "no_research_one_shot":
+        return NoResearchOneShotBot(
+            research_reports_per_question=1,
+            predictions_per_research_report=predictions_per_research_report or 1,
+            use_research_summary_to_forecast=default_for_using_summary,
+            publish_reports_to_metaculus=default_for_publish_to_metaculus,
+            skip_previously_forecasted_questions=default_for_skipping_questions,
+            llms={
+                "default": llm,
+                "summarizer": None,
+                "researcher": "no_research",
+                "parser": structure_output_model,
+            },
+            enable_summarize_research=False,
+            extra_metadata_in_explanation=True,
+        )
 
     if bot_type == "research_only":
         return FallResearchOnlyBot2025(
@@ -579,6 +601,53 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        ############################ No-research one-shot bots ############################
+        "METAC_GPT_5_5_NO_RESEARCH_ONE_SHOT": {
+            "estimated_cost_per_question": roughly_gpt_5_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-5.5",
+                    temperature=None,
+                    timeout=gpt_5_timeout,
+                ),
+                bot_type="no_research_one_shot",
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GEMINI_3_1_PRO_NO_RESEARCH_ONE_SHOT": {
+            "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/google/gemini-3.1-pro-preview",
+                    temperature=default_temperature,
+                    timeout=gemini_default_timeout,
+                ),
+                bot_type="no_research_one_shot",
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_CLAUDE_FABLE_5_NO_RESEARCH_ONE_SHOT": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-fable-5",
+                    temperature=default_temperature,
+                ),
+                bot_type="no_research_one_shot",
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GROK_4_3_NO_RESEARCH_ONE_SHOT": {
+            "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_llm,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/x-ai/grok-4.3",
+                    temperature=default_temperature,
+                ),
+                bot_type="no_research_one_shot",
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ Bots started in June 2026 ############################
         "METAC_CLAUDE_FABLE_5_HIGH": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 2,
