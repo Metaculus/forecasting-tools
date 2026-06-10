@@ -287,10 +287,14 @@ class GeneralLlm(
         assert isinstance(response, ModelResponse)
         choices = response.choices
         choices = typeguard.check_type(choices, list[Choices])
-        answer = choices[0].message.content
+        message = choices[0].message
+        answer = message.content
+        if answer is None:
+            answer = self._answer_from_reasoning_content(message)
+        finish_reason = choices[0].finish_reason
         assert isinstance(
             answer, str
-        ), f"Answer is not a string and is of type: {type(answer)}. Answer: {answer}"
+        ), f"Answer is not a string and is of type: {type(answer)}. Answer: {answer}. Finish reason: {finish_reason}"
         usage = response.usage  # type: ignore
         assert isinstance(usage, Usage)
         prompt_tokens = usage.prompt_tokens
@@ -352,6 +356,16 @@ class GeneralLlm(
         )
 
         return response
+
+    def _answer_from_reasoning_content(self, message: Message) -> str | None:
+        reasoning_content = getattr(message, "reasoning_content", None)
+        if isinstance(reasoning_content, str) and reasoning_content:
+            logger.warning(
+                f"Model {self.model} returned no message content; "
+                f"falling back to reasoning content as the answer."
+            )
+            return reasoning_content
+        return None
 
     @staticmethod
     def _extract_citations(
