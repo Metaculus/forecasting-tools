@@ -54,6 +54,9 @@ POST_IDS_TO_SKIP = [
     40280,  # https://www.metaculus.com/questions/40280/ is rejected since noisy workflow errors
     39138,  # https://www.metaculus.com/questions/39138/ is rejected the best value is way out of bounds, and bots are constrained to not be able to make these forecasts
 ]
+POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
+    43335,  # https://www.metaculus.com/questions/43335/ is still forecasted but should not fail the workflow if it errors
+]
 
 
 class ScheduleConfig:
@@ -173,10 +176,24 @@ async def configure_and_run_bot(
     for i, question_report in enumerate(zip(questions, all_reports)):
         question, report = question_report
         if isinstance(report, BaseException) and "TimeoutError" in str(report):
+            logger.warning(
+                f"TimeoutError occurred for question {question.id_of_post}, retrying..."
+            )
             new_report = await bot.forecast_question(question, return_exceptions=True)
             all_reports[i] = new_report
 
-    bot.log_report_summary(all_reports)
+    bot.log_report_summary(all_reports, raise_errors=False)
+
+    errors_to_raise = [
+        report
+        for question, report in zip(questions, all_reports)
+        if isinstance(report, BaseException)
+        and question.id_of_post not in POST_IDS_TO_NOT_RAISE_ERRORS_FOR
+    ]
+    if errors_to_raise:
+        raise RuntimeError(
+            f"{len(errors_to_raise)} errors occurred while forecasting: {errors_to_raise}"
+        )
 
     return all_reports
 
