@@ -57,6 +57,9 @@ POST_IDS_TO_SKIP = [
     40280,  # https://www.metaculus.com/questions/40280/ is rejected since noisy workflow errors
     39138,  # https://www.metaculus.com/questions/39138/ is rejected the best value is way out of bounds, and bots are constrained to not be able to make these forecasts
 ]
+POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
+    # 43335,  # https://www.metaculus.com/questions/43335/ is still forecasted but should not fail the workflow if it errors
+]
 
 
 class ScheduleConfig:
@@ -176,10 +179,24 @@ async def configure_and_run_bot(
     for i, question_report in enumerate(zip(questions, all_reports)):
         question, report = question_report
         if isinstance(report, BaseException) and "TimeoutError" in str(report):
+            logger.warning(
+                f"TimeoutError occurred for question {question.id_of_post}, retrying..."
+            )
             new_report = await bot.forecast_question(question, return_exceptions=True)
             all_reports[i] = new_report
 
-    bot.log_report_summary(all_reports)
+    bot.log_report_summary(all_reports, raise_errors=False)
+
+    errors_to_raise = [
+        report
+        for question, report in zip(questions, all_reports)
+        if isinstance(report, BaseException)
+        and question.id_of_post not in POST_IDS_TO_NOT_RAISE_ERRORS_FOR
+    ]
+    if errors_to_raise:
+        raise RuntimeError(
+            f"{len(errors_to_raise)} errors occurred while forecasting: {errors_to_raise}"
+        )
 
     return all_reports
 
@@ -1278,7 +1295,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # **flex_price_settings,
                 ),
             ),
-            "tournaments": [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,  # NOTE: gpt-5 (gpt-5-2025-08-07) deprecated by OpenAI, API shutoff Dec 10, 2026
         },
         "METAC_GPT_5": {
             "estimated_cost_per_question": roughly_gpt_5_cost,
@@ -1290,7 +1307,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # **flex_price_settings,
                 ),
             ),
-            "tournaments": TournConfig.NONE,
+            "tournaments": TournConfig.NONE,  # NOTE: gpt-5 (gpt-5-2025-08-07) deprecated by OpenAI, API shutoff Dec 10, 2026
         },
         "METAC_GPT_5_MINI": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
@@ -1301,7 +1318,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **flex_price_settings,
                 ),
             ),
-            "tournaments": TournConfig.NONE,
+            "tournaments": TournConfig.NONE,  # NOTE: gpt-5-mini (gpt-5-mini-2025-08-07) deprecated by OpenAI, API shutoff Dec 10, 2026
         },
         "METAC_GPT_5_NANO": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
@@ -1311,7 +1328,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.NONE,
+            "tournaments": TournConfig.NONE,  # NOTE: gpt-5-nano (gpt-5-nano-2025-08-07) deprecated by OpenAI, API shutoff Dec 10, 2026
         },
         "METAC_CLAUDE_4_SONNET_HIGH_16K": {
             "estimated_cost_per_question": 0.33980,
@@ -1483,7 +1500,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=gpt_5_with_search,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,  # NOTE: gpt-5 (gpt-5-2025-08-07) deprecated by OpenAI, API shutoff Dec 10, 2026
         },
         "METAC_GROK_4_LIVE_SEARCH": {
             "estimated_cost_per_question": 3 * roughly_one_call_to_grok_4_llm,
