@@ -55,7 +55,7 @@ POST_IDS_TO_SKIP = [
     39138,  # https://www.metaculus.com/questions/39138/ is rejected the best value is way out of bounds, and bots are constrained to not be able to make these forecasts
 ]
 POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
-    43335,  # https://www.metaculus.com/questions/43335/ is still forecasted but should not fail the workflow if it errors
+    # 43335,  # https://www.metaculus.com/questions/43335/ is still forecasted but should not fail the workflow if it errors
 ]
 
 
@@ -1226,7 +1226,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # **flex_price_settings,
                 ),
             ),
-            "tournaments": [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,  # NOTE: gpt-5 (gpt-5-2025-08-07) deprecated by OpenAI, API shutoff Dec 10, 2026
         },
         "METAC_GPT_5": {
             "estimated_cost_per_question": roughly_gpt_5_cost,
@@ -1238,7 +1238,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # **flex_price_settings,
                 ),
             ),
-            "tournaments": TournConfig.NONE,
+            "tournaments": TournConfig.NONE,  # NOTE: gpt-5 (gpt-5-2025-08-07) deprecated by OpenAI, API shutoff Dec 10, 2026
         },
         "METAC_GPT_5_MINI": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
@@ -1249,7 +1249,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **flex_price_settings,
                 ),
             ),
-            "tournaments": TournConfig.NONE,
+            "tournaments": TournConfig.NONE,  # NOTE: gpt-5-mini (gpt-5-mini-2025-08-07) deprecated by OpenAI, API shutoff Dec 10, 2026
         },
         "METAC_GPT_5_NANO": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
@@ -1259,7 +1259,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.NONE,
+            "tournaments": TournConfig.NONE,  # NOTE: gpt-5-nano (gpt-5-nano-2025-08-07) deprecated by OpenAI, API shutoff Dec 10, 2026
         },
         "METAC_CLAUDE_4_SONNET_HIGH_16K": {
             "estimated_cost_per_question": 0.33980,
@@ -1431,7 +1431,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=gpt_5_with_search,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,  # NOTE: gpt-5 (gpt-5-2025-08-07) deprecated by OpenAI, API shutoff Dec 10, 2026
         },
         "METAC_GROK_4_LIVE_SEARCH": {
             "estimated_cost_per_question": 3 * roughly_one_call_to_grok_4_llm,
