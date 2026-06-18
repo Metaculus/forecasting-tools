@@ -73,7 +73,7 @@ class NoResearchOneShotBot(SummerTemplateBot2026):
             f"**Question:** {question.question_text}\n\n"
             f"**Today's Date:** {today}\n\n"
             f"**Forecasting Window:** opens {question.open_time}, "
-            f"closes {question.scheduled_close_time}\n\n"
+            f"closes {question.close_time}\n\n"
             f"**Details:**\n{cls._question_details(question)}\n\n"
         )
 
