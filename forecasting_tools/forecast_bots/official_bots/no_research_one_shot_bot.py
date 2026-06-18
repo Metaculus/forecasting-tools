@@ -154,9 +154,7 @@ class NoResearchOneShotBot(SummerTemplateBot2026):
         )
         lo_dt = question.lower_bound
         hi_dt = question.upper_bound
-        range_desc = (
-            f"{lo_dt.date().isoformat()} to {hi_dt.date().isoformat()}"
-        )
+        range_desc = f"{lo_dt.date().isoformat()} to {hi_dt.date().isoformat()}"
         span = hi_dt - lo_dt
         examples = [
             f'"{(lo_dt + span * f).date().isoformat()}"' for f in _EXAMPLE_FRACTIONS
