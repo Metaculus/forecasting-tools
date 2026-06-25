@@ -10,6 +10,9 @@ import json
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
+from forecasting_tools.agents_and_tools.source_archive.canonicalize import (
+    canonicalize_url,
+)
 from forecasting_tools.agents_and_tools.source_archive.config import ArchiveConfig
 from forecasting_tools.agents_and_tools.source_archive.models import CitationRecord
 from forecasting_tools.agents_and_tools.source_archive.storage.blob_store import (
@@ -31,11 +34,19 @@ def loads(text: str) -> list[CitationRecord]:
 
 
 def unique_urls(records: Iterable[CitationRecord]) -> Iterator[str]:
-    """Yield each distinct URL once, preserving first-seen order."""
+    """Yield each distinct URL once, preserving first-seen order.
+
+    Distinctness is by *canonical* URL (see :func:`canonicalize_url`), so
+    near-duplicate links collapse to a single fetch; the original first-seen URL
+    string is what's yielded, for provenance.
+    """
     seen: set[str] = set()
     for r in records:
-        if r.url and r.url not in seen:
-            seen.add(r.url)
+        if not r.url:
+            continue
+        key = canonicalize_url(r.url)
+        if key not in seen:
+            seen.add(key)
             yield r.url
 
 

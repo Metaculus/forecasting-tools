@@ -43,6 +43,10 @@ Configuration is read from the environment (see the project `.env.template`):
 | `WEB_ARCHIVE_AWS_PROFILE` | Named AWS profile (e.g. an SSO profile). | default chain |
 | `WEB_ARCHIVE_TTL_DAYS` | Days before a cached capture is refetched. | `14` |
 | `FIRECRAWL_API_KEY` | Enables the Firecrawl fallback. | — (fallback off) |
+| `WEB_ARCHIVE_FIRECRAWL_PROXY` | Firecrawl proxy mode for hardened sites: `basic` (1 credit) / `auto` / `stealth` (5 credits). | `basic` |
+| `HYPERBROWSER_API_KEY` | Enables the Hyperbrowser managed fallback. | — (off) |
+| `WEB_ARCHIVE_CLOAKBROWSER_IMPORT` | Module exposing CloakBrowser's `launch()`. | `cloakbrowser` |
+| `WEB_ARCHIVE_PDF_MAX_PAGES` | Cap on PDF pages parsed per document. | `50` |
 
 AWS credentials use the standard AWS resolution chain — environment variables, a
 shared config file, or an SSO profile. Nothing secret is committed or baked into
@@ -87,12 +91,130 @@ source-archive capture run.jsonl --local ./archive
 # Capture and upload to S3 (uses WEB_ARCHIVE_S3_BUCKET), plus the manifest itself
 source-archive capture run.jsonl --upload-manifest --run-id 2026-06-01_demo
 
+# Skip the Hyperbrowser fallback this run; failures are written to a retry
+# manifest so you can come back to just those sites later (e.g. with it on).
+source-archive capture run.jsonl --no-hyperbrowser --run-id demo
+source-archive capture demo_needs_retry.jsonl --run-id demo   # later, hyperbrowser on
+
 # Build a manifest by harvesting the URLs bots cited on a Metaculus tournament
 source-archive harvest 32506 --out run.jsonl
 ```
 
+Because a failed fetch leaves no cache entry while a success does, re-running the
+same manifest only re-attempts the failures — the retry manifest just makes that
+explicit and fast (it skips the already-captured majority).
+
 `source-archive` is installed by the extra; the equivalent module form is
 `python -m forecasting_tools.agents_and_tools.source_archive.cli`.
+
+## Backup backends & the bake-off
+
+A self-hosted browser is the primary backend and gets ~70% of URLs for ~free,
+but two kinds of URL fall through it: **anti-bot/Cloudflare** pages (it detects
+the block but can't get past it) and **PDFs** (Chromium downloads them instead of
+rendering, so nothing is captured). The package ships these backups, ordered by
+marginal cost so the cheap tiers absorb most of the tail:
+
+| Backend | Cost (2026) | Closes | Notes |
+| --- | --- | --- | --- |
+| `CloakBrowserFetcher` | ~$0/page (self-host) | Cloudflare | **The primary browser tier when installed** (`pip install cloakbrowser`): patched Chromium that beat vanilla Playwright on Cloudflare in 2026 benchmarks. Only one browser runs — cloak *replaces* vanilla Playwright (two `sync_playwright` instances conflict in one process), falling back to vanilla when cloak isn't installed. |
+| `PdfFetcher` | $0 local; ~$0.0008/pg OCR | PDFs | PyMuPDF4LLM locally, falls back to Firecrawl OCR on scanned PDFs. |
+| `FirecrawlFetcher` | $0.0008 basic / $0.0042 stealth | Cloudflare + PDFs | Native PDF parser; `WEB_ARCHIVE_FIRECRAWL_PROXY=stealth` for hardened sites. |
+| `HyperbrowserFetcher` | $0.001 basic / $0.01 proxy | Cloudflare | Consolidates spend onto a vendor already used elsewhere. No PDF support. |
+
+Selenium was evaluated and **rejected**: it drives the same Chromium as
+Playwright, so it bypasses nothing Playwright can't, and its stealth ecosystem
+(`undetected-chromedriver`) is now legacy. CloakBrowser/Patchright/nodriver are
+the credible self-hosted upgrades.
+
+To decide which backup(s) to wire in, run the bake-off — it runs each selected
+backend independently over the same URLs (not tiered) and reports reliability,
+latency, and estimated cost per backend, broken down by category:
+
+```bash
+python -m forecasting_tools.agents_and_tools.source_archive.benchmark \
+    --manifest forecasting_tools/agents_and_tools/source_archive/benchmarks/sample_urls.jsonl \
+    --backends playwright,cloakbrowser,firecrawl,firecrawl-stealth,hyperbrowser,pdf \
+    --out bench.csv
+```
+
+Backends whose API key or dependency is missing are skipped cleanly. Cost
+figures are model estimates (see `PRICING` in `benchmark.py`); tune the credit
+rates with `--firecrawl-credit-usd` / `--hyperbrowser-credit-usd` to match your
+plan. Swap the sample manifest for a JSONL of your own cited URLs (one
+`{"url", "category"}` per line; categories `normal`/`cloudflare`/`pdf`) for a
+representative run.
+
+## Browse what you captured
+
+A Streamlit viewer reads the manifests + index back out of the store and shows
+each captured URL's **screenshot, markdown, and HTML** side by side, filterable
+by bot and question:
+
+```bash
+AWS_PROFILE=default WEB_ARCHIVE_S3_BUCKET=metaculus-web-archive \
+  streamlit run forecasting_tools/agents_and_tools/source_archive/viewer.py
+```
+
+It uses the same `ArchiveConfig.from_env()` settings as capture, so it points at
+whatever bucket/prefix you captured to (no extra configuration).
+
+To browse a **local** capture (no S3/AWS), set `WEB_ARCHIVE_LOCAL_DIR` to the
+directory you captured into with `--local`:
+
+```bash
+WEB_ARCHIVE_LOCAL_DIR=./archive \
+  streamlit run forecasting_tools/agents_and_tools/source_archive/viewer.py
+```
+
+## The catalog: a browsable, coworker-legible view
+
+The viewer is interactive (good for us); the **catalog** is a set of static
+HTML/CSV pages written into the bucket so a non-technical coworker can browse the
+sources without any tooling. It is **question-primary** — the encyclopedia of
+every web source used for a question — plus `by-bot/` and `by-domain/`
+cross-views, built by joining the manifests with the index:
+
+```bash
+# write catalog/ into the bucket (uses WEB_ARCHIVE_S3_BUCKET)
+source-archive catalog
+# or against a local capture dir
+source-archive catalog --local ./archive
+```
+
+Start at `catalog/index.html` (or `catalog/READ_ME_FIRST.html` for the plain
+explainer). Each source shows its screenshot, who used it (bot + tool), and
+whether it was captured; each question also has a CSV. Data/API calls (a bot's
+`run_code` pulling a CSV, etc.) are **excluded** from the catalog — it lists web
+pages a bot read, not data endpoints — though they remain in the raw manifests.
+
+## Coverage: what fraction did we archive?
+
+The catalog shows what we *have*; the **coverage report** shows what we're
+*missing*. It's two separate reports, by ingestion path — different denominators,
+different ground truth:
+
+```bash
+source-archive coverage                 # both reports
+source-archive coverage --mode trace    # just the complex/template bot
+source-archive coverage --csv ./cov     # also write cov_<mode>.csv (+ _missing.txt)
+```
+
+- **trace** — the complex/template bot's instrumented runs (metac-ai-sdk). Traces
+  hold *every* URL the bot touched, so this is a true archival success-rate.
+- **comments** — every bot (Metaculus's own + outsiders) harvested from public
+  comments. Comments are truncated, so this denominator under-counts — coverage
+  here means "of the links visible in comments, how many we archived."
+
+The report is oriented to one question: **are there sources bots are using that
+we are not yet archiving?** It leads with that gap, then breaks it down by
+question, bot, tool, and the biggest-gap sites, plus the list of sources to
+collect. Non-source URLs — search-engine results, `run_code`-style tool/API
+calls, and malformed extractor junk — are excluded (same as the catalog).
+
+If capture runs have persisted their outcomes (`reports/<run_id>.json`, written
+automatically by `capture`), the gap is split into **never fetched** (the real
+collection gap) vs **fetched but failed** (a capture problem).
 
 ## The manifest: what to feed it
 
@@ -107,33 +229,49 @@ The pipeline dedupes URLs within the manifest before fetching.
 
 ## Where the manifest comes from
 
-You can write a manifest yourself, or generate one from a bot's published
-reasoning. Both first-party and third-party bots post their reasoning — with the
-source links they used — as comments on Metaculus, so the public, no-auth
-Metaculus API is the one ingestion path that works across *every* bot:
+You can write a manifest yourself, or generate one from a forecasting bot's
+reasoning — the source links a bot used are recorded in the comment it posts and,
+more completely, in its run traces.
 
-```python
-from forecasting_tools.agents_and_tools.source_archive.ingest import (
-    MetaculusCommentHarvester,
-)
-from forecasting_tools.agents_and_tools.source_archive import manifest
+**From the database (operator path).** `harvest-db` reads the URLs a bot cited
+straight from the platform's Postgres database and emits a manifest. Point it at
+a database (a `postgresql://…` URL works — e.g. a Neon connection string):
 
-harvester = MetaculusCommentHarvester()        # uses METACULUS_API_BASE_URL
-records = harvester.harvest_project(32506)     # a tournament / project id
-manifest.write_file("run.jsonl", records)      # -> feed to `capture`
+```bash
+# one post, or the latest day of activity
+source-archive harvest-db --post 29495 --dedupe --out run.jsonl
+source-archive harvest-db --days 1 --dedupe --upload --run-id "$(date -u +%F)"
 ```
 
-Or in one line from the CLI: `source-archive harvest 32506 --out run.jsonl`.
+It reads `comments_comment ⋈ users_user (is_bot)` and emits the same manifest.
+`--days` is uncapped by default; `--limit N` caps the row count for spot checks.
+`--public-only` restricts to public comments (all comments are read by default).
 
-The lower-level `extract_urls(text)` / `extract_citation_records(...)` helpers in
-`ingest.url_extraction` pull URLs out of any markdown/text (markdown links,
-autolinks, and bare URLs), if you are ingesting from somewhere other than
-comments.
+**DSN resolution (keep the credential off disk).** The DSN is resolved in this
+order: `--dsn` flag → `$METACULUS_DB_DSN` → macOS Keychain item
+`metaculus-db-dsn` → local default `dbname=metaculus`. The DSN is a real secret
+(it grants database read access), so prefer the **Keychain** over `.env` / a
+shell export — those land in files and shell history that any editor or coding
+agent can read. Store it once (you'll be prompted to paste it, so it never
+appears in your shell history):
 
-Caveat: comments are length-truncated when posted, so a comment-harvested URL
-list can be incomplete versus a bot's full research. For bots you control, an
-instrumented trace gives a fuller list; comment harvesting is the universal
-baseline.
+```bash
+security add-generic-password -U -a "$USER" -s metaculus-db-dsn -w
+# paste the full postgresql://USER:PASS@HOST/dbname?sslmode=require string, return
+```
+
+For the strongest guard, open **Keychain Access.app → login → `metaculus-db-dsn`
+→ Access Control → "Confirm before allowing access"** and clear the always-allow
+list. Every read then raises a GUI confirm: a human running the harvest clicks
+*Allow* (not *Always Allow*), but an automated agent driving a shell can't. With
+that set, the harvester works with no DSN in any file — `source-archive
+harvest-db --days 1` just prompts you once per run.
+
+**From text or traces.** The lower-level `extract_urls(text)` /
+`extract_citation_records(...)` helpers in `ingest.url_extraction` pull URLs out
+of any markdown/text (markdown links, autolinks, and bare URLs). For bots you
+control, an instrumented trace (`ingest-traces`) gives the fullest URL list; a
+comment gives a shallower one, since it is length-truncated when posted.
 
 ## How it's organized
 
@@ -142,7 +280,8 @@ baseline.
 | `config.py` | Environment-driven `ArchiveConfig` |
 | `models.py` | `CaptureResult`, `StoredCapture`, `CitationRecord` |
 | `ingest/` | Build a manifest: URL extraction + Metaculus comment harvester |
-| `fetchers/` | Playwright (primary), Firecrawl (fallback), tiered orchestrator |
+| `fetchers/` | Playwright (primary) + CloakBrowser / Hyperbrowser / Firecrawl / PDF backups, tiered orchestrator |
+| `benchmark.py` | Backend bake-off: reliability + cost per backend over a manifest |
 | `quality.py` | Reject 404s, block pages, and thin content before archiving |
 | `storage/` | `BlobStore` interface with S3 and local backends |
 | `content_store.py` | `url + content-hash` store with the TTL cache and dedup |
@@ -150,12 +289,22 @@ baseline.
 | `pipeline.py` | `lookup → fetch → quality gate → store` |
 | `cli.py` | `source-archive` command |
 
+## Roadmap
+
+Planned and shipped improvements — smarter dedup (URL canonicalization +
+redirect/content aliasing), the coworker-legible catalog, and coverage reports —
+are written up in [ROADMAP.md](ROADMAP.md).
+
 ## What lands in storage
 
 ```
-<prefix>/index/<url_hash>.json                     per-URL capture history
+<prefix>/index/<url_hash>.json                     per-URL capture history (+ aliases)
+<prefix>/index/by-content/<content_hash>.json      reverse index for content dedup
 <prefix>/content/<url_hash>/<content_hash>.html
 <prefix>/content/<url_hash>/<content_hash>.webp     (screenshot)
 <prefix>/content/<url_hash>/<content_hash>.md
 <prefix>/manifests/<run_id>.jsonl                  the run's citation manifest
+<prefix>/reports/<run_id>.json                     per-URL capture outcomes (for coverage)
+<prefix>/catalog/index.html                        browsable catalog (by question/bot/site)
+<prefix>/catalog/by-question/<id>.{html,csv}
 ```

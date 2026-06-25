@@ -11,6 +11,7 @@ For each unique URL:
 from __future__ import annotations
 
 import logging
+import threading
 from collections.abc import Iterable
 
 from pydantic import BaseModel
@@ -71,6 +72,9 @@ class CapturePipeline:
         except FetchError as e:
             logger.info("fetch error for %s: %s", url, e)
             return CaptureOutcome(url=url, status="error", reason=str(e))
+        except Exception as e:  # never let one bad URL abort the whole run
+            logger.warning("unexpected error capturing %s: %s", url, e)
+            return CaptureOutcome(url=url, status="error", reason=f"unexpected: {e}")
 
         # Gate here so any fetcher is covered; the tiered fetcher also gates
         # internally to decide fallback, but this is the authoritative check.
@@ -92,3 +96,169 @@ class CapturePipeline:
 
     def run_manifest(self, records: Iterable[CitationRecord]) -> PipelineSummary:
         return self.run(unique_urls(records))
+
+
+# An outcome whose error reason contains one of these means the browser itself
+# died (crash, OOM, or the machine slept and severed the CDP pipe) — not a
+# problem with the URL. Without recovery, every later URL in that worker's shard
+# would error against the dead browser, so we rebuild the browser and retry.
+_DEAD_BROWSER_MARKERS = (
+    "has been closed",
+    "Target page, context or browser",
+    "Browser.new_context",
+    "Connection closed",
+    "browser has been closed",
+)
+
+
+def _browser_died(reason: str | None) -> bool:
+    return any(m in (reason or "") for m in _DEAD_BROWSER_MARKERS)
+
+
+def _close_quietly(cm, timeout_s: float = 15.0) -> None:
+    """Tear down a fetcher context manager, but never block on it: a wedged
+    browser's ``close()`` can itself hang, so run it in a daemon thread and give
+    up after ``timeout_s`` (the leftover process is reaped at the end of the run).
+    """
+    done = threading.Event()
+
+    def _close() -> None:
+        try:
+            cm.__exit__(None, None, None)
+        except Exception:
+            pass
+        finally:
+            done.set()
+
+    threading.Thread(target=_close, daemon=True).start()
+    done.wait(timeout_s)
+
+
+def _reap_browser_descendants() -> None:
+    """Best-effort: kill automation Chromium descending from this process. Used
+    both to recover a wedged worker (kill its browser so the blocked sync call
+    errors out) and to sweep leftovers at end of run. No-op without psutil so it
+    never becomes a hard dependency.
+    """
+    try:
+        import os
+
+        import psutil
+    except Exception:
+        return
+    try:
+        for child in psutil.Process(os.getpid()).children(recursive=True):
+            try:
+                if "chrom" in (child.name() or "").lower():
+                    child.kill()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+def capture_urls_concurrent(
+    urls: Iterable[str],
+    store: ContentStore,
+    config,
+    fetcher_factory,
+    per_url_timeout: float | None = None,
+    reaper=_reap_browser_descendants,
+) -> PipelineSummary:
+    """Capture ``urls`` across ``config.concurrency`` worker threads.
+
+    Headless Chromium's sync API is **thread-affine** — a browser must be used on
+    the thread that created it — so each worker opens its **own** browser via
+    ``fetcher_factory(config)`` and runs all captures inline on its own thread.
+    The content store is shared (writes are keyed by URL hash and idempotent, so
+    shards never collide). Order of outcomes is not preserved.
+
+    Hang protection runs *out of band*: a supervisor thread watches each worker's
+    heartbeat and, if one is stuck on a single URL past ``per_url_timeout`` (a
+    wedged sync call whose Playwright timeout never fires — e.g. the machine
+    slept and severed the CDP pipe), it **kills the browser processes**. That is
+    an OS-level action (safe across threads, unlike touching Playwright objects),
+    so the blocked call errors out and the worker rebuilds via the same
+    dead-browser path — no single stuck worker can freeze the whole run.
+    """
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+
+    url_list = list(urls)
+    workers = max(1, int(getattr(config, "concurrency", 1) or 1))
+    if per_url_timeout is None:
+        nav_s = float(getattr(config, "nav_timeout_ms", 30000)) / 1000.0
+        per_url_timeout = max(90.0, nav_s * 4)
+
+    # worker index -> monotonic start of its current URL (None when between URLs)
+    heartbeats: dict[int, float | None] = {}
+    hb_lock = threading.Lock()
+    stop = threading.Event()
+
+    def supervisor() -> None:
+        interval = max(0.5, min(per_url_timeout / 2, 30.0))
+        while not stop.wait(interval):
+            now = time.monotonic()
+            with hb_lock:
+                stalled = [
+                    w
+                    for w, t in heartbeats.items()
+                    if t is not None and now - t > per_url_timeout
+                ]
+            if stalled:
+                logger.warning(
+                    "worker(s) %s stuck > %.0fs on one URL; killing browsers to recover",
+                    stalled,
+                    per_url_timeout,
+                )
+                reaper()
+                with hb_lock:  # grace: don't reap again before workers rebuild
+                    for w in list(heartbeats):
+                        if heartbeats[w] is not None:
+                            heartbeats[w] = now
+
+    def work(idx: int, shard: list[str]) -> list[CaptureOutcome]:
+        outcomes: list[CaptureOutcome] = []
+        cm = fetcher_factory(config)
+        pipeline = CapturePipeline(cm.__enter__(), store)
+        try:
+            for url in shard:
+                with hb_lock:
+                    heartbeats[idx] = time.monotonic()
+                outcome = pipeline.capture_url(url)
+                if outcome.status == "error" and _browser_died(outcome.reason):
+                    logger.warning(
+                        "browser died; rebuilding worker %d, retrying %s", idx, url
+                    )
+                    _close_quietly(cm)
+                    cm = fetcher_factory(config)
+                    pipeline = CapturePipeline(cm.__enter__(), store)
+                    with hb_lock:
+                        heartbeats[idx] = time.monotonic()
+                    outcome = pipeline.capture_url(url)  # one retry on a fresh browser
+                outcomes.append(outcome)
+                with hb_lock:
+                    heartbeats[idx] = None
+        finally:
+            _close_quietly(cm)
+        return outcomes
+
+    supervisor_thread = threading.Thread(target=supervisor, daemon=True)
+    supervisor_thread.start()
+    try:
+        if workers == 1:
+            heartbeats[0] = None
+            return PipelineSummary(outcomes=work(0, url_list))
+
+        shards = [url_list[i::workers] for i in range(workers)]
+        for i in range(workers):
+            heartbeats[i] = None
+        summary = PipelineSummary()
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(work, i, shards[i]) for i in range(workers)]
+            for future in futures:
+                summary.outcomes.extend(future.result())
+        return summary
+    finally:
+        stop.set()
+        reaper()

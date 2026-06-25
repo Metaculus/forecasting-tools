@@ -29,10 +29,7 @@ from forecasting_tools.agents_and_tools.source_archive.content_store import (
 from forecasting_tools.agents_and_tools.source_archive.fetchers import (
     build_default_fetcher,
 )
-from forecasting_tools.agents_and_tools.source_archive.ingest import (
-    MetaculusCommentHarvester,
-    extract_urls,
-)
+from forecasting_tools.agents_and_tools.source_archive.ingest import extract_urls
 from forecasting_tools.agents_and_tools.source_archive.models import (
     CaptureResult,
     CitationRecord,
@@ -51,7 +48,6 @@ __all__ = [
     "CapturePipeline",
     "CitationRecord",
     "ContentStore",
-    "MetaculusCommentHarvester",
     "PipelineSummary",
     "StoreResult",
     "StoredCapture",

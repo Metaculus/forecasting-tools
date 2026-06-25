@@ -38,6 +38,25 @@ def test_dedupes_preserving_order():
     assert extract_urls(text) == ["https://a.test", "https://b.test"]
 
 
+def test_strips_trailing_backslash_escape_residue():
+    # Markdown often leaves a trailing backslash, e.g. "Zaporizhzhia\"
+    assert extract_urls("see https://a.test/search?q=Zaporizhzhia\\ ok") == [
+        "https://a.test/search?q=Zaporizhzhia"
+    ]
+
+
+def test_cuts_markdown_reference_tail_and_keeps_both_urls():
+    # The bare scan can glue ")[10](other)" onto a real URL; the tail is cut so
+    # the first URL is clean, and the genuinely-separate second URL (itself a
+    # valid markdown link) is still extracted. Order follows pattern precedence
+    # (markdown links before bare URLs), so compare as a set.
+    text = "https://a.test/story?id=123)[10](https://b.test/other)"
+    assert set(extract_urls(text)) == {
+        "https://a.test/story?id=123",
+        "https://b.test/other",
+    }
+
+
 def test_ignores_non_http_and_empty():
     assert extract_urls("ftp://a.test mailto:x@y.test nope") == []
     assert extract_urls(None) == []
