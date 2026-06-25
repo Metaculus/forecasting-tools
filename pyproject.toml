@@ -57,9 +57,16 @@ boto3 = {version = ">=1.34,<2.0.0", optional = true}
 playwright = {version = ">=1.44,<2.0.0", optional = true}
 firecrawl-py = {version = ">=4.0,<5.0.0", optional = true}
 trafilatura = {version = ">=1.9,<3.0.0", optional = true}
+pymupdf4llm = {version = ">=0.0.17,<1.0.0", optional = true}
+# Self-hosted anti-bot backend (CloakBrowser). Pinned tight to 0.3.x: it's a
+# young, fast-moving 0.x package whose launch() API changed recently, so bump
+# the minor deliberately. The pip wheel is light (httpx + playwright); the
+# ~200MB patched Chromium downloads at first launch, not at install.
+cloakbrowser = {version = ">=0.3.31,<0.4.0", optional = true}
 
 [tool.poetry.extras]
-source-archive = ["boto3", "playwright", "firecrawl-py", "trafilatura"]
+# hyperbrowser is already a core dep (used elsewhere too).
+source-archive = ["boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser"]
 
 [tool.poetry.scripts]
 source-archive = "forecasting_tools.agents_and_tools.source_archive.cli:main"

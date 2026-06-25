@@ -27,6 +27,13 @@ from forecasting_tools.agents_and_tools.source_archive.models import CaptureResu
 
 logger = logging.getLogger(__name__)
 
+# WebP's hard per-side pixel limit; taller captures must be cropped before encode.
+_WEBP_MAX_DIM = 16383
+# Above this total pixel count, skip the screenshot rather than decode it: a
+# pathological full-page render (very tall × wide) costs minutes of CPU in Pillow
+# for a screenshot that's nice-to-have, not essential.
+_MAX_SCREENSHOT_PIXELS = 200_000_000
+
 
 def _to_markdown(html: str, url: str) -> str | None:
     try:
@@ -39,21 +46,57 @@ def _to_markdown(html: str, url: str) -> str | None:
     )
 
 
-def _encode_screenshot(png_bytes: bytes, fmt: str) -> tuple[bytes, str]:
-    """Re-encode a PNG screenshot to the requested format using Pillow.
+# Scroll the document top-to-bottom (triggering lazy-loaded content) then back
+# up, so a subsequent full-page screenshot captures the fully-rendered page.
+_AUTOSCROLL_JS = """
+async () => {
+  await new Promise((resolve) => {
+    let y = 0;
+    const step = () => {
+      window.scrollTo(0, y);
+      y += 1000;
+      if (y < document.body.scrollHeight) setTimeout(step, 40);
+      else resolve();
+    };
+    step();
+  });
+  window.scrollTo(0, 0);
+}
+"""
+
+
+def _encode_screenshot(
+    png_bytes: bytes, fmt: str, max_height: int = 0
+) -> tuple[bytes, str]:
+    """Crop (to ``max_height``) and re-encode a PNG screenshot using Pillow.
 
     Pillow is already a forecasting-tools dependency, so true WebP is available
-    here (Playwright itself only emits PNG/JPEG).
+    here (Playwright itself only emits PNG/JPEG). The height cap is enforced by
+    cropping the *full-page* render to its top ``max_height`` pixels — never via
+    Playwright's ``clip`` (which, without ``full_page``, is bounded by the
+    viewport and silently truncates tall pages to a single screen).
     """
     fmt = fmt.lower()
-    if fmt == "png":
-        return png_bytes, "image/png"
     try:
         from PIL import Image
     except ImportError:
+        # No Pillow: can't crop or transcode; hand back the raw full-page PNG.
         return png_bytes, "image/png"
 
-    image = Image.open(io.BytesIO(png_bytes))
+    image = Image.open(io.BytesIO(png_bytes))  # lazy: reads size, doesn't decode
+    if image.width * image.height > _MAX_SCREENSHOT_PIXELS:
+        raise ValueError(
+            f"screenshot too large to encode ({image.width}x{image.height}px)"
+        )
+    # WebP cannot encode beyond 16383px on a side. Clamp the effective cap for
+    # webp so an over-tall page degrades to a top-crop instead of crashing the
+    # encoder mid-run (which would propagate out of fetch() and abort the URL).
+    limit = max_height or 0
+    if fmt == "webp":
+        limit = min(limit or _WEBP_MAX_DIM, _WEBP_MAX_DIM)
+    if limit and image.height > limit:
+        image = image.crop((0, 0, image.width, limit))
+
     out = io.BytesIO()
     if fmt == "webp":
         image.save(out, format="WEBP", quality=80, method=6)
@@ -61,7 +104,8 @@ def _encode_screenshot(png_bytes: bytes, fmt: str) -> tuple[bytes, str]:
     if fmt in ("jpeg", "jpg"):
         image.convert("RGB").save(out, format="JPEG", quality=80, optimize=True)
         return out.getvalue(), "image/jpeg"
-    return png_bytes, "image/png"
+    image.save(out, format="PNG", optimize=True)
+    return out.getvalue(), "image/png"
 
 
 class PlaywrightFetcher:
@@ -82,7 +126,12 @@ class PlaywrightFetcher:
         self._playwright = None
         self._browser = None
 
-    def __enter__(self) -> "PlaywrightFetcher":
+    def _launch_browser(self):
+        """Start the browser. Returns ``(playwright_or_none, browser)`` where
+        ``browser`` is a Playwright ``Browser``. Subclasses override this to swap
+        in a different stealth browser (see ``CloakBrowserFetcher``) while reusing
+        all of the capture logic. A backend that manages its own driver returns
+        ``None`` for the first element."""
         try:
             from playwright.sync_api import sync_playwright
         except ImportError as e:
@@ -91,8 +140,12 @@ class PlaywrightFetcher:
                 "`pip install forecasting-tools[source-archive]` and then run "
                 "`playwright install chromium`."
             ) from e
-        self._playwright = sync_playwright().start()
-        self._browser = self._playwright.chromium.launch(headless=True)
+        playwright = sync_playwright().start()
+        browser = playwright.chromium.launch(headless=True)
+        return playwright, browser
+
+    def __enter__(self) -> "PlaywrightFetcher":
+        self._playwright, self._browser = self._launch_browser()
         return self
 
     def __exit__(self, *exc) -> None:
@@ -102,6 +155,32 @@ class PlaywrightFetcher:
         if self._playwright is not None:
             self._playwright.stop()
             self._playwright = None
+
+    def _settle(self, page) -> None:
+        """Best-effort: let the page finish rendering before the screenshot.
+
+        ``page.goto`` only waits for ``domcontentloaded``, which fires before
+        CSS/images/lazy content have laid out — capturing then yields a short,
+        half-built page. Wait for the load/network to quiesce and scroll the
+        document to force lazy content in, so the full-page capture is complete.
+        Each step is bounded and swallows timeouts: rendering aids are
+        nice-to-have, never fatal to the capture.
+        """
+        try:
+            page.wait_for_load_state("load", timeout=self.config.nav_timeout_ms)
+        except Exception:
+            pass
+        try:
+            page.wait_for_load_state(
+                "networkidle", timeout=min(self.config.nav_timeout_ms, 10_000)
+            )
+        except Exception:
+            pass
+        try:
+            page.evaluate(_AUTOSCROLL_JS)
+            page.wait_for_timeout(500)
+        except Exception:
+            pass
 
     def fetch(self, url: str) -> CaptureResult:
         if self._browser is None:
@@ -119,26 +198,33 @@ class PlaywrightFetcher:
             except Exception as e:
                 raise FetchError(f"navigation failed for {url}: {e}") from e
 
+            self._settle(page)
+
             status = response.status if response is not None else None
             html = page.content()
 
-            shot_kwargs: dict = {"type": "png"}
-            cap = self.config.screenshot_max_height
-            dims = page.evaluate(
-                "() => ({w: document.documentElement.scrollWidth,"
-                " h: document.documentElement.scrollHeight})"
-            )
-            width = max(int(dims.get("w") or 0), 1)
-            height = int(dims.get("h") or 0)
-            if cap and height > cap:
-                shot_kwargs["clip"] = {"x": 0, "y": 0, "width": width, "height": cap}
-            else:
-                shot_kwargs["full_page"] = True
-
-            png = page.screenshot(**shot_kwargs)
-            screenshot, content_type = _encode_screenshot(
-                png, self.config.screenshot_format
-            )
+            # Always capture the entire scrollable page in one shot — Playwright
+            # stitches it internally. The height cap is applied afterward by
+            # cropping in Pillow (see ``_encode_screenshot``). Fall back to a
+            # viewport capture only if a full-page shot fails (e.g. a page taller
+            # than Chromium's screenshot limit).
+            try:
+                png = page.screenshot(full_page=True)
+            except Exception as e:
+                logger.info("full-page screenshot failed for %s: %s", url, e)
+                png = page.screenshot()
+            # Encoding can fail on pathological pages (e.g. a 400M-pixel full-page
+            # render trips Pillow's decompression-bomb guard). A screenshot is
+            # nice-to-have — never lose the whole capture over it.
+            try:
+                screenshot, content_type = _encode_screenshot(
+                    png,
+                    self.config.screenshot_format,
+                    self.config.screenshot_max_height,
+                )
+            except Exception as e:
+                logger.info("screenshot encode failed for %s: %s", url, e)
+                screenshot, content_type = None, None
 
             return CaptureResult(
                 url=url,

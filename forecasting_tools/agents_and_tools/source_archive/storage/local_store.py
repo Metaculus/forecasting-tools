@@ -22,3 +22,13 @@ class LocalBlobStore:
 
     def exists(self, key: str) -> bool:
         return self._path(key).exists()
+
+    def list_keys(self, prefix: str = "") -> list[str]:
+        if not self.root.exists():
+            return []
+        keys = [
+            p.relative_to(self.root).as_posix()
+            for p in self.root.rglob("*")
+            if p.is_file()
+        ]
+        return sorted(k for k in keys if k.startswith(prefix))

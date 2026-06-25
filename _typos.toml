@@ -1,6 +1,8 @@
 [default]
 extend-ignore-identifiers-re = [
     "AttributeID.*Supress.*",
+    # Real tracking-query params stripped during URL canonicalization (not typos).
+    "oly_.*",
 ]
 
 [default.extend-identifiers]
