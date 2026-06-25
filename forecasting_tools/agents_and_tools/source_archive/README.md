@@ -152,7 +152,7 @@ each captured URL's **screenshot, markdown, and HTML** side by side, filterable
 by bot and question:
 
 ```bash
-AWS_PROFILE=default WEB_ARCHIVE_S3_BUCKET=metaculus-web-archive \
+AWS_PROFILE=default WEB_ARCHIVE_S3_BUCKET=my-web-archive \
   streamlit run forecasting_tools/agents_and_tools/source_archive/viewer.py
 ```
 

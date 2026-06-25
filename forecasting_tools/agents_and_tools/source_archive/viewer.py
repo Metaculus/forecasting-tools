@@ -8,7 +8,7 @@ capture through its per-URL index — no local file wrangling.
 Run it::
 
     # uses the same env as the rest of the archive (WEB_ARCHIVE_S3_BUCKET, etc.)
-    AWS_PROFILE=default WEB_ARCHIVE_S3_BUCKET=metaculus-web-archive \\
+    AWS_PROFILE=default WEB_ARCHIVE_S3_BUCKET=my-web-archive \\
       streamlit run forecasting_tools/agents_and_tools/source_archive/viewer.py
 
 Nothing here is deployment-specific: bucket/prefix/profile come from
