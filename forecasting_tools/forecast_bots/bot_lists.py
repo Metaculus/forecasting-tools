@@ -41,6 +41,24 @@ from forecasting_tools.forecast_bots.official_bots.template_bot_2026_summer impo
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot,
 )
+from forecasting_tools.forecast_bots.public_baselines.center_leaning_bot import (
+    CenterLeaningBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.credible_news_bot import (
+    CredibleNewsBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.expert_opinion_bot import (
+    ExpertOpinionBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.left_leaning_bot import (
+    LeftLeaningBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.public_sentiment_bot import (
+    PublicSentimentBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.right_leaning_bot import (
+    RightLeaningBaselineBot,
+)
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
 
 
@@ -64,6 +82,12 @@ def get_all_important_bot_classes() -> list[type[ForecastBot]]:
         SummerTemplateBot2026,
         GPT41OptimizedBot,
         NoResearchOneShotBot,
+        PublicSentimentBaselineBot,
+        ExpertOpinionBaselineBot,
+        CredibleNewsBaselineBot,
+        LeftLeaningBaselineBot,
+        CenterLeaningBaselineBot,
+        RightLeaningBaselineBot,
     ]
 
 
