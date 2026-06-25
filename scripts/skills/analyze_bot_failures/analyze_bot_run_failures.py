@@ -521,13 +521,16 @@ def build_question_failure_section(all_events: list[FailureEvent]) -> list[str]:
     return section_lines
 
 
-def build_report(job_analyses: list[JobAnalysis], output_dir: Path) -> str:
+def build_report(
+    job_analyses: list[JobAnalysis], output_dir: Path, time_window_str: str
+) -> str:
     all_events = [event for analysis in job_analyses for event in analysis.events]
     groups = group_failures(all_events)
 
     report_lines = [
         "# Bot Workflow Failure Report",
         f"\nGenerated: {datetime.now(timezone.utc).isoformat()}",
+        f"Time window: {time_window_str}",
         f"\nFailed jobs analyzed: {len(job_analyses)}",
         f"Individual failures parsed: {len(all_events)}",
         f"Unique failure signatures: {len(groups)}",
@@ -642,6 +645,7 @@ def analyze_runs(
     token = resolve_github_token()
     if run_id is not None:
         runs = [github_get(f"/repos/{repo}/actions/runs/{run_id}", token)]
+        time_window_str = f"Run {run_id}"
     else:
         since_datetime = parse_since_to_datetime(since)
         all_runs = list_workflow_runs(repo, workflow, token, since_datetime, max_runs)
@@ -651,6 +655,7 @@ def analyze_runs(
             if run.get("conclusion") not in ("success", None)
             or run.get("status") != "completed"
         ]
+        time_window_str = f"Since {since_datetime.isoformat()}"
         logger.info(
             f"Found {len(all_runs)} runs since {since_datetime.isoformat()}, "
             f"{len(runs)} with failures"
@@ -669,7 +674,7 @@ def analyze_runs(
     if not job_analyses:
         logger.info("No failed jobs found in the selected window.")
 
-    report_path = build_report(job_analyses, analysis_dir)
+    report_path = build_report(job_analyses, analysis_dir, time_window_str)
     logger.info(f"Report written to {report_path}")
     logger.info(f"Raw logs saved under {raw_logs_dir}")
     return report_path
