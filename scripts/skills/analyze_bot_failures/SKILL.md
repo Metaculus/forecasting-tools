@@ -7,22 +7,22 @@ description: Analyze failures from the Metaculus bot forecasting GitHub Actions 
 
 Workflow for diagnosing failures in the `run-bot-aib-tournament.yaml` GitHub Actions workflow, which runs ~30 bot jobs every 30 minutes via `run_bots.py`.
 
-## Running this automatically (cron + Slack/email report)
+## Running this automatically (cron + Slack report)
 
 This skill is wired up to run unattended on a daily schedule via the
 `Analyze Bot Forecasting Failures` GitHub Actions workflow
 (`.github/workflows/analyze-bot-failures.yaml`). That workflow calls
 `scripts/skills/analyze_bot_failures/run_scheduled_analysis.py`, which runs the
 parser below, hands the report to a headless Cursor agent that performs steps
-2-5, and posts the agent's prioritized summary to Slack and/or email.
+2-5, and posts the agent's prioritized summary to Slack.
 
-Required repo secret: `CURSOR_API_KEY` (for the agent). Optional: `SLACK_WEBHOOK_URL`
-for Slack, and `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD`/`EMAIL_FROM`/`EMAIL_TO`
-for email. Optional repo variable `CURSOR_AGENT_MODEL` (defaults to `auto`). The
-default `GITHUB_TOKEN` already has the `actions: read` scope the parser needs.
+Required repo secret: `CURSOR_API_KEY` (for the agent). Optional: `SLACK_BOT_TOKEN`
+and `SLACK_CHANNEL_ID` for Slack delivery. Optional repo variable `CURSOR_AGENT_MODEL`
+(defaults to `auto`). The default `GITHUB_TOKEN` already has the `actions: read` scope
+the parser needs.
 
 The same orchestrator script can be run from a local crontab if preferred (set
-`GITHUB_TOKEN`, `CURSOR_API_KEY`, and `SLACK_WEBHOOK_URL` in the environment).
+`GITHUB_TOKEN`, `CURSOR_API_KEY`, `SLACK_BOT_TOKEN`, and `SLACK_CHANNEL_ID` in the environment).
 The steps below describe the manual/interactive version of the workflow.
 
 ## Step 1: Pull and aggregate the failure logs
@@ -30,11 +30,11 @@ The steps below describe the manual/interactive version of the workflow.
 A GitHub token is required (the job-log API rejects unauthenticated requests). Check `GITHUB_TOKEN` env var or `gh auth token`; if neither works, ask the user to run `gh auth login`.
 
 ```bash
-poetry run python scripts/skills/analyze_bot_failures/analyze_bot_run_failures.py --since 1d
+poetry run python scripts/skills/analyze_bot_failures/analyze_bot_run_failures.py
 ```
 
 Useful options:
-- `--since 12h|2d|1w|4w` or an ISO datetime (default `1d`). Any reasonable period works; the whole window is analyzed by default (note the workflow runs every 30 min, so wide windows pull many runs and take longer).
+- `--since 12h|2d|1w|4w` or an ISO datetime (default `3d`). Any reasonable period works; the whole window is analyzed by default (note the workflow runs every 30 min, so wide windows pull many runs and take longer).
 - `--run-id <id>` to analyze one specific run
 - `--max-runs <n>` optional cap on runs fetched (default: no cap, so the full `--since` window is covered). A warning is logged if the cap truncates the window.
 

@@ -9,17 +9,15 @@ cron (GitHub Actions or a local crontab):
 2. Hands the report to a headless Cursor agent (``cursor-agent``) which follows
    the investigation/triage steps of the skill and writes a prioritized
    markdown summary.
-3. Delivers that summary to Slack (incoming webhook) and/or email (SMTP), and
+3. Delivers that summary to Slack using a bot token, and
    always prints it to stdout so it shows up in the job logs.
 
 Environment variables:
     GITHUB_TOKEN / GH_TOKEN   token for downloading job logs (required)
     CURSOR_API_KEY            auth for the headless cursor-agent (required for the agent step)
     CURSOR_AGENT_MODEL        model slug for cursor-agent (default: "auto")
-    SLACK_WEBHOOK_URL         if set, the summary is posted to this Slack webhook
-    SMTP_HOST/SMTP_PORT       if set (with the fields below), the summary is emailed
-    SMTP_USER/SMTP_PASSWORD
-    EMAIL_FROM/EMAIL_TO       comma-separated recipient list
+    SLACK_BOT_TOKEN           Slack bot token (xoxb-...) to post the report
+    SLACK_CHANNEL_ID          Slack channel ID to post the report to
     GITHUB_SERVER_URL/GITHUB_REPOSITORY/GITHUB_RUN_ID
                               used to link back to the triggering Actions run
 
@@ -32,11 +30,9 @@ import json
 import logging
 import os
 import signal
-import smtplib
 import subprocess
 import sys
 import urllib.request
-from email.message import EmailMessage
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -47,7 +43,6 @@ SKILL_FILE = SCRIPT_DIR / "SKILL.md"
 DEFAULT_OUTPUT_DIR = Path("logs/workflow_failure_analysis")
 AGENT_REPORT_FILENAME = "agent_report.md"
 SLACK_MESSAGE_CHAR_LIMIT = 3500
-EMAIL_SUBJECT = "Bot forecasting failure report"
 
 
 def run_failure_log_analysis(since: str, output_dir: Path) -> None:
@@ -102,7 +97,7 @@ Hard constraints for this unattended run:
 When done, WRITE your findings as markdown to exactly this path:
 `{agent_report_path}`
 
-Structure the report so it is useful as a Slack/email digest:
+Structure the report so it is useful as a Slack digest:
 1. One-line health summary (how many failed jobs / failures, overall severity).
 2. Failure counts by category and by bot (from report.md).
 3. Real bugs found: each with a short evidence excerpt + code location
@@ -175,7 +170,7 @@ def build_run_link() -> str | None:
     return None
 
 
-def post_to_slack(report: str, webhook_url: str) -> None:
+def post_to_slack(report: str, token: str, channel_id: str) -> None:
     run_link = build_run_link()
     header = "*Bot forecasting failure report*"
     if run_link:
@@ -183,47 +178,34 @@ def post_to_slack(report: str, webhook_url: str) -> None:
     body = report
     if len(body) > SLACK_MESSAGE_CHAR_LIMIT:
         body = body[:SLACK_MESSAGE_CHAR_LIMIT] + "\n…(truncated — see full artifacts)"
-    payload = json.dumps({"text": f"{header}\n\n{body}"}).encode("utf-8")
+
+    payload = json.dumps({"channel": channel_id, "text": f"{header}\n\n{body}"}).encode(
+        "utf-8"
+    )
     request = urllib.request.Request(
-        webhook_url, data=payload, headers={"Content-Type": "application/json"}
+        "https://slack.com/api/chat.postMessage",
+        data=payload,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}",
+        },
     )
     with urllib.request.urlopen(request, timeout=30) as response:
         logger.info("Posted report to Slack (status %s)", response.status)
-
-
-def send_email(report: str) -> None:
-    smtp_host = os.getenv("SMTP_HOST")
-    email_from = os.getenv("EMAIL_FROM")
-    email_to = os.getenv("EMAIL_TO")
-    if not (smtp_host and email_from and email_to):
-        return
-    message = EmailMessage()
-    message["Subject"] = EMAIL_SUBJECT
-    message["From"] = email_from
-    message["To"] = email_to
-    run_link = build_run_link()
-    suffix = f"\n\nFull logs & artifacts: {run_link}" if run_link else ""
-    message.set_content(report + suffix)
-
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_password = os.getenv("SMTP_PASSWORD")
-    with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as smtp:
-        smtp.starttls()
-        if smtp_user and smtp_password:
-            smtp.login(smtp_user, smtp_password)
-        smtp.send_message(message)
-    logger.info("Emailed report to %s", email_to)
 
 
 def deliver_report(report: str) -> None:
     print("\n===== REPORT =====\n")
     print(report)
     print("\n==================\n")
-    webhook_url = os.getenv("SLACK_WEBHOOK_URL")
-    if webhook_url:
-        post_to_slack(report, webhook_url)
-    send_email(report)
+    slack_token = os.getenv("SLACK_BOT_TOKEN")
+    channel_id = os.getenv("SLACK_CHANNEL_ID")
+    if slack_token and channel_id:
+        post_to_slack(report, slack_token, channel_id)
+    else:
+        logger.info(
+            "Skipping Slack post; SLACK_BOT_TOKEN and/or SLACK_CHANNEL_ID not set."
+        )
 
 
 def run_scheduled_analysis(

@@ -687,11 +687,11 @@ def main() -> None:
     )
     parser.add_argument(
         "--since",
-        default="1d",
+        default="3d",
         help=(
             "Time window to analyze. Accepts <N>h / <N>d / <N>w (e.g. 12h, 2d, 1w, "
             "4w) or an ISO datetime. The whole window is analyzed by default "
-            "(default: 1d)"
+            "(default: 3d)"
         ),
     )
     parser.add_argument(
