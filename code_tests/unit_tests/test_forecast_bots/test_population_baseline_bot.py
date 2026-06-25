@@ -1,5 +1,10 @@
 from types import SimpleNamespace
 
+from forecasting_tools.agents_and_tools.research.exa_quote_searcher import (
+    ExaQuoteSearcher,
+)
+from forecasting_tools.ai_models.exa_searcher import ExaSource
+from forecasting_tools.data_models.forecast_report import ReasonedPrediction
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from forecasting_tools.data_models.questions import (
@@ -30,7 +35,7 @@ class _FakeAgent:
 
 def _make_bot_returning(output: object) -> PublicSentimentBaselineBot:
     bot = PublicSentimentBaselineBot()
-    bot._build_agent = lambda output_type: _FakeAgent(output)  # type: ignore
+    bot._build_agent = lambda output_type, branch_llm=None: _FakeAgent(output)  # type: ignore
     return bot
 
 
@@ -120,6 +125,52 @@ async def test_numeric_forecast_builds_distribution() -> None:
 
     assert isinstance(prediction.prediction_value, NumericDistribution)
     assert len(prediction.prediction_value.declared_percentiles) == 6
+
+
+async def test_make_prediction_round_robins_branch_models() -> None:
+    bot = PublicSentimentBaselineBot()
+    question = BinaryQuestion(question_text="Will it happen?")
+    notepad = await bot._initialize_notepad(question)
+    bot._note_pads.append(notepad)
+
+    used_models: list[str] = []
+
+    async def fake_binary(
+        question: BinaryQuestion, research: str, branch_llm: object = None
+    ) -> ReasonedPrediction[float]:
+        used_models.append(branch_llm.model)  # type: ignore[union-attr]
+        return ReasonedPrediction(prediction_value=0.5, reasoning="x")
+
+    bot._run_forecast_on_binary = fake_binary  # type: ignore[assignment]
+
+    for _ in range(len(bot.branch_llms)):
+        await bot._make_prediction(question, "")
+
+    assert used_models == [branch.model for branch in bot.branch_llms]
+
+
+def test_exa_quote_searcher_formats_summary_and_top_quotes() -> None:
+    searcher = ExaQuoteSearcher(num_quotes_per_source=2)
+    source = ExaSource(
+        original_query="poll",
+        auto_prompt_string=None,
+        title="Poll shows majority support",
+        url="https://example.com/poll",
+        text=None,
+        author="Jane Doe",
+        published_date=None,
+        score=0.9,
+        highlights=["a low-scoring quote", "a high-scoring quote"],
+        highlight_scores=[0.1, 0.9],
+        summary="A representative poll about the topic.",
+    )
+
+    formatted = searcher._format_sources("poll", [source])
+
+    assert "Poll shows majority support" in formatted
+    assert "https://example.com/poll" in formatted
+    assert "A representative poll about the topic." in formatted
+    assert "a high-scoring quote" in formatted
 
 
 def test_comment_includes_population_framing_and_sources() -> None:
