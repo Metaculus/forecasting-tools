@@ -83,7 +83,7 @@ ERROR_CATEGORY_PATTERNS: dict[str, list[str]] = {
     ],
 }
 
-QUESTION_URL_PATTERN = re.compile(r"https://www\.metaculus\.com/questions/\d+/")
+QUESTION_URL_PATTERN = re.compile(r"https://www\.metaculus\.com/questions/\d+/?")
 GH_TIMESTAMP_PREFIX_PATTERN = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s?"
 )
@@ -181,11 +181,11 @@ def parse_since_to_datetime(since: str) -> datetime:
 
 
 def list_workflow_runs(
-    repo: str, workflow: str, token: str, since: datetime, max_runs: int
+    repo: str, workflow: str, token: str, since: datetime, max_runs: int | None
 ) -> list[dict]:
     runs: list[dict] = []
     page = 1
-    while len(runs) < max_runs:
+    while max_runs is None or len(runs) < max_runs:
         data = github_get(
             f"/repos/{repo}/actions/workflows/{workflow}/runs",
             token,
@@ -201,7 +201,14 @@ def list_workflow_runs(
             break
         runs.extend(page_runs)
         page += 1
-    return runs[:max_runs]
+    if max_runs is not None and len(runs) > max_runs:
+        logger.warning(
+            f"--max-runs={max_runs} truncated the {len(runs)} runs found in the "
+            f"--since window; some of the time period is not covered. Raise or drop "
+            f"--max-runs to analyze the full window."
+        )
+        return runs[:max_runs]
+    return runs
 
 
 def list_failed_jobs(repo: str, run_id: int, token: str) -> list[dict]:
@@ -466,6 +473,54 @@ def build_failure_group_section(group: FailureGroup) -> list[str]:
     return section_lines
 
 
+def build_question_failure_section(all_events: list[FailureEvent]) -> list[str]:
+    events_with_question = [event for event in all_events if event.question_url]
+    if not events_with_question:
+        return []
+
+    stats_by_question: dict[str, dict] = {}
+    for event in events_with_question:
+        question_stats = stats_by_question.setdefault(
+            event.question_url,
+            {"total": 0, "run_ids": set(), "bot_names": set(), "categories": {}},
+        )
+        question_stats["total"] += 1
+        question_stats["run_ids"].add(event.run_id)
+        question_stats["bot_names"].add(event.bot_name)
+        for category in event.categories:
+            question_stats["categories"][category] = (
+                question_stats["categories"].get(category, 0) + 1
+            )
+
+    questions_ranked_by_consistency = sorted(
+        stats_by_question.items(),
+        key=lambda item: (-len(item[1]["run_ids"]), -item[1]["total"]),
+    )
+
+    section_lines = [
+        "\n## Failures by question (most distinct runs first)\n",
+        "A question failing across many *distinct runs* is far more likely to be "
+        "genuinely broken than one that failed many times within a single run. "
+        "Questions recurring across several runs are candidates for "
+        "`POST_IDS_TO_SKIP` or `POST_IDS_TO_NOT_RAISE_ERRORS_FOR` in `run_bots.py`.\n",
+        "| Question | Failures | Distinct runs | Distinct bots | Top categories |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for question_url, question_stats in questions_ranked_by_consistency:
+        top_categories = ", ".join(
+            f"{category} ({count})"
+            for category, count in sorted(
+                question_stats["categories"].items(), key=lambda pair: -pair[1]
+            )[:3]
+        )
+        section_lines.append(
+            f"| {question_url} | {question_stats['total']} | "
+            f"{len(question_stats['run_ids'])} | {len(question_stats['bot_names'])} | "
+            f"{top_categories} |"
+        )
+    return section_lines
+
+
 def build_report(job_analyses: list[JobAnalysis], output_dir: Path) -> str:
     all_events = [event for analysis in job_analyses for event in analysis.events]
     groups = group_failures(all_events)
@@ -488,14 +543,7 @@ def build_report(job_analyses: list[JobAnalysis], output_dir: Path) -> str:
     for bot_name, count in count_by([event.bot_name for event in all_events]):
         report_lines.append(f"- {bot_name}: {count}")
 
-    question_urls = [event.question_url for event in all_events if event.question_url]
-    if question_urls:
-        report_lines.append(
-            "\n## Questions appearing in failures "
-            "(recurring ones are POST_IDS_TO_SKIP candidates)\n"
-        )
-        for question_url, count in count_by(question_urls):
-            report_lines.append(f"- {question_url} : {count}")
+    report_lines.extend(build_question_failure_section(all_events))
 
     report_lines.append("\n## Failure groups (most frequent first)\n")
     for group in groups:
@@ -587,7 +635,7 @@ def analyze_runs(
     repo: str,
     workflow: str,
     since: str,
-    max_runs: int,
+    max_runs: int | None,
     output_dir: Path,
     run_id: int | None = None,
 ) -> str:
@@ -635,14 +683,27 @@ def main() -> None:
     parser.add_argument(
         "--since",
         default="1d",
-        help="Time window like 12h, 2d, 1w, or an ISO datetime (default: 1d)",
+        help=(
+            "Time window to analyze. Accepts <N>h / <N>d / <N>w (e.g. 12h, 2d, 1w, "
+            "4w) or an ISO datetime. The whole window is analyzed by default "
+            "(default: 1d)"
+        ),
     )
     parser.add_argument(
         "--run-id", type=int, default=None, help="Analyze a single specific run id"
     )
     parser.add_argument("--repo", default=DEFAULT_REPO)
     parser.add_argument("--workflow", default=DEFAULT_WORKFLOW)
-    parser.add_argument("--max-runs", type=int, default=50)
+    parser.add_argument(
+        "--max-runs",
+        type=int,
+        default=None,
+        help=(
+            "Optional cap on the number of workflow runs fetched. Default is no cap, "
+            "so the full --since window is analyzed. Only set this to limit work on "
+            "very large windows (a warning is logged if it truncates the window)."
+        ),
+    )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args()
 
