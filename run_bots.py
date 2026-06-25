@@ -32,6 +32,27 @@ from forecasting_tools.forecast_bots.official_bots.research_only_bot_2025_fall i
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot,
 )
+from forecasting_tools.forecast_bots.public_baselines.center_leaning_bot import (
+    CenterLeaningBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.credible_news_bot import (
+    CredibleNewsBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.expert_opinion_bot import (
+    ExpertOpinionBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.left_leaning_bot import (
+    LeftLeaningBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.population_baseline_bot import (
+    PopulationBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.public_sentiment_bot import (
+    PublicSentimentBaselineBot,
+)
+from forecasting_tools.forecast_bots.public_baselines.right_leaning_bot import (
+    RightLeaningBaselineBot,
+)
 from forecasting_tools.forecast_bots.template_bot import TemplateBot
 from forecasting_tools.helpers.metaculus_api import ApiFilter
 from forecasting_tools.helpers.metaculus_client import MetaculusClient
@@ -442,6 +463,27 @@ def create_bot(
     return default_bot
 
 
+def create_population_baseline_bot(
+    bot_class: type[PopulationBaselineBot],
+    branch_llms: list[GeneralLlm],
+) -> PopulationBaselineBot:
+    return bot_class(
+        research_reports_per_question=1,
+        branch_llms=branch_llms,
+        use_research_summary_to_forecast=False,
+        publish_reports_to_metaculus=default_for_publish_to_metaculus,
+        skip_previously_forecasted_questions=default_for_skipping_questions,
+        enable_summarize_research=False,
+        llms={
+            "default": branch_llms[0],
+            "summarizer": None,
+            "researcher": "no_research",
+            "parser": structure_output_model,
+        },
+        extra_metadata_in_explanation=True,
+    )
+
+
 def make_claude_thinking_settings(thinking_tokens: int, max_tokens: int) -> dict:
     return {
         "temperature": 1,
@@ -617,7 +659,72 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         ),
     }
 
+    population_baseline_agent_timeout = 5 * 60
+    population_baseline_branch_llms = [
+        GeneralLlm(
+            model="openrouter/anthropic/claude-sonnet-4.5",
+            temperature=0.3,
+            timeout=population_baseline_agent_timeout,
+        ),
+        GeneralLlm(
+            model="openrouter/x-ai/grok-4.20",
+            temperature=0.3,
+            timeout=population_baseline_agent_timeout,
+        ),
+        GeneralLlm(
+            model="openrouter/z-ai/glm-5.1",
+            temperature=0.3,
+            timeout=population_baseline_agent_timeout,
+        ),
+    ]
+    roughly_population_baseline_cost = (
+        roughly_sonnet_4_cost + 2 * roughly_deepseek_r1_cost
+    )
+
     mode_base_bot_mapping = {
+        ############################ Public-baseline bots (June 2026) ############################
+        "METAC_PUBLIC_SENTIMENT_BASELINE": {
+            "estimated_cost_per_question": roughly_population_baseline_cost,
+            "bot": create_population_baseline_bot(
+                PublicSentimentBaselineBot, population_baseline_branch_llms
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_EXPERT_OPINION_BASELINE": {
+            "estimated_cost_per_question": roughly_population_baseline_cost,
+            "bot": create_population_baseline_bot(
+                ExpertOpinionBaselineBot, population_baseline_branch_llms
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_CREDIBLE_NEWS_BASELINE": {
+            "estimated_cost_per_question": roughly_population_baseline_cost,
+            "bot": create_population_baseline_bot(
+                CredibleNewsBaselineBot, population_baseline_branch_llms
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_LEFT_LEANING_BASELINE": {
+            "estimated_cost_per_question": roughly_population_baseline_cost,
+            "bot": create_population_baseline_bot(
+                LeftLeaningBaselineBot, population_baseline_branch_llms
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_CENTER_LEANING_BASELINE": {
+            "estimated_cost_per_question": roughly_population_baseline_cost,
+            "bot": create_population_baseline_bot(
+                CenterLeaningBaselineBot, population_baseline_branch_llms
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_RIGHT_LEANING_BASELINE": {
+            "estimated_cost_per_question": roughly_population_baseline_cost,
+            "bot": create_population_baseline_bot(
+                RightLeaningBaselineBot, population_baseline_branch_llms
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ No-research one-shot bots ############################
         "METAC_GPT_5_5_NO_RESEARCH_ONE_SHOT": {
             "estimated_cost_per_question": roughly_gpt_5_cost,

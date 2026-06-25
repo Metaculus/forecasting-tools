@@ -34,6 +34,7 @@ class ExaSource(BaseModel, Jsonable):
     score: float | None
     highlights: list[str]
     highlight_scores: list[float]
+    summary: str | None = None
 
     @property
     def readable_publish_date(self) -> str:
@@ -119,18 +120,21 @@ class ExaSearcher(RequestLimitedModel, RetryableModel, TimeLimitedModel, IncursC
     COST_PER_REQUEST = 0.005
     COST_PER_HIGHLIGHT = 0.001
     COST_PER_TEXT = 0.001
+    COST_PER_SUMMARY = 0.001
 
     def __init__(
         self,
         *args,
         include_text: bool = False,
         include_highlights: bool = True,
+        include_summary: bool = False,
         num_results: int = 5,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.include_text = include_text
         self.include_highlights = include_highlights
+        self.include_summary = include_summary
         self.num_highlights_per_url = 10
         self.num_sentences_per_highlight = 4
         self.num_results = num_results
@@ -217,6 +221,7 @@ class ExaSearcher(RequestLimitedModel, RetryableModel, TimeLimitedModel, IncursC
                     if self.include_highlights
                     else False
                 ),
+                "summary": (True if self.include_summary else False),
             },
         }
 
@@ -283,6 +288,7 @@ class ExaSearcher(RequestLimitedModel, RetryableModel, TimeLimitedModel, IncursC
                 score=result.get("score"),
                 highlights=result.get("highlights", []),
                 highlight_scores=result.get("highlightScores", []),
+                summary=result.get("summary"),
             )
             exa_sources.append(exa_source)
         return exa_sources
@@ -298,6 +304,7 @@ class ExaSearcher(RequestLimitedModel, RetryableModel, TimeLimitedModel, IncursC
         cost = self.COST_PER_REQUEST
         cost += self.COST_PER_TEXT * len(results) if self.include_text else 0
         cost += self.COST_PER_HIGHLIGHT * len(results) if self.include_highlights else 0
+        cost += self.COST_PER_SUMMARY * len(results) if self.include_summary else 0
         return cost
 
     async def _track_cost_in_manager_using_model_response(
