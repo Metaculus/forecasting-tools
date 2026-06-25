@@ -20,7 +20,7 @@ Three lenses:
 Run it::
 
     # against the configured S3 bucket (read-only audit)
-    WEB_ARCHIVE_S3_BUCKET=metaculus-web-archive WEB_ARCHIVE_AWS_PROFILE=default \\
+    WEB_ARCHIVE_S3_BUCKET=my-web-archive WEB_ARCHIVE_AWS_PROFILE=default \\
         python -m forecasting_tools.agents_and_tools.source_archive.reindex
 
     # against a local capture dir

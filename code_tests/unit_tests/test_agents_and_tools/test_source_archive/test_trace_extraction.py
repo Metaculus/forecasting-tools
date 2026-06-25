@@ -185,7 +185,7 @@ def test_harvest_run_walks_bot_and_question_dirs(tmp_path: Path):
 
 
 def test_harvest_run_flat_layout_without_bot_dirs(tmp_path: Path):
-    # Butler-style: <run>/<question>/traces_*.jsonl with no bot_* grouping.
+    # Flat layout: <run>/<question>/traces_*.jsonl with no bot_* grouping.
     run = tmp_path / "s3_backfill"
     qdir = run / "2026-05-20_metac_43538"
     qdir.mkdir(parents=True)
@@ -196,10 +196,10 @@ def test_harvest_run_flat_layout_without_bot_dirs(tmp_path: Path):
         qdir / "traces_forecast_1.jsonl",
         [{"type": "tool_result", "content": "https://a.test/x"}],
     )
-    records = harvest_run(str(run), bot="butler")
+    records = harvest_run(str(run), bot="mybot")
     assert len(records) == 1
     rec = records[0]
-    assert rec.bot == "butler"  # the flat-layout bot override
+    assert rec.bot == "mybot"  # the flat-layout bot override
     assert rec.metaculus_id == "43538"  # still read from question.json
 
 
