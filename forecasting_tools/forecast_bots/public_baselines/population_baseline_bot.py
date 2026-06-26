@@ -265,9 +265,7 @@ class PopulationBaselineBot(SummerTemplateBot2026):
                 timeout=agent_timeout,
             ),
             GeneralLlm(
-                # grok-4.1-fast is no longer served on OpenRouter; 4.20 is the
-                # current cheap/fast grok generation and the closest replacement.
-                model="openrouter/x-ai/grok-4.20",
+                model="openrouter/x-ai/grok-4.3",
                 temperature=0.3,
                 timeout=agent_timeout,
             ),

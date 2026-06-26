@@ -667,7 +667,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             timeout=population_baseline_agent_timeout,
         ),
         GeneralLlm(
-            model="openrouter/x-ai/grok-4.20",
+            model="openrouter/x-ai/grok-4.3",
             temperature=0.3,
             timeout=population_baseline_agent_timeout,
         ),
