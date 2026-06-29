@@ -683,6 +683,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     },
                 ),
                 researcher="no_research",  # Fusion does its own web research behind the API
+                predictions_per_research_report=1,  # Fusion already aggregates a multi-model panel internally, so only run it once
             ),
             "tournaments": TournConfig.aib_and_site,
         },
