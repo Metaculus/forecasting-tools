@@ -666,6 +666,36 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "tournaments": TournConfig.aib_and_site,
         },
         ############################ Bots started in June 2026 ############################
+        "METAC_OPENROUTER_FUSION_GENERAL_BUDGET": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost,  # Rough guess: budget panel of models + frontier judge + final answer
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/openrouter/fusion",
+                    temperature=default_temperature,
+                    timeout=20 * 60,
+                    extra_body={
+                        "plugins": [
+                            {
+                                "id": "fusion",
+                                "preset": "general-budget",
+                            }
+                        ]
+                    },
+                ),
+                researcher="no_research",  # Fusion does its own web research behind the API
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GLM_5_2": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/z-ai/glm-5.2",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         "METAC_CLAUDE_FABLE_5_HIGH": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 2,
             "bot": create_bot(
