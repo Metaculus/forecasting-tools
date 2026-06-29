@@ -110,12 +110,19 @@ def _cmd_capture(args, config: ArchiveConfig) -> int:
     summary = capture_urls_concurrent(urls, store, config, build_default_fetcher)
     print(summary)
 
+    from forecasting_tools.agents_and_tools.source_archive import cost as cost_mod
+
+    run_cost = cost_mod.estimate_run_cost(summary, config, run_id=args.run_id)
+    print(run_cost)
+
     run_id = args.run_id or (records[0].run_id if records else None)
     if run_id:
         from forecasting_tools.agents_and_tools.source_archive import reports
 
         reports.write_run_report(store.blobs, run_id, summary, config)
         print(f"Wrote run outcomes -> {config.s3_prefix}/reports/{run_id}.json")
+        cost_mod.write_cost_report(store.blobs, run_id, run_cost, config)
+        print(f"Wrote cost report -> {config.s3_prefix}/reports/{run_id}_cost.json")
 
     # Failures leave no cache entry, so re-running retries exactly them. Write a
     # retry manifest (with provenance) so coming back — e.g. with hyperbrowser

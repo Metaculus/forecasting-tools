@@ -159,3 +159,36 @@ def test_different_content_not_aliased(tmp_path):
     b = store.store(_result("https://b.test/y", "<p>two different</p>"))
     assert b.capture.content_alias_of is None
     assert b.capture.html_key != a.capture.html_key
+
+
+def test_incomplete_capture_is_not_a_cache_hit(tmp_path):
+    # A browser capture whose screenshot failed to encode (screenshot_key=None)
+    # is not "done" — the next run should retry it to fill the missing format.
+    store = _store(tmp_path, ttl_days=14)
+    store.store(
+        CaptureResult(
+            url="https://a.test",
+            final_url="https://a.test",
+            status_code=200,
+            html="<p>one</p>",
+            markdown="md " * 50,
+            screenshot=None,
+            fetcher="cloakbrowser",
+        )
+    )
+    assert store.lookup("https://a.test") is None
+
+
+def test_pdf_capture_without_screenshot_is_complete(tmp_path):
+    # PDFs have no screenshot by nature, so markdown alone counts as complete.
+    store = _store(tmp_path, ttl_days=14)
+    store.store(
+        CaptureResult(
+            url="https://a.test/x.pdf",
+            final_url="https://a.test/x.pdf",
+            status_code=200,
+            markdown="md " * 50,
+            fetcher="pdf",
+        )
+    )
+    assert store.lookup("https://a.test/x.pdf") is not None

@@ -69,6 +69,20 @@ def _parse_iso(ts: str) -> datetime:
     return dt
 
 
+def _capture_is_complete(cap: dict) -> bool:
+    """Whether a stored capture has every format we expect for its type.
+
+    A browser capture is complete only with html + markdown + screenshot; a PDF
+    (which has no screenshot) only needs its markdown. Used by :meth:`lookup` so
+    an incomplete capture is re-fetched rather than treated as already done.
+    """
+    if (cap.get("fetcher") or "").lower() == "pdf":
+        return bool(cap.get("markdown_key"))
+    return bool(
+        cap.get("html_key") and cap.get("markdown_key") and cap.get("screenshot_key")
+    )
+
+
 class ContentStore:
     def __init__(self, blob_store: BlobStore, config: ArchiveConfig | None = None):
         self.blobs = blob_store
@@ -165,6 +179,12 @@ class ContentStore:
         last_seen = _parse_iso(latest["last_seen"])
         age = datetime.now(timezone.utc) - last_seen
         if age > timedelta(days=self.config.ttl_days):
+            return None
+        # Skip only a COMPLETE capture. A partial one (e.g. a failed screenshot
+        # encode left screenshot_key=None) is treated as a miss so the next run
+        # retries the missing format instead of skipping it forever. PDFs have no
+        # screenshot by nature, so they only need their markdown.
+        if not _capture_is_complete(latest):
             return None
         return StoredCapture.model_validate(latest)
 
