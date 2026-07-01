@@ -3,8 +3,7 @@
 When the template bot is run with tracing enabled it writes one JSONL trace per
 forecast attempt, recording the agent loop step by step. Those traces are the
 *fullest* record of what the bot actually looked at — richer than the reasoning
-comment it posts, which is length-truncated (see :mod:`metaculus_db` for the
-shallower comment path).
+comment it posts, which is length-truncated.
 
 This module walks those traces and pulls out every external URL the bot touched,
 turning each into a :class:`CitationRecord` with provenance (which trace, which
