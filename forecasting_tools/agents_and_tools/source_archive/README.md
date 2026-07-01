@@ -229,49 +229,17 @@ The pipeline dedupes URLs within the manifest before fetching.
 
 ## Where the manifest comes from
 
-You can write a manifest yourself, or generate one from a forecasting bot's
-reasoning — the source links a bot used are recorded in the comment it posts and,
-more completely, in its run traces.
+You write a manifest yourself, or generate one from a bot's recorded reasoning.
 
-**From the database (operator path).** `harvest-db` reads the URLs a bot cited
-straight from the platform's Postgres database and emits a manifest. Point it at
-a database (a `postgresql://…` URL works — e.g. a Neon connection string):
+**From text.** `extract_urls(text)` / `extract_citation_records(...)` in
+`ingest.url_extraction` pull URLs out of any markdown/text (markdown links,
+autolinks, and bare URLs) — point them at whatever record of a bot's reasoning
+you have.
 
-```bash
-# one post, or the latest day of activity
-source-archive harvest-db --post 29495 --dedupe --out run.jsonl
-source-archive harvest-db --days 1 --dedupe --upload --run-id "$(date -u +%F)"
-```
-
-It reads `comments_comment ⋈ users_user (is_bot)` and emits the same manifest.
-`--days` is uncapped by default; `--limit N` caps the row count for spot checks.
-`--public-only` restricts to public comments (all comments are read by default).
-
-**DSN resolution (keep the credential off disk).** The DSN is resolved in this
-order: `--dsn` flag → `$METACULUS_DB_DSN` → macOS Keychain item
-`metaculus-db-dsn` → local default `dbname=metaculus`. The DSN is a real secret
-(it grants database read access), so prefer the **Keychain** over `.env` / a
-shell export — those land in files and shell history that any editor or coding
-agent can read. Store it once (you'll be prompted to paste it, so it never
-appears in your shell history):
-
-```bash
-security add-generic-password -U -a "$USER" -s metaculus-db-dsn -w
-# paste the full postgresql://USER:PASS@HOST/dbname?sslmode=require string, return
-```
-
-For the strongest guard, open **Keychain Access.app → login → `metaculus-db-dsn`
-→ Access Control → "Confirm before allowing access"** and clear the always-allow
-list. Every read then raises a GUI confirm: a human running the harvest clicks
-*Allow* (not *Always Allow*), but an automated agent driving a shell can't. With
-that set, the harvester works with no DSN in any file — `source-archive
-harvest-db --days 1` just prompts you once per run.
-
-**From text or traces.** The lower-level `extract_urls(text)` /
-`extract_citation_records(...)` helpers in `ingest.url_extraction` pull URLs out
-of any markdown/text (markdown links, autolinks, and bare URLs). For bots you
-control, an instrumented trace (`ingest-traces`) gives the fullest URL list; a
-comment gives a shallower one, since it is length-truncated when posted.
+**From instrumented traces.** For bots you control, a trace is the fullest
+source. `source-archive ingest-traces <run-dir>` walks a traced run and emits a
+manifest of every URL the bot touched, with provenance (trace, tool, search
+query).
 
 ## How it's organized
 
@@ -279,7 +247,7 @@ comment gives a shallower one, since it is length-truncated when posted.
 | --- | --- |
 | `config.py` | Environment-driven `ArchiveConfig` |
 | `models.py` | `CaptureResult`, `StoredCapture`, `CitationRecord` |
-| `ingest/` | Build a manifest: URL extraction + Metaculus comment harvester |
+| `ingest/` | Build a manifest: URL extraction from text + traced bot runs |
 | `fetchers/` | Playwright (primary) + CloakBrowser / Hyperbrowser / Firecrawl / PDF backups, tiered orchestrator |
 | `benchmark.py` | Backend bake-off: reliability + cost per backend over a manifest |
 | `quality.py` | Reject 404s, block pages, and thin content before archiving |

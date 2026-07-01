@@ -190,44 +190,6 @@ def _cmd_catalog(args, config: ArchiveConfig) -> int:
     return 0
 
 
-def _cmd_harvest_db(args, config: ArchiveConfig) -> int:
-    from forecasting_tools.agents_and_tools.source_archive.ingest import (
-        MetaculusDbHarvester,
-        dedupe_records,
-        resolve_dsn,
-    )
-
-    dsn = resolve_dsn(args.dsn)
-    include_private = not args.public_only
-    harvester = MetaculusDbHarvester.from_dsn(dsn)
-    if args.post:
-        records = harvester.harvest_post(
-            args.post, run_id=args.run_id, include_private=include_private
-        )
-        run_id = args.run_id or f"metaculus-db-post-{args.post}"
-    else:
-        records = harvester.harvest_recent(
-            days=args.days,
-            limit=args.limit,
-            run_id=args.run_id,
-            include_private=include_private,
-        )
-        run_id = args.run_id or f"metaculus-db-recent-{args.days}d"
-    if args.dedupe:
-        records = dedupe_records(records)
-    print(f"Harvested {len(records)} citation record(s) from the Metaculus DB")
-
-    out_path = args.out or f"{run_id}.jsonl"
-    if not args.upload or args.out:
-        manifest_io.write_file(out_path, records)
-        print(f"Wrote manifest -> {out_path}")
-    if args.upload:
-        store = _make_blob_store(config, None, args.bucket)
-        manifest_io.write_blob(store, run_id, records, config)
-        print(f"Uploaded manifest -> {config.s3_prefix}/manifests/{run_id}.jsonl")
-    return 0
-
-
 def _cmd_coverage(args, config: ArchiveConfig) -> int:
     from pathlib import Path
 
@@ -336,41 +298,6 @@ def main(argv: list[str] | None = None) -> int:
     )
     cat.add_argument("--bucket", help="override the S3 bucket")
 
-    hdb = sub.add_parser(
-        "harvest-db",
-        help="read a bot's cited URLs from the platform Postgres database (operator)",
-    )
-    grp = hdb.add_mutually_exclusive_group(required=True)
-    grp.add_argument("--post", help="harvest one post id")
-    grp.add_argument("--days", type=int, help="harvest the most recent N days")
-    hdb.add_argument(
-        "--limit",
-        type=int,
-        default=None,
-        help="cap rows when using --days (default: uncapped — a daily sweep wants all)",
-    )
-    hdb.add_argument(
-        "--public-only",
-        action="store_true",
-        help="read only public comments (default: read all of a bot's comments)",
-    )
-    hdb.add_argument(
-        "--dsn",
-        help="libpq DSN or postgresql:// URL. Default resolution: --dsn > "
-        "$METACULUS_DB_DSN > macOS Keychain item 'metaculus-db-dsn' > "
-        "dbname=metaculus. Prefer the Keychain for the real secret "
-        "(a --dsn value lands in shell history).",
-    )
-    hdb.add_argument("--out", metavar="FILE", help="write the manifest to this .jsonl")
-    hdb.add_argument("--run-id", help="run id (default derived from the slice)")
-    hdb.add_argument(
-        "--dedupe", action="store_true", help="keep one record per URL (first seen)"
-    )
-    hdb.add_argument(
-        "--upload", action="store_true", help="upload the manifest to S3 manifests/"
-    )
-    hdb.add_argument("--bucket", help="override the S3 bucket")
-
     cov = sub.add_parser(
         "coverage",
         help="report what %% of cited sources were archived (trace vs comments)",
@@ -396,8 +323,6 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_capture(args, config)
     if args.command == "ingest-traces":
         return _cmd_ingest_traces(args, config)
-    if args.command == "harvest-db":
-        return _cmd_harvest_db(args, config)
     if args.command == "catalog":
         return _cmd_catalog(args, config)
     if args.command == "coverage":
