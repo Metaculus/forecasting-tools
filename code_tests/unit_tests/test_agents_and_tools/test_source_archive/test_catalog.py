@@ -120,3 +120,40 @@ def test_write_catalog_emits_views(tmp_path):
     q_csv = store.get("t/catalog/by-question/100.csv").decode("utf-8")
     assert "https://uncaptured.test/x" in q_csv
     assert "no" in q_csv  # uncaptured row marked
+
+
+def test_nested_views_group_by_day_question_bot(tmp_path):
+    store = LocalBlobStore(tmp_path)
+    config = ArchiveConfig(s3_prefix="t")
+    ContentStore(store, config).store(_capture("https://a.test/p", "<p>a</p>"))
+    records = [
+        CitationRecord(
+            url="https://a.test/p",
+            run_id="daily-2026-06-30",
+            bot="alpha",
+            question_id="100",
+            question_url="https://www.metaculus.com/questions/100/",
+            first_seen="2026-06-30T12:00:00+00:00",
+        ),
+        CitationRecord(
+            url="https://a.test/p",
+            run_id="daily-2026-07-01",
+            bot="beta",
+            question_id="100",
+            first_seen="2026-07-01T12:00:00+00:00",
+        ),
+    ]
+    manifest_io.write_blob(store, "m", records, config)
+    summary = write_catalog(store, config)
+
+    assert summary.dates == 2
+    keys = set(store.list_keys("t/catalog/"))
+    assert "t/catalog/by-date/2026-06-30.html" in keys
+    assert "t/catalog/by-date/2026-07-01.html" in keys
+
+    day = store.get("t/catalog/by-date/2026-06-30.html").decode("utf-8")
+    assert "Question 100" in day and "Bot alpha" in day  # day -> question -> bot
+    q = store.get("t/catalog/by-question/100.html").decode("utf-8")
+    assert "2026-06-30" in q and "2026-07-01" in q  # question -> date -> bot
+    b = store.get("t/catalog/by-bot/beta.html").decode("utf-8")
+    assert "Question 100" in b and "2026-07-01" in b  # bot -> question -> date

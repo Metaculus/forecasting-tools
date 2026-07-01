@@ -126,6 +126,7 @@ class Citation(BaseModel):
     question_id: str | None = None
     question_url: str | None = None
     run_id: str | None = None
+    first_seen: str | None = None  # ISO timestamp; the day it was scraped
     tool_name: str | None = None
     origin: str | None = None
     query: str | None = None
@@ -261,6 +262,7 @@ def build_sources(store: BlobStore, config: ArchiveConfig) -> list[Source]:
                     question_id=r.question_id or r.metaculus_id,
                     question_url=r.question_url,
                     run_id=r.run_id,
+                    first_seen=r.first_seen,
                     tool_name=r.tool_name,
                     origin=r.origin,
                     query=r.query,
@@ -309,6 +311,10 @@ table{border-collapse:collapse;width:100%;background:#fff}
 td,th{border:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:13px}
 th{background:#f3f4f6}
 a.grid{display:inline-block;margin:4px 12px 4px 0}
+details{margin:2px 0 2px 8px;border-left:2px solid #e5e7eb;padding-left:10px}
+summary{cursor:pointer;padding:4px 0;font-weight:600}
+summary:hover{color:#3730a3}
+details details summary{font-weight:400}
 """
 
 
@@ -407,6 +413,76 @@ def _question_csv(sources: list[Source]) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# Nested views: date / question / bot, each drilling into two more levels.
+# --------------------------------------------------------------------------- #
+_UNKNOWN_DATE = "(undated)"
+
+
+def _cite_date(c: Citation) -> str:
+    if c.first_seen:
+        return c.first_seen[:10]  # YYYY-MM-DD
+    if c.run_id and c.run_id.startswith("daily-"):
+        return c.run_id[len("daily-") :][:10]
+    return _UNKNOWN_DATE
+
+
+def _cite_question(c: Citation) -> str:
+    return c.question_id or _UNKNOWN_Q
+
+
+def _cite_bot(c: Citation) -> str:
+    return c.bot or "(no bot)"
+
+
+# One page per top-level key; each key maps to {level2: {level3: {url: Source}}}.
+Tree = dict
+
+
+def _nest(sources: list[Source], k1, k2, k3) -> Tree:
+    """Bucket every (source, citation) into a 3-level tree by the given key fns.
+
+    A source appears under each (k1, k2, k3) path its citations imply — the same
+    URL can show up under several questions/bots/dates, which is correct.
+    """
+    tree: Tree = defaultdict(lambda: defaultdict(dict))
+    for s in sources:
+        for c in s.citations:
+            tree[k1(c)][k2(c)].setdefault(k3(c), {})[s.canonical_url] = s
+    return tree
+
+
+def _summary(kind: str, key: str, n: int, data) -> str:
+    if kind == "question":
+        qurl = data.question_url(key)
+        link = f" <a href='{_esc(qurl)}'>↗</a>" if qurl else ""
+        return f"Question {_esc(key)}{link} <span class='muted'>({n})</span>"
+    if kind == "bot":
+        return f"Bot {_esc(key)} <span class='muted'>({n})</span>"
+    return f"{_esc(key)} <span class='muted'>({n})</span>"  # a date
+
+
+def _nested_body(subtree: dict, linker, rr: str, label2: str, label3: str, data) -> str:
+    """Render {level2: {level3: {url: Source}}} as two nested <details> levels."""
+    parts: list[str] = []
+    for k2 in sorted(subtree):
+        level3 = subtree[k2]
+        urls2 = {u for m in level3.values() for u in m}
+        parts.append(
+            f"<details open><summary>{_summary(label2, k2, len(urls2), data)}"
+            "</summary>"
+        )
+        for k3 in sorted(level3):
+            srcs = [level3[k3][u] for u in sorted(level3[k3])]
+            parts.append(
+                f"<details><summary>{_summary(label3, k3, len(srcs), data)}</summary>"
+            )
+            parts.append("".join(_source_card(s, linker, rr) for s in srcs))
+            parts.append("</details>")
+        parts.append("</details>")
+    return "".join(parts)
+
+
+# --------------------------------------------------------------------------- #
 # Write
 # --------------------------------------------------------------------------- #
 class CatalogSummary(BaseModel):
@@ -415,6 +491,7 @@ class CatalogSummary(BaseModel):
     questions: int = 0
     bots: int = 0
     domains: int = 0
+    dates: int = 0
     excluded: dict[str, int] = {}
 
     def __str__(self) -> str:
@@ -454,38 +531,58 @@ def write_catalog(
     def put(rel: str, body: str, ctype: str) -> None:
         out.put(f"{prefix}/catalog/{rel}", body.encode("utf-8"), content_type=ctype)
 
-    by_q = data.by_question()
-    by_b = data.by_bot()
+    pages = data.sources  # already filtered to real page sources
+    by_q = data.by_question()  # flat, for the per-question CSV
     by_d = data.by_domain()
 
-    # Per-question pages (the encyclopedia) + CSVs. rel_root: catalog/<view>/ -> ../../
-    rr2 = "../../"
-    for qid, sources in sorted(by_q.items()):
-        sources = sorted(sources, key=lambda s: s.canonical_url)
+    # Three nested drill-downs (top level -> level 2 -> level 3):
+    tree_date = _nest(pages, _cite_date, _cite_question, _cite_bot)  # day -> q -> bot
+    tree_q = _nest(pages, _cite_question, _cite_date, _cite_bot)  # q -> day -> bot
+    tree_bot = _nest(pages, _cite_bot, _cite_question, _cite_date)  # bot -> q -> day
+    rr2 = "../../"  # catalog/<view>/<page> back to the prefix root
+
+    def _urls(sub: dict) -> int:
+        return len({u for m in sub.values() for d in m.values() for u in d})
+
+    # By day: what was scraped that day -> question -> bot
+    for date in sorted(tree_date, reverse=True):
+        body = (
+            f"<h1>Scraped on {_esc(date)}</h1>"
+            f"<p class='muted'>{_urls(tree_date[date])} source(s) that day</p>"
+            + _nested_body(tree_date[date], linker, rr2, "question", "bot", data)
+        )
+        put(f"by-date/{_slug(date)}.html", _page(date, body, rr2), "text/html")
+
+    # By question: every source per question -> date -> bot  (+ CSV)
+    for qid in sorted(tree_q):
         qurl = data.question_url(qid)
+        srcs = sorted(by_q.get(qid, []), key=lambda s: s.canonical_url)
         head = f"<h1>Question {_esc(qid)}</h1>"
         if qurl:
             head += f"<p><a href='{_esc(qurl)}'>{_esc(qurl)} ↗</a></p>"
         head += (
-            f"<p class='muted'>{len(sources)} source(s); "
-            f"{sum(s.captured for s in sources)} captured · "
+            f"<p class='muted'>{len(srcs)} source(s); "
+            f"{sum(s.captured for s in srcs)} captured · "
             f"<a href='{_slug(qid)}.csv'>download CSV</a></p>"
         )
-        cards = "".join(_source_card(s, linker, rr2) for s in sources)
+        body = head + _nested_body(tree_q[qid], linker, rr2, "date", "bot", data)
         put(
             f"by-question/{_slug(qid)}.html",
-            _page(f"Question {qid}", head + cards, rr2),
+            _page(f"Question {qid}", body, rr2),
             "text/html",
         )
-        put(f"by-question/{_slug(qid)}.csv", _question_csv(sources), "text/csv")
+        put(f"by-question/{_slug(qid)}.csv", _question_csv(srcs), "text/csv")
 
-    # Per-bot and per-domain cross-views.
-    for bot, sources in sorted(by_b.items()):
-        sources = sorted(sources, key=lambda s: s.canonical_url)
-        body = f"<h1>Bot: {_esc(bot)}</h1><p class='muted'>{len(sources)} source(s)</p>"
-        body += "".join(_source_card(s, linker, rr2) for s in sources)
+    # By bot: one bot's sources -> question -> date
+    for bot in sorted(tree_bot):
+        body = (
+            f"<h1>Bot: {_esc(bot)}</h1>"
+            f"<p class='muted'>{_urls(tree_bot[bot])} source(s)</p>"
+            + _nested_body(tree_bot[bot], linker, rr2, "question", "date", data)
+        )
         put(f"by-bot/{_slug(bot)}.html", _page(f"Bot {bot}", body, rr2), "text/html")
 
+    # By site: flat "what sites overall"
     for domain, sources in sorted(by_d.items()):
         sources = sorted(sources, key=lambda s: s.canonical_url)
         body = f"<h1>Site: {_esc(domain)}</h1><p class='muted'>{len(sources)} source(s)</p>"
@@ -498,31 +595,45 @@ def write_catalog(
 
     # Landing + readme. rel_root: catalog/ -> ../
     rr1 = "../"
-    index_body = _index_body(data, by_q, by_b, by_d)
+    index_body = _index_body(data, tree_date, tree_q, tree_bot, by_d)
     put("index.html", _page("Catalog", index_body, rr1), "text/html")
     put("READ_ME_FIRST.html", _page("Read me first", _readme_body(), rr1), "text/html")
 
     return CatalogSummary(
-        sources=len(data.sources),
-        captured=sum(s.captured for s in data.sources),
-        questions=len(by_q),
-        bots=len(by_b),
+        sources=len(pages),
+        captured=sum(s.captured for s in pages),
+        questions=len(tree_q),
+        bots=len(tree_bot),
         domains=len(by_d),
+        dates=len(tree_date),
         excluded=data.excluded,
     )
 
 
-def _index_body(data, by_q, by_b, by_d) -> str:
+def _index_body(data, tree_date, tree_q, tree_bot, by_d) -> str:
     captured = sum(s.captured for s in data.sources)
 
-    def links(items: dict, view: str) -> str:
-        rows = []
-        for key, sources in sorted(items.items(), key=lambda kv: (-len(kv[1]), kv[0])):
-            rows.append(
-                f"<a class='grid' href='{view}/{_slug(key)}.html'>"
-                f"{_esc(key)} <span class='muted'>({len(sources)})</span></a>"
-            )
-        return "".join(rows)
+    def _urls(sub: dict) -> int:
+        return len({u for m in sub.values() for d in m.values() for u in d})
+
+    def tree_links(tree: dict, view: str, newest_first: bool = False) -> str:
+        keys = (
+            sorted(tree, reverse=True)
+            if newest_first
+            else sorted(tree, key=lambda k: (-_urls(tree[k]), k))
+        )
+        return "".join(
+            f"<a class='grid' href='{view}/{_slug(k)}.html'>"
+            f"{_esc(k)} <span class='muted'>({_urls(tree[k])})</span></a>"
+            for k in keys
+        )
+
+    def flat_links(items: dict, view: str) -> str:
+        return "".join(
+            f"<a class='grid' href='{view}/{_slug(k)}.html'>"
+            f"{_esc(k)} <span class='muted'>({len(v)})</span></a>"
+            for k, v in sorted(items.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+        )
 
     hidden_note = (
         f" · {data.hidden_total} non-page URLs hidden "
@@ -533,11 +644,15 @@ def _index_body(data, by_q, by_b, by_d) -> str:
     return (
         f"<p><a href='READ_ME_FIRST.html'>What is this? →</a></p>"
         f"<p class='muted'>{len(data.sources)} page sources ({captured} captured) · "
-        f"{len(by_q)} questions · {len(by_b)} bots · {len(by_d)} sites{hidden_note}</p>"
-        f"<h1>By question</h1><p class='muted'>The encyclopedia of sources per "
-        f"question — start here.</p>{links(by_q, 'by-question')}"
-        f"<h1>By bot</h1>{links(by_b, 'by-bot')}"
-        f"<h1>By site</h1>{links(by_d, 'by-domain')}"
+        f"{len(tree_date)} days · {len(tree_q)} questions · {len(tree_bot)} bots · "
+        f"{len(by_d)} sites{hidden_note}</p>"
+        f"<h1>By day</h1><p class='muted'>What got scraped each day, then grouped by "
+        f"question, then by bot.</p>{tree_links(tree_date, 'by-date', newest_first=True)}"
+        f"<h1>By question</h1><p class='muted'>Every source for a question, grouped by "
+        f"day, then by bot.</p>{tree_links(tree_q, 'by-question')}"
+        f"<h1>By bot</h1><p class='muted'>One bot's sources, grouped by question, then "
+        f"by day.</p>{tree_links(tree_bot, 'by-bot')}"
+        f"<h1>By site</h1>{flat_links(by_d, 'by-domain')}"
     )
 
 
@@ -549,13 +664,14 @@ def _readme_body() -> str:
         "<b>screenshot</b>, and a clean <b>markdown</b> copy — so a forecast can be "
         "audited later even if the original page changes or disappears.</p>"
         "<h1>How to browse it</h1>"
+        "<p>Open <b>index.html</b>, then pick a view. Each view drills down through "
+        "two more levels — click a ▸ heading to expand it:</p>"
         "<ul>"
-        "<li>Open <b>index.html</b> (the catalog home).</li>"
-        "<li><b>By question</b> is the main view: pick a question to see every "
-        "source used for it, who used it, and a screenshot of each.</li>"
-        "<li><b>By bot</b> shows one bot's sources across questions; <b>By site</b> "
-        "groups sources by website.</li>"
-        "<li>Each question also has a <b>CSV</b> you can open in a spreadsheet.</li>"
+        "<li><b>By day</b> — what was scraped that day → each question → each bot.</li>"
+        "<li><b>By question</b> — every source for a question → which day → which "
+        "bot. Each question also has a <b>CSV</b> for spreadsheets.</li>"
+        "<li><b>By bot</b> — one bot's sources → which question → which day.</li>"
+        "<li><b>By site</b> — a flat list of every source grouped by website.</li>"
         "</ul>"
         "<p class='muted'>The folders with long hash names (content/, index/) are "
         "the machine-readable store — you don't need to open those.</p>"
