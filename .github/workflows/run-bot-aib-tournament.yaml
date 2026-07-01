@@ -113,18 +113,18 @@ jobs:
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-  # bot_claude_fable_5_no_research_one_shot:
-  #   needs: precache_asknews
-  #   uses: ./.github/workflows/run-bot-launcher.yaml
-  #   with:
-  #     bot_name: "METAC_CLAUDE_FABLE_5_NO_RESEARCH_ONE_SHOT"
-  #     metac_name: "metac-claude-fable-5-no-research-one-shot"
-  #     cache_key: asknews-cache-${{ github.run_id }}
-  #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
-  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-  #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  bot_claude_fable_5_no_research_one_shot:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_CLAUDE_FABLE_5_NO_RESEARCH_ONE_SHOT"
+      metac_name: "metac-claude-fable-5-no-research-one-shot"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_grok_4_3_no_research_one_shot:
     needs: precache_asknews
@@ -167,20 +167,20 @@ jobs:
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
-  # bot_claude_fable_5_high:
-  #   needs: precache_asknews
-  #   uses: ./.github/workflows/run-bot-launcher.yaml
-  #   with:
-  #     bot_name: "METAC_CLAUDE_FABLE_5_HIGH"
-  #     metac_name: "metac-claude-fable-5-high+asknews"
-  #     cache_key: asknews-cache-${{ github.run_id }}
-  #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
-  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-  #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-  #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-  #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  bot_claude_fable_5_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_CLAUDE_FABLE_5_HIGH"
+      metac_name: "metac-claude-fable-5-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   bot_nemotron_3_ultra:
     needs: precache_asknews
