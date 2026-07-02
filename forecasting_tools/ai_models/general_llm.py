@@ -269,19 +269,7 @@ class GeneralLlm(
         litellm.drop_params = True
 
         with MonetaryCostManager(1) as cost_manager:
-            if self.responses_api:
-                original_response = await aresponses(
-                    input=self.model_input_to_message(prompt),  # type: ignore # NOTE: This might only accept the last message in the list?
-                    **self.litellm_kwargs,
-                )
-                assert isinstance(original_response, ResponsesAPIResponse)
-                response = self._normalize_response(original_response, ModelResponse())
-                # Simpler method might be just grabbing last message in choices `response.output[-1].content[0].text`
-            else:
-                response = await acompletion(
-                    messages=self.model_input_to_message(prompt),
-                    **self.litellm_kwargs,
-                )
+            response = await self._call_litellm_dropping_deprecated_temperature(prompt)
             call_back_cost = cost_manager.current_usage
 
         assert isinstance(response, ModelResponse)
@@ -356,6 +344,51 @@ class GeneralLlm(
         )
 
         return response
+
+    async def _call_litellm_dropping_deprecated_temperature(
+        self, prompt: ModelInputType
+    ) -> ModelResponse:
+        try:
+            return await self._call_litellm(prompt)
+        except litellm.BadRequestError as error:
+            if not self._is_deprecated_temperature_error(error):
+                raise
+            if "temperature" not in self.litellm_kwargs:
+                raise
+            logger.warning(
+                f"Model {self.model} rejected the 'temperature' parameter as deprecated/unsupported. "
+                f"Dropping it and retrying (this llm will no longer send temperature)."
+            )
+            self.litellm_kwargs.pop("temperature", None)
+            return await self._call_litellm(prompt)
+
+    async def _call_litellm(self, prompt: ModelInputType) -> ModelResponse:
+        if self.responses_api:
+            original_response = await aresponses(
+                input=self.model_input_to_message(prompt),  # type: ignore # NOTE: This might only accept the last message in the list?
+                **self.litellm_kwargs,
+            )
+            assert isinstance(original_response, ResponsesAPIResponse)
+            # Simpler method might be just grabbing last message in choices `response.output[-1].content[0].text`
+            return self._normalize_response(original_response, ModelResponse())
+        response = await acompletion(
+            messages=self.model_input_to_message(prompt),
+            **self.litellm_kwargs,
+        )
+        assert isinstance(response, ModelResponse)
+        return response
+
+    @staticmethod
+    def _is_deprecated_temperature_error(error: Exception) -> bool:
+        message = str(error).lower()
+        mentions_temperature = "temperature" in message
+        is_unsupported = (
+            "deprecated" in message
+            or "not supported" in message
+            or "unsupported" in message
+            or "does not support" in message
+        )
+        return mentions_temperature and is_unsupported
 
     def _answer_from_reasoning_content(self, message: Message) -> str | None:
         reasoning_content = getattr(message, "reasoning_content", None)
