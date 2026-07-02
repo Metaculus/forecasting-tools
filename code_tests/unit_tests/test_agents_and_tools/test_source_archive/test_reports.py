@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import json
+
 from forecasting_tools.agents_and_tools.source_archive.config import ArchiveConfig
+from forecasting_tools.agents_and_tools.source_archive.models import (
+    StoredCapture,
+    url_hash,
+)
 from forecasting_tools.agents_and_tools.source_archive.pipeline import (
     CaptureOutcome,
     PipelineSummary,
@@ -10,6 +16,12 @@ from forecasting_tools.agents_and_tools.source_archive.reports import (
     write_run_report,
 )
 from forecasting_tools.agents_and_tools.source_archive.storage import LocalBlobStore
+
+
+def _stored(url: str, fetcher: str) -> StoredCapture:
+    return StoredCapture(
+        url=url, url_hash=url_hash(url), content_hash="c1", fetcher=fetcher
+    )
 
 
 def test_run_report_roundtrip_canonicalizes(tmp_path):
@@ -27,6 +39,32 @@ def test_run_report_roundtrip_canonicalizes(tmp_path):
     # keys are canonicalized (tracking param stripped)
     assert out["https://a.test/p"] == "stored"
     assert out["https://b.test/q"] == "error"
+
+
+def test_run_report_records_backend_per_url(tmp_path):
+    store = LocalBlobStore(tmp_path)
+    config = ArchiveConfig(s3_prefix="t")
+    summary = PipelineSummary(
+        outcomes=[
+            CaptureOutcome(
+                url="https://a.test/p",
+                status="stored",
+                stored=_stored("https://a.test/p", "firecrawl"),
+            ),
+            CaptureOutcome(
+                url="https://c.test/r",
+                status="cache_hit",
+                stored=_stored("https://c.test/r", "playwright"),
+            ),
+            CaptureOutcome(url="https://b.test/q", status="error", reason="cloudflare"),
+        ]
+    )
+    key = write_run_report(store, "r1", summary, config)
+
+    rows = {r["url"]: r for r in json.loads(store.get(key).decode("utf-8"))}
+    assert rows["https://a.test/p"]["backend"] == "firecrawl"
+    assert rows["https://c.test/r"]["backend"] == "playwright"
+    assert rows["https://b.test/q"]["backend"] == ""  # nothing fetched
 
 
 def test_captured_status_wins_over_failure(tmp_path):
