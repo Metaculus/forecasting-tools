@@ -618,6 +618,17 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        ############################ Bots started in July 2026 ############################
+        "METAC_CLAUDE_SONNET_5": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 1.5,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-sonnet-5",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ No-research one-shot bots ############################
         "METAC_GPT_5_5_NO_RESEARCH_ONE_SHOT": {
             "estimated_cost_per_question": roughly_gpt_5_cost,
