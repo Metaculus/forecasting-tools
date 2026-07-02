@@ -624,7 +624,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="anthropic/claude-sonnet-5",
-                    temperature=default_temperature,
+                    temperature=None,
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -659,7 +659,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="anthropic/claude-fable-5",
-                    temperature=default_temperature,
+                    temperature=None,
                 ),
                 bot_type="no_research_one_shot",
             ),
@@ -713,7 +713,11 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 llm=GeneralLlm(
                     model="anthropic/claude-fable-5",
-                    **claude_adaptive_thinking_settings_high,
+                    **{
+                        k: v
+                        for k, v in claude_adaptive_thinking_settings_high.items()
+                        if k != "temperature"
+                    },
                 ),
             ),
             "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
