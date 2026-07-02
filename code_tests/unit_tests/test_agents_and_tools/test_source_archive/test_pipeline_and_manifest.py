@@ -142,7 +142,7 @@ def test_manifest_blob_roundtrip(tmp_path):
     cfg = ArchiveConfig(s3_prefix="t")
     records = [CitationRecord(url="https://a.test", run_id="r1")]
     manifest.write_blob(store, "r1", records, cfg)
-    assert store.exists("t/manifests/r1.jsonl")
+    assert store.exists("t/manifests/adhoc/r1.jsonl")
     assert manifest.read_blob(store, "r1", cfg)[0].url == "https://a.test"
 
 

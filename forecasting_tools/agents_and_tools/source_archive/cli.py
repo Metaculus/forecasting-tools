@@ -119,10 +119,14 @@ def _cmd_capture(args, config: ArchiveConfig) -> int:
     if run_id:
         from forecasting_tools.agents_and_tools.source_archive import reports
 
-        reports.write_run_report(store.blobs, run_id, summary, config)
-        print(f"Wrote run outcomes -> {config.s3_prefix}/reports/{run_id}.json")
-        cost_mod.write_cost_report(store.blobs, run_id, run_cost, config)
-        print(f"Wrote cost report -> {config.s3_prefix}/reports/{run_id}_cost.json")
+        key = reports.write_run_report(
+            store.blobs, run_id, summary, config, group=args.group
+        )
+        print(f"Wrote run outcomes -> {key}")
+        key = cost_mod.write_cost_report(
+            store.blobs, run_id, run_cost, config, group=args.group
+        )
+        print(f"Wrote cost report -> {key}")
 
     # Failures leave no cache entry, so re-running retries exactly them. Write a
     # retry manifest (with provenance) so coming back — e.g. with hyperbrowser
@@ -147,8 +151,10 @@ def _cmd_capture(args, config: ArchiveConfig) -> int:
     if args.upload_manifest:
         if not run_id:
             sys.exit("--upload-manifest needs --run-id (no run_id found in records)")
-        manifest_io.write_blob(store.blobs, run_id, records, config)
-        print(f"Uploaded manifest -> {config.s3_prefix}/manifests/{run_id}.jsonl")
+        manifest_io.write_blob(store.blobs, run_id, records, config, group=args.group)
+        print(
+            f"Uploaded manifest -> {manifest_io.manifest_key(run_id, config, args.group)}"
+        )
     return 0
 
 
@@ -173,8 +179,10 @@ def _cmd_ingest_traces(args, config: ArchiveConfig) -> int:
         if not run_id:
             sys.exit("--upload needs a run id (pass --run-id; none found in records)")
         store = _make_blob_store(config, None, args.bucket)
-        manifest_io.write_blob(store, run_id, records, config)
-        print(f"Uploaded manifest -> {config.s3_prefix}/manifests/{run_id}.jsonl")
+        manifest_io.write_blob(store, run_id, records, config, group=args.group)
+        print(
+            f"Uploaded manifest -> {manifest_io.manifest_key(run_id, config, args.group)}"
+        )
     return 0
 
 
@@ -245,6 +253,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     cap.add_argument("--run-id", help="run id for the uploaded manifest")
     cap.add_argument(
+        "--group",
+        help="nest the uploaded manifest/reports under this folder, e.g. "
+        "'sprints/myrun' (default: daily/<YYYY-MM>/ for daily-YYYY-MM-DD "
+        "run ids, else adhoc/)",
+    )
+    cap.add_argument(
         "--no-hyperbrowser",
         action="store_true",
         help="disable the Hyperbrowser fallback for this run (others still run)",
@@ -286,6 +300,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     ing.add_argument(
         "--upload", action="store_true", help="upload the manifest to S3 manifests/"
+    )
+    ing.add_argument(
+        "--group",
+        help="nest the uploaded manifest under this folder, e.g. 'sprints/myrun' "
+        "(default: daily/<YYYY-MM>/ for daily-YYYY-MM-DD run ids, else adhoc/)",
     )
     ing.add_argument("--bucket", help="override the S3 bucket")
 

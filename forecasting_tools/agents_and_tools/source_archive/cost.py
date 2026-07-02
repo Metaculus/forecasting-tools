@@ -19,6 +19,7 @@ from collections import Counter
 
 from pydantic import BaseModel
 
+from forecasting_tools.agents_and_tools.source_archive import layout
 from forecasting_tools.agents_and_tools.source_archive.config import ArchiveConfig
 
 # $ per vendor credit (public list pricing, 2026-06).
@@ -116,13 +117,18 @@ def estimate_run_cost(
     )
 
 
-def cost_report_key(run_id: str, config: ArchiveConfig) -> str:
-    return f"{config.s3_prefix.rstrip('/')}/reports/{run_id}_cost.json"
+def cost_report_key(
+    run_id: str, config: ArchiveConfig, group: str | None = None
+) -> str:
+    prefix = config.s3_prefix.rstrip("/")
+    return f"{prefix}/{layout.report_key(run_id, '_cost.json', group)}"
 
 
-def write_cost_report(store, run_id: str, cost: RunCost, config: ArchiveConfig) -> str:
-    """Persist the cost breakdown next to the run report (``reports/<id>_cost.json``)."""
-    key = cost_report_key(run_id, config)
+def write_cost_report(
+    store, run_id: str, cost: RunCost, config: ArchiveConfig, group: str | None = None
+) -> str:
+    """Persist the cost breakdown next to the run report (``<id>_cost.json``)."""
+    key = cost_report_key(run_id, config, group)
     store.put(
         key,
         json.dumps(cost.model_dump(), indent=2).encode("utf-8"),
