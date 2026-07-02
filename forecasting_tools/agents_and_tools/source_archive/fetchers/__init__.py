@@ -2,7 +2,7 @@
 
 Most callers want :func:`build_default_fetcher`, which wires the recommended
 cost-ordered tiered setup: self-hosted Playwright primary, then CloakBrowser,
-PDF, Hyperbrowser, and Firecrawl backups.
+PDF, Firecrawl, and Hyperbrowser backups.
 """
 
 from __future__ import annotations
@@ -69,10 +69,10 @@ def build_default_fetcher(config: ArchiveConfig | None = None) -> PlaywrightFetc
        single process, so cloak *replaces* vanilla rather than stacking with it.
     2. **PdfFetcher** (local, free; Firecrawl OCR fallback) — captures PDFs,
        which the browsers can't render.
-    3. **Hyperbrowser** (managed) — consolidated anti-bot fallback. Added when
-       ``HYPERBROWSER_API_KEY`` is set.
-    4. **Firecrawl** (managed) — cheapest stealth + native-PDF safety net. Added
-       when ``FIRECRAWL_API_KEY`` is set.
+    3. **Firecrawl** (managed) — cheapest stealth + native-PDF safety net
+       (~$0.0042/page stealth). Added when ``FIRECRAWL_API_KEY`` is set.
+    4. **Hyperbrowser** (managed) — anti-bot fallback of last resort (~$0.01/page
+       with proxy, plus bandwidth). Added when ``HYPERBROWSER_API_KEY`` is set.
 
     The returned object is a :class:`PlaywrightFetcher` subclass so the single
     browser's lifecycle is managed by ``with``.
@@ -111,10 +111,10 @@ class _ManagedTieredFetcher(PlaywrightFetcher):
         # key is present). Cheap to keep in the chain unconditionally.
         backends.append(PdfFetcher(self.config))
 
-        if self.config.hyperbrowser_api_key:
-            backends.append(HyperbrowserFetcher(self.config))
         if self.config.firecrawl_api_key:
             backends.append(FirecrawlFetcher(self.config))
+        if self.config.hyperbrowser_api_key:
+            backends.append(HyperbrowserFetcher(self.config))
 
         self._tiered = TieredFetcher(*backends)
         return self

@@ -244,7 +244,7 @@ def test_default_chain_cloakbrowser_is_primary(monkeypatch):
     with build_default_fetcher(config) as fetcher:
         names = [b.name for b in fetcher._tiered.backends]
     # Note: exactly one browser tier (cloakbrowser), not vanilla + cloak.
-    assert names == ["cloakbrowser", "pdf", "hyperbrowser", "firecrawl"]
+    assert names == ["cloakbrowser", "pdf", "firecrawl", "hyperbrowser"]
 
 
 def test_default_chain_falls_back_to_playwright_and_skips_unkeyed(monkeypatch):
