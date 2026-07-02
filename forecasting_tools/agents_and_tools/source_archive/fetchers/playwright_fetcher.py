@@ -149,11 +149,24 @@ class PlaywrightFetcher:
         return self
 
     def __exit__(self, *exc) -> None:
-        if self._browser is not None:
-            self._browser.close()
+        # close() raises when the browser process is already gone (crashed or
+        # killed by the pipeline's reaper). Still attempt stop(): it tears down
+        # the driver and un-registers the sync API's event loop from this
+        # thread — without that, the next sync_playwright().start() here fails
+        # with "Sync API inside the asyncio loop".
+        try:
+            if self._browser is not None:
+                self._browser.close()
+        except Exception as e:
+            logger.info("browser close failed (already dead?): %s", e)
+        finally:
             self._browser = None
-        if self._playwright is not None:
-            self._playwright.stop()
+        try:
+            if self._playwright is not None:
+                self._playwright.stop()
+        except Exception as e:
+            logger.info("playwright stop failed: %s", e)
+        finally:
             self._playwright = None
 
     def _settle(self, page) -> None:
