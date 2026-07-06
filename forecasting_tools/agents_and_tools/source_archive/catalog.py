@@ -16,10 +16,9 @@ Views (question-primary, with two cross-views):
     catalog/by-bot/<bot>.html         one bot's sources across questions
     catalog/by-domain/<domain>.html   sources grouped by site
 
-The question view is the default because that's how post-mortems and
-non-technical coworkers think ("what did we know about question X?"); ``by-bot``
-covers profiling/"what is the top bot-maker doing", always next to how other
-bots handled the same question.
+The question view is the default because that's how post-mortems think
+("what sources informed question X?"); ``by-bot`` groups a bot's sources
+across questions, and ``by-domain`` groups them by site.
 """
 
 from __future__ import annotations

@@ -271,8 +271,15 @@ are written up in [ROADMAP.md](ROADMAP.md).
 <prefix>/content/<url_hash>/<content_hash>.html
 <prefix>/content/<url_hash>/<content_hash>.webp     (screenshot)
 <prefix>/content/<url_hash>/<content_hash>.md
-<prefix>/manifests/<run_id>.jsonl                  the run's citation manifest
-<prefix>/reports/<run_id>.json                     per-URL capture outcomes (for coverage)
+<prefix>/manifests/<nest>/<run_id>.jsonl           the run's citation manifest
+<prefix>/reports/<nest>/<run_id>.json              per-URL capture outcomes (for coverage)
+<prefix>/reports/<nest>/<run_id>_cost.json         the run's estimated cost breakdown
 <prefix>/catalog/index.html                        browsable catalog (by question/bot/site)
 <prefix>/catalog/by-question/<id>.{html,csv}
 ```
+
+`<nest>` keeps manifests/reports from piling into one flat folder: it is
+`daily/<YYYY-MM>` for `daily-YYYY-MM-DD` run ids, `adhoc` otherwise, or
+whatever you pin with `--group` (e.g. `--group sprints/myrun`). Readers list by
+prefix (and fall back to the old flat keys), so archives written before this
+layout keep working unchanged.

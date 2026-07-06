@@ -1,4 +1,5 @@
-"""Persist each capture run's per-URL outcomes to ``reports/<run_id>.json``.
+"""Persist each capture run's per-URL outcomes under ``reports/`` (nested per
+:mod:`layout`; reads also pick up legacy flat ``reports/<run_id>.json`` keys).
 
 The coverage report's job is to surface sources we should be collecting. A cited
 source we have not archived falls into two very different buckets:
@@ -16,6 +17,7 @@ from __future__ import annotations
 
 import json
 
+from forecasting_tools.agents_and_tools.source_archive import layout
 from forecasting_tools.agents_and_tools.source_archive.canonicalize import (
     canonicalize_url,
 )
@@ -28,12 +30,17 @@ CAPTURED_STATUSES = {"stored", "deduped", "cache_hit"}
 FAILED_STATUSES = {"quality_failed", "error"}
 
 
-def report_key(run_id: str, config: ArchiveConfig) -> str:
-    return f"{config.s3_prefix.rstrip('/')}/reports/{run_id}.json"
+def report_key(run_id: str, config: ArchiveConfig, group: str | None = None) -> str:
+    prefix = config.s3_prefix.rstrip("/")
+    return f"{prefix}/{layout.report_key(run_id, '.json', group)}"
 
 
 def write_run_report(
-    store: BlobStore, run_id: str, summary, config: ArchiveConfig
+    store: BlobStore,
+    run_id: str,
+    summary,
+    config: ArchiveConfig,
+    group: str | None = None,
 ) -> str:
     """Persist a run's per-URL outcomes; ``summary`` is a ``PipelineSummary``.
 
@@ -50,7 +57,7 @@ def write_run_report(
         }
         for o in summary.outcomes
     ]
-    key = report_key(run_id, config)
+    key = report_key(run_id, config, group)
     store.put(
         key, json.dumps(rows, indent=2).encode("utf-8"), content_type="application/json"
     )
