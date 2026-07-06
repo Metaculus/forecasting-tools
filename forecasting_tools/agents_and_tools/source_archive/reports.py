@@ -35,9 +35,19 @@ def report_key(run_id: str, config: ArchiveConfig) -> str:
 def write_run_report(
     store: BlobStore, run_id: str, summary, config: ArchiveConfig
 ) -> str:
-    """Persist a run's per-URL outcomes; ``summary`` is a ``PipelineSummary``."""
+    """Persist a run's per-URL outcomes; ``summary`` is a ``PipelineSummary``.
+
+    ``backend`` is the fetcher that produced the capture (from the stored
+    capture, so it is set for stored/deduped/cache_hit outcomes and ``""``
+    when unknown, e.g. errors) — it enables per-domain cost attribution.
+    """
     rows = [
-        {"url": o.url, "status": o.status, "reason": getattr(o, "reason", "")}
+        {
+            "url": o.url,
+            "status": o.status,
+            "reason": getattr(o, "reason", ""),
+            "backend": o.stored.fetcher if o.stored is not None else "",
+        }
         for o in summary.outcomes
     ]
     key = report_key(run_id, config)
