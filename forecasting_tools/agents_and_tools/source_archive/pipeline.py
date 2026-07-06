@@ -134,6 +134,43 @@ def _close_quietly(cm, timeout_s: float = 15.0) -> None:
     done.wait(timeout_s)
 
 
+def _running_loop():
+    import asyncio
+
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        return None
+
+
+def _restore_thread_loop_state(baseline) -> None:
+    """Un-poison a worker thread's asyncio state after abandoning a dead
+    sync-Playwright instance.
+
+    Sync Playwright drives its asyncio loop *on the calling thread* (via a
+    greenlet), so while an instance is alive the thread is marked as being
+    inside a running event loop. A clean ``stop()`` clears that mark — but a
+    SIGKILLed browser can't be closed cleanly: ``close()``/``stop()`` fail or
+    hang, and both are thread-affine, so :func:`_close_quietly`'s helper thread
+    can't reach them either. The abandoned loop then stays registered as
+    running, and the next ``sync_playwright().start()`` on this thread refuses
+    with "Playwright Sync API inside the asyncio loop", killing the rebuild.
+
+    Resetting the thread-local marker to its pre-fetcher ``baseline`` lets the
+    rebuilt fetcher start a fresh loop. The old loop object is leaked on
+    purpose (its browser processes are swept by the reaper); that is the price
+    of recovering without touching thread-affine Playwright internals.
+    """
+    import asyncio
+
+    if _running_loop() is baseline:
+        return
+    try:
+        asyncio.events._set_running_loop(baseline)
+    except Exception:
+        pass
+
+
 def _reap_browser_descendants() -> None:
     """Best-effort: kill automation Chromium descending from this process. Used
     both to recover a wedged worker (kill its browser so the blocked sync call
@@ -219,6 +256,7 @@ def capture_urls_concurrent(
 
     def work(idx: int, shard: list[str]) -> list[CaptureOutcome]:
         outcomes: list[CaptureOutcome] = []
+        baseline_loop = _running_loop()  # almost always None; see _restore_...
         cm = fetcher_factory(config)
         pipeline = CapturePipeline(cm.__enter__(), store)
         try:
@@ -231,16 +269,31 @@ def capture_urls_concurrent(
                         "browser died; rebuilding worker %d, retrying %s", idx, url
                     )
                     _close_quietly(cm)
-                    cm = fetcher_factory(config)
-                    pipeline = CapturePipeline(cm.__enter__(), store)
-                    with hb_lock:
-                        heartbeats[idx] = time.monotonic()
-                    outcome = pipeline.capture_url(url)  # one retry on a fresh browser
+                    _restore_thread_loop_state(baseline_loop)
+                    try:
+                        cm = fetcher_factory(config)
+                        pipeline = CapturePipeline(cm.__enter__(), store)
+                    except Exception as e:
+                        # A failed rebuild must never kill the run: keep this
+                        # URL's error outcome and move on — the still-dead
+                        # pipeline makes the next URL error with a dead-browser
+                        # reason, which retries the rebuild.
+                        logger.warning(
+                            "worker %d rebuild failed (%s); keeping error outcome",
+                            idx,
+                            e,
+                        )
+                    else:
+                        with hb_lock:
+                            heartbeats[idx] = time.monotonic()
+                        # one retry on a fresh browser
+                        outcome = pipeline.capture_url(url)
                 outcomes.append(outcome)
                 with hb_lock:
                     heartbeats[idx] = None
         finally:
             _close_quietly(cm)
+            _restore_thread_loop_state(baseline_loop)
         return outcomes
 
     supervisor_thread = threading.Thread(target=supervisor, daemon=True)
