@@ -248,7 +248,7 @@ query).
 | `config.py` | Environment-driven `ArchiveConfig` |
 | `models.py` | `CaptureResult`, `StoredCapture`, `CitationRecord` |
 | `ingest/` | Build a manifest: URL extraction from text + traced bot runs |
-| `fetchers/` | Playwright (primary) + CloakBrowser / Hyperbrowser / Firecrawl / PDF backups, tiered orchestrator |
+| `fetchers/` | Playwright (primary) + CloakBrowser / PDF / Firecrawl / Hyperbrowser backups, tiered orchestrator |
 | `benchmark.py` | Backend bake-off: reliability + cost per backend over a manifest |
 | `quality.py` | Reject 404s, block pages, and thin content before archiving |
 | `storage/` | `BlobStore` interface with S3 and local backends |
