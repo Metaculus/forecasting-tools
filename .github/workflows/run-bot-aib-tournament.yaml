@@ -88,6 +88,21 @@ jobs:
 
   #################################### July 2026 new bots ####################################
 
+  bot_grok_4_5_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GROK_4_5_HIGH"
+      metac_name: "metac-grok-4-5-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
   bot_claude_sonnet_5:
     needs: precache_asknews
     uses: ./.github/workflows/run-bot-launcher.yaml

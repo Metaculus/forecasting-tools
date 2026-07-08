@@ -497,6 +497,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     guess_at_deepseek_plus_search = roughly_deepseek_r1_cost + guess_at_search_cost
     guess_at_deepseek_v3_1_cost = roughly_deepseek_r1_cost / 2
     roughly_one_call_to_grok_4_llm = 0.084
+    roughly_one_call_to_grok_4_5_llm = 0.15
     roughly_sonar_deep_research_cost_per_call = 1.35399 / 3
     roughly_opus_4_5_cost = 1.5
 
@@ -619,6 +620,17 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     mode_base_bot_mapping = {
         ############################ Bots started in July 2026 ############################
+        "METAC_GROK_4_5_HIGH": {
+            "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_5_llm,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/x-ai/grok-4.5",
+                    reasoning_effort="high",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         "METAC_CLAUDE_SONNET_5": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 1.5,
             "bot": create_bot(
