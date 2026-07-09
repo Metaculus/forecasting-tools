@@ -3,6 +3,10 @@ from __future__ import annotations
 import json
 
 from forecasting_tools.agents_and_tools.source_archive.config import ArchiveConfig
+from forecasting_tools.agents_and_tools.source_archive.cost import (
+    RunCost,
+    write_cost_report,
+)
 from forecasting_tools.agents_and_tools.source_archive.models import (
     StoredCapture,
     url_hash,
@@ -87,3 +91,22 @@ def test_captured_status_wins_over_failure(tmp_path):
         config,
     )
     assert read_outcomes(store, config)["https://a.test"] == "stored"
+
+
+def test_read_outcomes_ignores_cost_reports(tmp_path):
+    """Cost reports live under reports/ too (``<run_id>_cost.json``, a JSON
+    dict, not a list of rows) — read_outcomes must skip them, not crash."""
+    store = LocalBlobStore(tmp_path)
+    config = ArchiveConfig(s3_prefix="t")
+    write_run_report(
+        store,
+        "r1",
+        PipelineSummary(
+            outcomes=[CaptureOutcome(url="https://a.test", status="stored")]
+        ),
+        config,
+    )
+    write_cost_report(store, "r1", RunCost(run_id="r1", archived=1), config)
+
+    out = read_outcomes(store, config)
+    assert out == {"https://a.test": "stored"}

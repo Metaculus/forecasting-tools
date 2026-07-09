@@ -73,11 +73,15 @@ def read_outcomes(store: BlobStore, config: ArchiveConfig) -> dict[str, str]:
     prefix = config.s3_prefix.rstrip("/")
     out: dict[str, str] = {}
     for key in store.list_keys(f"{prefix}/reports/"):
-        if not key.endswith(".json"):
+        # reports/ also holds per-run cost breakdowns (``<run_id>_cost.json``,
+        # a dict) — only run reports (a list of outcome rows) belong here.
+        if not key.endswith(".json") or key.endswith("_cost.json"):
             continue
         try:
             rows = json.loads(store.get(key).decode("utf-8"))
         except (UnicodeDecodeError, ValueError):
+            continue
+        if not isinstance(rows, list):
             continue
         for r in rows:
             url = canonicalize_url(r.get("url", ""))
