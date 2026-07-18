@@ -88,6 +88,48 @@ jobs:
 
   #################################### July 2026 new bots ####################################
 
+  bot_inkling:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_INKLING"
+      metac_name: "metac-inkling+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_muse_spark_1_1:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_MUSE_SPARK_1_1"
+      metac_name: "metac-muse-spark-1-1+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_kimi_k3:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_KIMI_K3"
+      metac_name: "metac-kimi-k3+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
   bot_gpt_5_6_luna:
     needs: precache_asknews
     uses: ./.github/workflows/run-bot-launcher.yaml

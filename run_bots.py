@@ -620,6 +620,37 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     mode_base_bot_mapping = {
         ############################ Bots started in July 2026 ############################
+        "METAC_INKLING": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 0.405,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/thinkingmachines/inkling",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_MUSE_SPARK_1_1": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 0.425,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/meta/muse-spark-1.1",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_KIMI_K3": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 1.5,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/moonshotai/kimi-k3",
+                    temperature=default_temperature,
+                    timeout=kimi_k2_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         "METAC_GPT_5_6_LUNA": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 0.6,
             "bot": create_bot(
