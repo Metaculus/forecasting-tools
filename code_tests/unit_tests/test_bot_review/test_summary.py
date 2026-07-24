@@ -165,6 +165,12 @@ def test_questions_without_a_spot_peer_score_are_not_ranked():
     assert "Q1" not in report.split("## Best")[1]
 
 
+def test_a_table_saved_to_json_renders_the_same_report():
+    table = make_table()
+    reloaded = OutcomeTable.model_validate_json(table.model_dump_json())
+    assert build_summary(reloaded) == build_summary(table)
+
+
 def test_no_scored_questions():
     questions = [make_question(1, scored=False, status="open")]
     report = build_summary(make_table(questions=questions, leaderboard=None))

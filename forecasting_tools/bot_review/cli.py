@@ -18,6 +18,19 @@ from forecasting_tools.bot_review.summary import build_summary
 from forecasting_tools.helpers.metaculus_client import MetaculusClient
 
 
+def _write_and_print(table: OutcomeTable, args: argparse.Namespace) -> None:
+    report = build_summary(table, top_n=args.top)
+    print(report)
+    if args.output:
+        with open(args.output, "w") as file:
+            file.write(table.model_dump_json(indent=2))
+        print(f"wrote {args.output}")
+    if args.summary:
+        with open(args.summary, "w") as file:
+            file.write(report)
+        print(f"wrote {args.summary}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Review how a bot's forecasts did")
     source = parser.add_mutually_exclusive_group(required=True)
@@ -28,6 +41,9 @@ def main() -> None:
         type=int,
         metavar="DAYS",
         help="your questions that resolved in the last DAYS days, any tournament",
+    )
+    source.add_argument(
+        "--from-json", metavar="FILE", help="re-render a table saved with --output"
     )
     parser.add_argument(
         "--include-unforecasted",
@@ -48,6 +64,13 @@ def main() -> None:
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)
     load_dotenv()
+
+    if args.from_json:
+        with open(args.from_json) as file:
+            table = OutcomeTable.model_validate_json(file.read())
+        print(f"\nreviewing forecasts made by user {table.user_id}")
+        _write_and_print(table, args)
+        return
 
     client = MetaculusClient(
         sleep_seconds_between_requests=args.seconds_between_requests
@@ -74,17 +97,7 @@ def main() -> None:
             project_name=project_name,
         )
 
-    report = build_summary(table, top_n=args.top)
-    print(report)
-
-    if args.output:
-        with open(args.output, "w") as file:
-            file.write(table.model_dump_json(indent=2))
-        print(f"wrote {args.output}")
-    if args.summary:
-        with open(args.summary, "w") as file:
-            file.write(report)
-        print(f"wrote {args.summary}")
+    _write_and_print(table, args)
 
 
 if __name__ == "__main__":
