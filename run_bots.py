@@ -620,6 +620,38 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     mode_base_bot_mapping = {
         ############################ Bots started in July 2026 ############################
+        "METAC_CLAUDE_OPUS_5": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-opus-5",
+                    temperature=None,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GEMINI_3_6_FLASH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 0.42,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/google/gemini-3.6-flash",
+                    temperature=None,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GEMINI_3_5_FLASH_LITE": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 0.14,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/google/gemini-3.5-flash-lite",
+                    temperature=None,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         "METAC_INKLING": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 0.405,
             "bot": create_bot(
