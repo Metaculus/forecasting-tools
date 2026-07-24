@@ -184,19 +184,43 @@ def outcomes_from_post(post_json: dict) -> list[QuestionOutcome]:
     return []
 
 
+def get_outcomes_for_posts(
+    post_ids: list[int], client: MetaculusClient | None = None
+) -> list[QuestionOutcome]:
+    """
+    Fetch outcomes for specific posts, one request each.
+
+    :param post_ids: post ids, as they appear in question urls
+    :param client: client to fetch with, created from the environment if not given
+    """
+    client = client or MetaculusClient()
+    outcomes: list[QuestionOutcome] = []
+    for post_id in post_ids:
+        fetched = client.get_question_by_post_id(
+            post_id, group_question_mode="unpack_subquestions"
+        )
+        questions = fetched if isinstance(fetched, list) else [fetched]
+        outcomes.extend(outcomes_from_post(questions[0].api_json))
+    return outcomes
+
+
 def get_tournament_outcomes(
-    tournament: int | str, client: MetaculusClient | None = None
+    tournament: int | str,
+    client: MetaculusClient | None = None,
+    forecasted_only: bool = False,
 ) -> TournamentOutcomes:
     """
-    Fetch every question in a tournament and how the bot did on each.
+    Fetch the questions in a tournament and how the bot did on each.
 
     :param tournament: tournament slug or id
     :param client: client to fetch with, created from the environment if not given
+    :param forecasted_only: skip questions the bot never forecast
     """
     client = client or MetaculusClient()
     api_filter = ApiFilter(
         allowed_tournaments=[tournament],
         group_question_mode="unpack_subquestions",
+        is_previously_forecasted_by_user=True if forecasted_only else None,
     )
     listed_questions = asyncio.run(
         client.get_questions_matching_filter(
@@ -208,15 +232,7 @@ def get_tournament_outcomes(
     post_ids = list(dict.fromkeys(question.id_of_post for question in listed_questions))
     logger.info(f"Building outcomes for {len(post_ids)} posts in {tournament}")
 
-    outcomes: list[QuestionOutcome] = []
-    for post_id in post_ids:
-        assert post_id is not None
-        fetched = client.get_question_by_post_id(
-            post_id, group_question_mode="unpack_subquestions"
-        )
-        questions = fetched if isinstance(fetched, list) else [fetched]
-        outcomes.extend(outcomes_from_post(questions[0].api_json))
-
+    outcomes = get_outcomes_for_posts(post_ids, client)  # type: ignore[arg-type]
     project_id = outcomes[0].project_id if outcomes else None
     leaderboard = (
         client.get_project_leaderboard(project_id) if project_id is not None else None
