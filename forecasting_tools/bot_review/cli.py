@@ -29,9 +29,9 @@ def main() -> None:
     source.add_argument("--tournament", help="tournament slug or id")
     source.add_argument("--post", type=int, nargs="+", metavar="POST_ID")
     parser.add_argument(
-        "--all",
+        "--include-unforecasted",
         action="store_true",
-        help="include tournament questions the bot never forecast",
+        help="also include questions in the tournament that the bot never forecast",
     )
     parser.add_argument("--output", help="write the full table to this json file")
     parser.add_argument(
@@ -53,7 +53,9 @@ def main() -> None:
         report = None
     else:
         report = get_tournament_outcomes(
-            args.tournament, client=client, forecasted_only=not args.all
+            args.tournament,
+            client=client,
+            forecasted_only=not args.include_unforecasted,
         )
         outcomes = report.questions
         print(f"{report.project_name} ({report.project_id})")
