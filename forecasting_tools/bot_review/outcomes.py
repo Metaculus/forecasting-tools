@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 CONTINUOUS_TYPES = ("numeric", "date", "discrete")
 MAX_QUESTIONS_PER_TOURNAMENT = 1000
+LATE_RESOLUTION_ALLOWANCE = timedelta(days=14)
 
 
 class QuestionScores(BaseModel):
@@ -218,7 +219,7 @@ def get_recently_resolved_outcomes(
     api_filter = ApiFilter(
         allowed_statuses=["resolved"],
         is_previously_forecasted_by_user=True,
-        scheduled_resolve_time_gt=cutoff,
+        scheduled_resolve_time_gt=cutoff - LATE_RESOLUTION_ALLOWANCE,
         group_question_mode="unpack_subquestions",
     )
     listed_questions = asyncio.run(

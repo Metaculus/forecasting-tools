@@ -200,3 +200,14 @@ class TestRecentlyResolved:
         assert api_filter.allowed_statuses == ["resolved"]
         assert api_filter.is_previously_forecasted_by_user
         assert api_filter.scheduled_resolve_time_gt is not None
+
+    def test_the_api_window_reaches_further_back_than_the_cutoff(self):
+        # a question scheduled before the cutoff can still resolve inside it
+        client = MagicMock()
+        client.get_questions_matching_filter = AsyncMock(return_value=[])
+        with patch.object(outcomes_module, "get_outcomes_for_posts", return_value=[]):
+            get_recently_resolved_outcomes(7, client)
+
+        api_filter = client.get_questions_matching_filter.call_args.args[0]
+        cutoff = datetime.now(tz=timezone.utc) - timedelta(days=7)
+        assert api_filter.scheduled_resolve_time_gt < cutoff
