@@ -6,6 +6,8 @@ import argparse
 import json
 import logging
 
+from dotenv import load_dotenv
+
 from forecasting_tools.bot_review.outcomes import (
     QuestionOutcome,
     get_outcomes_for_posts,
@@ -40,10 +42,12 @@ def main() -> None:
     )
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)
+    load_dotenv()
 
     client = MetaculusClient(
         sleep_seconds_between_requests=args.seconds_between_requests
     )
+    print(f"\nreviewing forecasts made by user {client.get_current_user_id()}")
     if args.post:
         outcomes = get_outcomes_for_posts(args.post, client)
         report = None
@@ -52,7 +56,7 @@ def main() -> None:
             args.tournament, client=client, forecasted_only=not args.all
         )
         outcomes = report.questions
-        print(f"\n{report.project_name} ({report.project_id}) as user {report.user_id}")
+        print(f"{report.project_name} ({report.project_id})")
         print(f"leaderboard: {report.leaderboard_entry}")
 
     scored = [outcome for outcome in outcomes if outcome.scores]
