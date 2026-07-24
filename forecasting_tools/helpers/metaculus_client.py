@@ -23,7 +23,9 @@ from forecasting_tools.data_models.coherence_link import (
     DetailedCoherenceLink,
     NeedsUpdateResponse,
 )
+from forecasting_tools.data_models.comment import Comment
 from forecasting_tools.data_models.data_organizer import DataOrganizer
+from forecasting_tools.data_models.leaderboard import Leaderboard
 from forecasting_tools.data_models.questions import (
     BinaryQuestion,
     ConditionalQuestion,
@@ -154,6 +156,7 @@ class MetaculusClient:
     )  # Going forward, please use the https://metaculus.com/tournament/bot-testing-area/ questions for testing
 
     MAX_QUESTIONS_FROM_QUESTION_API_PER_REQUEST = 100
+    MAX_COMMENTS_FROM_COMMENT_API_PER_REQUEST = 100
 
     def __init__(
         self,
@@ -488,6 +491,89 @@ class MetaculusClient:
         raise_for_status_with_additional_info(response)
         content = json.loads(response.content)
         return int(content["id"])
+
+    def get_own_comments(
+        self,
+        post_id: int | None = None,
+        is_private: bool = True,
+        user_id: int | None = None,
+        max_comments: int = 500,
+    ) -> list[Comment]:
+        """
+        Comments you posted, newest first.
+
+        The API refuses to list any other author's comments, so this is
+        deliberately limited to your own.
+
+        ``is_private`` defaults to True because ``post_question_comment`` posts
+        private comments by default, and the endpoint omits private comments
+        unless asked for them. A bot's own reports are therefore invisible
+        without this, and an empty result is indistinguishable from one where
+        the bot never commented.
+
+        Pass ``user_id`` to skip the lookup request when calling this in a loop.
+        """
+        author_id = user_id if user_id is not None else self.get_current_user_id()
+        comments: list[Comment] = []
+        while len(comments) < max_comments:
+            page_size = min(
+                self.MAX_COMMENTS_FROM_COMMENT_API_PER_REQUEST,
+                max_comments - len(comments),
+            )
+            params: dict[str, Any] = {
+                "author": author_id,
+                "is_private": str(is_private).lower(),
+                "limit": page_size,
+                "offset": len(comments),
+            }
+            if post_id is not None:
+                params["post"] = post_id
+            page = self._get_comment_page(params)
+            comments.extend(Comment.from_metaculus_api_json(item) for item in page)
+            if len(page) < page_size:
+                break
+        logger.info(f"Retrieved {len(comments)} comments for user {author_id}")
+        return comments
+
+    @retry_with_exponential_backoff()
+    def _get_comment_page(self, params: dict[str, Any]) -> list[dict]:
+        self._sleep_between_requests()
+        response = requests.get(
+            f"{self.base_url}/comments/",
+            params=params,
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        raise_for_status_with_additional_info(response)
+        return json.loads(response.content)["results"]
+
+    @retry_with_exponential_backoff()
+    def get_project_leaderboard(self, project_id: int) -> Leaderboard:
+        """
+        The primary leaderboard for a tournament, including your own entry.
+
+        Takes the numeric project id; the slug that works elsewhere 404s here.
+        The endpoint returns every leaderboard attached to the project, of which
+        the primary one is the tournament's actual standings.
+        """
+        self._sleep_between_requests()
+        response = requests.get(
+            f"{self.base_url}/leaderboards/project/{project_id}/",
+            params={"with_entries": "true"},
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        raise_for_status_with_additional_info(response)
+        leaderboards = json.loads(response.content)
+        primary = next(
+            leaderboard
+            for leaderboard in leaderboards
+            if leaderboard["is_primary_leaderboard"]
+        )
+        logger.info(
+            f"Retrieved leaderboard for project {project_id} with {len(primary.get('entries') or [])} entries"
+        )
+        return Leaderboard.from_metaculus_api_json(primary)
 
     @retry_with_exponential_backoff()
     def post_question_link(
