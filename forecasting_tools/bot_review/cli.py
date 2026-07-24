@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from forecasting_tools.bot_review.outcomes import (
     QuestionOutcome,
     get_outcomes_for_posts,
+    get_recently_resolved_outcomes,
     get_tournament_outcomes,
 )
 from forecasting_tools.helpers.metaculus_client import MetaculusClient
@@ -28,6 +29,12 @@ def main() -> None:
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--tournament", help="tournament slug or id")
     source.add_argument("--post", type=int, nargs="+", metavar="POST_ID")
+    source.add_argument(
+        "--resolved-since",
+        type=int,
+        metavar="DAYS",
+        help="your questions that resolved in the last DAYS days, any tournament",
+    )
     parser.add_argument(
         "--include-unforecasted",
         action="store_true",
@@ -50,6 +57,9 @@ def main() -> None:
     print(f"\nreviewing forecasts made by user {client.get_current_user_id()}")
     if args.post:
         outcomes = get_outcomes_for_posts(args.post, client)
+        report = None
+    elif args.resolved_since:
+        outcomes = get_recently_resolved_outcomes(args.resolved_since, client)
         report = None
     else:
         report = get_tournament_outcomes(

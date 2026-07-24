@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from pydantic import BaseModel
@@ -202,6 +202,41 @@ def get_outcomes_for_posts(
         questions = fetched if isinstance(fetched, list) else [fetched]
         outcomes.extend(outcomes_from_post(questions[0].api_json))
     return outcomes
+
+
+def get_recently_resolved_outcomes(
+    days: int, client: MetaculusClient | None = None
+) -> list[QuestionOutcome]:
+    """
+    Fetch the bot's forecasts on questions that resolved in the last few days.
+
+    :param days: how far back to look
+    :param client: client to fetch with, created from the environment if not given
+    """
+    client = client or MetaculusClient()
+    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=days)
+    api_filter = ApiFilter(
+        allowed_statuses=["resolved"],
+        is_previously_forecasted_by_user=True,
+        scheduled_resolve_time_gt=cutoff,
+        group_question_mode="unpack_subquestions",
+    )
+    listed_questions = asyncio.run(
+        client.get_questions_matching_filter(
+            api_filter,
+            num_questions=MAX_QUESTIONS_PER_TOURNAMENT,
+            error_if_question_target_missed=False,
+        )
+    )
+    post_ids = list(dict.fromkeys(question.id_of_post for question in listed_questions))
+    logger.info(f"Building outcomes for {len(post_ids)} posts resolved since {cutoff}")
+    outcomes = get_outcomes_for_posts(post_ids, client)  # type: ignore[arg-type]
+    return [
+        outcome
+        for outcome in outcomes
+        if outcome.actual_resolve_time is not None
+        and outcome.actual_resolve_time >= cutoff
+    ]
 
 
 def get_tournament_outcomes(

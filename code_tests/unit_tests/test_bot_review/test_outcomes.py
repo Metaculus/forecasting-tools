@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import math
+from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
+from forecasting_tools.bot_review import outcomes as outcomes_module
 from forecasting_tools.bot_review.outcomes import (
     cdf_median,
+    get_recently_resolved_outcomes,
     outcomes_from_post,
     scale_internal,
     summarize_forecast,
@@ -162,3 +166,37 @@ class TestOutcomesFromPost:
 
     def test_notebooks_are_skipped(self):
         assert outcomes_from_post({"id": 4, "notebook": {}}) == []
+
+
+class TestRecentlyResolved:
+    def outcome_resolved(self, resolve_time: datetime | None):
+        (outcome,) = outcomes_from_post(make_binary_post())
+        return outcome.model_copy(update={"actual_resolve_time": resolve_time})
+
+    def test_keeps_only_questions_resolved_inside_the_window(self):
+        now = datetime.now(tz=timezone.utc)
+        recent = self.outcome_resolved(now - timedelta(days=2))
+        old = self.outcome_resolved(now - timedelta(days=40))
+        never = self.outcome_resolved(None)
+
+        client = MagicMock()
+        client.get_questions_matching_filter = AsyncMock(return_value=[])
+        with patch.object(
+            outcomes_module,
+            "get_outcomes_for_posts",
+            return_value=[recent, old, never],
+        ):
+            kept = get_recently_resolved_outcomes(7, client)
+
+        assert kept == [recent]
+
+    def test_asks_the_api_for_resolved_questions_it_forecast(self):
+        client = MagicMock()
+        client.get_questions_matching_filter = AsyncMock(return_value=[])
+        with patch.object(outcomes_module, "get_outcomes_for_posts", return_value=[]):
+            get_recently_resolved_outcomes(7, client)
+
+        api_filter = client.get_questions_matching_filter.call_args.args[0]
+        assert api_filter.allowed_statuses == ["resolved"]
+        assert api_filter.is_previously_forecasted_by_user
+        assert api_filter.scheduled_resolve_time_gt is not None
