@@ -5,6 +5,9 @@ SUMMARY listing each forecaster's prediction, the RESEARCH behind them, and one
 FORECASTS subsection per forecaster. That string is what gets saved to disk and
 what gets posted to Metaculus as a comment, so the same functions read either.
 
+Sections come from ``MarkdownTree``, the same splitter ``ForecastReport`` uses.
+The summary bullets are not headings, so they are read directly.
+
 Forecasters are keyed ``R<research report>:F<forecaster>``, since a bot running
 more than one research report per question has a forecaster 1 in each.
 """
@@ -13,14 +16,14 @@ from __future__ import annotations
 
 import re
 
+from forecasting_tools.data_models.markdown_tree import MarkdownTree
+
 SECTIONS = ("summary", "research", "forecasts")
 REPORT_PATTERN = re.compile(r"^## Report (\d+) Summary\s*$", re.MULTILINE)
 FORECASTER_PATTERN = re.compile(
     r"^\*Forecaster (\d+)(?: \(([^)]*)\))?\*:", re.MULTILINE
 )
-RATIONALE_PATTERN = re.compile(
-    r"^## R(\d+): Forecaster (\d+) Reasoning\s*$", re.MULTILINE
-)
+RATIONALE_TITLE_PATTERN = re.compile(r"^R(\d+): Forecaster (\d+) Reasoning$")
 FINAL_PREDICTION_PATTERN = re.compile(
     r"^\*Final Prediction\*:(.*?)(?=^\*[A-Z]|^## |\Z)", re.MULTILINE | re.DOTALL
 )
@@ -28,17 +31,25 @@ FINAL_PREDICTION_PATTERN = re.compile(
 
 def split_sections(explanation: str) -> dict[str, str]:
     """The SUMMARY / RESEARCH / FORECASTS blocks, by lowercased name."""
-    marks = []
-    for name in SECTIONS:
-        match = re.search(rf"^# {name.upper()}\s*$", explanation, re.MULTILINE)
-        if match:
-            marks.append((match.start(), match.end(), name))
-    marks.sort()
-    sections = {}
-    for i, (_, end, name) in enumerate(marks):
-        stop = marks[i + 1][0] if i + 1 < len(marks) else len(explanation)
-        sections[name] = explanation[end:stop].strip()
-    return sections
+    return {
+        section.title.strip().lower(): section.text_of_section_and_subsections.strip()
+        for section in MarkdownTree.turn_markdown_into_report_sections(explanation)
+        if section.title and section.title.strip().lower() in SECTIONS
+    }
+
+
+def forecaster_rationales(explanation: str) -> dict[str, str]:
+    """Full reasoning text for each forecaster."""
+    rationales = {}
+    for section in MarkdownTree.turn_markdown_into_report_sections(explanation):
+        if not section.title or section.title.strip().lower() != "forecasts":
+            continue
+        for subsection in section.sub_sections:
+            match = RATIONALE_TITLE_PATTERN.match((subsection.title or "").strip())
+            if match:
+                key = f"R{match.group(1)}:F{match.group(2)}"
+                rationales[key] = subsection.text_of_section_and_subsections.strip()
+    return rationales
 
 
 def _bodies_between(text: str, marks: list[tuple[int, int]]) -> list[str]:
@@ -61,8 +72,8 @@ def forecasts_block(summary: str) -> str:
 def parse_forecasters(summary: str) -> list[dict]:
     """Each forecaster's prediction as it was written in the summary.
 
-    ``model`` is None unless the bot annotates its own bullets with model names;
-    stock forecasting-tools does not.
+    ``model`` is None unless the bot annotates its own bullets with model names,
+    which the framework does not do.
     """
     reports = list(REPORT_PATTERN.finditer(summary))
     blocks = _bodies_between(summary, [(m.start(), m.end()) for m in reports])
@@ -80,17 +91,6 @@ def parse_forecasters(summary: str) -> list[dict]:
             for match, body in zip(matches, bodies)
         ]
     return forecasters
-
-
-def forecaster_rationales(explanation: str) -> dict[str, str]:
-    """Full reasoning text for each forecaster."""
-    block = split_sections(explanation).get("forecasts", "")
-    matches = list(RATIONALE_PATTERN.finditer(block))
-    bodies = _bodies_between(block, [(m.start(), m.end()) for m in matches])
-    return {
-        f"R{match.group(1)}:F{match.group(2)}": body
-        for match, body in zip(matches, bodies)
-    }
 
 
 def final_prediction(summary: str) -> str:

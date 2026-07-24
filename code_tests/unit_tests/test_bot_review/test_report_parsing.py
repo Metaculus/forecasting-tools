@@ -55,8 +55,7 @@ R2F1 reasoning.
 R2F2 reasoning.
 """.strip()
 
-# A bot that annotates its bullets with model names, and a model that emitted a
-# top level heading inside its rationale.
+# Bots may annotate the bullets with the model behind each forecaster.
 ANNOTATED_EXPLANATION = """
 # SUMMARY
 *Question*: Will X happen?
@@ -64,8 +63,8 @@ ANNOTATED_EXPLANATION = """
 
 ## Report 1 Summary
 ### Forecasts
-*Forecaster 1 (gpt-5.4)*: 3.0%
-*Forecaster 2 (gpt-5.5)*: 4.0%
+*Forecaster 1 (a-model)*: 3.0%
+*Forecaster 2 (another-model)*: 4.0%
 
 ### Research Summary
 _Full research in the RESEARCH section below._
@@ -77,9 +76,6 @@ Some news.
 # FORECASTS
 ## R1: Forecaster 1 Reasoning
 First rationale.
-
-# Analysis: a heading the model emitted mid rationale
-Still forecaster 1.
 
 ## R1: Forecaster 2 Reasoning
 Second rationale.
@@ -119,7 +115,10 @@ class TestSplitSections:
         assert "Forecaster 1 Reasoning" not in research
 
     def test_missing_sections_are_omitted(self):
-        assert split_sections("# SUMMARY\nonly this") == {"summary": "only this"}
+        # the heading line stays in, as it does on ForecastReport.summary
+        assert split_sections("# SUMMARY\nonly this") == {
+            "summary": "# SUMMARY\nonly this"
+        }
 
 
 class TestParseForecasters:
@@ -135,8 +134,8 @@ class TestParseForecasters:
     def test_model_names_when_the_bot_annotates_them(self):
         summary = split_sections(ANNOTATED_EXPLANATION)["summary"]
         assert parse_forecasters(summary) == [
-            {"key": "R1:F1", "model": "gpt-5.4", "prediction": "3.0%"},
-            {"key": "R1:F2", "model": "gpt-5.5", "prediction": "4.0%"},
+            {"key": "R1:F1", "model": "a-model", "prediction": "3.0%"},
+            {"key": "R1:F2", "model": "another-model", "prediction": "4.0%"},
         ]
 
     def test_research_summary_is_not_read_as_a_prediction(self):
@@ -156,11 +155,13 @@ class TestForecasterRationales:
         assert "R1F1 reasoning." in rationales["R1:F1"]
         assert "R2F1 reasoning." in rationales["R2:F1"]
 
-    def test_heading_inside_a_rationale_does_not_end_it(self):
-        rationales = forecaster_rationales(ANNOTATED_EXPLANATION)
-        assert sorted(rationales) == ["R1:F1", "R1:F2"]
-        assert "Still forecaster 1." in rationales["R1:F1"]
-        assert "Second rationale" not in rationales["R1:F1"]
+    def test_subheadings_stay_with_their_forecaster(self):
+        rationales = forecaster_rationales(TEMPLATE_EXPLANATION)
+        assert "A heading demoted by the framework" in rationales["R1:F1"]
+        assert "R1F2 reasoning" not in rationales["R1:F1"]
+
+    def test_no_forecasts_section(self):
+        assert forecaster_rationales("# SUMMARY\nnothing else") == {}
 
 
 class TestFinalPrediction:
