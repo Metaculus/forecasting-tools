@@ -73,7 +73,6 @@ class TestLeaderboardParsing:
         assert Leaderboard.from_metaculus_api_json(without_entry).user_entry is None
 
     def test_community_aggregates_rank_alongside_forecasters(self):
-        # These entries have no user; they are the crowd you are being compared to.
         aggregate = {
             **ENTRY_JSON,
             "user": None,

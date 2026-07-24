@@ -500,18 +500,12 @@ class MetaculusClient:
         max_comments: int = 500,
     ) -> list[Comment]:
         """
-        Comments you posted, newest first.
+        Comments you posted, newest first. The API only allows listing your own.
 
-        The API refuses to list any other author's comments, so this is
-        deliberately limited to your own.
-
-        ``is_private`` defaults to True because ``post_question_comment`` posts
-        private comments by default, and the endpoint omits private comments
-        unless asked for them. A bot's own reports are therefore invisible
-        without this, and an empty result is indistinguishable from one where
-        the bot never commented.
-
-        Pass ``user_id`` to skip the lookup request when calling this in a loop.
+        :param post_id: only return comments on this post
+        :param is_private: whether to return private or public comments
+        :param user_id: your own user id, looked up if not given
+        :param max_comments: stop paging once this many are collected
         """
         author_id = user_id if user_id is not None else self.get_current_user_id()
         comments: list[Comment] = []
@@ -550,11 +544,9 @@ class MetaculusClient:
     @retry_with_exponential_backoff()
     def get_project_leaderboard(self, project_id: int) -> Leaderboard:
         """
-        The primary leaderboard for a tournament, including your own entry.
+        The primary leaderboard for a project, including your own entry.
 
-        Takes the numeric project id; the slug that works elsewhere 404s here.
-        The endpoint returns every leaderboard attached to the project, of which
-        the primary one is the tournament's actual standings.
+        :param project_id: numeric project id (slugs are not accepted here)
         """
         self._sleep_between_requests()
         response = requests.get(

@@ -1,15 +1,11 @@
 """Pull structure back out of a report explanation.
 
-``ForecastBot._create_comment`` assembles every report into the same shape: a
-SUMMARY listing each forecaster's prediction, the RESEARCH behind them, and one
-FORECASTS subsection per forecaster. That string is what gets saved to disk and
-what gets posted to Metaculus as a comment, so the same functions read either.
+Reads the format ``ForecastBot._create_comment`` produces: a SUMMARY listing
+each forecaster's prediction, the RESEARCH behind them, and one FORECASTS
+subsection per forecaster. Works on a saved report or on the comment text
+posted to Metaculus, which are the same string.
 
-Sections come from ``MarkdownTree``, the same splitter ``ForecastReport`` uses.
-The summary bullets are not headings, so they are read directly.
-
-Forecasters are keyed ``R<research report>:F<forecaster>``, since a bot running
-more than one research report per question has a forecaster 1 in each.
+Forecasters are keyed ``R<research report>:F<forecaster>``.
 """
 
 from __future__ import annotations
@@ -72,8 +68,7 @@ def forecasts_block(summary: str) -> str:
 def parse_forecasters(summary: str) -> list[dict]:
     """Each forecaster's prediction as it was written in the summary.
 
-    ``model`` is None unless the bot annotates its own bullets with model names,
-    which the framework does not do.
+    ``model`` is None unless the bot annotates its summary bullets with model names.
     """
     reports = list(REPORT_PATTERN.finditer(summary))
     blocks = _bodies_between(summary, [(m.start(), m.end()) for m in reports])

@@ -6,9 +6,8 @@ from pydantic import BaseModel
 class LeaderboardEntry(BaseModel):
     """One forecaster's standing on a leaderboard.
 
-    Community aggregates are ranked alongside forecasters. Those entries have no
-    user and carry an ``aggregation_method`` instead, so comparing your rank
-    against them is how you tell whether you beat the crowd.
+    Community aggregates appear as entries with no user and an
+    ``aggregation_method`` set.
     """
 
     user_id: int | None
@@ -40,11 +39,7 @@ class LeaderboardEntry(BaseModel):
 
 
 class Leaderboard(BaseModel):
-    """A tournament's leaderboard, plus your own entry on it.
-
-    ``user_entry`` is None when the requesting user has no standing on this
-    leaderboard, which is also the case for a tournament they never forecast.
-    """
+    """A project's leaderboard. ``user_entry`` is None if you have no standing on it."""
 
     project_id: int
     project_name: str | None

@@ -6,16 +6,7 @@ from pydantic import BaseModel
 
 
 class Comment(BaseModel):
-    """A comment on a Metaculus post.
-
-    A bot publishing a report posts the report's explanation as the comment
-    text, so ``text`` parses with the same functions that read a saved
-    ``ForecastReport``.
-
-    ``on_post`` is a post id, not a question id. The two are separate sequences
-    that overlap, so joining question-level data on ``on_post`` silently matches
-    the wrong question rather than matching nothing.
-    """
+    """A comment on a Metaculus post. ``on_post`` is a post id, not a question id."""
 
     id: int
     on_post: int
