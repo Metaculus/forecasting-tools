@@ -63,6 +63,7 @@ source-archive = ["boto3", "playwright", "firecrawl-py", "trafilatura"]
 
 [tool.poetry.scripts]
 source-archive = "forecasting_tools.agents_and_tools.source_archive.cli:main"
+bot-review = "forecasting_tools.bot_review.cli:main"
 
 [tool.poetry.group.dev.dependencies]
 time-machine = ">=2.19.0,<4.0.0"
