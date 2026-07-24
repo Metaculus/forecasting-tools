@@ -13,7 +13,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from forecasting_tools.data_models.leaderboard import LeaderboardEntry
+from forecasting_tools.data_models.leaderboard import Leaderboard
 from forecasting_tools.helpers.metaculus_client import ApiFilter, MetaculusClient
 
 logger = logging.getLogger(__name__)
@@ -63,16 +63,16 @@ class QuestionOutcome(BaseModel):
         return self.resolution == "annulled"
 
 
-class TournamentOutcomes(BaseModel):
-    """Every question in a tournament, with the bot's standing on it."""
+class OutcomeTable(BaseModel):
+    """A set of questions, the bot's forecasts on them, and its standing."""
 
     generated_at: datetime
-    project_id: int | None
-    project_slug: str | None
-    project_name: str | None
     user_id: int
-    leaderboard_entry: LeaderboardEntry | None
     questions: list[QuestionOutcome]
+    project_id: int | None = None
+    project_slug: str | None = None
+    project_name: str | None = None
+    leaderboard: Leaderboard | None = None
 
 
 def scale_internal(location: float, scaling: dict) -> float | None:
@@ -244,7 +244,7 @@ def get_tournament_outcomes(
     tournament: int | str,
     client: MetaculusClient | None = None,
     forecasted_only: bool = False,
-) -> TournamentOutcomes:
+) -> OutcomeTable:
     """
     Fetch the questions in a tournament and how the bot did on each.
 
@@ -273,12 +273,12 @@ def get_tournament_outcomes(
     leaderboard = (
         client.get_project_leaderboard(project_id) if project_id is not None else None
     )
-    return TournamentOutcomes(
+    return OutcomeTable(
         generated_at=datetime.now(tz=timezone.utc),
         project_id=project_id,
         project_slug=outcomes[0].project_slug if outcomes else None,
         project_name=outcomes[0].project_name if outcomes else None,
         user_id=client.get_current_user_id(),
-        leaderboard_entry=leaderboard.user_entry if leaderboard else None,
+        leaderboard=leaderboard,
         questions=outcomes,
     )
