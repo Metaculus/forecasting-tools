@@ -15,6 +15,7 @@ from forecasting_tools.bot_review.outcomes import (
     get_tournament_outcomes,
 )
 from forecasting_tools.bot_review.summary import build_summary
+from forecasting_tools.bot_review.traces import attach_traces, get_trace
 from forecasting_tools.helpers.metaculus_client import MetaculusClient
 
 
@@ -44,6 +45,21 @@ def main() -> None:
     )
     source.add_argument(
         "--from-json", metavar="FILE", help="re-render a table saved with --output"
+    )
+    source.add_argument(
+        "--show",
+        type=int,
+        metavar="POST_ID",
+        help="print part of the bot's report on one post",
+    )
+    parser.add_argument(
+        "--section",
+        default="research",
+        choices=["summary", "research", "forecasts"],
+        help="which section --show prints",
+    )
+    parser.add_argument(
+        "--forecaster", metavar="KEY", help="print one rationale, e.g. R1:F2"
     )
     parser.add_argument(
         "--include-unforecasted",
@@ -75,6 +91,10 @@ def main() -> None:
     client = MetaculusClient(
         sleep_seconds_between_requests=args.seconds_between_requests
     )
+    if args.show:
+        print(get_trace(args.show, args.section, args.forecaster, client))
+        return
+
     user_id = client.get_current_user_id()
     print(f"\nreviewing forecasts made by user {user_id}")
     if args.tournament:
@@ -97,6 +117,7 @@ def main() -> None:
             project_name=project_name,
         )
 
+    attach_traces(table, client)
     _write_and_print(table, args)
 
 

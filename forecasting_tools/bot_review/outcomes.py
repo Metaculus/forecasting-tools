@@ -35,6 +35,19 @@ class QuestionScores(BaseModel):
     relative_legacy_score: float | None = None
 
 
+class RunTrace(BaseModel):
+    """One run of the bot on one question, as recorded in the comment it posted."""
+
+    comment_id: int
+    post_id: int
+    run_time: datetime
+    question_text: str | None
+    forecasters: list[dict[str, Any]]
+    cost: float | None
+    minutes: float | None
+    truncated: bool
+
+
 class QuestionOutcome(BaseModel):
     """A question, the bot's forecast on it, and the result."""
 
@@ -57,10 +70,20 @@ class QuestionOutcome(BaseModel):
     project_id: int | None
     project_slug: str | None
     project_name: str | None
+    traces: list[RunTrace] = []
 
     @property
     def was_annulled(self) -> bool:
         return self.resolution == "annulled"
+
+    @property
+    def trace(self) -> RunTrace | None:
+        """The run standing when the question was spot scored, if any was."""
+        runs = sorted(self.traces, key=lambda run: run.run_time)
+        if self.spot_scoring_time is None:
+            return runs[-1] if runs else None
+        standing = [run for run in runs if run.run_time <= self.spot_scoring_time]
+        return standing[-1] if standing else None
 
 
 class OutcomeTable(BaseModel):

@@ -123,6 +123,11 @@ def build_summary(table: OutcomeTable, top_n: int = 10) -> str:
             f"- Forecasted but unscored: {len(unscored)} "
             f"({len(resolved_unscored)} resolved without a score)"
         ),
+        (
+            f"- Traced: {sum(1 for o in forecasted if o.trace)} "
+            f"({sum(1 for o in forecasted if o.traces and not o.trace)} ran only after "
+            "spot scoring time)"
+        ),
     ]
     for outcome in resolved_unscored:
         lines.append(
