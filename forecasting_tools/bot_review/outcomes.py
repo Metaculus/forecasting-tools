@@ -39,7 +39,6 @@ class RunTrace(BaseModel):
     """One run of the bot on one question, as recorded in the comment it posted."""
 
     comment_id: int
-    post_id: int
     run_time: datetime
     question_text: str | None
     forecasters: list[dict[str, Any]]

@@ -83,7 +83,6 @@ class TestReduceComment:
     def test_reads_the_metadata_the_bot_writes_into_its_report(self):
         trace = reduce_comment(make_comment())
         assert trace.comment_id == 1
-        assert trace.post_id == 1
         assert trace.run_time == RUN_TIME
         assert trace.question_text == "Q1"
         assert trace.cost == 0.0706
@@ -238,6 +237,19 @@ class TestGetTrace:
             make_comment(comment_id=2, created_at=RUN_TIME + timedelta(hours=1)),
         )
         assert "the research" in get_trace(1, "research", client=client)
+
+    def test_reads_the_run_that_scored_when_given_its_comment_id(self):
+        client = self.client_returning(
+            make_comment(
+                comment_id=1, text=EXPLANATION.replace("the research", "the scored run")
+            ),
+            make_comment(comment_id=2, created_at=RUN_TIME + timedelta(hours=1)),
+        )
+        assert "the scored run" in get_trace(1, "research", comment_id=1, client=client)
+
+    def test_an_unknown_comment_id_returns_nothing(self):
+        client = self.client_returning(make_comment(comment_id=1))
+        assert get_trace(1, comment_id=99, client=client) == ""
 
     def test_a_post_with_no_comments(self):
         assert get_trace(1, client=self.client_returning()) == ""

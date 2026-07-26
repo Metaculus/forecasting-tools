@@ -36,7 +36,6 @@ def reduce_comment(comment: Comment) -> RunTrace:
     minutes = MINUTES_PATTERN.search(comment.text)
     return RunTrace(
         comment_id=comment.id,
-        post_id=comment.on_post,
         run_time=comment.created_at,
         question_text=question.group(1).strip() if question else None,
         forecasters=parse_forecasters(summary),
@@ -95,14 +94,16 @@ def get_trace(
     post_id: int,
     section: str = "research",
     forecaster: str | None = None,
+    comment_id: int | None = None,
     client: MetaculusClient | None = None,
 ) -> str:
     """
-    One part of the bot's latest report on a post.
+    One part of a report the bot posted, by default its latest on the post.
 
     :param post_id: post id, as it appears in question urls
     :param section: summary, research or forecasts
     :param forecaster: a key like ``R1:F2``, to read that rationale instead
+    :param comment_id: a trace's ``comment_id``, to read the run that scored
     :param client: client to fetch with, created from the environment if not given
     """
     client = client or MetaculusClient()
@@ -113,6 +114,7 @@ def get_trace(
         for comment in client.get_own_comments(
             post_id=post_id, is_private=is_private, user_id=user_id
         )
+        if comment_id is None or comment.id == comment_id
     ]
     if not comments:
         return ""

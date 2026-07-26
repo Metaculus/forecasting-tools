@@ -62,6 +62,12 @@ def main() -> None:
         "--forecaster", metavar="KEY", help="print one rationale, e.g. R1:F2"
     )
     parser.add_argument(
+        "--comment",
+        type=int,
+        metavar="ID",
+        help="which run --show reads, from a trace's comment_id (default: the latest)",
+    )
+    parser.add_argument(
         "--include-unforecasted",
         action="store_true",
         help="also include questions in the tournament that the bot never forecast",
@@ -92,7 +98,7 @@ def main() -> None:
         sleep_seconds_between_requests=args.seconds_between_requests
     )
     if args.show:
-        print(get_trace(args.show, args.section, args.forecaster, client))
+        print(get_trace(args.show, args.section, args.forecaster, args.comment, client))
         return
 
     user_id = client.get_current_user_id()
