@@ -15,6 +15,7 @@ def make_question(
     post_id: int,
     spot_peer: float | None = 0.0,
     baseline: float | None = 0.0,
+    peer: float | None = None,
     scored: bool = True,
     forecasted: bool = True,
     resolution: str | None = "yes",
@@ -37,7 +38,10 @@ def make_question(
         forecast_time=None,
         scores=(
             QuestionScores(
-                spot_peer_score=spot_peer, baseline_score=baseline, coverage=0.5
+                spot_peer_score=spot_peer,
+                baseline_score=baseline,
+                peer_score=peer,
+                coverage=0.5,
             )
             if scored
             else None
@@ -48,7 +52,9 @@ def make_question(
     )
 
 
-def make_leaderboard(rank: int = 3, entries: int = 50) -> Leaderboard:
+def make_leaderboard(
+    rank: int = 3, entries: int = 50, score_type: str = "spot_peer_tournament"
+) -> Leaderboard:
     def entry(user_id: int | None, rank: int | None) -> LeaderboardEntry:
         return LeaderboardEntry(
             user_id=user_id,
@@ -67,7 +73,7 @@ def make_leaderboard(rank: int = 3, entries: int = 50) -> Leaderboard:
         project_id=1,
         project_name="TestCup",
         project_slug="testcup",
-        score_type="spot_peer_tournament",
+        score_type=score_type,
         finalized=False,
         entries=[entry(i, i) for i in range(1, entries + 1)],
         user_entry=entry(7, rank),
@@ -135,9 +141,34 @@ def test_best_worst_ordering():
 
 def test_signed_formatting_and_leaderboard():
     report = build_summary(make_table())
-    assert "+25.0 spot-peer" in report
-    assert "-15.0 spot-peer" in report
+    assert "+25.0 spot peer" in report
+    assert "-15.0 spot peer" in report
     assert "Rank: **3 / 50** (spot_peer_tournament)" in report
+
+
+def test_a_peer_tournament_is_ranked_on_peer_score():
+    questions = [
+        make_question(1, spot_peer=90.0, peer=-5.0),
+        make_question(2, spot_peer=-90.0, peer=10.0),
+    ]
+    report = build_summary(
+        make_table(
+            questions=questions,
+            leaderboard=make_leaderboard(score_type="peer_tournament"),
+        )
+    )
+    assert "## Best 2 (by peer score)" in report
+    assert report.split("## Best")[1].index("Q2") < report.split("## Best")[1].index(
+        "Q1"
+    )
+    assert "+10.0 peer" in report
+
+
+def test_an_unknown_score_type_falls_back_to_spot_peer():
+    report = build_summary(
+        make_table(leaderboard=make_leaderboard(score_type="comment_insight"))
+    )
+    assert "## Best 4 (by spot peer score)" in report
 
 
 def test_mean_coverage_over_scored():

@@ -10,7 +10,24 @@ from collections import Counter
 
 from forecasting_tools.bot_review.outcomes import OutcomeTable, QuestionOutcome
 
-RANK_METRIC = "spot_peer_score"
+METRIC_BY_SCORE_TYPE = {
+    "peer_tournament": "peer_score",
+    "spot_peer_tournament": "spot_peer_score",
+    "spot_baseline_tournament": "spot_baseline_score",
+    "relative_legacy_tournament": "relative_legacy_score",
+}
+DEFAULT_METRIC = "spot_peer_score"
+
+
+def _rank_metric(table: OutcomeTable) -> str:
+    """The per-question score the table's leaderboard ranks on."""
+    if table.leaderboard is None:
+        return DEFAULT_METRIC
+    return METRIC_BY_SCORE_TYPE.get(table.leaderboard.score_type, DEFAULT_METRIC)
+
+
+def _metric_label(metric: str) -> str:
+    return metric.removesuffix("_score").replace("_", " ")
 
 
 def _signed(value: float | None) -> str:
@@ -21,10 +38,10 @@ def _project_label(outcome: QuestionOutcome) -> str:
     return outcome.project_name or outcome.project_slug or str(outcome.project_id)
 
 
-def _question_line(rank: int, outcome: QuestionOutcome) -> str:
+def _question_line(rank: int, outcome: QuestionOutcome, metric: str) -> str:
     assert outcome.scores is not None
     return (
-        f"{rank}. {_signed(outcome.scores.spot_peer_score)} spot-peer · "
+        f"{rank}. {_signed(getattr(outcome.scores, metric))} {_metric_label(metric)} · "
         f"{_signed(outcome.scores.baseline_score)} baseline · "
         f"{outcome.question_type} · [{outcome.title}]({outcome.url})"
     )
@@ -76,14 +93,15 @@ def build_summary(table: OutcomeTable, top_n: int = 10) -> str:
     resolved_unscored = [
         outcome for outcome in unscored if outcome.status == "resolved"
     ]
+    metric = _rank_metric(table)
     ranked = sorted(
         (
             outcome
             for outcome in scored
             if outcome.scores is not None
-            and getattr(outcome.scores, RANK_METRIC) is not None
+            and getattr(outcome.scores, metric) is not None
         ),
-        key=lambda outcome: getattr(outcome.scores, RANK_METRIC),
+        key=lambda outcome: getattr(outcome.scores, metric),
         reverse=True,
     )
 
@@ -116,9 +134,12 @@ def build_summary(table: OutcomeTable, top_n: int = 10) -> str:
         scored_here = sum(1 for o in scored if _project_label(o) == label)
         lines.append(f"- {label}: {count} questions ({scored_here} scored)")
 
-    lines += ["", f"## Best {min(top_n, len(ranked))} (by spot peer score)", ""]
-    lines += [_question_line(i, o) for i, o in enumerate(ranked[:top_n], 1)]
-    lines += ["", f"## Worst {min(top_n, len(ranked))} (by spot peer score)", ""]
-    lines += [_question_line(i, o) for i, o in enumerate(reversed(ranked[-top_n:]), 1)]
+    metric_label = f"{_metric_label(metric)} score"
+    lines += ["", f"## Best {min(top_n, len(ranked))} (by {metric_label})", ""]
+    lines += [_question_line(i, o, metric) for i, o in enumerate(ranked[:top_n], 1)]
+    lines += ["", f"## Worst {min(top_n, len(ranked))} (by {metric_label})", ""]
+    lines += [
+        _question_line(i, o, metric) for i, o in enumerate(reversed(ranked[-top_n:]), 1)
+    ]
 
     return "\n".join(lines) + "\n"
