@@ -46,20 +46,43 @@ def reduce_comment(comment: Comment) -> RunTrace:
     )
 
 
-def attach_traces(table: OutcomeTable, client: MetaculusClient | None = None) -> None:
+def attach_traces(
+    table: OutcomeTable,
+    client: MetaculusClient | None = None,
+    max_comments: int = 500,
+) -> None:
     """
-    Fill in ``traces`` on every question in the table, one request per post.
+    Fill in ``traces`` on every question in the table.
+
+    Bots publish their reports privately or publicly depending on how they are
+    configured, so both are fetched.
 
     :param table: the table to attach to, modified in place
     :param client: client to fetch with, created from the environment if not given
+    :param max_comments: how far back to page, per privacy setting
     """
     client = client or MetaculusClient()
+    user_id = client.get_current_user_id()
+    comments = [
+        comment
+        for is_private in (True, False)
+        for comment in client.get_own_comments(
+            is_private=is_private, user_id=user_id, max_comments=max_comments
+        )
+    ]
     rows_by_post = defaultdict(list)
     for outcome in table.questions:
         rows_by_post[outcome.post_id].append(outcome)
-    logger.info(f"Fetching comments for {len(rows_by_post)} posts")
+    comments_by_post = defaultdict(list)
+    for comment in comments:
+        if comment.on_post in rows_by_post:
+            comments_by_post[comment.on_post].append(comment)
+    logger.info(
+        f"Read {len(comments)} comments, {sum(map(len, comments_by_post.values()))} "
+        f"of them on the {len(rows_by_post)} posts in the table"
+    )
     for post_id, rows in rows_by_post.items():
-        runs = [reduce_comment(c) for c in client.get_own_comments(post_id=post_id)]
+        runs = [reduce_comment(c) for c in comments_by_post[post_id]]
         for outcome in rows:
             outcome.traces = (
                 runs
@@ -83,7 +106,14 @@ def get_trace(
     :param client: client to fetch with, created from the environment if not given
     """
     client = client or MetaculusClient()
-    comments = client.get_own_comments(post_id=post_id)
+    user_id = client.get_current_user_id()
+    comments = [
+        comment
+        for is_private in (True, False)
+        for comment in client.get_own_comments(
+            post_id=post_id, is_private=is_private, user_id=user_id
+        )
+    ]
     if not comments:
         return ""
     text = max(comments, key=lambda comment: comment.created_at).text

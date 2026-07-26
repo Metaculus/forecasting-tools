@@ -110,15 +110,39 @@ class TestReduceComment:
 
 class TestAttachTraces:
     def client_returning(self, *comments) -> MagicMock:
+        """A client whose comments are all private, as most bots post them."""
         client = MagicMock()
-        client.get_own_comments.return_value = list(comments)
+        client.get_own_comments.side_effect = lambda **kwargs: (
+            list(comments) if kwargs.get("is_private") else []
+        )
         return client
 
-    def test_one_request_per_post_not_per_question(self):
-        questions = [make_question(1), make_question(1)]
+    def test_comments_are_read_in_bulk_not_once_per_post(self):
+        questions = [make_question(1), make_question(2), make_question(3)]
         client = self.client_returning(make_comment())
         attach_traces(make_table(questions), client)
-        assert client.get_own_comments.call_count == 1
+        assert client.get_own_comments.call_count == 2
+        assert [
+            c.kwargs["is_private"] for c in client.get_own_comments.call_args_list
+        ] == [
+            True,
+            False,
+        ]
+
+    def test_public_comments_are_read_too(self):
+        question = make_question(1)
+        client = MagicMock()
+        client.get_own_comments.side_effect = lambda **kwargs: (
+            [] if kwargs.get("is_private") else [make_comment(comment_id=9)]
+        )
+        attach_traces(make_table([question]), client)
+        assert [t.comment_id for t in question.traces] == [9]
+
+    def test_comments_on_other_posts_are_ignored(self):
+        question = make_question(1)
+        client = self.client_returning(make_comment(post_id=1), make_comment(post_id=2))
+        attach_traces(make_table([question]), client)
+        assert len(question.traces) == 1
 
     def test_a_group_post_splits_its_comments_by_question_text(self):
         first = make_question(title="Q1")
@@ -191,8 +215,11 @@ class TestSelectingTheScoredRun:
 
 class TestGetTrace:
     def client_returning(self, *comments) -> MagicMock:
+        """A client whose comments are all private, as most bots post them."""
         client = MagicMock()
-        client.get_own_comments.return_value = list(comments)
+        client.get_own_comments.side_effect = lambda **kwargs: (
+            list(comments) if kwargs.get("is_private") else []
+        )
         return client
 
     def test_returns_the_asked_for_section(self):
