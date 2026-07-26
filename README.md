@@ -21,6 +21,7 @@ Here are the tools most likely to be useful to you:
 - 🎯 **Forecasting Bot:** General forecaster that integrates with the Metaculus AI benchmarking competition and provides a number of utilities. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the aggregation/API code, etc)
 - 🔌 **Metaculus API Wrapper:** for interacting with questions and tournaments
 - 🤖 **In-House Metaculus Bots**: You can see all the bots that Metaculus is running on their site in `run_bots.py`
+- 🔍 **Bot Review:** `bot-review` scores your bot's resolved forecasts and shows what it was thinking on the ones it got wrong. See [Reviewing a bot's forecasts](#reviewing-a-bots-forecasts)
 
 Here are some other features of the project (not all are documented yet):
 - **General LLM Wrapper:** A unified interface around litellm with retry logic, the Metaculus proxy, structured outputs, and cost tracking
@@ -509,6 +510,49 @@ with MonetaryCostManager(max_cost) as cost_manager:
 
     current_cost = cost_manager.current_usage
     print(f"Current cost: ${current_cost:.2f}")
+```
+
+# Reviewing a bot's forecasts
+
+`bot-review` builds a table of how your bot's forecasts turned out and attaches the reports it
+posted, so you can see what it was thinking on the questions it got wrong. Everything is
+read-only: it makes no forecasts, spends nothing on LLMs, and publishes nothing. All it needs
+is `METACULUS_TOKEN`.
+
+```bash
+bot-review --tournament <slug-or-id> --output review.json --summary review.md
+bot-review --resolved-since 30                    # anything that resolved recently
+bot-review --post 44328 44326                     # specific questions
+bot-review --from-json review.json --top 3        # re-render without refetching
+```
+
+The markdown summary gives your leaderboard standing, how many questions were forecast and
+scored, and the best and worst questions ranked on whichever score the leaderboard uses — spot
+peer for the AI benchmark tournaments, time-averaged peer for the Metaculus Cup.
+
+The JSON adds per-question detail: the official scores, the bot's forecast, and one `RunTrace`
+per run taken from the comment that run posted — each forecaster's prediction, the run time,
+cost and minutes where the bot leaves that metadata in. `QuestionOutcome.trace` picks the run
+that was standing when the question was spot scored, which is the one that earned the score.
+
+Reasoning text is not stored. Pull it a piece at a time:
+
+```bash
+bot-review --show 44328 --comment 921582 --section research
+bot-review --show 44328 --comment 921582 --forecaster R1:F3
+```
+
+Or from Python:
+
+```python
+from forecasting_tools.bot_review.outcomes import get_tournament_outcomes
+from forecasting_tools.bot_review.summary import build_summary
+from forecasting_tools.bot_review.traces import attach_traces, get_trace
+
+table = get_tournament_outcomes("minibench-2026-06-29")
+attach_traces(table)
+print(build_summary(table))
+print(get_trace(44328, section="research"))
 ```
 
 # Local Development
