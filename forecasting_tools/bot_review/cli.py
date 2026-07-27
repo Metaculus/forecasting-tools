@@ -6,7 +6,7 @@ import argparse
 import logging
 from datetime import datetime, timezone
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
 from forecasting_tools.bot_review.outcomes import (
     OutcomeTable,
@@ -93,7 +93,7 @@ def main() -> None:
 
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)
-    load_dotenv()
+    load_dotenv(find_dotenv(usecwd=True))
 
     if args.command == "review" and args.from_json:
         with open(args.from_json) as file:
