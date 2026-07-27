@@ -34,7 +34,21 @@ def _write_and_print(table: OutcomeTable, args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Review how a bot's forecasts did")
-    source = parser.add_mutually_exclusive_group(required=True)
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument(
+        "--seconds-between-requests",
+        type=float,
+        default=0.7,
+        help="delay between Metaculus requests",
+    )
+    commands = parser.add_subparsers(dest="command", required=True)
+
+    review = commands.add_parser(
+        "review",
+        parents=[common],
+        help="score the bot's questions and write the summary",
+    )
+    source = review.add_mutually_exclusive_group(required=True)
     source.add_argument("--tournament", help="tournament slug or id")
     source.add_argument("--post", type=int, nargs="+", metavar="POST_ID")
     source.add_argument(
@@ -46,48 +60,42 @@ def main() -> None:
     source.add_argument(
         "--from-json", metavar="FILE", help="re-render a table saved with --output"
     )
-    source.add_argument(
-        "--show",
-        type=int,
-        metavar="POST_ID",
-        help="print part of the bot's report on one post",
-    )
-    parser.add_argument(
-        "--section",
-        default="research",
-        choices=["summary", "research", "forecasts"],
-        help="which section --show prints",
-    )
-    parser.add_argument(
-        "--forecaster", metavar="KEY", help="print one rationale, e.g. R1:F2"
-    )
-    parser.add_argument(
-        "--comment",
-        type=int,
-        metavar="ID",
-        help="which run --show reads, from a trace's comment_id (default: the latest)",
-    )
-    parser.add_argument(
+    review.add_argument(
         "--include-unforecasted",
         action="store_true",
         help="also include questions in the tournament that the bot never forecast",
     )
-    parser.add_argument("--output", help="write the full table to this json file")
-    parser.add_argument("--summary", help="write the markdown report to this file")
-    parser.add_argument(
+    review.add_argument("--output", help="write the full table to this json file")
+    review.add_argument("--summary", help="write the markdown report to this file")
+    review.add_argument(
         "--top", type=int, default=10, help="how many best and worst questions to list"
     )
-    parser.add_argument(
-        "--seconds-between-requests",
-        type=float,
-        default=0.7,
-        help="delay between Metaculus requests",
+
+    show = commands.add_parser(
+        "show", parents=[common], help="print part of one report the bot posted"
     )
+    show.add_argument("post_id", type=int)
+    show.add_argument(
+        "--section",
+        default="research",
+        choices=["summary", "research", "forecasts"],
+        help="which section to print",
+    )
+    show.add_argument(
+        "--forecaster", metavar="KEY", help="print one rationale, e.g. R1:F2"
+    )
+    show.add_argument(
+        "--comment",
+        type=int,
+        metavar="ID",
+        help="which run to read, from a trace's comment_id (default: the latest)",
+    )
+
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)
     load_dotenv()
 
-    if args.from_json:
+    if args.command == "review" and args.from_json:
         with open(args.from_json) as file:
             table = OutcomeTable.model_validate_json(file.read())
         print(f"\nreviewing forecasts made by user {table.user_id}")
@@ -97,8 +105,10 @@ def main() -> None:
     client = MetaculusClient(
         sleep_seconds_between_requests=args.seconds_between_requests
     )
-    if args.show:
-        print(get_trace(args.show, args.section, args.forecaster, args.comment, client))
+    if args.command == "show":
+        print(
+            get_trace(args.post_id, args.section, args.forecaster, args.comment, client)
+        )
         return
 
     user_id = client.get_current_user_id()

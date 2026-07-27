@@ -520,10 +520,10 @@ read-only: it makes no forecasts, spends nothing on LLMs, and publishes nothing.
 is `METACULUS_TOKEN`.
 
 ```bash
-bot-review --tournament <slug-or-id> --output review.json --summary review.md
-bot-review --resolved-since 30                    # anything that resolved recently
-bot-review --post 44328 44326                     # specific questions
-bot-review --from-json review.json --top 3        # re-render without refetching
+bot-review review --tournament <slug-or-id> --output review.json --summary review.md
+bot-review review --resolved-since 30              # anything that resolved recently
+bot-review review --post 44328 44326               # specific questions
+bot-review review --from-json review.json --top 3  # re-render without refetching
 ```
 
 The markdown summary gives your leaderboard standing, how many questions were forecast and
@@ -538,8 +538,8 @@ that was standing when the question was spot scored, which is the one that earne
 Reasoning text is not stored. Pull it a piece at a time:
 
 ```bash
-bot-review --show 44328 --comment 921582 --section research
-bot-review --show 44328 --comment 921582 --forecaster R1:F3
+bot-review show 44328 --section research
+bot-review show 44328 --forecaster R1:F3 --comment 921582  # a specific run
 ```
 
 Or from Python:
