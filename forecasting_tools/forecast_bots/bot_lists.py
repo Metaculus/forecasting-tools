@@ -11,6 +11,9 @@ from forecasting_tools.forecast_bots.main_bot import MainBot
 from forecasting_tools.forecast_bots.official_bots.gpt_4_1_optimized_bot import (
     GPT41OptimizedBot,
 )
+from forecasting_tools.forecast_bots.official_bots.no_research_one_shot_bot import (
+    NoResearchOneShotBot,
+)
 from forecasting_tools.forecast_bots.official_bots.q1_template_bot import (
     Q1TemplateBot2025,
 )
@@ -60,6 +63,7 @@ def get_all_important_bot_classes() -> list[type[ForecastBot]]:
         SpringTemplateBot2026,
         SummerTemplateBot2026,
         GPT41OptimizedBot,
+        NoResearchOneShotBot,
     ]
 
 

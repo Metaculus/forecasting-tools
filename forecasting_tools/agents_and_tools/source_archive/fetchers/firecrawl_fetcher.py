@@ -1,8 +1,14 @@
-"""Firecrawl fetcher — the FALLBACK backend.
+"""Firecrawl fetcher — a managed FALLBACK backend.
 
-Reserved for sites that block headless Chromium. It costs ~1 credit/page even
-with a screenshot, so it only runs when the primary backend fails or its capture
-fails the quality gate.
+Reserved for sites that block headless Chromium. A basic scrape costs 1 credit/
+page even with a screenshot, so it only runs when the primary backend fails or
+its capture fails the quality gate.
+
+For hardened anti-bot sites, set ``config.firecrawl_proxy`` to ``"auto"`` or
+``"stealth"`` (a.k.a. "enhanced") — this routes through residential proxies and
+is billed at ~5 credits/page, so it is opt-in and reserved for the Cloudflare
+tier. Firecrawl also natively parses PDFs to markdown (1 credit per PDF page),
+which is why it is the fallback for the tiered ``PdfFetcher``.
 
 The Firecrawl SDK is optional and imported lazily. The screenshot comes back as
 a hosted URL, which we download to bytes.
@@ -50,10 +56,24 @@ class FirecrawlFetcher:
         self._client = Firecrawl(api_key=self.config.firecrawl_api_key)
         return self._client
 
+    def _scrape_kwargs(self, formats: list[str]) -> dict:
+        kwargs: dict = {"formats": formats}
+        # Firecrawl 4.x renamed "stealth" to the "enhanced" proxy mode but still
+        # accepts the legacy spelling; pass whatever the operator configured and
+        # let the SDK normalize. "basic" is the implicit default, so only send
+        # the param when something stronger is requested (keeps the call 1-credit
+        # unless the operator explicitly opts into the 5-credit proxy).
+        proxy = (self.config.firecrawl_proxy or "basic").strip().lower()
+        if proxy and proxy != "basic":
+            kwargs["proxy"] = proxy
+        return kwargs
+
     def fetch(self, url: str) -> CaptureResult:
         client = self._get_client()
         try:
-            doc = client.scrape(url, formats=["markdown", "html", "screenshot"])
+            doc = client.scrape(
+                url, **self._scrape_kwargs(["markdown", "html", "screenshot"])
+            )
         except Exception as e:
             raise FetchError(f"firecrawl scrape failed for {url}: {e}") from e
 
@@ -75,8 +95,22 @@ class FirecrawlFetcher:
             screenshot=screenshot,
             screenshot_content_type=content_type,
             fetcher=self.name,
-            metadata={"title": _attr(metadata, "title")},
+            metadata={
+                "title": _attr(metadata, "title"),
+                "firecrawl_proxy": self.config.firecrawl_proxy,
+            },
         )
+
+    def fetch_pdf_markdown(self, url: str) -> str | None:
+        """Scrape just the markdown for a PDF URL via Firecrawl's native PDF
+        parser. Used as the fallback inside :class:`PdfFetcher` when local
+        extraction yields thin text (e.g. a scanned PDF needing OCR)."""
+        client = self._get_client()
+        try:
+            doc = client.scrape(url, **self._scrape_kwargs(["markdown"]))
+        except Exception as e:
+            raise FetchError(f"firecrawl pdf scrape failed for {url}: {e}") from e
+        return _attr(doc, "markdown")
 
     @staticmethod
     def _download(src_url: str) -> tuple[bytes | None, str | None]:

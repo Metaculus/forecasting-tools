@@ -1,7 +1,8 @@
 """Per-run citation manifest: one JSONL record per (URL, citation).
 
 This is the provenance layer a bot emits and the input to the capture pipeline.
-One manifest per run, stored as ``manifests/<run_id>.jsonl`` in the blob store.
+One manifest per run, stored in the blob store under the nested ``manifests/``
+layout (see :mod:`layout`); reads fall back to the legacy flat key.
 """
 
 from __future__ import annotations
@@ -10,6 +11,10 @@ import json
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
+from forecasting_tools.agents_and_tools.source_archive import layout
+from forecasting_tools.agents_and_tools.source_archive.canonicalize import (
+    canonicalize_url,
+)
 from forecasting_tools.agents_and_tools.source_archive.config import ArchiveConfig
 from forecasting_tools.agents_and_tools.source_archive.models import CitationRecord
 from forecasting_tools.agents_and_tools.source_archive.storage.blob_store import (
@@ -31,11 +36,19 @@ def loads(text: str) -> list[CitationRecord]:
 
 
 def unique_urls(records: Iterable[CitationRecord]) -> Iterator[str]:
-    """Yield each distinct URL once, preserving first-seen order."""
+    """Yield each distinct URL once, preserving first-seen order.
+
+    Distinctness is by *canonical* URL (see :func:`canonicalize_url`), so
+    near-duplicate links collapse to a single fetch; the original first-seen URL
+    string is what's yielded, for provenance.
+    """
     seen: set[str] = set()
     for r in records:
-        if r.url and r.url not in seen:
-            seen.add(r.url)
+        if not r.url:
+            continue
+        key = canonicalize_url(r.url)
+        if key not in seen:
+            seen.add(key)
             yield r.url
 
 
@@ -49,15 +62,28 @@ def write_file(path: str | Path, records: Iterable[CitationRecord]) -> None:
 
 
 # --- blob store io ---------------------------------------------------------
-def manifest_key(run_id: str, config: ArchiveConfig | None = None) -> str:
+def manifest_key(
+    run_id: str, config: ArchiveConfig | None = None, group: str | None = None
+) -> str:
     prefix = (config or ArchiveConfig()).s3_prefix.rstrip("/")
-    return f"{prefix}/manifests/{run_id}.jsonl"
+    return f"{prefix}/{layout.manifest_key(run_id, group)}"
 
 
 def read_blob(
-    store: BlobStore, run_id: str, config: ArchiveConfig | None = None
+    store: BlobStore,
+    run_id: str,
+    config: ArchiveConfig | None = None,
+    group: str | None = None,
 ) -> list[CitationRecord]:
-    return loads(store.get(manifest_key(run_id, config)).decode("utf-8"))
+    prefix = (config or ArchiveConfig()).s3_prefix.rstrip("/")
+    candidates = [
+        f"{prefix}/{k}" for k in layout.manifest_key_candidates(run_id, group)
+    ]
+    # Prefer the nested key; fall back to the legacy flat key for old runs.
+    for key in candidates[:-1]:
+        if store.exists(key):
+            return loads(store.get(key).decode("utf-8"))
+    return loads(store.get(candidates[-1]).decode("utf-8"))
 
 
 def write_blob(
@@ -65,9 +91,10 @@ def write_blob(
     run_id: str,
     records: Iterable[CitationRecord],
     config: ArchiveConfig | None = None,
+    group: str | None = None,
 ) -> None:
     store.put(
-        manifest_key(run_id, config),
+        manifest_key(run_id, config, group),
         dumps(records).encode("utf-8"),
         content_type="application/x-ndjson",
     )

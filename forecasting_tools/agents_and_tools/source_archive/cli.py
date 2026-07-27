@@ -24,7 +24,6 @@ from forecasting_tools.agents_and_tools.source_archive.content_store import Cont
 from forecasting_tools.agents_and_tools.source_archive.fetchers import (
     build_default_fetcher,
 )
-from forecasting_tools.agents_and_tools.source_archive.pipeline import CapturePipeline
 
 
 def _load_dotenv() -> None:
@@ -69,6 +68,11 @@ def _cmd_check(config: ArchiveConfig) -> int:
     print(f"  AWS profile          : {config.aws_profile or '(default chain)'}")
     print(f"  AWS region           : {config.aws_region or '(default)'}")
     print(f"  Firecrawl API key    : {_mask(config.firecrawl_api_key)}")
+    print(f"  Firecrawl proxy mode : {config.firecrawl_proxy}")
+    print(f"  Hyperbrowser API key : {_mask(config.hyperbrowser_api_key)}")
+    print(f"  Hyperbrowser proxy   : {config.hyperbrowser_use_proxy}")
+    print(f"  CloakBrowser module  : {config.cloakbrowser_import}")
+    print(f"  PDF max pages        : {config.pdf_max_pages}")
     print(f"  TTL (days)           : {config.ttl_days}")
     print(f"  Screenshot format    : {config.screenshot_format}")
     print(f"  Screenshot max height: {config.screenshot_max_height}")
@@ -76,47 +80,150 @@ def _cmd_check(config: ArchiveConfig) -> int:
 
 
 def _cmd_capture(args, config: ArchiveConfig) -> int:
+    from forecasting_tools.agents_and_tools.source_archive.manifest import unique_urls
+    from forecasting_tools.agents_and_tools.source_archive.pipeline import (
+        capture_urls_concurrent,
+    )
+
     records = manifest_io.read_file(args.manifest)
+
+    overrides = {}
+    if getattr(args, "no_hyperbrowser", False):
+        overrides["hyperbrowser_api_key"] = None
+    if getattr(args, "concurrency", None):
+        overrides["concurrency"] = args.concurrency
+    if overrides:
+        config = config.model_copy(update=overrides)
+    if "hyperbrowser_api_key" in overrides:
+        print("Hyperbrowser fallback DISABLED for this run.")
+
     store = ContentStore(_make_blob_store(config, args.local, args.bucket), config)
 
+    urls = list(unique_urls(records))
+    if args.limit:
+        urls = urls[: args.limit]
     target = args.local or f"s3://{args.bucket or config.s3_bucket}/{config.s3_prefix}"
-    print(f"Capturing {len(records)} citation record(s) -> {target}")
+    print(
+        f"Capturing {len(urls)} URL(s) at concurrency {config.concurrency} -> {target}"
+    )
 
-    with build_default_fetcher(config) as fetcher:
-        pipeline = CapturePipeline(fetcher, store)
-        summary = pipeline.run_manifest(records)
+    summary = capture_urls_concurrent(urls, store, config, build_default_fetcher)
     print(summary)
 
+    from forecasting_tools.agents_and_tools.source_archive import cost as cost_mod
+
+    run_cost = cost_mod.estimate_run_cost(summary, config, run_id=args.run_id)
+    print(run_cost)
+
+    run_id = args.run_id or (records[0].run_id if records else None)
+    if run_id:
+        from forecasting_tools.agents_and_tools.source_archive import reports
+
+        key = reports.write_run_report(
+            store.blobs, run_id, summary, config, group=args.group
+        )
+        print(f"Wrote run outcomes -> {key}")
+        key = cost_mod.write_cost_report(
+            store.blobs, run_id, run_cost, config, group=args.group
+        )
+        print(f"Wrote cost report -> {key}")
+
+    # Failures leave no cache entry, so re-running retries exactly them. Write a
+    # retry manifest (with provenance) so coming back — e.g. with hyperbrowser
+    # re-enabled — is one command over only the sites that still need it.
+    failed = {
+        o.url for o in summary.outcomes if o.status in ("quality_failed", "error")
+    }
+    if failed:
+        from forecasting_tools.agents_and_tools.source_archive.ingest import (
+            dedupe_records,
+        )
+
+        retry_records = dedupe_records(r for r in records if r.url in failed)
+        retry_path = args.retry_out or f"{run_id or 'run'}_needs_retry.jsonl"
+        manifest_io.write_file(retry_path, retry_records)
+        print(
+            f"{len(failed)} URL(s) failed -> retry manifest {retry_path}\n"
+            f"  come back later with:  source-archive capture {retry_path} "
+            f"--run-id {run_id or '<run-id>'}   (hyperbrowser on by default)"
+        )
+
     if args.upload_manifest:
-        run_id = args.run_id or (records[0].run_id if records else None)
         if not run_id:
             sys.exit("--upload-manifest needs --run-id (no run_id found in records)")
-        manifest_io.write_blob(store.blobs, run_id, records, config)
-        print(f"Uploaded manifest -> {config.s3_prefix}/manifests/{run_id}.jsonl")
+        manifest_io.write_blob(store.blobs, run_id, records, config, group=args.group)
+        print(
+            f"Uploaded manifest -> {manifest_io.manifest_key(run_id, config, args.group)}"
+        )
     return 0
 
 
-def _cmd_harvest(args, config: ArchiveConfig) -> int:
+def _cmd_ingest_traces(args, config: ArchiveConfig) -> int:
     from forecasting_tools.agents_and_tools.source_archive.ingest import (
-        MetaculusCommentHarvester,
+        dedupe_records,
+        harvest_run,
     )
 
-    run_id = args.run_id or f"metaculus-comments-{args.project_id}"
-    harvester = MetaculusCommentHarvester()
-    records = harvester.harvest_project(args.project_id, run_id=run_id)
-    print(
-        f"Harvested {len(records)} citation record(s) from project "
-        f"{args.project_id}"
-    )
+    run_id = args.run_id  # None -> derived from the run dir name
+    records = harvest_run(args.run_dir, run_id=run_id, bot=args.bot)
+    if args.dedupe:
+        records = dedupe_records(records)
+    run_id = run_id or (records[0].run_id if records else None)
+    print(f"Ingested {len(records)} citation record(s) from traces in {args.run_dir}")
 
-    out_path = args.out or f"{run_id}.jsonl"
+    out_path = args.out or f"{run_id or 'traces'}.jsonl"
     if not args.upload or args.out:
         manifest_io.write_file(out_path, records)
         print(f"Wrote manifest -> {out_path}")
     if args.upload:
+        if not run_id:
+            sys.exit("--upload needs a run id (pass --run-id; none found in records)")
         store = _make_blob_store(config, None, args.bucket)
-        manifest_io.write_blob(store, run_id, records, config)
-        print(f"Uploaded manifest -> {config.s3_prefix}/manifests/{run_id}.jsonl")
+        manifest_io.write_blob(store, run_id, records, config, group=args.group)
+        print(
+            f"Uploaded manifest -> {manifest_io.manifest_key(run_id, config, args.group)}"
+        )
+    return 0
+
+
+def _cmd_catalog(args, config: ArchiveConfig) -> int:
+    from forecasting_tools.agents_and_tools.source_archive.catalog import write_catalog
+
+    store = _make_blob_store(config, args.local, args.bucket)
+    target = args.local or f"s3://{args.bucket or config.s3_bucket}/{config.s3_prefix}"
+    print(f"Building catalog from manifests + index -> {target}/catalog/")
+    summary = write_catalog(store, config)
+    print(summary)
+    print(f"Open {config.s3_prefix}/catalog/index.html")
+    return 0
+
+
+def _cmd_coverage(args, config: ArchiveConfig) -> int:
+    from pathlib import Path
+
+    from forecasting_tools.agents_and_tools.source_archive import reports
+    from forecasting_tools.agents_and_tools.source_archive.catalog import build_sources
+    from forecasting_tools.agents_and_tools.source_archive.coverage import (
+        MODES,
+        coverage_from_sources,
+    )
+
+    store = _make_blob_store(config, args.local, args.bucket)
+    sources = build_sources(store, config)  # read manifests + index once
+    outcomes = reports.read_outcomes(store, config) or None
+    modes = MODES if args.mode == "both" else (args.mode,)
+    for mode in modes:
+        report = coverage_from_sources(sources, mode, outcomes)
+        print(report)
+        print()
+        if args.csv:
+            Path(f"{args.csv}_{mode}.csv").write_text(report.to_csv())
+            print(f"Wrote {args.csv}_{mode}.csv")
+            if report.missing_urls:
+                Path(f"{args.csv}_{mode}_missing.txt").write_text(
+                    "\n".join(report.missing_urls)
+                )
+                print(f"Wrote {args.csv}_{mode}_missing.txt")
     return 0
 
 
@@ -145,22 +252,86 @@ def main(argv: list[str] | None = None) -> int:
         help="also upload the manifest itself to manifests/<run_id>.jsonl",
     )
     cap.add_argument("--run-id", help="run id for the uploaded manifest")
-
-    harv = sub.add_parser(
-        "harvest",
-        help="harvest cited URLs from bot comments on a Metaculus project",
+    cap.add_argument(
+        "--group",
+        help="nest the uploaded manifest/reports under this folder, e.g. "
+        "'sprints/myrun' (default: daily/<YYYY-MM>/ for daily-YYYY-MM-DD "
+        "run ids, else adhoc/)",
     )
-    harv.add_argument("project_id", help="Metaculus project / tournament id")
-    harv.add_argument(
+    cap.add_argument(
+        "--no-hyperbrowser",
+        action="store_true",
+        help="disable the Hyperbrowser fallback for this run (others still run)",
+    )
+    cap.add_argument(
+        "--retry-out",
+        metavar="FILE",
+        help="where to write the failed-URL retry manifest "
+        "(default: <run_id>_needs_retry.jsonl)",
+    )
+    cap.add_argument(
+        "--concurrency",
+        type=int,
+        metavar="N",
+        help="parallel browser workers for this run (overrides WEB_ARCHIVE_CONCURRENCY)",
+    )
+    cap.add_argument(
+        "--limit",
+        type=int,
+        metavar="N",
+        help="capture only the first N URLs (chunk a big manifest; resume via cache)",
+    )
+
+    ing = sub.add_parser(
+        "ingest-traces",
+        help="build a manifest from a traced bot run directory (bot_*/q_*/traces_*.jsonl)",
+    )
+    ing.add_argument("run_dir", help="path to a traced run directory")
+    ing.add_argument(
         "--out", metavar="FILE", help="write the manifest to this .jsonl file"
     )
-    harv.add_argument(
-        "--run-id", help="run id (default: metaculus-comments-<project_id>)"
+    ing.add_argument("--run-id", help="run id (default: the run dir's name)")
+    ing.add_argument(
+        "--bot",
+        help="bot name for a flat (no bot_*/) layout (default: the run dir's name)",
     )
-    harv.add_argument(
+    ing.add_argument(
+        "--dedupe", action="store_true", help="keep one record per URL (first seen)"
+    )
+    ing.add_argument(
         "--upload", action="store_true", help="upload the manifest to S3 manifests/"
     )
-    harv.add_argument("--bucket", help="override the S3 bucket")
+    ing.add_argument(
+        "--group",
+        help="nest the uploaded manifest under this folder, e.g. 'sprints/myrun' "
+        "(default: daily/<YYYY-MM>/ for daily-YYYY-MM-DD run ids, else adhoc/)",
+    )
+    ing.add_argument("--bucket", help="override the S3 bucket")
+
+    cat = sub.add_parser(
+        "catalog",
+        help="generate a coworker-legible HTML/CSV catalog (by question/bot/site)",
+    )
+    cat.add_argument(
+        "--local", metavar="DIR", help="read/write the catalog in this directory"
+    )
+    cat.add_argument("--bucket", help="override the S3 bucket")
+
+    cov = sub.add_parser(
+        "coverage",
+        help="report what %% of cited sources were archived (trace vs comments)",
+    )
+    cov.add_argument(
+        "--mode",
+        choices=["trace", "comments", "both"],
+        default="both",
+        help="which report(s) to print (default: both)",
+    )
+    cov.add_argument(
+        "--csv", metavar="PREFIX", help="write PREFIX_<mode>.csv (+ _missing.txt)"
+    )
+    cov.add_argument("--local", metavar="DIR", help="read from this directory")
+    cov.add_argument("--bucket", help="override the S3 bucket")
 
     args = parser.parse_args(argv)
     config = ArchiveConfig.from_env()
@@ -169,8 +340,12 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_check(config)
     if args.command == "capture":
         return _cmd_capture(args, config)
-    if args.command == "harvest":
-        return _cmd_harvest(args, config)
+    if args.command == "ingest-traces":
+        return _cmd_ingest_traces(args, config)
+    if args.command == "catalog":
+        return _cmd_catalog(args, config)
+    if args.command == "coverage":
+        return _cmd_coverage(args, config)
     return 1
 
 

@@ -4,7 +4,10 @@ from forecasting_tools.agents_and_tools.source_archive import manifest
 from forecasting_tools.agents_and_tools.source_archive.config import ArchiveConfig
 from forecasting_tools.agents_and_tools.source_archive.content_store import ContentStore
 from forecasting_tools.agents_and_tools.source_archive.models import CitationRecord
-from forecasting_tools.agents_and_tools.source_archive.pipeline import CapturePipeline
+from forecasting_tools.agents_and_tools.source_archive.pipeline import (
+    CapturePipeline,
+    capture_urls_concurrent,
+)
 from forecasting_tools.agents_and_tools.source_archive.storage import LocalBlobStore
 
 
@@ -13,6 +16,219 @@ def _pipeline(tmp_path, fetcher) -> CapturePipeline:
         LocalBlobStore(tmp_path), ArchiveConfig(s3_prefix="t", ttl_days=14)
     )
     return CapturePipeline(fetcher, store)
+
+
+def test_capture_urls_concurrent_captures_all(tmp_path, make_fetcher):
+    from contextlib import contextmanager
+
+    config = ArchiveConfig(s3_prefix="t", concurrency=4)
+    store = ContentStore(LocalBlobStore(tmp_path), config)
+    urls = [f"https://s{i}.test/p" for i in range(12)]
+
+    @contextmanager
+    def factory(_cfg):
+        f = make_fetcher()
+        for u in urls:
+            f.add(u)
+        yield f
+
+    summary = capture_urls_concurrent(urls, store, config, factory)
+
+    assert len(summary.outcomes) == 12
+    assert summary.count("stored") == 12
+    # every URL is resolvable afterwards (proves the shared store got all writes)
+    assert all(store.lookup(u) is not None for u in urls)
+
+
+def test_concurrent_supervisor_recovers_a_stuck_worker(tmp_path, make_fetcher):
+    import threading
+    from contextlib import contextmanager
+
+    config = ArchiveConfig(s3_prefix="t", concurrency=1)
+    store = ContentStore(LocalBlobStore(tmp_path), config)
+    urls = ["https://stuck.test/x"]
+    reaped = threading.Event()
+    builds = {"n": 0}
+
+    class _Wedges:
+        name = "wedge"
+
+        def fetch(self, url):
+            # Block until the supervisor's reaper "kills the browser", then surface
+            # the dead-browser error a killed Chromium would raise.
+            reaped.wait(5)
+            raise RuntimeError("Target page, context or browser has been closed")
+
+    @contextmanager
+    def factory(_cfg):
+        builds["n"] += 1
+        if builds["n"] == 1:
+            yield _Wedges()  # first browser wedges
+        else:
+            fetcher = make_fetcher()
+            fetcher.add(urls[0])
+            yield fetcher  # rebuilt browser works
+
+    # Inject a fake reaper so the test drives the supervisor without real Chromium.
+    summary = capture_urls_concurrent(
+        urls, store, config, factory, per_url_timeout=0.3, reaper=reaped.set
+    )
+
+    assert builds["n"] == 2  # stalled -> reaped -> death -> rebuild -> retry
+    assert summary.count("stored") == 1  # recovered and captured on a fresh browser
+
+
+def test_concurrent_restarts_browser_after_death(tmp_path, make_fetcher):
+    from contextlib import contextmanager
+
+    config = ArchiveConfig(s3_prefix="t", concurrency=1)
+    store = ContentStore(LocalBlobStore(tmp_path), config)
+    urls = ["https://a.test/x"]
+    builds = {"n": 0}
+
+    class _DeadBrowser:
+        name = "dead"
+
+        def fetch(self, url):
+            raise RuntimeError("Target page, context or browser has been closed")
+
+    @contextmanager
+    def factory(_cfg):
+        builds["n"] += 1
+        if builds["n"] == 1:
+            yield _DeadBrowser()  # first browser is dead
+        else:
+            fetcher = make_fetcher()
+            fetcher.add(urls[0])
+            yield fetcher  # rebuilt browser works
+
+    summary = capture_urls_concurrent(urls, store, config, factory)
+
+    assert builds["n"] == 2  # detected death, rebuilt once
+    assert summary.count("stored") == 1  # retry on the fresh browser succeeded
+
+
+def test_concurrent_rebuild_survives_poisoned_thread_loop_state(tmp_path, make_fetcher):
+    """Regression: a SIGKILLed sync-Playwright browser leaves its asyncio loop
+    registered as *running* on the worker thread (teardown is thread-affine, so
+    ``_close_quietly``'s helper thread can't clear it). The rebuild must reset
+    that thread-local state — otherwise ``sync_playwright().start()`` raises
+    "Sync API inside the asyncio loop" and future.result() kills the whole run.
+    """
+    import asyncio
+    import threading
+
+    config = ArchiveConfig(s3_prefix="t", concurrency=1)
+    store = ContentStore(LocalBlobStore(tmp_path), config)
+    urls = ["https://a.test/x", "https://b.test/y"]
+    builds = {"n": 0}
+
+    class _SyncPlaywrightAlike:
+        """Mimics sync Playwright's thread behavior: __enter__ refuses if the
+        thread already reports a running loop, then registers its own; a killed
+        browser errors on fetch; teardown from a foreign thread fails the way a
+        greenlet does, leaving the loop state poisoned."""
+
+        name = "pwalike"
+
+        def __init__(self, dead: bool, inner):
+            self._dead = dead
+            self._inner = inner
+            self._thread = None
+
+        def __enter__(self):
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                pass
+            else:  # what playwright's sync context manager raises
+                raise RuntimeError(
+                    "It looks like you are using Playwright Sync API inside "
+                    "the asyncio loop."
+                )
+            self._thread = threading.current_thread()
+            asyncio.events._set_running_loop(asyncio.new_event_loop())
+            return self
+
+        def fetch(self, url):
+            if self._dead:
+                raise RuntimeError("Target page, context or browser has been closed")
+            return self._inner.fetch(url)
+
+        def __exit__(self, *exc):
+            if threading.current_thread() is not self._thread:
+                raise RuntimeError("cannot switch to a different thread")
+            asyncio.events._set_running_loop(None)
+
+    def factory(_cfg):
+        builds["n"] += 1
+        inner = make_fetcher()
+        for u in urls:
+            inner.add(u)
+        return _SyncPlaywrightAlike(dead=builds["n"] == 1, inner=inner)
+
+    try:
+        summary = capture_urls_concurrent(urls, store, config, factory)
+    finally:
+        asyncio.events._set_running_loop(None)  # never leak into other tests
+
+    assert builds["n"] == 2  # death detected -> loop state reset -> rebuilt
+    assert summary.count("stored") == 2  # retried URL and the rest captured
+
+
+def test_concurrent_failed_rebuild_does_not_kill_the_run(tmp_path, make_fetcher):
+    """If the rebuild itself fails (e.g. a transient launch error), the run must
+    keep going: the URL keeps its error outcome and the next URL retries the
+    rebuild."""
+    from contextlib import contextmanager
+
+    config = ArchiveConfig(s3_prefix="t", concurrency=1)
+    store = ContentStore(LocalBlobStore(tmp_path), config)
+    urls = ["https://a.test/x", "https://b.test/y"]
+    builds = {"n": 0}
+
+    class _DeadBrowser:
+        name = "dead"
+
+        def fetch(self, url):
+            raise RuntimeError("Target page, context or browser has been closed")
+
+    @contextmanager
+    def factory(_cfg):
+        builds["n"] += 1
+        if builds["n"] == 1:
+            yield _DeadBrowser()  # first browser is dead
+        elif builds["n"] == 2:
+            raise RuntimeError("browser launch flaked")  # rebuild attempt fails
+        else:
+            fetcher = make_fetcher()
+            for u in urls:
+                fetcher.add(u)
+            yield fetcher  # second rebuild attempt works
+
+    summary = capture_urls_concurrent(urls, store, config, factory)
+
+    assert builds["n"] == 3  # dead -> failed rebuild -> successful rebuild
+    assert summary.count("error") == 1  # first URL kept its error outcome
+    assert summary.count("stored") == 1  # second URL captured after recovery
+
+
+class _BoomFetcher:
+    """Raises an unexpected (non-FetchError) exception, like a bad screenshot."""
+
+    name = "boom"
+
+    def fetch(self, url):
+        raise ValueError("kaboom")
+
+
+def test_pipeline_isolates_unexpected_fetcher_errors(tmp_path):
+    # One pathological URL must not abort the whole run.
+    pipe = _pipeline(tmp_path, _BoomFetcher())
+    summary = pipe.run(["https://a.test", "https://b.test"])
+    assert summary.count("error") == 2
+    assert len(summary.outcomes) == 2
+    assert all(o.reason.startswith("unexpected:") for o in summary.outcomes)
 
 
 def test_manifest_roundtrip_and_unique_urls():
@@ -31,7 +247,7 @@ def test_manifest_blob_roundtrip(tmp_path):
     cfg = ArchiveConfig(s3_prefix="t")
     records = [CitationRecord(url="https://a.test", run_id="r1")]
     manifest.write_blob(store, "r1", records, cfg)
-    assert store.exists("t/manifests/r1.jsonl")
+    assert store.exists("t/manifests/adhoc/r1.jsonl")
     assert manifest.read_blob(store, "r1", cfg)[0].url == "https://a.test"
 
 

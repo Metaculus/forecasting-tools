@@ -6,6 +6,7 @@ directly, so they can run offline against :class:`LocalBlobStore`.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Protocol, runtime_checkable
 
 
@@ -18,3 +19,7 @@ class BlobStore(Protocol):
     def get(self, key: str) -> bytes: ...
 
     def exists(self, key: str) -> bool: ...
+
+    def list_keys(self, prefix: str = "") -> Iterable[str]:
+        """Yield every stored key beginning with ``prefix`` (for reindex/audit)."""
+        ...

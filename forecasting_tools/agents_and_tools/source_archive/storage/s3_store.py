@@ -58,3 +58,9 @@ class S3BlobStore:
             if code in ("404", "NoSuchKey", "NotFound"):
                 return False
             raise
+
+    def list_keys(self, prefix: str = ""):
+        paginator = self._get_client().get_paginator("list_objects_v2")
+        for page in paginator.paginate(Bucket=self.bucket, Prefix=prefix):
+            for obj in page.get("Contents", []):
+                yield obj["Key"]

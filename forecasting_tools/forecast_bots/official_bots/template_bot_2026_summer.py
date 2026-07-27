@@ -228,11 +228,18 @@ class SummerTemplateBot2026(ForecastBot):
     ) -> ReasonedPrediction[float]:
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
+        parsing_instructions = clean_indents(
+            f"""
+            The text given to you is trying to give a probability forecast for a binary question.
+            {self._create_resolved_question_parsing_message()}
+            """
+        )
         binary_prediction: BinaryPrediction = await structure_output(
             reasoning,
             BinaryPrediction,
             model=self.get_llm("parser", "llm"),
             num_validation_samples=self._structure_output_validation_samples,
+            additional_instructions=parsing_instructions,
         )
         decimal_pred = max(0.01, min(0.99, binary_prediction.prediction_in_decimal))
 
@@ -298,6 +305,7 @@ class SummerTemplateBot2026(ForecastBot):
 
             The text you are parsing may prepend these options with some variation of "Option" which you should remove if not part of the option names I just gave you.
             Additionally, you may sometimes need to parse a 0% probability. Please do not skip options with 0% but rather make it an entry in your final list with 0% probability.
+            {self._create_resolved_question_parsing_message()}
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
@@ -389,6 +397,8 @@ class SummerTemplateBot2026(ForecastBot):
             f"""
             The text given to you is trying to give a forecast distribution for a numeric question.
             - This text is trying to answer the numeric question: "{question.question_text}".
+            {self._create_single_distribution_parsing_message(question)}
+            {self._create_resolved_question_parsing_message()}
             - When parsing the text, please make sure to give the values (the ones assigned to percentiles) in terms of the correct units.
             - The units for the forecast are: {question.unit_of_measure}
             - Your work will be shown publicly with these units stated verbatim after the numbers your parse.
@@ -483,6 +493,8 @@ class SummerTemplateBot2026(ForecastBot):
             f"""
             The text given to you is trying to give a forecast distribution for a date question.
             - This text is trying to answer the question: "{question.question_text}".
+            {self._create_single_distribution_parsing_message(question)}
+            {self._create_resolved_question_parsing_message()}
             - As an example, someone else guessed that the answer will be between {question.lower_bound} and {question.upper_bound}, so the numbers parsed from an answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
             - The output is given as dates/times please format it into a valid datetime parsable string. Assume midnight UTC if no hour is given.
             - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
@@ -508,6 +520,24 @@ class SummerTemplateBot2026(ForecastBot):
             f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}."
         )
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    def _create_resolved_question_parsing_message(self) -> str:
+        return "- If the text concludes that the question has already resolved *in the past* (i.e. it treats the question as decided rather than something to forecast), please DO NOT return a parsed output, even if a final forecast is also given. Instead indicate that the answer is not explicitly given in the text.\n"
+
+    def _create_single_distribution_parsing_message(
+        self, question: NumericQuestion | DateQuestion
+    ) -> str:
+        message = (
+            "- The text may contain multiple percentile distributions (e.g. forecasts for several related questions/entities, or intermediate drafts before a final answer). You must return exactly ONE distribution: the single final distribution that answers the question stated above.\n"
+            "- Never merge or concatenate percentile lists that refer to different entities, options, or scenarios. Each percentile should appear at most once in your output.\n"
+            "- If there are multiple final distributions and you cannot tell which one answers the question stated above, do not guess or combine them. Instead indicate that the answer is not explicitly given in the text."
+        )
+        if question.group_question_option is not None:
+            message += (
+                f'\n- This question is specifically about "{question.group_question_option}" (one subquestion within a group of related questions). '
+                f'If the text gives distributions for multiple subjects, return only the distribution for "{question.group_question_option}".'
+            )
+        return message
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion | DateQuestion
