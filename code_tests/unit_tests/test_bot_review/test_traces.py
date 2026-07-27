@@ -92,7 +92,6 @@ class TestReduceComment:
     def test_reads_each_forecaster_prediction(self):
         trace = reduce_comment(make_comment())
         assert [f["key"] for f in trace.forecasters] == ["R1:F1", "R1:F2"]
-        assert [f["model"] for f in trace.forecasters] == [None, "gpt-5"]
         assert trace.forecasters[1]["prediction"] == "30.0%"
 
     def test_missing_metadata_is_none_not_an_error(self):

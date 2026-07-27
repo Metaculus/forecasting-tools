@@ -55,7 +55,7 @@ R2F1 reasoning.
 R2F2 reasoning.
 """.strip()
 
-# Bots may annotate the bullets with the model behind each forecaster.
+# Some bots add a parenthesised suffix to the bullets; it must not break parsing.
 ANNOTATED_EXPLANATION = """
 # SUMMARY
 *Question*: Will X happen?
@@ -125,17 +125,17 @@ class TestParseForecasters:
     def test_unannotated_bullets_across_two_reports(self):
         summary = split_sections(TEMPLATE_EXPLANATION)["summary"]
         assert parse_forecasters(summary) == [
-            {"key": "R1:F1", "model": None, "prediction": "30.0%"},
-            {"key": "R1:F2", "model": None, "prediction": "40.0%"},
-            {"key": "R2:F1", "model": None, "prediction": "50.0%"},
-            {"key": "R2:F2", "model": None, "prediction": "60.0%"},
+            {"key": "R1:F1", "prediction": "30.0%"},
+            {"key": "R1:F2", "prediction": "40.0%"},
+            {"key": "R2:F1", "prediction": "50.0%"},
+            {"key": "R2:F2", "prediction": "60.0%"},
         ]
 
-    def test_model_names_when_the_bot_annotates_them(self):
+    def test_annotated_bullets_still_parse(self):
         summary = split_sections(ANNOTATED_EXPLANATION)["summary"]
         assert parse_forecasters(summary) == [
-            {"key": "R1:F1", "model": "a-model", "prediction": "3.0%"},
-            {"key": "R1:F2", "model": "another-model", "prediction": "4.0%"},
+            {"key": "R1:F1", "prediction": "3.0%"},
+            {"key": "R1:F2", "prediction": "4.0%"},
         ]
 
     def test_research_summary_is_not_read_as_a_prediction(self):

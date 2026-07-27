@@ -16,9 +16,7 @@ from forecasting_tools.data_models.markdown_tree import MarkdownTree
 
 SECTIONS = ("summary", "research", "forecasts")
 REPORT_PATTERN = re.compile(r"^## Report (\d+) Summary\s*$", re.MULTILINE)
-FORECASTER_PATTERN = re.compile(
-    r"^\*Forecaster (\d+)(?: \(([^)]*)\))?\*:", re.MULTILINE
-)
+FORECASTER_PATTERN = re.compile(r"^\*Forecaster (\d+)(?: \([^)]*\))?\*:", re.MULTILINE)
 RATIONALE_TITLE_PATTERN = re.compile(r"^R(\d+): Forecaster (\d+) Reasoning$")
 FINAL_PREDICTION_PATTERN = re.compile(
     r"^\*Final Prediction\*:(.*?)(?=^\*[A-Z]|^## |\Z)", re.MULTILINE | re.DOTALL
@@ -66,10 +64,7 @@ def forecasts_block(summary: str) -> str:
 
 
 def parse_forecasters(summary: str) -> list[dict]:
-    """Each forecaster's prediction as it was written in the summary.
-
-    ``model`` is None unless the bot annotates its summary bullets with model names.
-    """
+    """Each forecaster's prediction as it was written in the summary."""
     reports = list(REPORT_PATTERN.finditer(summary))
     blocks = _bodies_between(summary, [(m.start(), m.end()) for m in reports])
     forecasters = []
@@ -80,7 +75,6 @@ def parse_forecasters(summary: str) -> list[dict]:
         forecasters += [
             {
                 "key": f"R{report.group(1)}:F{match.group(1)}",
-                "model": match.group(2),
                 "prediction": body,
             }
             for match, body in zip(matches, bodies)
