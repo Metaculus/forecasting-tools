@@ -97,12 +97,19 @@ _MALFORMED_MARKERS = ("%5b", "%5d", "%5c", "%0a", "%0d", "%28http", "%29%5b")
 
 
 def is_search_url(url: str) -> bool:
-    host = urlsplit(url).netloc.lower()
+    try:
+        host = urlsplit(url).netloc.lower()
+    except ValueError:  # unparsable (see is_malformed_url) — not a search page
+        return False
     host = host[4:] if host.startswith("www.") else host
     return host in _SEARCH_HOSTS or host == "google.com" or host.startswith("google.")
 
 
 def is_malformed_url(url: str) -> bool:
+    try:
+        urlsplit(url)
+    except ValueError:  # e.g. a bare "http://[" — urlsplit: "Invalid IPv6 URL"
+        return True
     low = url.lower()
     return url.count("://") > 1 or any(m in low for m in _MALFORMED_MARKERS)
 
@@ -191,7 +198,10 @@ class CatalogData(BaseModel):
 # Build (join manifests + index)
 # --------------------------------------------------------------------------- #
 def _domain(url: str) -> str:
-    host = urlsplit(url).netloc.lower()
+    try:
+        host = urlsplit(url).netloc.lower()
+    except ValueError:  # malformed URL — caller falls back to "(unknown)"
+        return ""
     return host[4:] if host.startswith("www.") else host
 
 
