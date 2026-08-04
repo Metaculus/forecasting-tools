@@ -94,6 +94,23 @@ def test_build_catalog_joins_and_canonicalizes(tmp_path):
     assert set(by_bot) == {"alpha", "beta"}
 
 
+def test_build_catalog_excludes_parse_raising_urls(tmp_path):
+    store, config = _seed(tmp_path)
+    # A bare "http://[" (junk extracted from a bot comment) makes urlsplit raise
+    # ValueError ("Invalid IPv6 URL"); it must count as malformed, not crash.
+    records = [
+        CitationRecord(url="http://[", run_id="r2", bot="alpha", question_id="100"),
+    ]
+    manifest_io.write_blob(store, "r2", records, config)
+
+    data = build_catalog(store, config)
+    assert data.excluded.get("malformed") == 1
+    assert "http://[" not in {s.canonical_url for s in data.sources}
+
+    summary = write_catalog(store, config)
+    assert summary.excluded.get("malformed") == 1
+
+
 def test_write_catalog_emits_views(tmp_path):
     store, config = _seed(tmp_path)
     summary = write_catalog(store, config)
