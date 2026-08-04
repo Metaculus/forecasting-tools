@@ -94,9 +94,7 @@ def canonicalize_url(url: str) -> str:
             if parts.password is not None:
                 auth += f":{parts.password}"
             netloc = f"{auth}@{netloc}"
-        if parts.port is not None and str(parts.port) != _DEFAULT_PORTS.get(
-            scheme
-        ):
+        if parts.port is not None and str(parts.port) != _DEFAULT_PORTS.get(scheme):
             netloc += f":{parts.port}"
     except ValueError:
         return raw
