@@ -73,27 +73,31 @@ def canonicalize_url(url: str) -> str:
     if not url:
         return url
     raw = url.strip()
+    # urlsplit() itself rarely raises; .hostname/.port are LAZY properties that
+    # raise ValueError on junk like "http://root{--x:80/" or bad IPv6 — so the
+    # guard must cover the whole netloc normalization, not just the split.
     try:
         parts = urlsplit(raw)
+        if parts.scheme not in ("http", "https") or not parts.netloc:
+            return raw
+
+        scheme = parts.scheme.lower()
+
+        # netloc: lowercase host (bracket IPv6), keep userinfo, strip default
+        # port.
+        host = (parts.hostname or "").lower()
+        if ":" in host:  # IPv6 literal
+            host = f"[{host}]"
+        netloc = host
+        if parts.username is not None:
+            auth = parts.username
+            if parts.password is not None:
+                auth += f":{parts.password}"
+            netloc = f"{auth}@{netloc}"
+        if parts.port is not None and str(parts.port) != _DEFAULT_PORTS.get(scheme):
+            netloc += f":{parts.port}"
     except ValueError:
         return raw
-    if parts.scheme not in ("http", "https") or not parts.netloc:
-        return raw
-
-    scheme = parts.scheme.lower()
-
-    # netloc: lowercase host (bracket IPv6), keep userinfo, strip default port.
-    host = (parts.hostname or "").lower()
-    if ":" in host:  # IPv6 literal
-        host = f"[{host}]"
-    netloc = host
-    if parts.username is not None:
-        auth = parts.username
-        if parts.password is not None:
-            auth += f":{parts.password}"
-        netloc = f"{auth}@{netloc}"
-    if parts.port is not None and str(parts.port) != _DEFAULT_PORTS.get(scheme):
-        netloc += f":{parts.port}"
 
     # path: collapse the bare root to empty; drop a trailing slash otherwise.
     path = parts.path

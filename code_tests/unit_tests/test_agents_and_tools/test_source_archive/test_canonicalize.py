@@ -70,3 +70,13 @@ def test_distinct_pages_keep_distinct_hashes():
 
 def test_empty_and_none_safe():
     assert canonicalize_url("") == ""
+
+
+def test_lazy_port_valueerror_returns_raw() -> None:
+    # .port raises ValueError lazily when the port section is non-numeric —
+    # junk the URL regex can extract from CSS-ish text ("Port could not be
+    # cast to integer value as 'root{--novem-render-frac'"). canonicalize
+    # must not propagate it.
+    junk = "http://a.test:root{--novem-render-frac/x"
+    assert canonicalize_url(junk) == junk
+    assert canonicalize_url(canonicalize_url(junk)) == canonicalize_url(junk)
