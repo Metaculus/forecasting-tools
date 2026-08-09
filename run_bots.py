@@ -619,6 +619,48 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        ############################ Bots started in August 2026 ############################
+        "METAC_MUSE_SPARK_1_2": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 0.425,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/meta/muse-spark-1.2",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_QWEN_3_8_MAX": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 0.6,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/qwen/qwen3.8-max",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_INKLING_SMALL": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 0.12,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/thinkingmachines/inkling-small",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_DEEPSEEK_V4_FLASH": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost * 0.072,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/deepseek/deepseek-v4-flash-0731",
+                    temperature=default_temperature,
+                    timeout=5 * 60,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ Bots started in July 2026 ############################
         "METAC_CLAUDE_OPUS_5": {
             "estimated_cost_per_question": roughly_opus_4_5_cost,
