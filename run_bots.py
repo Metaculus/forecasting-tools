@@ -620,6 +620,47 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     mode_base_bot_mapping = {
         ############################ Bots started in August 2026 ############################
+        "METAC_GEMINI_3_7_FLASH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 0.21,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/google/gemini-3.7-flash",
+                    temperature=None,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GROK_4_6": {
+            "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_5_llm,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/x-ai/grok-4.6",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_NEMOTRON_3_5_LIGHTNING": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost * 0.1,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/nvidia/nemotron-3.5-lightning",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_MUSE_GLIMMER_30B": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 0.15,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/meta/muse-glimmer-30b",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         "METAC_MUSE_SPARK_1_2": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 0.425,
             "bot": create_bot(
