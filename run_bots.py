@@ -620,6 +620,26 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     mode_base_bot_mapping = {
         ############################ Bots started in August 2026 ############################
+        "METAC_QWEN_3_8_FLASH": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 0.047,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/qwen/qwen3.8-flash",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GLM_5_3_FLASH": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 0.05,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/z-ai/glm-5.3-flash",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         "METAC_GLM_5_3": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 0.44,
             "bot": create_bot(
