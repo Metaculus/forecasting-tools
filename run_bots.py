@@ -619,6 +619,17 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        ############################ Bots started in September 2026 ############################
+        "METAC_CLAUDE_FABLE_5_1": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-fable-5-1",
+                    temperature=None,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ Bots started in August 2026 ############################
         "METAC_QWEN_3_8_FLASH": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 0.047,
