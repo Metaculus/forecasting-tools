@@ -369,13 +369,13 @@ tests = ["mypy (>=1.14.0)", "pytest", "pytest-asyncio"]
 
 [[package]]
 name = "asknews"
-version = "0.13.47"
+version = "0.14.2"
 description = "Python SDK for AskNews"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "asknews-0.13.47-py3-none-any.whl", hash = "sha256:45865459285f75573ce62af11ad40351090448d0b8ccd923a9e62e7a420b9243"},
+    {file = "asknews-0.14.2-py3-none-any.whl", hash = "sha256:b73db86f4fae9f2fdfeef879db25cc7a4009ff801fda0c4fb1d91fb932130a1a"},
 ]
 
 [package.dependencies]
@@ -7902,4 +7902,4 @@ source-archive = ["boto3", "cloakbrowser", "firecrawl-py", "playwright", "pymupd
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "d9abd6c9194bdd4769704c8c60f48f438f9d77370b35ee739555d3b9fd3e5e22"
+content-hash = "b271eaeac26c368aeff02253063586c1cf4396cd454b4ef9b2c573cee62a172f"
