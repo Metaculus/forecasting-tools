@@ -40,3 +40,19 @@ async def test_formatted_deep_research() -> None:
     assert len(news) > 100, "News is too short"
     assert "<final_answer>" not in news, "<final_answer> is in the final answer"
     assert "<think>" not in news, "<think> is in the news"
+
+
+async def test_deep_research_accepts_podcasts_source() -> None:
+    if not os.getenv("ASKNEWS_CLIENT_ID") or not os.getenv("ASKNEWS_SECRET"):
+        pytest.skip("ASKNEWS_CLIENT_ID or ASKNEWS_SECRET is not set")
+    response = await AskNewsSearcher().run_deep_research(
+        "In one sentence, what is the latest news about the US federal funds rate?",
+        sources=["asknews", "podcasts"],
+        model="open-source-best",
+        search_depth=1,
+        max_depth=1,
+    )
+    content = response.choices[0].message.content
+    logger.info(f"Deep research with podcasts source: {content}")
+    assert content is not None, "Content is None"
+    assert len(content) > 100, "Content is too short"

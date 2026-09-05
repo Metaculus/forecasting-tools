@@ -164,7 +164,7 @@ class AskNewsSearcher:
         elif "asknews/deep-research/medium-depth" in preset:
             research = await self.get_formatted_deep_research(
                 prompt,
-                sources=["asknews", "google", "x", "wiki"],
+                sources=["asknews", "google", "x", "wiki", "podcasts"],
                 filter_params={"premium": True},
                 search_depth=2,
                 max_depth=4,
@@ -173,7 +173,7 @@ class AskNewsSearcher:
         elif "asknews/deep-research/high-depth" in preset:
             research = await self.get_formatted_deep_research(
                 prompt,
-                sources=["asknews", "google", "x", "wiki"],
+                sources=["asknews", "google", "x", "wiki", "podcasts"],
                 filter_params={"premium": True},
                 search_depth=4,
                 max_depth=6,
@@ -187,10 +187,7 @@ class AskNewsSearcher:
         self,
         query: str,
         sources: list[str] | None = None,
-        model: (
-            Literal["deepseek", "deepseek-basic", "claude-3-7-sonnet-latest", "o3-mini"]
-            | str
-        ) = _default_model,
+        model: DeepNewsModel | str = _default_model,
         search_depth: int = _default_search_depth,
         max_depth: int = _default_max_depth,
         filter_params: dict[str, bool] | None = None,
@@ -225,7 +222,7 @@ class AskNewsSearcher:
             from asknews_sdk.dto.deepnews import CreateDeepNewsResponse
         except ImportError:
             raise ImportError(
-                "Most recent version of asknews package not installed, deep research will not work. Run `poetry add asknews@0.11.6`"
+                "Most recent version of asknews package not installed, deep research will not work. Run `poetry add asknews@0.14.2`"
             )
         async with AsyncAskNewsSDK(
             client_id=self.client_id,
