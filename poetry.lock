@@ -7902,4 +7902,4 @@ source-archive = ["boto3", "cloakbrowser", "firecrawl-py", "playwright", "pymupd
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "b271eaeac26c368aeff02253063586c1cf4396cd454b4ef9b2c573cee62a172f"
+content-hash = "285646db0f1223467d614fd0440be78f7fb72bde6ac4a94652496f4b94921db1"
