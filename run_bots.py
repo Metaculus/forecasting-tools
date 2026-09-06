@@ -56,6 +56,7 @@ POST_IDS_TO_SKIP = [
     43310,  # https://www.metaculus.com/questions/43310/ is rejected since too many MC options
     40280,  # https://www.metaculus.com/questions/40280/ is rejected since noisy workflow errors
     39138,  # https://www.metaculus.com/questions/39138/ is rejected the best value is way out of bounds, and bots are constrained to not be able to make these forecasts
+    42541,  # https://www.metaculus.com/questions/42541/ is rejected since too many MC options
 ]
 POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     # 43335,  # https://www.metaculus.com/questions/43335/ is still forecasted but should not fail the workflow if it errors
