@@ -7,8 +7,8 @@ from pydantic import BaseModel
 from forecasting_tools.util.misc import clean_indents
 from forecasting_tools.util.optional_imports import require_optional_package
 
-require_optional_package("hyperbrowser", "hyperbrowser", "computer-use")
-require_optional_package("agents", "openai-agents", "computer-use")
+require_optional_package("hyperbrowser", "hyperbrowser", "agents")
+require_optional_package("agents", "openai-agents", "agents")
 
 from hyperbrowser import AsyncHyperbrowser  # noqa: E402
 from hyperbrowser.models import (  # noqa: E402

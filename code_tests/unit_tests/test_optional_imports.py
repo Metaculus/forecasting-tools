@@ -65,7 +65,7 @@ extra_for_name = {
     "BotOptimizer": "agents",
     "DataAnalyzer": "agents",
     "QuestionDecomposer": "agents",
-    "ComputerUse": "computer-use",
+    "ComputerUse": "agents",
     "run_benchmark_streamlit_page": "front-end",
 }
 for name, extra in extra_for_name.items():

@@ -2058,7 +2058,7 @@ description = "Signatures for entire Python programs. Extract the structure, the
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"agents\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "griffelib-2.3.0-py3-none-any.whl", hash = "sha256:1b8f9cd525681c26b1d6d574faa1371651e8459ca51d209684f50b8096ae06e0"},
     {file = "griffelib-2.3.0.tar.gz", hash = "sha256:7b0952caf5bca6afa4bb5ee8c6a2d183fe3f21b62efc5f6c7243cb2b26d2d115"},
@@ -2164,7 +2164,7 @@ description = "A minimal low-level HTTP client."
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\") and sys_platform != \"emscripten\" and python_version < \"3.14\""
+markers = "(extra == \"agents\" or extra == \"front-end\" or extra == \"all\") and sys_platform != \"emscripten\" and python_version < \"3.14\""
 files = [
     {file = "httpcore2-2.12.0-py3-none-any.whl", hash = "sha256:7e04258ce01013d7d615e5b910a3b27fac937d7a95038227e79652b4ba3b4ceb"},
     {file = "httpcore2-2.12.0.tar.gz", hash = "sha256:9293522bba0aa7c4c8e9e3f040c16575bd8868e155a77fa30c7a9085a5eae648"},
@@ -2273,7 +2273,7 @@ description = "Consume Server-Sent Event (SSE) messages with HTTPX."
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "python_version >= \"3.14\" and (extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\")"
+markers = "python_version >= \"3.14\" and (extra == \"agents\" or extra == \"front-end\" or extra == \"all\")"
 files = [
     {file = "httpx_sse-0.4.3-py3-none-any.whl", hash = "sha256:0ac1c9fe3c0afad2e0ebb25a934a59f4c7823b60792691f779fad2c5568830fc"},
     {file = "httpx_sse-0.4.3.tar.gz", hash = "sha256:9b1ed0127459a66014aec3c56bebd93da3c1bc8bb6618c8082039a44889a755d"},
@@ -2286,7 +2286,7 @@ description = "The next generation HTTP client."
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\") and python_version < \"3.14\""
+markers = "(extra == \"agents\" or extra == \"front-end\" or extra == \"all\") and python_version < \"3.14\""
 files = [
     {file = "httpx2-2.12.0-py3-none-any.whl", hash = "sha256:cc8b6eecb8661c146b8f89a60e97456ee086e91a784ed31ac450c3a9e613dd36"},
     {file = "httpx2-2.12.0.tar.gz", hash = "sha256:7631fe9887a8a2275f4a2540e053aa670fcc50742864a9ae7c66e609fdcf12cf"},
@@ -2315,7 +2315,7 @@ description = "httpx2 transports for Emscripten/Pyodide, backed by the JavaScrip
 optional = true
 python-versions = ">=3.12"
 groups = ["main"]
-markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\") and python_version >= \"3.12\" and sys_platform == \"emscripten\" and python_version < \"3.14\""
+markers = "(extra == \"agents\" or extra == \"front-end\" or extra == \"all\") and python_version >= \"3.12\" and sys_platform == \"emscripten\" and python_version < \"3.14\""
 files = [
     {file = "httpx2_jsfetch-1.0-py3-none-any.whl", hash = "sha256:cb916b707601e69a07721aabc8f3f6659be3a6893bc1ff5c6f9e02241df2da32"},
     {file = "httpx2_jsfetch-1.0.tar.gz", hash = "sha256:70a0e3eabfef7cce5ad9c629f7d01ca05e418f586646f4ddf14782e4c1454c60"},
@@ -2402,7 +2402,7 @@ description = "Python SDK for hyperbrowser"
 optional = true
 python-versions = "<4.0,>=3.8"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"computer-use\" or extra == \"all\""
+markers = "extra == \"source-archive\" or extra == \"agents\" or extra == \"all\""
 files = [
     {file = "hyperbrowser-1.4.2-py3-none-any.whl", hash = "sha256:19a9aa958aefc9a07af4395ad021872caf068d2c00836d1288057d3688d7167f"},
     {file = "hyperbrowser-1.4.2.tar.gz", hash = "sha256:f3274e1a3c11befc32b4ebf0e8f0f6961ecea5020176b892998c333643742e0a"},
@@ -2832,7 +2832,7 @@ description = "jsonref is a library for automatic dereferencing of JSON Referenc
 optional = true
 python-versions = ">=3.7"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"computer-use\" or extra == \"all\""
+markers = "extra == \"source-archive\" or extra == \"agents\" or extra == \"all\""
 files = [
     {file = "jsonref-1.1.0-py3-none-any.whl", hash = "sha256:590dc7773df6c21cbf948b5dac07a72a251db28b0238ceecce0a2abfa8ec30a9"},
     {file = "jsonref-1.1.0.tar.gz", hash = "sha256:32fe8e1d85af0fdefbebce950af85590b22b60f9e95443176adbde4e1ecea552"},
@@ -3854,7 +3854,7 @@ description = "Model Context Protocol SDK"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "python_version >= \"3.14\" and (extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\")"
+markers = "python_version >= \"3.14\" and (extra == \"agents\" or extra == \"front-end\" or extra == \"all\")"
 files = [
     {file = "mcp-1.30.0-py3-none-any.whl", hash = "sha256:666edb5009503e1047c9d60346a756f94b261f05cc2625f23d41c728ffc484d0"},
     {file = "mcp-1.30.0.tar.gz", hash = "sha256:445414625fce5c295faa505bb11bacece661ab6f4028d57c935db57820b7a3e4"},
@@ -3888,7 +3888,7 @@ description = "Model Context Protocol SDK"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\") and python_version < \"3.14\""
+markers = "(extra == \"agents\" or extra == \"front-end\" or extra == \"all\") and python_version < \"3.14\""
 files = [
     {file = "mcp-2.2.0-py3-none-any.whl", hash = "sha256:bde982589473a060ae145e3406e9a5333fe538c97229ba841f5a7f92be004f81"},
     {file = "mcp-2.2.0.tar.gz", hash = "sha256:2dc37ecb1974becdcebdbf7561e7c15a07dbbf20ba21ba16c3593b3038b3afbd"},
@@ -3921,7 +3921,7 @@ description = "Model Context Protocol wire types"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\") and python_version < \"3.14\""
+markers = "(extra == \"agents\" or extra == \"front-end\" or extra == \"all\") and python_version < \"3.14\""
 files = [
     {file = "mcp_types-2.2.0-py3-none-any.whl", hash = "sha256:ea476b73ee86709ab5abc9452385ed36cc05907e582355622e294595c9a04f13"},
     {file = "mcp_types-2.2.0.tar.gz", hash = "sha256:d3ed53703ddd10d9c6399f29d322bb66f3f67ab41348ac8556ba23e07fedefad"},
@@ -4526,7 +4526,7 @@ description = "OpenAI Agents SDK"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "python_version >= \"3.14\" and (extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\")"
+markers = "python_version >= \"3.14\" and (extra == \"agents\" or extra == \"front-end\" or extra == \"all\")"
 files = [
     {file = "openai_agents-0.17.3-py3-none-any.whl", hash = "sha256:a048bb0752d40913d18bccf6562f56260b603bb57c972597b6da58f60123f4bd"},
     {file = "openai_agents-0.17.3.tar.gz", hash = "sha256:63b6dda6bd4fb51169e2a2cbd5d187a4e5ce823bbd15f965c8ed1d3b89072eec"},
@@ -4572,7 +4572,7 @@ description = "OpenAI Agents SDK"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "python_version < \"3.14\" and (extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\")"
+markers = "python_version < \"3.14\" and (extra == \"agents\" or extra == \"front-end\" or extra == \"all\")"
 files = [
     {file = "openai_agents-0.20.0-py3-none-any.whl", hash = "sha256:aaff662b802fa90762ad539e131b9ea387e12e3664b87bc75157ad1b3fc88850"},
     {file = "openai_agents-0.20.0.tar.gz", hash = "sha256:a6b37954877868ac233876a27dab1e2a461c53ecbd5fcf6e19e2d276d3e848cd"},
@@ -4617,7 +4617,7 @@ description = "OpenTelemetry Python API"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\") and python_version < \"3.14\""
+markers = "(extra == \"agents\" or extra == \"front-end\" or extra == \"all\") and python_version < \"3.14\""
 files = [
     {file = "opentelemetry_api-1.44.0-py3-none-any.whl", hash = "sha256:94b98c893a91b88657eaac1e3ba89618cdb85be6918196705354f34728b2cdef"},
     {file = "opentelemetry_api-1.44.0.tar.gz", hash = "sha256:67647e5e9566edcf421166fdf022b3537f818635daa852b289e34604dc6fb33a"},
@@ -5797,7 +5797,7 @@ description = "Settings management using Pydantic"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\" or python_version < \"3.14\""
+markers = "extra == \"agents\" or extra == \"front-end\" or extra == \"all\" or python_version < \"3.14\""
 files = [
     {file = "pydantic_settings-2.15.0-py3-none-any.whl", hash = "sha256:0ba092c291c94baceb5eff768aa0d56400a457585bc0175925a5a5510303da42"},
     {file = "pydantic_settings-2.15.0.tar.gz", hash = "sha256:694b793e84f766ba76a90ebdefc01d0a9a045dab0382bee70393da93712ad117"},
@@ -5878,7 +5878,7 @@ description = "JSON Web Token implementation in Python"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"agents\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "pyjwt-2.13.0-py3-none-any.whl", hash = "sha256:66adcc2aff09b3f1bbd95fc1e1577df8ac8723c978552fd43304c8a290ac5728"},
     {file = "pyjwt-2.13.0.tar.gz", hash = "sha256:41571c89ca91598c79e8ef18a2d07367d4810fbbd6f637794879baf1b7703423"},
@@ -6148,7 +6148,7 @@ description = "A streaming multipart parser for Python"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"agents\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "python_multipart-0.0.32-py3-none-any.whl", hash = "sha256:ff6d3f776f16878c894e52e107296ffc890e913c611b1a4ec6c44e2821fe2e23"},
     {file = "python_multipart-0.0.32.tar.gz", hash = "sha256:be54b7f3fa167bb83e4fcd936b887b708f4e57fe75911c02aebf53efaf8d938e"},
@@ -6192,7 +6192,7 @@ description = "Python for Windows Extensions"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\") and sys_platform == \"win32\""
+markers = "(extra == \"agents\" or extra == \"front-end\" or extra == \"all\") and sys_platform == \"win32\""
 files = [
     {file = "pywin32-312-cp310-cp310-win32.whl", hash = "sha256:772235332b5d1024c696f11cea1ae4be7930f0a8b894bb43db14e3f435f1ff7e"},
     {file = "pywin32-312-cp310-cp310-win_amd64.whl", hash = "sha256:5dbc35d2b5320dc07f25fa31269cfb767471002b17de5eb067d03da68c7cb2db"},
@@ -7104,7 +7104,7 @@ description = "SSE plugin for Starlette"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"agents\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "sse_starlette-3.4.11-py3-none-any.whl", hash = "sha256:c7b2244bdff016fe7f64e10075e89a3e6bbf899649cc89b0fe884b5545042453"},
     {file = "sse_starlette-3.4.11.tar.gz", hash = "sha256:1bae716c02f3e6f294be41ff333220692dae7c3cbab077c900f159676719dade"},
@@ -7148,7 +7148,7 @@ description = "The little ASGI library that shines."
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"agents\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "starlette-1.6.0-py3-none-any.whl", hash = "sha256:a86dd39d14bb45f85a3d18525215a9ef0cfd1f192ac793220e72598c90335f0c"},
     {file = "starlette-1.6.0.tar.gz", hash = "sha256:d4e3ac5e546444960c710297a3c9fc3f7ebae1b7e963f3d36173b49da535be9b"},
@@ -7799,7 +7799,7 @@ description = "Verify certificates using native system trust stores"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\") and sys_platform != \"emscripten\" and python_version < \"3.14\""
+markers = "(extra == \"agents\" or extra == \"front-end\" or extra == \"all\") and sys_platform != \"emscripten\" and python_version < \"3.14\""
 files = [
     {file = "truststore-0.10.4-py3-none-any.whl", hash = "sha256:adaeaecf1cbb5f4de3b1959b42d41f6fab57b2b1666adb59e89cb0b53361d981"},
     {file = "truststore-0.10.4.tar.gz", hash = "sha256:9d91bd436463ad5e4ee4aba766628dd6cd7010cf3e2461756b3303710eebc301"},
@@ -7846,7 +7846,7 @@ description = "Typing stubs for requests"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "python_version >= \"3.14\" and (extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\")"
+markers = "python_version >= \"3.14\" and (extra == \"agents\" or extra == \"front-end\" or extra == \"all\")"
 files = [
     {file = "types_requests-2.33.0.20260906-py3-none-any.whl", hash = "sha256:9f53622652bd921ead7a54d665be1b8d518165c8b51cc9d68d944cd6b6bfa8fb"},
     {file = "types_requests-2.33.0.20260906.tar.gz", hash = "sha256:76ab8a0fb736744a0c3deee7aa57b2927e301f078d9e61f5391b3e92002416b9"},
@@ -7966,7 +7966,7 @@ description = "The lightning-fast ASGI server."
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\") and sys_platform != \"emscripten\" or extra == \"front-end\" or extra == \"all\""
+markers = "(extra == \"agents\" or extra == \"front-end\" or extra == \"all\") and sys_platform != \"emscripten\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "uvicorn-0.52.4-py3-none-any.whl", hash = "sha256:f86e41a149d7d05a9969337e3946a9c171c06a5d42680896daaba624aeac8da1"},
     {file = "uvicorn-0.52.4.tar.gz", hash = "sha256:73acfee47a0b133c5de13d219492d62d8a31e935f4fe6e41a232451a15379f86"},
@@ -8105,7 +8105,7 @@ description = "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "extra == \"front-end\" or extra == \"all\" or extra == \"source-archive\" or extra == \"computer-use\" or extra == \"agents\""
+markers = "extra == \"front-end\" or extra == \"all\" or extra == \"source-archive\" or extra == \"agents\""
 files = [
     {file = "websockets-15.0.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d63efaa0cd96cf0c5fe4d581521d9fa87744540d4bc999ae6e08595a1014b45b"},
     {file = "websockets-15.0.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:ac60e3b188ec7574cb761b08d50fcedf9d77f1530352db4eef1707fe9dee7205"},
@@ -8318,13 +8318,12 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more_it
 type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 
 [extras]
-agents = ["openai-agents"]
+agents = ["hyperbrowser", "openai-agents"]
 all = ["boto3", "cloakbrowser", "firecrawl-py", "hyperbrowser", "openai-agents", "playwright", "pymupdf4llm", "streamlit", "trafilatura"]
-computer-use = ["hyperbrowser", "openai-agents"]
 front-end = ["openai-agents", "streamlit"]
 source-archive = ["boto3", "cloakbrowser", "firecrawl-py", "hyperbrowser", "playwright", "pymupdf4llm", "trafilatura"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "7b9a095b900f3b381496e731cc00e1fad60ded8b29c093df19425b2ea0c0e590"
+content-hash = "690c4165e28d0fd78fd3f9bb5cc517f49564410cf88a397d2aa4a562d77554e3"

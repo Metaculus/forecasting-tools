@@ -158,7 +158,6 @@ from forecasting_tools import (
     ReasonedPrediction,
     PredictedOptionList,
     NumericDistribution,
-    AskNewsSearcher,
     MetaculusClient,
     GeneralLlm,
     PredictionExtractor,
@@ -168,7 +167,7 @@ from forecasting_tools.util.misc import clean_indents
 class MyCustomBot(TemplateBot):
 
     async def run_research(self, question: MetaculusQuestion) -> str:
-        searcher = AskNewsSearcher()
+        searcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0)
 
         prompt = clean_indents(
             f"""
@@ -183,7 +182,7 @@ class MyCustomBot(TemplateBot):
             """
         )
 
-        report = await searcher.get_formatted_news_async(prompt)
+        report = await searcher.invoke(prompt)
         return report
 
     async def _run_forecast_on_binary(
@@ -511,14 +510,13 @@ Some features need heavier dependencies that a bot does not, so they are opt-in.
 
 | Extra | You need it for |
 | --- | --- |
-| `agents` | Anything built on the agent SDK: `QuestionDecomposer`, `QuestionOperationalizer`, `TopicGenerator`, `DataAnalyzer`, `Benchmarker`, `BenchmarkForBot`, `BotOptimizer`, `CustomizableBot`, and the AI Congress tools |
+| `agents` | Anything built on the agent SDK: `QuestionDecomposer`, `QuestionOperationalizer`, `TopicGenerator`, `DataAnalyzer`, `Benchmarker`, `BenchmarkForBot`, `BotOptimizer`, `CustomizableBot`, `ComputerUse` (browser-driving agent), and the AI Congress tools |
 | `front-end` | The Streamlit app in `forecasting_tools/front_end/` and `run_benchmark_streamlit_page` |
-| `computer-use` | `ComputerUse` (browser-driving agent) |
 | `all` | Everything above |
 
 ```bash
 pip install 'forecasting-tools[agents]'
-pip install 'forecasting-tools[front-end,computer-use]'
+pip install 'forecasting-tools[agents,front-end]'
 pip install 'forecasting-tools[all]'
 ```
 
