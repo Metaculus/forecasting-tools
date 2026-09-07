@@ -137,13 +137,16 @@ class MetaculusClient:
     METACULUS_CUP_SUMMER_2026_ID = (
         33021  # https://www.metaculus.com/tournament/metaculus-cup-summer-2026/
     )
+    METACULUS_CUP_FALL_2026_ID = (
+        33108  # https://www.metaculus.com/tournament/metaculus-cup-fall-2026/
+    )
 
     Q3_2025_MARKET_PULSE_ID = "market-pulse-25q3"
     Q4_2025_MARKET_PULSE_ID = "market-pulse-25q4"
     Q1_2026_MARKET_PULSE_ID = "market-pulse-26q1"
     Q2_2026_MARKET_PULSE_ID = "market-pulse-26q2"
 
-    CURRENT_METACULUS_CUP_ID = METACULUS_CUP_SUMMER_2026_ID
+    CURRENT_METACULUS_CUP_ID = METACULUS_CUP_FALL_2026_ID
     CURRENT_QUARTERLY_CUP_ID = CURRENT_METACULUS_CUP_ID  # Consider this parameter deprecated since quarterly cup is no longer active
     CURRENT_AI_COMPETITION_ID = FE_SUMMER_2026_ID
     CURRENT_MINIBENCH_ID = "minibench"
