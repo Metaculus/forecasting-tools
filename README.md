@@ -9,27 +9,6 @@
 # Quick Start
 Install this package with `pip install forecasting-tools`
 
-This gives you everything needed to build and run a forecasting bot (the template bots, `MetaculusApi`/`MetaculusClient`, `GeneralLlm`, research tools like `SmartSearcher` and `AskNewsSearcher`, and the report/question data models).
-
-## Optional extras
-Some features need heavier dependencies that a bot does not, so they are opt-in. The base install stays small, and nothing in the template bot or the bot running infrastructure depends on them.
-
-| Extra | Installs | You need it for |
-| --- | --- | --- |
-| `agents` | `openai-agents` | Anything built on the agent SDK: `QuestionDecomposer`, `QuestionOperationalizer`, `TopicGenerator`, `DataAnalyzer`, `Benchmarker`, `BenchmarkForBot`, `BotOptimizer`, `CustomizableBot`, and the AI Congress tools |
-| `front-end` | `streamlit` (+ `openai-agents`) | The Streamlit app in `forecasting_tools/front_end/` and `run_benchmark_streamlit_page` |
-| `computer-use` | `hyperbrowser` (+ `openai-agents`) | `ComputerUse` (browser-driving agent) |
-| `source-archive` | `boto3`, `playwright`, `firecrawl-py`, `trafilatura`, `pymupdf4llm`, `cloakbrowser`, `hyperbrowser`, `streamlit` | The source archive backends and its viewer |
-| `all` | everything above | Convenience |
-
-```bash
-pip install 'forecasting-tools[agents]'
-pip install 'forecasting-tools[front-end,computer-use]'
-pip install 'forecasting-tools[all]'
-```
-
-If you use one of these features without its extra installed, you get an error telling you exactly which command to run. Importing `forecasting_tools` itself never requires an extra — the affected names are loaded on first access.
-
 Demo website: https://forecasting-tools.streamlit.app/
 
 Demo repo (get a Metaculus bot running in 30min): https://github.com/Metaculus/metac-bot-template
@@ -179,7 +158,7 @@ from forecasting_tools import (
     ReasonedPrediction,
     PredictedOptionList,
     NumericDistribution,
-    SmartSearcher,
+    AskNewsSearcher,
     MetaculusClient,
     GeneralLlm,
     PredictionExtractor,
@@ -189,18 +168,13 @@ from forecasting_tools.util.misc import clean_indents
 class MyCustomBot(TemplateBot):
 
     async def run_research(self, question: MetaculusQuestion) -> str:
-        searcher = SmartSearcher(
-            num_searches_to_run=2,
-            num_sites_per_search=10
-        )
+        searcher = AskNewsSearcher()
 
         prompt = clean_indents(
             f"""
             Analyze this forecasting question:
-            1. Filter for recent events in the past 6 months
-            2. Don't include domains from youtube.com
-            3. Look for current trends and data
-            4. Find historical analogies and base rates
+            1. Look for current trends and data
+            2. Find historical analogies and base rates
 
             Question: {question.question_text}
 
@@ -209,7 +183,7 @@ class MyCustomBot(TemplateBot):
             """
         )
 
-        report = await searcher.invoke(prompt)
+        report = await searcher.get_formatted_news_async(prompt)
         return report
 
     async def _run_forecast_on_binary(
@@ -531,6 +505,25 @@ with MonetaryCostManager(max_cost) as cost_manager:
     current_cost = cost_manager.current_usage
     print(f"Current cost: ${current_cost:.2f}")
 ```
+
+# Optional extras
+Some features need heavier dependencies that a bot does not, so they are opt-in. The base install stays small, and nothing in the template bot or the bot running infrastructure depends on them.
+
+| Extra | You need it for |
+| --- | --- |
+| `agents` | Anything built on the agent SDK: `QuestionDecomposer`, `QuestionOperationalizer`, `TopicGenerator`, `DataAnalyzer`, `Benchmarker`, `BenchmarkForBot`, `BotOptimizer`, `CustomizableBot`, and the AI Congress tools |
+| `front-end` | The Streamlit app in `forecasting_tools/front_end/` and `run_benchmark_streamlit_page` |
+| `computer-use` | `ComputerUse` (browser-driving agent) |
+| `all` | Everything above |
+
+```bash
+pip install 'forecasting-tools[agents]'
+pip install 'forecasting-tools[front-end,computer-use]'
+pip install 'forecasting-tools[all]'
+```
+
+If you use one of these features without its extra installed, you get an error telling you exactly which command to run. Importing `forecasting_tools` itself never requires an extra — the affected names are loaded on first access.
+
 
 # Local Development
 
