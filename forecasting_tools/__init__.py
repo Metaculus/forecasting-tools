@@ -1,3 +1,6 @@
+import importlib
+from typing import TYPE_CHECKING, Any
+
 import nest_asyncio
 
 from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
@@ -14,21 +17,6 @@ from forecasting_tools.agents_and_tools.base_rates.niche_list_researcher import 
 )
 from forecasting_tools.agents_and_tools.deprecated.question_generator import (
     QuestionGenerator as QuestionGenerator,
-)
-from forecasting_tools.agents_and_tools.other.data_analyzer import (
-    DataAnalyzer as DataAnalyzer,
-)
-from forecasting_tools.agents_and_tools.question_generators.question_decomposer import (
-    QuestionDecomposer as QuestionDecomposer,
-)
-from forecasting_tools.agents_and_tools.question_generators.question_operationalizer import (
-    QuestionOperationalizer as QuestionOperationalizer,
-)
-from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
-    TopicGenerator as TopicGenerator,
-)
-from forecasting_tools.agents_and_tools.research.computer_use import (
-    ComputerUse as ComputerUse,
 )
 from forecasting_tools.agents_and_tools.research.key_factors_researcher import (
     KeyFactorsResearcher as KeyFactorsResearcher,
@@ -66,14 +54,6 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 from forecasting_tools.ai_models.resource_managers.refreshing_bucket_rate_limiter import (
     RefreshingBucketRateLimiter as RefreshingBucketRateLimiter,
 )
-from forecasting_tools.auto_optimizers.bot_optimizer import BotOptimizer as BotOptimizer
-from forecasting_tools.cp_benchmarking.benchmark_displayer import (
-    run_benchmark_streamlit_page as run_benchmark_streamlit_page,
-)
-from forecasting_tools.cp_benchmarking.benchmark_for_bot import (
-    BenchmarkForBot as BenchmarkForBot,
-)
-from forecasting_tools.cp_benchmarking.benchmarker import Benchmarker as Benchmarker
 from forecasting_tools.data_models.binary_report import (
     BinaryPrediction as BinaryPrediction,
 )
@@ -195,5 +175,62 @@ from forecasting_tools.helpers.structure_output import (
     structure_output as structure_output,
 )
 from forecasting_tools.util.misc import clean_indents as clean_indents
+
+# Loaded on first access rather than at import time. These names need optional
+# dependencies (see the extras in pyproject.toml), so importing them eagerly
+# would make `import forecasting_tools` fail for anyone who installed only the
+# base package to run a bot.
+_LAZY_EXPORTS: dict[str, str] = {
+    "Benchmarker": "forecasting_tools.cp_benchmarking.benchmarker",
+    "BenchmarkForBot": "forecasting_tools.cp_benchmarking.benchmark_for_bot",
+    "BotOptimizer": "forecasting_tools.auto_optimizers.bot_optimizer",
+    "ComputerUse": "forecasting_tools.agents_and_tools.research.computer_use",
+    "DataAnalyzer": "forecasting_tools.agents_and_tools.other.data_analyzer",
+    "QuestionDecomposer": "forecasting_tools.agents_and_tools.question_generators.question_decomposer",
+    "QuestionOperationalizer": "forecasting_tools.agents_and_tools.question_generators.question_operationalizer",
+    "TopicGenerator": "forecasting_tools.agents_and_tools.question_generators.topic_generator",
+    "run_benchmark_streamlit_page": "forecasting_tools.cp_benchmarking.benchmark_displayer",
+}
+
+if TYPE_CHECKING:
+    from forecasting_tools.agents_and_tools.other.data_analyzer import (
+        DataAnalyzer as DataAnalyzer,
+    )
+    from forecasting_tools.agents_and_tools.question_generators.question_decomposer import (
+        QuestionDecomposer as QuestionDecomposer,
+    )
+    from forecasting_tools.agents_and_tools.question_generators.question_operationalizer import (
+        QuestionOperationalizer as QuestionOperationalizer,
+    )
+    from forecasting_tools.agents_and_tools.question_generators.topic_generator import (
+        TopicGenerator as TopicGenerator,
+    )
+    from forecasting_tools.agents_and_tools.research.computer_use import (
+        ComputerUse as ComputerUse,
+    )
+    from forecasting_tools.auto_optimizers.bot_optimizer import (
+        BotOptimizer as BotOptimizer,
+    )
+    from forecasting_tools.cp_benchmarking.benchmark_displayer import (
+        run_benchmark_streamlit_page as run_benchmark_streamlit_page,
+    )
+    from forecasting_tools.cp_benchmarking.benchmark_for_bot import (
+        BenchmarkForBot as BenchmarkForBot,
+    )
+    from forecasting_tools.cp_benchmarking.benchmarker import Benchmarker as Benchmarker
+
+
+def __getattr__(name: str) -> Any:
+    module_path = _LAZY_EXPORTS.get(name)
+    if module_path is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(importlib.import_module(module_path), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_LAZY_EXPORTS))
+
 
 nest_asyncio.apply()

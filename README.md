@@ -9,6 +9,27 @@
 # Quick Start
 Install this package with `pip install forecasting-tools`
 
+This gives you everything needed to build and run a forecasting bot (the template bots, `MetaculusApi`/`MetaculusClient`, `GeneralLlm`, research tools like `SmartSearcher` and `AskNewsSearcher`, and the report/question data models).
+
+## Optional extras
+Some features need heavier dependencies that a bot does not, so they are opt-in. The base install stays small, and nothing in the template bot or the bot running infrastructure depends on them.
+
+| Extra | Installs | You need it for |
+| --- | --- | --- |
+| `agents` | `openai-agents` | Anything built on the agent SDK: `QuestionDecomposer`, `QuestionOperationalizer`, `TopicGenerator`, `DataAnalyzer`, `Benchmarker`, `BenchmarkForBot`, `BotOptimizer`, `CustomizableBot`, and the AI Congress tools |
+| `front-end` | `streamlit` (+ `openai-agents`) | The Streamlit app in `forecasting_tools/front_end/` and `run_benchmark_streamlit_page` |
+| `computer-use` | `hyperbrowser` (+ `openai-agents`) | `ComputerUse` (browser-driving agent) |
+| `source-archive` | `boto3`, `playwright`, `firecrawl-py`, `trafilatura`, `pymupdf4llm`, `cloakbrowser`, `hyperbrowser`, `streamlit` | The source archive backends and its viewer |
+| `all` | everything above | Convenience |
+
+```bash
+pip install 'forecasting-tools[agents]'
+pip install 'forecasting-tools[front-end,computer-use]'
+pip install 'forecasting-tools[all]'
+```
+
+If you use one of these features without its extra installed, you get an error telling you exactly which command to run. Importing `forecasting_tools` itself never requires an extra — the affected names are loaded on first access.
+
 Demo website: https://forecasting-tools.streamlit.app/
 
 Demo repo (get a Metaculus bot running in 30min): https://github.com/Metaculus/metac-bot-template
@@ -548,8 +569,17 @@ There are many ways to manager Docker containers, but generally if you download 
 If you choose not to run Docker, you can use poetry to set up a local virtual environment. If you are on Ubuntu, you should be able to just read through and then run `.devcontainer/postinstall.sh`. If you aren't on Ubuntu, check out the links in the postinstall file for where install instructions for dependencies were originally found. You may also want to take a look at VSCode extensions that would be installed (see the list in the `.devcontainer/devcontainer.json` file) so that some VSCode workplace settings work out of the box (e.g. automatic Black Formatting).
 
 
+## Installing dependencies
+Local development uses the optional extras (the tests cover the front end, the agent tools, and benchmarking), so install with:
+
+```bash
+poetry install --all-extras
+```
+
+A plain `poetry install` gives you only the base dependencies. That is what the bot-running GitHub workflows use, which keeps them honest about the template bot not needing the extras — but it is not enough to run the full unit test suite.
+
 ## Running the Front End
-You can run any front end folder in the front_end directory by executing `streamlit run front_end/main.py`. This will start a development server for you that you can run. Streamlit makes it very easy to publish demos.
+You can run any front end folder in the front_end directory by executing `streamlit run front_end/main.py`. This will start a development server for you that you can run. Streamlit makes it very easy to publish demos. This needs the `front-end` extra (included in `poetry install --all-extras`).
 
 ## Testing
 This repository uses pytest tests are subdivided into folders 'unit_tests', 'integration'. Unit tests should always pass. You can run `pytest code_tests/unit_tests` or just `pytest` to run all of these

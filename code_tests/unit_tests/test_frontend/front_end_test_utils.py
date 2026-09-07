@@ -1,4 +1,6 @@
+import importlib
 import logging
+from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
 
@@ -11,7 +13,8 @@ class FrontEndTestUtils:
 
     @staticmethod
     def convert_page_to_app_tester(app_page: type[AppPage]) -> AppTest:
-        module_name = app_page.__module__
-        project_path = module_name.replace(".", "/") + ".py"
-        app_test = AppTest.from_file(project_path, default_timeout=600)
-        return app_test
+        module = importlib.import_module(app_page.__module__)
+        if module.__file__ is None:
+            raise RuntimeError(f"Cannot find the file backing {app_page.__module__}")
+        script_path = Path(module.__file__).resolve()
+        return AppTest.from_file(script_path, default_timeout=600)

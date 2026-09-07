@@ -30,7 +30,15 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 import pandas as pd  # noqa: E402
-import streamlit as st  # noqa: E402
+
+from forecasting_tools.util.optional_imports import (  # noqa: E402
+    missing_optional_package_error,
+)
+
+try:
+    import streamlit as st  # noqa: E402
+except ImportError as e:
+    raise missing_optional_package_error("streamlit", "front-end") from e
 
 from forecasting_tools.agents_and_tools.source_archive.config import (  # noqa: E402
     ArchiveConfig,
