@@ -2,12 +2,17 @@ import asyncio
 import logging
 
 import nest_asyncio
-from agents import Agent, CodeInterpreterTool, FunctionTool, Runner
-from agents import function_tool as ft
-from agents.extensions.models.litellm_model import LitellmModel
-from agents.stream_events import StreamEvent
 
 from forecasting_tools.ai_models.model_tracker import ModelTracker
+from forecasting_tools.util.optional_imports import missing_optional_package_error
+
+try:
+    from agents import Agent, CodeInterpreterTool, FunctionTool, Runner
+    from agents import function_tool as ft
+    from agents.extensions.models.litellm_model import LitellmModel
+    from agents.stream_events import StreamEvent
+except ImportError as e:
+    raise missing_optional_package_error("openai-agents", "agents") from e
 
 logger = logging.getLogger(__name__)
 

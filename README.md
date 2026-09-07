@@ -158,7 +158,6 @@ from forecasting_tools import (
     ReasonedPrediction,
     PredictedOptionList,
     NumericDistribution,
-    SmartSearcher,
     MetaculusClient,
     GeneralLlm,
     PredictionExtractor,
@@ -168,18 +167,13 @@ from forecasting_tools.util.misc import clean_indents
 class MyCustomBot(TemplateBot):
 
     async def run_research(self, question: MetaculusQuestion) -> str:
-        searcher = SmartSearcher(
-            num_searches_to_run=2,
-            num_sites_per_search=10
-        )
+        searcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0)
 
         prompt = clean_indents(
             f"""
             Analyze this forecasting question:
-            1. Filter for recent events in the past 6 months
-            2. Don't include domains from youtube.com
-            3. Look for current trends and data
-            4. Find historical analogies and base rates
+            1. Look for current trends and data
+            2. Find historical analogies and base rates
 
             Question: {question.question_text}
 
@@ -511,6 +505,25 @@ with MonetaryCostManager(max_cost) as cost_manager:
     print(f"Current cost: ${current_cost:.2f}")
 ```
 
+# Optional extras
+Some features need heavier dependencies that a bot does not, so they are opt-in. The base install stays small, and nothing in the template bot or the bot running infrastructure depends on them.
+
+| Extra | You need it for |
+| --- | --- |
+| `agents` | Anything built on the agent SDK: `QuestionDecomposer`, `QuestionOperationalizer`, `TopicGenerator`, `DataAnalyzer`, `Benchmarker`, `BenchmarkForBot`, `BotOptimizer`, `CustomizableBot`, `ComputerUse` (browser-driving agent), and the AI Congress tools |
+| `front-end` | The Streamlit app in `forecasting_tools/front_end/` and `run_benchmark_streamlit_page` |
+| `stats` | `forecasting_tools.util.stats` and the calibration adjusters in `forecasting_tools/calibration_adjustment/` |
+| `all` | Everything above |
+
+```bash
+pip install 'forecasting-tools[agents]'
+pip install 'forecasting-tools[agents,front-end]'
+pip install 'forecasting-tools[all]'
+```
+
+If you use one of these features without its extra installed, you get an error telling you exactly which command to run. Importing `forecasting_tools` itself never requires an extra — the affected names are loaded on first access.
+
+
 # Local Development
 
 ## Environment Variables
@@ -548,8 +561,17 @@ There are many ways to manager Docker containers, but generally if you download 
 If you choose not to run Docker, you can use poetry to set up a local virtual environment. If you are on Ubuntu, you should be able to just read through and then run `.devcontainer/postinstall.sh`. If you aren't on Ubuntu, check out the links in the postinstall file for where install instructions for dependencies were originally found. You may also want to take a look at VSCode extensions that would be installed (see the list in the `.devcontainer/devcontainer.json` file) so that some VSCode workplace settings work out of the box (e.g. automatic Black Formatting).
 
 
+## Installing dependencies
+Local development uses the optional extras (the tests cover the front end, the agent tools, and benchmarking), so install with:
+
+```bash
+poetry install --all-extras
+```
+
+A plain `poetry install` gives you only the base dependencies. That is what the bot-running GitHub workflows use, which keeps them honest about the template bot not needing the extras — but it is not enough to run the full unit test suite.
+
 ## Running the Front End
-You can run any front end folder in the front_end directory by executing `streamlit run front_end/main.py`. This will start a development server for you that you can run. Streamlit makes it very easy to publish demos.
+You can run any front end folder in the front_end directory by executing `streamlit run front_end/Home.py`. This will start a development server for you that you can run. Streamlit makes it very easy to publish demos. This needs the `front-end` extra (included in `poetry install --all-extras`).
 
 ## Testing
 This repository uses pytest tests are subdivided into folders 'unit_tests', 'integration'. Unit tests should always pass. You can run `pytest code_tests/unit_tests` or just `pytest` to run all of these
