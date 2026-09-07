@@ -572,7 +572,7 @@ poetry install --all-extras
 A plain `poetry install` gives you only the base dependencies. That is what the bot-running GitHub workflows use, which keeps them honest about the template bot not needing the extras — but it is not enough to run the full unit test suite.
 
 ## Running the Front End
-You can run any front end folder in the front_end directory by executing `streamlit run front_end/main.py`. This will start a development server for you that you can run. Streamlit makes it very easy to publish demos. This needs the `front-end` extra (included in `poetry install --all-extras`).
+You can run any front end folder in the front_end directory by executing `streamlit run front_end/Home.py`. This will start a development server for you that you can run. Streamlit makes it very easy to publish demos. This needs the `front-end` extra (included in `poetry install --all-extras`).
 
 ## Testing
 This repository uses pytest tests are subdivided into folders 'unit_tests', 'integration'. Unit tests should always pass. You can run `pytest code_tests/unit_tests` or just `pytest` to run all of these

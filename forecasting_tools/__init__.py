@@ -1,4 +1,4 @@
-import importlib
+import importlib.util
 from typing import TYPE_CHECKING, Any
 
 import nest_asyncio
@@ -220,11 +220,26 @@ if TYPE_CHECKING:
     from forecasting_tools.cp_benchmarking.benchmarker import Benchmarker as Benchmarker
 
 
+def _import_or_attribute_error(module_path: str) -> Any:
+    try:
+        return importlib.import_module(module_path)
+    except ImportError as e:
+        # Raised as AttributeError so that hasattr() reports False rather than
+        # blowing up. The message still names the extra that needs installing.
+        raise AttributeError(str(e)) from e
+
+
 def __getattr__(name: str) -> Any:
     module_path = _LAZY_EXPORTS.get(name)
-    if module_path is None:
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    value = getattr(importlib.import_module(module_path), name)
+    if module_path is not None:
+        value = getattr(_import_or_attribute_error(module_path), name)
+    else:
+        # Subpackages used to be bound here as a side effect of the eager imports
+        # that lived above, so keep `forecasting_tools.<subpackage>` reachable.
+        submodule_path = f"{__name__}.{name}"
+        if importlib.util.find_spec(submodule_path) is None:
+            raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+        value = _import_or_attribute_error(submodule_path)
     globals()[name] = value
     return value
 

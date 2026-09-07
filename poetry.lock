@@ -345,7 +345,7 @@ description = "Vega-Altair: A declarative statistical visualization library for 
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "altair-6.2.2-py3-none-any.whl", hash = "sha256:94014f8ad8617c3cb163d1137359cd6db5ba134b9b46d93cfd8b609fd245a583"},
     {file = "altair-6.2.2.tar.gz", hash = "sha256:a1ff9d9cfe81c75414641826312b9471780e19d39293ba0b012933f6b6cba0fe"},
@@ -2187,7 +2187,7 @@ description = "A collection of framework independent HTTP protocol utils."
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "httptools-0.8.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:bf3b6f807c8541503cecfbb8a8dffb385640d0d96102f3d112aa8740f9b7c826"},
     {file = "httptools-0.8.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:da684f2e1aa2ee9bdcb083f3f3a68c5956750b375bc5df864d3a5f0c42a40b77"},
@@ -2611,7 +2611,7 @@ description = "Safely pass data to untrusted environments and back."
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "itsdangerous-2.2.0-py3-none-any.whl", hash = "sha256:c6242fc49e35958c8b15141343aa660db5fc54d4f13a1db01a3f5891b98700ef"},
     {file = "itsdangerous-2.2.0.tar.gz", hash = "sha256:e0050c0b7da1eea53ffaf149c0cfbb5c6e2e2b69c4bef22c81fa6eb73e5f6173"},
@@ -5331,7 +5331,7 @@ description = ""
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "protobuf-7.36.1-cp310-abi3-macosx_10_9_universal2.whl", hash = "sha256:3cf2ee25d006cee57294a1196ea43b37feb78e0dcd1e8af5c1aeddb777655aca"},
     {file = "protobuf-7.36.1-cp310-abi3-manylinux2014_aarch64.whl", hash = "sha256:43d3d37b1eb24c113b9b7d02008cac44e423f00b611b7781ae998d7623972969"},
@@ -5413,7 +5413,7 @@ description = "Python library for Apache Arrow"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "pyarrow-25.0.1-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:0b1edbb2f385a6a65e9711b62ba86ac54a7816a3f8d17bb3e8a5929d65fb2485"},
     {file = "pyarrow-25.0.1-cp310-cp310-macosx_12_0_x86_64.whl", hash = "sha256:a4dd8bf99a8fac133efc0ed6a92f5fddbe2adba0d0f6dd720e39ba9855cea85c"},
@@ -5822,7 +5822,7 @@ description = "Widget for deck.gl maps"
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "pydeck-0.9.3-py2.py3-none-any.whl", hash = "sha256:d8a47c11c81fb12d51b1feb42427ff4f0e13cb599e48931021b2cba98b6849a6"},
     {file = "pydeck-0.9.3.tar.gz", hash = "sha256:695775cbfe51f5fdffbd9735ba469987fdc5efc96bc40a0ee4808170509c78b2"},
@@ -6148,7 +6148,7 @@ description = "A streaming multipart parser for Python"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\" or extra == \"source-archive\""
+markers = "extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "python_multipart-0.0.32-py3-none-any.whl", hash = "sha256:ff6d3f776f16878c894e52e107296ffc890e913c611b1a4ec6c44e2821fe2e23"},
     {file = "python_multipart-0.0.32.tar.gz", hash = "sha256:be54b7f3fa167bb83e4fcd936b887b708f4e57fe75911c02aebf53efaf8d938e"},
@@ -7148,7 +7148,7 @@ description = "The little ASGI library that shines."
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\" or extra == \"source-archive\""
+markers = "extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "starlette-1.6.0-py3-none-any.whl", hash = "sha256:a86dd39d14bb45f85a3d18525215a9ef0cfd1f192ac793220e72598c90335f0c"},
     {file = "starlette-1.6.0.tar.gz", hash = "sha256:d4e3ac5e546444960c710297a3c9fc3f7ebae1b7e963f3d36173b49da535be9b"},
@@ -7168,7 +7168,7 @@ description = "A faster way to build and share data apps"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "streamlit-1.63.0-py3-none-any.whl", hash = "sha256:c24fd38170543ffb749321c801627aaa09068219539d7b81ef77633ea2408b36"},
     {file = "streamlit-1.63.0.tar.gz", hash = "sha256:1ea0121884d5606cf055b8c42600528daf07d0401eaabfc8e22f00e235ea53eb"},
@@ -7660,7 +7660,7 @@ description = "Python Library for Tom's Obvious, Minimal Language"
 optional = true
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\""
+markers = "extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
     {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
@@ -7966,7 +7966,7 @@ description = "The lightning-fast ASGI server."
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\" or extra == \"source-archive\") and sys_platform != \"emscripten\" or extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\""
+markers = "(extra == \"agents\" or extra == \"computer-use\" or extra == \"front-end\" or extra == \"all\") and sys_platform != \"emscripten\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "uvicorn-0.52.4-py3-none-any.whl", hash = "sha256:f86e41a149d7d05a9969337e3946a9c171c06a5d42680896daaba624aeac8da1"},
     {file = "uvicorn-0.52.4.tar.gz", hash = "sha256:73acfee47a0b133c5de13d219492d62d8a31e935f4fe6e41a232451a15379f86"},
@@ -8004,7 +8004,7 @@ description = "Filesystem events monitoring"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "(extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\") and platform_system != \"Darwin\""
+markers = "(extra == \"front-end\" or extra == \"all\") and platform_system != \"Darwin\""
 files = [
     {file = "watchdog-6.0.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d1cdb490583ebd691c012b3d6dae011000fe42edb7a82ece80965b42abd61f26"},
     {file = "watchdog-6.0.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:bc64ab3bdb6a04d69d4023b29422170b74681784ffb9463ed4870cf2f3e66112"},
@@ -8105,7 +8105,7 @@ description = "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"front-end\" or extra == \"all\" or extra == \"computer-use\" or extra == \"agents\""
+markers = "extra == \"front-end\" or extra == \"all\" or extra == \"source-archive\" or extra == \"computer-use\" or extra == \"agents\""
 files = [
     {file = "websockets-15.0.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d63efaa0cd96cf0c5fe4d581521d9fa87744540d4bc999ae6e08595a1014b45b"},
     {file = "websockets-15.0.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:ac60e3b188ec7574cb761b08d50fcedf9d77f1530352db4eef1707fe9dee7205"},
@@ -8322,9 +8322,9 @@ agents = ["openai-agents"]
 all = ["boto3", "cloakbrowser", "firecrawl-py", "hyperbrowser", "openai-agents", "playwright", "pymupdf4llm", "streamlit", "trafilatura"]
 computer-use = ["hyperbrowser", "openai-agents"]
 front-end = ["openai-agents", "streamlit"]
-source-archive = ["boto3", "cloakbrowser", "firecrawl-py", "hyperbrowser", "playwright", "pymupdf4llm", "streamlit", "trafilatura"]
+source-archive = ["boto3", "cloakbrowser", "firecrawl-py", "hyperbrowser", "playwright", "pymupdf4llm", "trafilatura"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "3623198004cc4c07c6b39765d98afd308f0410e9be213aa85d400a3c2da113f8"
+content-hash = "7b9a095b900f3b381496e731cc00e1fad60ded8b29c093df19425b2ea0c0e590"
