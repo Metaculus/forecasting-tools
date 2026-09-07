@@ -1,7 +1,7 @@
 from forecasting_tools.util.optional_imports import require_optional_package
 
-require_optional_package("sklearn", "scikit-learn", "calibration")
-require_optional_package("pandas", "pandas", "calibration")
+require_optional_package("sklearn", "scikit-learn", "stats")
+require_optional_package("pandas", "pandas", "stats")
 
 from forecasting_tools.calibration_adjustment.calibration_adjuster import (  # noqa: E402
     CalibrationAdjuster as CalibrationAdjuster,

@@ -65,21 +65,10 @@ pymupdf4llm = {version = ">=0.0.17,<1.0.0", optional = true}
 cloakbrowser = {version = ">=0.3.31,<0.4.0", optional = true}
 
 [tool.poetry.extras]
-# The viewer also needs streamlit; it says so via the front-end extra rather than
-# making every CLI user download it.
 source-archive = ["boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser", "hyperbrowser"]
-# The template bot and the bot running infrastructure need none of the below, so
-# they are opt-in and the base install stays small. See "Optional extras" in the README.
 agents = ["openai-agents", "hyperbrowser", "faker"]
-# The chat page imports ComputerUse and the TopicGenerator tools, so the front
-# end needs everything in the agents extra as well.
 front-end = ["streamlit", "plotly", "pandas", "scipy", "openai-agents", "hyperbrowser", "faker"]
-# calibration_adjustment is the only thing needing scikit-learn, which drags in
-# scipy and pandas (~185MB) that a bot never touches.
-# scipy is listed explicitly rather than being inherited from scikit-learn.
-calibration = ["scikit-learn", "scipy", "pandas"]
-# forecasting_tools.util.stats only needs scipy, not the rest of the front end.
-stats = ["scipy"]
+stats = ["scipy", "scikit-learn", "pandas"]
 all = ["openai-agents", "hyperbrowser", "faker", "streamlit", "plotly", "pandas", "scikit-learn", "scipy", "boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser"]
 
 [tool.poetry.scripts]
