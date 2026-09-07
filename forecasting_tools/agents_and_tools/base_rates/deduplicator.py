@@ -6,7 +6,6 @@ import random
 import numpy as np
 import requests
 from openai import OpenAI
-from sklearn.metrics.pairwise import cosine_similarity
 
 from forecasting_tools.agents_and_tools.deprecated.configured_llms import BasicLlm
 from forecasting_tools.agents_and_tools.research.smart_searcher import SmartSearcher
@@ -223,12 +222,21 @@ class Deduplicator:
         list_embeddings = embeddings[1:]
 
         for list_embedding in list_embeddings:
-            similarity = cosine_similarity(
-                np.array([text_embedding]), np.array([list_embedding])
-            )[0][0]
+            similarity = cls.__cosine_similarity(text_embedding, list_embedding)
             if similarity > semantic_similarity_threshold:
                 return True
         return False
+
+    @staticmethod
+    def __cosine_similarity(
+        first_vector: list[float], second_vector: list[float]
+    ) -> float:
+        first = np.asarray(first_vector, dtype=float)
+        second = np.asarray(second_vector, dtype=float)
+        magnitude = float(np.linalg.norm(first) * np.linalg.norm(second))
+        if magnitude == 0.0:
+            return 0.0
+        return float(np.dot(first, second) / magnitude)
 
     @classmethod
     def __get_embeddings_using_openai(cls, texts: list[str]) -> list[list[float]]:

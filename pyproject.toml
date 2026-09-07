@@ -33,17 +33,16 @@ nest-asyncio = "^1.5.8"
 requests = "^2.32.3"
 pydantic = "^2.9.2"
 python-dotenv = "^1.0.0"
-regex = ">=2024.11.6,<2027.0.0"
 tenacity = ">=8.0.0,<10.0.0"
 pillow = ">=9.0.0,<13.0.0"
 typeguard = "^4.3.0"
-scikit-learn = "^1.5.2"
+scikit-learn = {version = "^1.5.2", optional = true}
 litellm = ">=1.59.1,<2.0.0,!=1.76.*,!=1.77.*,!=1.82.7,!=1.82.8"
 numpy = ">=1.26.0,<3.0.0"
 exceptiongroup = "^1.2.2"
-faker = ">=37.0.0,<41.0.0"
-plotly = ">=5.24.1,<8.0.0"
-pandas = ">=2.2.3,<4.0.0"
+faker = {version = ">=37.0.0,<41.0.0", optional = true}
+plotly = {version = ">=5.24.1,<8.0.0", optional = true}
+pandas = {version = ">=2.2.3,<4.0.0", optional = true}
 streamlit = {version = "^1.20.0", optional = true}
 asknews = ">=0.9.1,<0.15.0"
 unidecode = "^1.4.0"
@@ -70,9 +69,12 @@ cloakbrowser = {version = ">=0.3.31,<0.4.0", optional = true}
 source-archive = ["boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser", "hyperbrowser"]
 # The template bot and the bot running infrastructure need none of the below, so
 # they are opt-in and the base install stays small. See "Optional extras" in the README.
-agents = ["openai-agents", "hyperbrowser"]
-front-end = ["streamlit", "openai-agents"]
-all = ["openai-agents", "hyperbrowser", "streamlit", "boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser"]
+agents = ["openai-agents", "hyperbrowser", "faker"]
+front-end = ["streamlit", "openai-agents", "plotly", "pandas"]
+# calibration_adjustment is the only thing needing scikit-learn, which drags in
+# scipy and pandas (~185MB) that a bot never touches.
+calibration = ["scikit-learn", "pandas"]
+all = ["openai-agents", "hyperbrowser", "faker", "streamlit", "plotly", "pandas", "scikit-learn", "boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser"]
 
 [tool.poetry.scripts]
 source-archive = "forecasting_tools.agents_and_tools.source_archive.cli:main"

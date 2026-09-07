@@ -12,7 +12,7 @@ _HIDE_OPTIONAL_PACKAGES = """
 import sys
 
 class _Blocker:
-    blocked = {"agents", "hyperbrowser", "streamlit"}
+    blocked = {"agents", "hyperbrowser", "streamlit", "sklearn", "plotly", "pandas", "faker"}
 
     def find_spec(self, fullname, path=None, target=None):
         if fullname.split(".")[0] in self.blocked:
@@ -43,7 +43,7 @@ import run_bots  # noqa: F401
 
 still_loaded = [
     package
-    for package in ("agents", "hyperbrowser", "streamlit")
+    for package in ("agents", "hyperbrowser", "streamlit", "sklearn", "scipy", "plotly", "pandas", "faker")
     if package in sys.modules
 ]
 assert not still_loaded, f"optional packages imported on a base install: {still_loaded}"
@@ -66,18 +66,26 @@ extra_for_name = {
     "DataAnalyzer": "agents",
     "QuestionDecomposer": "agents",
     "ComputerUse": "agents",
+    "TopicGenerator": "agents",
     "run_benchmark_streamlit_page": "front-end",
 }
 for name, extra in extra_for_name.items():
     try:
         getattr(forecasting_tools, name)
-    except AttributeError as error:
+    except ImportError as error:
         assert f"forecasting-tools[{extra}]" in str(error), (name, str(error))
     else:
         raise AssertionError(f"{name} should not be reachable without its extra")
 
-# AttributeError rather than ImportError, so capability checks degrade quietly.
-assert hasattr(forecasting_tools, "Benchmarker") is False
+# `from forecasting_tools import X` is the documented style, and Python replaces
+# an AttributeError raised in __getattr__ with a bare "cannot import name"
+# message, so the gate must raise ImportError to keep the install instructions.
+try:
+    from forecasting_tools import Benchmarker  # noqa: F401
+except ImportError as error:
+    assert "forecasting-tools[agents]" in str(error), str(error)
+else:
+    raise AssertionError("Benchmarker should not be importable without its extra")
 """
     )
 

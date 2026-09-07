@@ -2,17 +2,18 @@ import logging
 import os
 from typing import Sequence
 
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objs as go
 import typeguard
 
-from forecasting_tools.util.optional_imports import missing_optional_package_error
+from forecasting_tools.util.optional_imports import require_optional_package
 
-try:
-    import streamlit as st
-except ImportError as e:
-    raise missing_optional_package_error("streamlit", "front-end") from e
+require_optional_package("streamlit", "streamlit", "front-end")
+require_optional_package("plotly", "plotly", "front-end")
+require_optional_package("pandas", "pandas", "front-end")
+
+import pandas as pd  # noqa: E402
+import plotly.express as px  # noqa: E402
+import plotly.graph_objs as go  # noqa: E402
+import streamlit as st  # noqa: E402
 
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 from forecasting_tools.data_models.binary_report import BinaryReport
