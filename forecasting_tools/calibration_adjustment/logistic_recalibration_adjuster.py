@@ -7,10 +7,10 @@ import pandas as pd
 from scipy.special import expit, logit
 from sklearn.linear_model import LogisticRegression
 
-from forecasting_tools.calibration_adjustments._training_data import (
+from forecasting_tools.calibration_adjustment._training_data import (
     extract_bernoulli_observations,
 )
-from forecasting_tools.calibration_adjustments.calibration_adjuster import (
+from forecasting_tools.calibration_adjustment.calibration_adjuster import (
     CalibrationAdjuster,
 )
 
