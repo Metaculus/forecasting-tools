@@ -513,6 +513,7 @@ Some features need heavier dependencies that a bot does not, so they are opt-in.
 | `agents` | Anything built on the agent SDK: `QuestionDecomposer`, `QuestionOperationalizer`, `TopicGenerator`, `DataAnalyzer`, `Benchmarker`, `BenchmarkForBot`, `BotOptimizer`, `CustomizableBot`, `ComputerUse` (browser-driving agent), and the AI Congress tools |
 | `front-end` | The Streamlit app in `forecasting_tools/front_end/` and `run_benchmark_streamlit_page` |
 | `calibration` | The calibration adjusters in `forecasting_tools/calibration_adjustment/` |
+| `stats` | `forecasting_tools.util.stats` (just scipy; already included in `front-end` and `calibration`) |
 | `all` | Everything above |
 
 ```bash

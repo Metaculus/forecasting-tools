@@ -1528,7 +1528,7 @@ description = "Faker is a Python package that generates fake data for you."
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"agents\" or extra == \"all\""
+markers = "extra == \"agents\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "faker-40.38.0-py3-none-any.whl", hash = "sha256:69927515d61759c8a257540b8a91891cd622ba1c24a386b62a0a777e44ba46a9"},
     {file = "faker-40.38.0.tar.gz", hash = "sha256:72e421098664edf38478f4269a5d5a539337de5da18883ce67cb1e6bb96b0b3a"},
@@ -2404,7 +2404,7 @@ description = "Python SDK for hyperbrowser"
 optional = true
 python-versions = "<4.0,>=3.8"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"agents\" or extra == \"all\""
+markers = "extra == \"source-archive\" or extra == \"agents\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "hyperbrowser-1.4.2-py3-none-any.whl", hash = "sha256:19a9aa958aefc9a07af4395ad021872caf068d2c00836d1288057d3688d7167f"},
     {file = "hyperbrowser-1.4.2.tar.gz", hash = "sha256:f3274e1a3c11befc32b4ebf0e8f0f6961ecea5020176b892998c333643742e0a"},
@@ -2835,7 +2835,7 @@ description = "jsonref is a library for automatic dereferencing of JSON Referenc
 optional = true
 python-versions = ">=3.7"
 groups = ["main"]
-markers = "extra == \"source-archive\" or extra == \"agents\" or extra == \"all\""
+markers = "extra == \"source-archive\" or extra == \"agents\" or extra == \"front-end\" or extra == \"all\""
 files = [
     {file = "jsonref-1.1.0-py3-none-any.whl", hash = "sha256:590dc7773df6c21cbf948b5dac07a72a251db28b0238ceecce0a2abfa8ec30a9"},
     {file = "jsonref-1.1.0.tar.gz", hash = "sha256:32fe8e1d85af0fdefbebce950af85590b22b60f9e95443176adbde4e1ecea552"},
@@ -6886,7 +6886,7 @@ description = "Fundamental algorithms for scientific computing in Python"
 optional = true
 python-versions = ">=3.11"
 groups = ["main"]
-markers = "python_version < \"3.14\" and (extra == \"calibration\" or extra == \"all\")"
+markers = "python_version < \"3.14\" and (extra == \"calibration\" or extra == \"all\" or extra == \"front-end\" or extra == \"stats\")"
 files = [
     {file = "scipy-1.17.1-cp311-cp311-macosx_10_14_x86_64.whl", hash = "sha256:1f95b894f13729334fb990162e911c9e5dc1ab390c58aa6cbecb389c5b5e28ec"},
     {file = "scipy-1.17.1-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:e18f12c6b0bc5a592ed23d3f7b891f68fd7f8241d69b7883769eb5d5dfb52696"},
@@ -6966,7 +6966,7 @@ description = "Fundamental algorithms for scientific computing in Python"
 optional = true
 python-versions = ">=3.12"
 groups = ["main"]
-markers = "python_version >= \"3.14\" and (extra == \"calibration\" or extra == \"all\")"
+markers = "python_version >= \"3.14\" and (extra == \"calibration\" or extra == \"all\" or extra == \"front-end\" or extra == \"stats\")"
 files = [
     {file = "scipy-1.18.1-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:457fd7a2a8edeb044ab6ffbc0aa03ff6cd18491356e5e0c834d76ce621b916d1"},
     {file = "scipy-1.18.1-cp312-cp312-macosx_12_0_arm64.whl", hash = "sha256:e708533e8b2ae2497d65346538a7dcc92814410b25b81432eac66de0f2af8265"},
@@ -8327,12 +8327,13 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 
 [extras]
 agents = ["faker", "hyperbrowser", "openai-agents"]
-all = ["boto3", "cloakbrowser", "faker", "firecrawl-py", "hyperbrowser", "openai-agents", "pandas", "playwright", "plotly", "pymupdf4llm", "scikit-learn", "streamlit", "trafilatura"]
-calibration = ["pandas", "scikit-learn"]
-front-end = ["openai-agents", "pandas", "plotly", "streamlit"]
+all = ["boto3", "cloakbrowser", "faker", "firecrawl-py", "hyperbrowser", "openai-agents", "pandas", "playwright", "plotly", "pymupdf4llm", "scikit-learn", "scipy", "streamlit", "trafilatura"]
+calibration = ["pandas", "scikit-learn", "scipy"]
+front-end = ["faker", "hyperbrowser", "openai-agents", "pandas", "plotly", "scipy", "streamlit"]
 source-archive = ["boto3", "cloakbrowser", "firecrawl-py", "hyperbrowser", "playwright", "pymupdf4llm", "trafilatura"]
+stats = ["scipy"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "001484692d41a60868948c3e215981900f9fa04ab0b6d7ce642fc58b2ca020ab"
+content-hash = "a2a7233264270ff4bb080e783aeeca640b889abde38a0c0b31512c01eee951e2"

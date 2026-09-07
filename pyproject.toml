@@ -37,6 +37,7 @@ tenacity = ">=8.0.0,<10.0.0"
 pillow = ">=9.0.0,<13.0.0"
 typeguard = "^4.3.0"
 scikit-learn = {version = "^1.5.2", optional = true}
+scipy = {version = ">=1.10.0,<2.0.0", optional = true}
 litellm = ">=1.59.1,<2.0.0,!=1.76.*,!=1.77.*,!=1.82.7,!=1.82.8"
 numpy = ">=1.26.0,<3.0.0"
 exceptiongroup = "^1.2.2"
@@ -70,11 +71,16 @@ source-archive = ["boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf
 # The template bot and the bot running infrastructure need none of the below, so
 # they are opt-in and the base install stays small. See "Optional extras" in the README.
 agents = ["openai-agents", "hyperbrowser", "faker"]
-front-end = ["streamlit", "openai-agents", "plotly", "pandas"]
+# The chat page imports ComputerUse and the TopicGenerator tools, so the front
+# end needs everything in the agents extra as well.
+front-end = ["streamlit", "plotly", "pandas", "scipy", "openai-agents", "hyperbrowser", "faker"]
 # calibration_adjustment is the only thing needing scikit-learn, which drags in
 # scipy and pandas (~185MB) that a bot never touches.
-calibration = ["scikit-learn", "pandas"]
-all = ["openai-agents", "hyperbrowser", "faker", "streamlit", "plotly", "pandas", "scikit-learn", "boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser"]
+# scipy is listed explicitly rather than being inherited from scikit-learn.
+calibration = ["scikit-learn", "scipy", "pandas"]
+# forecasting_tools.util.stats only needs scipy, not the rest of the front end.
+stats = ["scipy"]
+all = ["openai-agents", "hyperbrowser", "faker", "streamlit", "plotly", "pandas", "scikit-learn", "scipy", "boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser"]
 
 [tool.poetry.scripts]
 source-archive = "forecasting_tools.agents_and_tools.source_archive.cli:main"

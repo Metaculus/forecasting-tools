@@ -1,4 +1,5 @@
 import importlib.util
+import types
 from typing import TYPE_CHECKING, Any
 
 import nest_asyncio
@@ -242,5 +243,19 @@ def __getattr__(name: str) -> Any:
 def __dir__() -> list[str]:
     return sorted(set(globals()) | set(_LAZY_EXPORTS))
 
+
+# Without this, `from forecasting_tools import *` would silently skip the lazy
+# names, since a star import only copies what is already bound in globals().
+_IMPORT_MACHINERY_NAMES = {"TYPE_CHECKING", "Any"}
+__all__ = sorted(
+    {
+        name
+        for name, value in globals().items()
+        if not name.startswith("_")
+        and name not in _IMPORT_MACHINERY_NAMES
+        and not isinstance(value, types.ModuleType)
+    }
+    | set(_LAZY_EXPORTS)
+)
 
 nest_asyncio.apply()
