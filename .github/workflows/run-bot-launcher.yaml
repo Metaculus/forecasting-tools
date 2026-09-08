@@ -121,6 +121,7 @@ jobs:
       - name: Resolve METACULUS_TOKEN
         run: |
           if [ -n "$RAW_TOKEN" ]; then
+            echo "::add-mask::$RAW_TOKEN"
             echo "METACULUS_TOKEN=$RAW_TOKEN" >> $GITHUB_ENV
           else
             TOKEN=$(echo "$METACULUS_TOKENS" | jq -r --arg key "$METAC_NAME" '.[$key] // empty')
@@ -128,6 +129,9 @@ jobs:
               echo "ERROR: No token found for $METAC_NAME in METACULUS_TOKENS" >&2
               exit 1
             fi
+            # Tokens pulled out of the METACULUS_TOKENS json are not registered secrets,
+            # so without this they get printed in plain text by later steps
+            echo "::add-mask::$TOKEN"
             echo "METACULUS_TOKEN=$TOKEN" >> $GITHUB_ENV
           fi
         env:

@@ -280,9 +280,12 @@ class GeneralLlm(
         if answer is None:
             answer = self._answer_from_reasoning_content(message)
         finish_reason = choices[0].finish_reason
-        assert isinstance(
-            answer, str
-        ), f"Answer is not a string and is of type: {type(answer)}. Answer: {answer}. Finish reason: {finish_reason}"
+        if not isinstance(answer, str):
+            raise RuntimeError(
+                "LLM returned no text in either the content or the reasoning content field. "
+                f"The model was {self.model}, the content was {answer} (type {type(answer)}), "
+                f"the finish reason was {finish_reason}, and the usage was {response.usage}."
+            )
         usage = response.usage  # type: ignore
         assert isinstance(usage, Usage)
         prompt_tokens = usage.prompt_tokens

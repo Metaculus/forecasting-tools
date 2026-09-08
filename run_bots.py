@@ -650,7 +650,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Returns empty completions via OpenRouter as of Sep 8th, 2026
         },
         "METAC_CLAUDE_FABLE_5_1": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 2,
@@ -742,7 +742,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Returns empty completions via OpenRouter as of Sep 8th, 2026
         },
         "METAC_QWEN_3_8_MAX": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 0.6,
@@ -826,7 +826,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Returns empty completions via OpenRouter as of Sep 8th, 2026
         },
         "METAC_KIMI_K3": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 1.5,
