@@ -107,7 +107,6 @@ class AllowedTourn(Enum):
     MAIN_AIB = MetaculusClient.CURRENT_AI_COMPETITION_ID
     MAIN_SITE = "main-site"
     METACULUS_CUP = MetaculusClient.CURRENT_METACULUS_CUP_ID
-    GULF_BREEZE = 32810  # https://www.metaculus.com/tournament/GB/
     DEMOCRACY_THREAT_INDEX = (
         32829  # https://www.metaculus.com/index/us-democracy-threat/
     )
@@ -119,7 +118,6 @@ class TournConfig:
     aib_only = [AllowedTourn.MAIN_AIB, AllowedTourn.MINIBENCH]
     main_site_tourns = [
         AllowedTourn.MAIN_SITE,
-        AllowedTourn.GULF_BREEZE,
         AllowedTourn.DEMOCRACY_THREAT_INDEX,
     ]
     aib_and_site = aib_only.copy() + main_site_tourns.copy()
@@ -1689,7 +1687,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         },
         "METAC_KIMI_K2_VARIANCE_TEST": {
             **kimi_k2_basic_bot,
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_VARIANCE_TEST": {
             **deepseek_r1_bot,
@@ -1751,7 +1749,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=o4_mini_deep_research_llm,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_O3_DEEP_RESEARCH": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost * 3
@@ -1773,7 +1771,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=sonar_deep_research_llm,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_EXA_RESEARCH_PRO": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost
@@ -1829,7 +1827,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=sonnet_4_search_llm,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost
@@ -1855,7 +1853,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=default_research_comparison_forecast_llm,
                 researcher=sonnet_4_search_llm,
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_XAI_LIVESEARCH": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search
@@ -1872,7 +1870,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=default_research_comparison_forecast_llm,
                 researcher=o4_mini_deep_research_llm,
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_NO_RESEARCH": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -1993,7 +1991,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 default_research_comparison_forecast_llm,
                 researcher=sonar_deep_research_llm,
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_SONAR_REASONING_PRO": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -2026,7 +2024,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 researcher="None",
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_GPT_4O_SEARCH_PREVIEW": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -2070,7 +2068,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 default_research_comparison_forecast_llm,
                 researcher=deepnews_model,
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_O3_HIGH_TOKEN": {
             "estimated_cost_per_question": 0.16,

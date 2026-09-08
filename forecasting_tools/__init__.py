@@ -150,6 +150,9 @@ from forecasting_tools.forecast_bots.official_bots.research_only_bot_2025_fall i
 from forecasting_tools.forecast_bots.official_bots.template_bot_2025_fall import (
     FallTemplateBot2025 as FallTemplateBot2025,
 )
+from forecasting_tools.forecast_bots.official_bots.template_bot_2026_fall import (
+    FallTemplateBot2026 as FallTemplateBot2026,
+)
 from forecasting_tools.forecast_bots.official_bots.template_bot_2026_spring import (
     SpringTemplateBot2026 as SpringTemplateBot2026,
 )

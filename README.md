@@ -18,7 +18,7 @@ Demo repo (get a Metaculus bot running in 30min): https://github.com/Metaculus/m
 This repository contains forecasting and research tools built with Python and Streamlit. The project aims to assist users in making predictions, conducting research, and analyzing data related to hard to answer questions (especially those from Metaculus).
 
 Here are the tools most likely to be useful to you:
-- 🎯 **Forecasting Bot:** General forecaster that integrates with the Metaculus AI benchmarking competition and provides a number of utilities. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the aggregation/API code, etc)
+- 🎯 **Forecasting Bot:** General forecaster that integrates with the Metaculus FutureEval bot tournament and provides a number of utilities. You can forecast with a pre-existing bot or override the class to customize your own (without redoing all the aggregation/API code, etc)
 - 🔌 **Metaculus API Wrapper:** for interacting with questions and tournaments
 - 🤖 **In-House Metaculus Bots**: You can see all the bots that Metaculus is running on their site in `run_bots.py`
 
@@ -29,7 +29,7 @@ Here are some other features of the project (not all are documented yet):
 
 All the examples below are in a Jupyter Notebook called `README.ipynb` which you can run locally to test the package (make sure to run the first cell though).
 
-If you decide you want to join the Metaculus AI Benchmarking Tournament, it is recommended that you start [here](https://github.com/Metaculus/metac-bot-template). This repo is easy to start with and has a 30min tutorial for how to set it up.
+If you decide you want to join the Metaculus FutureEval Bot Tournament, it is recommended that you start [here](https://github.com/Metaculus/metac-bot-template). This repo is easy to start with and has a 30min tutorial for how to set it up.
 
 Join the [discord](https://discord.gg/Dtq4JNdXnw) for updates and to give feedback (btw feedback is very appreciated, even just a quick "I did/didn't decide to use tool X for reason Y, though am busy and don't have time to elaborate" is helpful to know)
 

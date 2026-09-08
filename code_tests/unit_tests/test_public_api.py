@@ -72,6 +72,7 @@ def test_public_api_imports() -> None:
         "DiscreteReport",
         "FallResearchOnlyBot2025",
         "FallTemplateBot2025",
+        "FallTemplateBot2026",
         "GPT41OptimizedBot",
         "MetaculusClient",
         "Percentile",
