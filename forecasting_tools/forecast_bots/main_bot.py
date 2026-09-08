@@ -42,10 +42,12 @@ class MainBot(Q2TemplateBot2025):
     def _llm_config_defaults(cls) -> dict[str, str | GeneralLlm]:
         return {
             "default": GeneralLlm(
-                model="openai/gpt-5",
-                reasoning_effort="high",
-                temperature=0.3,
-                timeout=15 * 60,
+                model="anthropic/claude-opus-5",
+                thinking={"type": "adaptive"},
+                output_config={"effort": "high"},
+                allowed_openai_params=["output_config"],
+                max_tokens=64000,
+                timeout=160,
             ),
             "summarizer": GeneralLlm(model="openai/gpt-4o", temperature=0),
         }
