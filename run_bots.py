@@ -627,7 +627,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_opus_4_5_cost * 1.6,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="anthropic/claude-opus-5.5",
+                    model="anthropic/claude-opus-5-5",
                     **claude_adaptive_thinking_settings_high,
                 ),
             ),
