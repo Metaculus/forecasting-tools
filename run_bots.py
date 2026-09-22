@@ -623,6 +623,16 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     mode_base_bot_mapping = {
         ############################ Bots started in September 2026 ############################
+        "METAC_CLAUDE_OPUS_5_5_HIGH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 1.6,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-opus-5.5",
+                    **claude_adaptive_thinking_settings_high,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         "METAC_GPT_6_ASTRA_HIGH": {
             "estimated_cost_per_question": roughly_gpt_5_high_cost * 5,
             "bot": create_bot(
