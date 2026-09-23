@@ -114,19 +114,13 @@ class AllowedTourn(Enum):
     MAIN_AIB = MetaculusClient.CURRENT_AI_COMPETITION_ID
     MAIN_SITE = "main-site"
     METACULUS_CUP = MetaculusClient.CURRENT_METACULUS_CUP_ID
-    DEMOCRACY_THREAT_INDEX = (
-        32829  # https://www.metaculus.com/index/us-democracy-threat/
-    )
     # When representing a tournament, these should be valid slugs
 
 
 class TournConfig:
     everything = [t for t in AllowedTourn]
     aib_only = [AllowedTourn.MAIN_AIB, AllowedTourn.MINIBENCH]
-    main_site_tourns = [
-        AllowedTourn.MAIN_SITE,
-        AllowedTourn.DEMOCRACY_THREAT_INDEX,
-    ]
+    main_site_tourns = [AllowedTourn.MAIN_SITE]
     aib_and_site = aib_only.copy() + main_site_tourns.copy()
     every_x_days_tourns = [AllowedTourn.METACULUS_CUP]
     experimental = []
@@ -636,7 +630,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **claude_adaptive_thinking_settings_high,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_GPT_6_ASTRA_HIGH": {
             "estimated_cost_per_question": roughly_gpt_5_high_cost * 5,
@@ -648,7 +642,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gpt_5_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_GEMINI_3_8_FLASH": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 0.21,
@@ -659,7 +653,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gemini_default_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_MUSE_SPARK_1_3": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 0.425,
@@ -679,7 +673,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=None,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         ############################ Bots started in August 2026 ############################
         "METAC_QWEN_3_8_FLASH": {
@@ -1095,7 +1089,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gemini_default_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_GEMINI_3_1_FLASH_LITE": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
@@ -1720,7 +1714,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_ZAI_GLM_4_5": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
@@ -1733,7 +1727,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     },
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_DEEPSEEK_V3_1_REASONING": {
             "estimated_cost_per_question": guess_at_deepseek_v3_1_cost * 1.2,
@@ -1747,7 +1741,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=6 * 60,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_DEEPSEEK_V3_1": {
             **deepseek_v3_1_bot,
@@ -1897,7 +1891,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=default_research_comparison_forecast_llm,
                 researcher="no_research",
             ),
-            "tournaments": TournConfig.aib_only + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_only,
         },
         ### Specialized Bots
         "METAC_GPT_4_1_OPTIMIZED_PROMPT": {
@@ -2239,7 +2233,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_GPT_4O_MINI_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
@@ -2259,7 +2253,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN": {
             "estimated_cost_per_question": 0.37,
@@ -2336,7 +2330,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_QWEN_2_5_MAX_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
@@ -2350,7 +2344,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         },
         "METAC_DEEPSEEK_R1_TOKEN": {
             **deepseek_r1_bot,
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.aib_and_site,
         },
         "METAC_DEEPSEEK_V3_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
@@ -2390,7 +2384,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 publish_reports_to_metaculus=default_for_publish_to_metaculus,
                 skip_previously_forecasted_questions=default_for_skipping_questions,
             ),
-            "tournaments": TournConfig.everything,
+            "tournaments": TournConfig.aib_and_site,
         },
     }
 
