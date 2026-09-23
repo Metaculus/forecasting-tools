@@ -56,6 +56,11 @@ POST_IDS_TO_SKIP = [
     43310,  # https://www.metaculus.com/questions/43310/ is rejected since too many MC options
     40280,  # https://www.metaculus.com/questions/40280/ is rejected since noisy workflow errors
     39138,  # https://www.metaculus.com/questions/39138/ is rejected the best value is way out of bounds, and bots are constrained to not be able to make these forecasts
+    42541,  # https://www.metaculus.com/questions/42541/ is rejected since too many MC options
+    38420,  # https://www.metaculus.com/questions/38420/ is rejected since bots treat the 0.1-0.7 range as percent points (~43-56) and fail numeric validation
+    27552,  # https://www.metaculus.com/questions/27552/ is rejected the best value is way out of bounds (date question closes 2026-12-31)
+    7055,  # https://www.metaculus.com/questions/7055/ is rejected since bots treat the 0-1 range as percent points and fail numeric validation
+    42727,  # https://www.metaculus.com/questions/42727/ is rejected since too many MC options
 ]
 POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     # 43335,  # https://www.metaculus.com/questions/43335/ is still forecasted but should not fail the workflow if it errors
@@ -109,7 +114,6 @@ class AllowedTourn(Enum):
     MAIN_AIB = MetaculusClient.CURRENT_AI_COMPETITION_ID
     MAIN_SITE = "main-site"
     METACULUS_CUP = MetaculusClient.CURRENT_METACULUS_CUP_ID
-    GULF_BREEZE = 32810  # https://www.metaculus.com/tournament/GB/
     DEMOCRACY_THREAT_INDEX = (
         32829  # https://www.metaculus.com/index/us-democracy-threat/
     )
@@ -121,7 +125,6 @@ class TournConfig:
     aib_only = [AllowedTourn.MAIN_AIB, AllowedTourn.MINIBENCH]
     main_site_tourns = [
         AllowedTourn.MAIN_SITE,
-        AllowedTourn.GULF_BREEZE,
         AllowedTourn.DEMOCRACY_THREAT_INDEX,
     ]
     aib_and_site = aib_only.copy() + main_site_tourns.copy()
@@ -510,7 +513,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     sonnet_4_5_name = "anthropic/claude-sonnet-4-5-20250929"
     gemini_2_5_pro = "openrouter/google/gemini-2.5-pro"  # Used to be gemini-2.5-pro-preview (though automatically switched to regular pro when preview was deprecated)
     gemini_default_timeout = 5 * 60
-    deepnews_model = "asknews/deep-research/high-depth/claude-fable-5"  # Switched to claude-fable-5 and added podcasts source Sep 5th 2026. Switched to opus 4.6 Feb 23rd. Switched to high depth Feb 16th 2026. Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
+    deepnews_model = "asknews/deep-research/high-depth/claude-fable-5-1"  # Switched to claude-fable-5-1 Sep 8th 2026 once AskNews supported it. Switched to claude-fable-5 and added podcasts source Sep 5th 2026. Switched to opus 4.6 Feb 23rd. Switched to high depth Feb 16th 2026. Switched from claude-sonnet-4-20250514 to sonnet 4.5 in Nov 2025. Switched from high to medium depth on Jan 2nd, 2026
 
     roughly_sonnet_4_cost = 0.25190
     roughly_gpt_5_high_cost = 0.37868
@@ -625,6 +628,49 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     mode_base_bot_mapping = {
         ############################ Bots started in September 2026 ############################
+        "METAC_CLAUDE_OPUS_5_5_HIGH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 1.6,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-opus-5-5",
+                    **claude_adaptive_thinking_settings_high,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GPT_6_ASTRA_HIGH": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost * 5,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-6-astra",
+                    reasoning_effort="high",
+                    temperature=None,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GEMINI_3_8_FLASH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 0.21,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/google/gemini-3.8-flash",
+                    temperature=None,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_MUSE_SPARK_1_3": {
+            "estimated_cost_per_question": roughly_gpt_5_cost * 0.425,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/meta/muse-spark-1.3",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         "METAC_CLAUDE_FABLE_5_1": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 2,
             "bot": create_bot(
@@ -1660,7 +1706,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         },
         "METAC_KIMI_K2_VARIANCE_TEST": {
             **kimi_k2_basic_bot,
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_VARIANCE_TEST": {
             **deepseek_r1_bot,
@@ -1722,7 +1768,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=o4_mini_deep_research_llm,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_O3_DEEP_RESEARCH": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost * 3
@@ -1744,7 +1790,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=sonar_deep_research_llm,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_EXA_RESEARCH_PRO": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost
@@ -1800,7 +1846,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=sonnet_4_search_llm,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost
@@ -1826,7 +1872,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=default_research_comparison_forecast_llm,
                 researcher=sonnet_4_search_llm,
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_XAI_LIVESEARCH": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search
@@ -1843,7 +1889,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=default_research_comparison_forecast_llm,
                 researcher=o4_mini_deep_research_llm,
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_NO_RESEARCH": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -1964,7 +2010,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 default_research_comparison_forecast_llm,
                 researcher=sonar_deep_research_llm,
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_SONAR_REASONING_PRO": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -1997,7 +2043,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 researcher="None",
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_DEEPSEEK_R1_GPT_4O_SEARCH_PREVIEW": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -2041,7 +2087,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 default_research_comparison_forecast_llm,
                 researcher=deepnews_model,
             ),
-            "tournaments": TournConfig.experimental,
+            "tournaments": TournConfig.NONE,
         },
         "METAC_O3_HIGH_TOKEN": {
             "estimated_cost_per_question": 0.16,

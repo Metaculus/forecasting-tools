@@ -29,6 +29,13 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
+from forecasting_tools.util.optional_imports import (  # noqa: E402
+    require_optional_package,
+)
+
+require_optional_package("streamlit", "streamlit", "front-end")
+require_optional_package("pandas", "pandas", "front-end")
+
 import pandas as pd  # noqa: E402
 import streamlit as st  # noqa: E402
 

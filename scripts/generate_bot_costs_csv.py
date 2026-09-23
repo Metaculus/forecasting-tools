@@ -17,7 +17,6 @@ TOURNAMENT_SLUG_MAP: dict[AllowedTourn, str] = {
     AllowedTourn.MAIN_AIB: "main_aib",
     AllowedTourn.MAIN_SITE: "main_site",
     AllowedTourn.METACULUS_CUP: "metaculus_cup",
-    AllowedTourn.GULF_BREEZE: "gulf_breeze",
     AllowedTourn.DEMOCRACY_THREAT_INDEX: "democracy_threat_index",
 }
 

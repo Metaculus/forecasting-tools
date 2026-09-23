@@ -2,7 +2,12 @@ from math import sqrt
 
 import numpy as np
 from pydantic import BaseModel
-from scipy.stats import norm, shapiro, t
+
+from forecasting_tools.util.optional_imports import require_optional_package
+
+require_optional_package("scipy", "scipy", "stats")
+
+from scipy.stats import norm, shapiro, t  # noqa: E402
 
 
 class ProportionStatCalculator:

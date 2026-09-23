@@ -56,3 +56,20 @@ async def test_deep_research_accepts_podcasts_source() -> None:
     logger.info(f"Deep research with podcasts source: {content}")
     assert content is not None, "Content is None"
     assert len(content) > 100, "Content is too short"
+
+
+async def test_deep_research_accepts_claude_fable_5_1_model() -> None:
+    if not os.getenv("ASKNEWS_CLIENT_ID") or not os.getenv("ASKNEWS_SECRET"):
+        pytest.skip("ASKNEWS_CLIENT_ID or ASKNEWS_SECRET is not set")
+    response = await AskNewsSearcher().run_deep_research(
+        "In one sentence, what is the latest news about the US federal funds rate?",
+        sources=["asknews"],
+        model="claude-fable-5-1",
+        search_depth=1,
+        max_depth=1,
+    )
+    content = response.choices[0].message.content
+    logger.info(f"Deep research with claude-fable-5-1: {content}")
+    assert response.model == "claude-fable-5-1", f"Unexpected model: {response.model}"
+    assert content is not None, "Content is None"
+    assert len(content) > 100, "Content is too short"

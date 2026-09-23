@@ -2,13 +2,25 @@ import asyncio
 import logging
 import os
 
-from hyperbrowser import AsyncHyperbrowser
-from hyperbrowser.models import CreateSessionParams, CuaTaskData, StartCuaTaskParams
 from pydantic import BaseModel
 
-from forecasting_tools.agents_and_tools.other.hosted_file import HostedFile
-from forecasting_tools.ai_models.agent_wrappers import agent_tool
 from forecasting_tools.util.misc import clean_indents
+from forecasting_tools.util.optional_imports import require_optional_package
+
+require_optional_package("hyperbrowser", "hyperbrowser", "agents")
+require_optional_package("agents", "openai-agents", "agents")
+
+from hyperbrowser import AsyncHyperbrowser  # noqa: E402
+from hyperbrowser.models import (  # noqa: E402
+    CreateSessionParams,
+    CuaTaskData,
+    StartCuaTaskParams,
+)
+
+from forecasting_tools.agents_and_tools.other.hosted_file import (  # noqa: E402
+    HostedFile,
+)
+from forecasting_tools.ai_models.agent_wrappers import agent_tool  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

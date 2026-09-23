@@ -11,7 +11,7 @@ pipx install poetry
 poetry config virtualenvs.in-project true
 
 # Install python dependencies
-poetry install --no-interaction
+poetry install --no-interaction --all-extras
 
 # Install pre-commit hooks
 poetry run pre-commit install

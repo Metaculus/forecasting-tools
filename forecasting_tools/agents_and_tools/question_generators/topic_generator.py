@@ -11,6 +11,7 @@ from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.helpers.structure_output import structure_output
 from forecasting_tools.util.misc import clean_indents
+from forecasting_tools.util.optional_imports import require_optional_package
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class TopicGenerator:
         number_of_topics: int = 10,
         additional_instructions: str = "",
     ) -> list[str]:
+        require_optional_package("faker", "faker", "agents")
         from faker import Faker
 
         if isinstance(model, str):
@@ -216,6 +218,7 @@ class TopicGenerator:
         model: GeneralLlm | str = "gpt-4o",
         search_model: GeneralLlm | str = "openrouter/perplexity/sonar-pro",
     ) -> tuple[OrgInfo, list[str]]:
+        require_optional_package("faker", "faker", "agents")
         from faker import Faker
 
         fake = Faker(cls.LANGUAGES)
