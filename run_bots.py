@@ -68,7 +68,10 @@ POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
 
 
 class ScheduleConfig:
-    regular_forecast_interval_days: int = 2
+    regular_forecast_interval_days: int = (
+        3  # Cup and other every-x-days tournaments. Was 2 until Sep 2026
+    )
+    main_site_check_interval_days: int = 2
     min_main_site_forecast_interval_days: int = 4
 
     _window_length_hrs = 2.5
@@ -82,9 +85,9 @@ class ScheduleConfig:
     main_site_months_ahead_to_check = 4
 
     @classmethod
-    def is_interval_day(cls, time: datetime | None = None) -> bool:
+    def is_interval_day(cls, interval_days: int, time: datetime | None = None) -> bool:
         time = time or pendulum.now(tz="UTC")
-        value = time.day % cls.regular_forecast_interval_days == 0
+        value = time.day % interval_days == 0
         return value
 
     @classmethod
@@ -247,14 +250,16 @@ async def get_questions_for_allowed_tournaments(
             "FORECAST_ON_REGULARLY_FORECASTED_TOURNAMENTS_ALWAYS", "false"
         ).lower()
         == "true"
-    )  # env variables are for testing the workflow w/o waiting 2 days
+    )  # env variables are for testing the workflow w/o waiting for the next interval day
     reforecast_aib_questions = False  # Manually change this if testing
 
     should_forecast_on_main_site = (
-        ScheduleConfig.is_interval_day() and ScheduleConfig.is_afternoon_window()
+        ScheduleConfig.is_interval_day(ScheduleConfig.main_site_check_interval_days)
+        and ScheduleConfig.is_afternoon_window()
     ) or main_site_override
     should_forecast_on__every_x_days__questions = (
-        ScheduleConfig.is_interval_day() and ScheduleConfig.is_morning_window()
+        ScheduleConfig.is_interval_day(ScheduleConfig.regular_forecast_interval_days)
+        and ScheduleConfig.is_morning_window()
     ) or every_x_days_override
 
     questions: list[MetaculusQuestion] = []
@@ -631,7 +636,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **claude_adaptive_thinking_settings_high,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
         },
         "METAC_GPT_6_ASTRA_HIGH": {
             "estimated_cost_per_question": roughly_gpt_5_high_cost * 5,
@@ -643,7 +648,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gpt_5_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
         },
         "METAC_GEMINI_3_8_FLASH": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 0.21,
@@ -654,7 +659,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gemini_default_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
         },
         "METAC_MUSE_SPARK_1_3": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 0.425,
@@ -674,7 +679,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=None,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
         },
         ############################ Bots started in August 2026 ############################
         "METAC_QWEN_3_8_FLASH": {
@@ -716,7 +721,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gemini_default_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 23rd 2026: outpaced by Gemini 3.8 Flash
         },
         "METAC_GROK_4_6": {
             "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_5_llm,
@@ -756,7 +761,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 23rd 2026: outpaced by Muse Spark 1.3
         },
         "METAC_QWEN_3_8_MAX": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 0.6,
@@ -798,7 +803,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=None,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 23rd 2026: outpaced by Opus 5.5
         },
         "METAC_GEMINI_3_6_FLASH": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 0.42,
@@ -809,7 +814,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gemini_default_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Gemini 3.7 Flash
         },
         "METAC_GEMINI_3_5_FLASH_LITE": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 0.14,
@@ -840,7 +845,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Muse Spark 1.2
         },
         "METAC_KIMI_K3": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 1.5,
@@ -885,7 +890,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gpt_5_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 23rd 2026: outpaced by GPT-6 Astra
         },
         "METAC_GROK_4_5_HIGH": {
             "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_5_llm,
@@ -896,7 +901,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Grok 4.6
         },
         "METAC_CLAUDE_SONNET_5": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 1.5,
@@ -919,7 +924,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 bot_type="no_research_one_shot",
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: expensive no-research one-shot experiment retired
         },
         "METAC_GEMINI_3_1_PRO_NO_RESEARCH_ONE_SHOT": {
             "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost,
@@ -931,7 +936,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 bot_type="no_research_one_shot",
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: expensive no-research one-shot experiment retired
         },
         "METAC_CLAUDE_FABLE_5_NO_RESEARCH_ONE_SHOT": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 2,
@@ -942,7 +947,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 bot_type="no_research_one_shot",
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: expensive no-research one-shot experiment retired
         },
         "METAC_GROK_4_3_NO_RESEARCH_ONE_SHOT": {
             "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_llm,
@@ -953,7 +958,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 bot_type="no_research_one_shot",
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: expensive no-research one-shot experiment retired
         },
         ############################ Bots started in June 2026 ############################
         "METAC_OPENROUTER_FUSION_GENERAL_BUDGET": {
@@ -999,7 +1004,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     },
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Fable 5.1
         },
         "METAC_NEMOTRON_3_ULTRA": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
@@ -1042,7 +1047,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gemini_default_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Gemini 3.7 Flash
         },
         "METAC_GPT_5_5_HIGH": {
             "estimated_cost_per_question": roughly_gpt_5_high_cost * 2,
@@ -1054,7 +1059,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gpt_5_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by GPT 5.6 Sol
         },
         "METAC_GPT_5_5_INSTANT": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 2,
@@ -1066,7 +1071,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gpt_5_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by GPT 5.6 Luna
         },
         "METAC_GPT_5_4_HIGH": {
             "estimated_cost_per_question": roughly_gpt_5_high_cost,
@@ -1078,7 +1083,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gpt_5_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by GPT 5.6 Sol
         },
         "METAC_GEMINI_3_1_PRO_HIGH": {
             "estimated_cost_per_question": roughly_gemini_2_5_pro_preview_cost * 1.3,
@@ -1141,7 +1146,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **claude_adaptive_thinking_settings_high,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Opus 5
         },
         "METAC_CLAUDE_OPUS_4_8_HIGH": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 1.5,
@@ -1151,7 +1156,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **claude_adaptive_thinking_settings_high,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site + [AllowedTourn.METACULUS_CUP],
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Opus 5
         },
         "METAC_KIMI_K2_6": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
@@ -1187,7 +1192,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Grok 4.6
         },
         "METAC_GROK_4_20": {
             "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_llm,
@@ -1197,7 +1202,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Grok 4.6
         },
         "METAC_GROK_4_20_MULTI_AGENT": {
             "estimated_cost_per_question": 10 * roughly_one_call_to_grok_4_llm,
@@ -1207,7 +1212,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Grok 4.6
         },
         ############################ Bots started in April 2026 ############################
         "METAC_CLAUDE_SONNET_4_6": {
@@ -1218,7 +1223,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 5th 2026: outpaced by Sonnet 5
         },
         "METAC_QWEN_3_5": {
             "estimated_cost_per_question": roughly_sonnet_3_5_cost / 2,
