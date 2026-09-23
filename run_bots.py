@@ -63,7 +63,10 @@ POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
 
 
 class ScheduleConfig:
-    regular_forecast_interval_days: int = 2
+    regular_forecast_interval_days: int = (
+        3  # Cup and other every-x-days tournaments. Was 2 until Sep 2026
+    )
+    main_site_check_interval_days: int = 2
     min_main_site_forecast_interval_days: int = 4
 
     _window_length_hrs = 2.5
@@ -77,9 +80,9 @@ class ScheduleConfig:
     main_site_months_ahead_to_check = 4
 
     @classmethod
-    def is_interval_day(cls, time: datetime | None = None) -> bool:
+    def is_interval_day(cls, interval_days: int, time: datetime | None = None) -> bool:
         time = time or pendulum.now(tz="UTC")
-        value = time.day % cls.regular_forecast_interval_days == 0
+        value = time.day % interval_days == 0
         return value
 
     @classmethod
@@ -244,14 +247,16 @@ async def get_questions_for_allowed_tournaments(
             "FORECAST_ON_REGULARLY_FORECASTED_TOURNAMENTS_ALWAYS", "false"
         ).lower()
         == "true"
-    )  # env variables are for testing the workflow w/o waiting 2 days
+    )  # env variables are for testing the workflow w/o waiting for the next interval day
     reforecast_aib_questions = False  # Manually change this if testing
 
     should_forecast_on_main_site = (
-        ScheduleConfig.is_interval_day() and ScheduleConfig.is_afternoon_window()
+        ScheduleConfig.is_interval_day(ScheduleConfig.main_site_check_interval_days)
+        and ScheduleConfig.is_afternoon_window()
     ) or main_site_override
     should_forecast_on__every_x_days__questions = (
-        ScheduleConfig.is_interval_day() and ScheduleConfig.is_morning_window()
+        ScheduleConfig.is_interval_day(ScheduleConfig.regular_forecast_interval_days)
+        and ScheduleConfig.is_morning_window()
     ) or every_x_days_override
 
     questions: list[MetaculusQuestion] = []

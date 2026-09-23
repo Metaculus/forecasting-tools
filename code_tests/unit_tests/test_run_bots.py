@@ -103,6 +103,10 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
         pendulum.datetime(2025, 5, 13, morning_hour + 1, 0, 0, tz="UTC"),
         pendulum.datetime(2025, 5, 13, afternoon_hour + 1, 0, 0, tz="UTC"),
         pendulum.datetime(2025, 5, 13, out_of_hours + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 14, morning_hour + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 14, afternoon_hour + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 15, morning_hour + 1, 0, 0, tz="UTC"),
+        pendulum.datetime(2025, 5, 15, afternoon_hour + 1, 0, 0, tz="UTC"),
     ]
     configs = [
         TournConfig.aib_only,
@@ -129,7 +133,12 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
 
             is_morning_window = ScheduleConfig.is_morning_window(time=date)
             is_afternoon_window = ScheduleConfig.is_afternoon_window(time=date)
-            is_interval_day = ScheduleConfig.is_interval_day(time=date)
+            is_cup_interval_day = ScheduleConfig.is_interval_day(
+                ScheduleConfig.regular_forecast_interval_days, time=date
+            )
+            is_main_site_interval_day = ScheduleConfig.is_interval_day(
+                ScheduleConfig.main_site_check_interval_days, time=date
+            )
 
             expected_aib_questions = (
                 NUM_QUESTIONS_FOR_SINGLE_MOCK_CALL
@@ -143,12 +152,12 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
             )
             expected_regularly_forecasted_questions = (
                 no_or_stale_forecasted_questions * num_regularly_forecasted_tourns
-                if is_morning_window and is_interval_day
+                if is_morning_window and is_cup_interval_day
                 else 0
             )
             expected_main_site_questions = (
                 no_or_stale_forecasted_questions * num_main_site_tourns
-                if is_afternoon_window and is_interval_day
+                if is_afternoon_window and is_main_site_interval_day
                 else 0
             )
 
@@ -159,7 +168,7 @@ def create_test_cases() -> list[tuple[list[AllowedTourn], datetime, int]]:
             )
             test_cases.append(
                 (
-                    f"{len(config)} tourns on {date} (is_morning_window: {is_morning_window}, is_afternoon_window: {is_afternoon_window}, is_interval_day: {is_interval_day})",
+                    f"{len(config)} tourns on {date} (is_morning_window: {is_morning_window}, is_afternoon_window: {is_afternoon_window}, is_cup_interval_day: {is_cup_interval_day}, is_main_site_interval_day: {is_main_site_interval_day})",
                     config,
                     date,
                     expected_questions,
