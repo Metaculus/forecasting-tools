@@ -469,6 +469,23 @@ def make_claude_adaptive_thinking_settings(
     }
 
 
+def make_openrouter_provider_pin(endpoint_slug: str) -> dict:
+    """
+    OpenRouter serves open-weight models from many hosts at different quantizations, so an unpinned
+    bot's quality shifts between runs. Pin to the lab's own endpoint, else the highest declared precision
+    host (see https://openrouter.ai/api/v1/models/{model}/endpoints). Bots were first pinned Sep 24th 2026.
+    """
+    return {
+        "extra_body": {
+            "provider": {
+                "order": [endpoint_slug],
+                "allow_fallbacks": False,
+                "require_parameters": True,
+            }
+        }
+    }
+
+
 def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     """
     Each entry in the dict has a key which is the environment variable set in the project secrets, and also used in the Workflows that run the bots.
@@ -545,6 +562,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         model="openrouter/deepseek/deepseek-r1",
         temperature=default_temperature,
         timeout=60 * 6,
+        **make_openrouter_provider_pin("novita/fp8"),
     )
     grok_4_search_llm = GeneralLlm(
         model="xai/grok-4-latest",
@@ -564,6 +582,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     deepseek_r1_exa_online_llm = GeneralLlm(
         model="openrouter/deepseek/deepseek-r1:online",
         timeout=60 * 6,
+        **make_openrouter_provider_pin("novita/fp8"),
     )
     o4_mini_deep_research_llm = GeneralLlm(
         model="openai/o4-mini-deep-research",
@@ -607,6 +626,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 model="openrouter/deepseek/deepseek-r1",
                 temperature=default_temperature,
                 timeout=60 * 6,
+                **make_openrouter_provider_pin("novita/fp8"),
             ),
         ),
     }
@@ -616,6 +636,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             GeneralLlm(
                 model="openrouter/deepseek/deepseek-chat-v3.1",
                 temperature=default_temperature,
+                **make_openrouter_provider_pin("coreweave/fp8"),
             ),
         ),
     }
@@ -727,6 +748,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/z-ai/glm-5.3-flash",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("z-ai/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -737,6 +759,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/z-ai/glm-5.3",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("z-ai/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -768,6 +791,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/nvidia/nemotron-3.5-lightning",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("coreweave/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -778,6 +802,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/meta/muse-glimmer-30b",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("deepinfra/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -808,6 +833,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/thinkingmachines/inkling-small",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("deepinfra/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -819,6 +845,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/deepseek/deepseek-v4-flash-0731",
                     temperature=default_temperature,
                     timeout=5 * 60,
+                    **make_openrouter_provider_pin("coreweave/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -862,6 +889,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/thinkingmachines/inkling",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("deepinfra/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -881,8 +909,9 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 GeneralLlm(
                     model="openrouter/moonshotai/kimi-k3",
-                    temperature=default_temperature,
+                    temperature=None,  # Moonshot's endpoint doesn't support temperature
                     timeout=kimi_k2_timeout,
+                    **make_openrouter_provider_pin("moonshotai/mxfp4"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1017,6 +1046,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/z-ai/glm-5.2",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("z-ai/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1042,6 +1072,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/nvidia/nemotron-3-ultra-550b-a55b",
                     temperature=default_temperature,
                     timeout=kimi_k2_timeout,
+                    # Only fp8 host (Venice) was down and DeepInfra's fp4 caps output at 16k tokens
+                    **make_openrouter_provider_pin("baseten/fp4"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1062,6 +1094,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/minimax/minimax-m3",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("minimax/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1153,6 +1186,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/google/gemma-4-31b-it",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("crusoe/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1163,6 +1197,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/z-ai/glm-5.1",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("z-ai/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1192,8 +1227,9 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 GeneralLlm(
                     model="openrouter/moonshotai/kimi-k2.6",
-                    temperature=default_temperature,
+                    temperature=None,  # Moonshot's endpoint doesn't support temperature
                     timeout=kimi_k2_timeout,
+                    **make_openrouter_provider_pin("moonshotai/int4"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1208,6 +1244,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                         "effort": "high",
                     },
                     timeout=5 * 60,
+                    **make_openrouter_provider_pin("alibaba/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1325,6 +1362,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/minimax/minimax-m2.7",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("minimax/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1603,6 +1641,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                         "enabled": True,
                     },
                     timeout=5 * 60,
+                    **make_openrouter_provider_pin("novita/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1747,6 +1786,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/openai/gpt-oss-120b",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("deepinfra/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1774,6 +1814,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                         "enabled": True,
                     },
                     timeout=6 * 60,
+                    **make_openrouter_provider_pin("coreweave/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -2363,6 +2404,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/meta-llama/llama-4-maverick",
                     temperature=default_temperature,
+                    **make_openrouter_provider_pin("deepinfra/base"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -2387,6 +2429,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/deepseek/deepseek-chat",
                     temperature=default_temperature,
+                    # StreamLake doesn't declare its quantization, but the only other host is fp4
+                    **make_openrouter_provider_pin("streamlake"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,

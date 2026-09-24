@@ -17,3 +17,4 @@ class TextTokenResponse(ModelResponse):
 
 class TextTokenCostResponse(TextTokenResponse):
     cost: float
+    serving_provider: str | None = None

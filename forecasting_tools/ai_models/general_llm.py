@@ -57,6 +57,8 @@ class GeneralLlm(
     Litellm support every model, most every parameter, and acts as one interface for every provider.
     """
 
+    _logged_model_provider_pairs: set[tuple[str, str]] = set()
+
     _defaults: dict[str, Any] = {
         # The lowest matching model substring is used as default (default 60s timeout)
         "gpt-4o": {
@@ -273,6 +275,7 @@ class GeneralLlm(
             call_back_cost = cost_manager.current_usage
 
         assert isinstance(response, ModelResponse)
+        serving_provider = self._get_serving_provider_and_log_if_new(response)
         choices = response.choices
         choices = typeguard.check_type(choices, list[Choices])
         message = choices[0].message
@@ -341,6 +344,7 @@ class GeneralLlm(
             total_tokens_used=total_tokens,
             model=self.model,
             cost=direct_cost,
+            serving_provider=serving_provider,
         )
 
         return response
@@ -389,6 +393,22 @@ class GeneralLlm(
             or "does not support" in message
         )
         return mentions_temperature and is_unsupported
+
+    def _get_serving_provider_and_log_if_new(
+        self, response: ModelResponse
+    ) -> str | None:
+        serving_provider = typeguard.check_type(
+            (response.model_extra or {}).get("provider"), str | None
+        )
+        if serving_provider is None:
+            return None
+        model_and_provider = (self.model, serving_provider)
+        if model_and_provider not in GeneralLlm._logged_model_provider_pairs:
+            GeneralLlm._logged_model_provider_pairs.add(model_and_provider)
+            logger.info(
+                f"{self.model} is being served by provider '{serving_provider}'"
+            )
+        return serving_provider
 
     def _answer_from_reasoning_content(self, message: Message) -> str | None:
         reasoning_content = getattr(message, "reasoning_content", None)
