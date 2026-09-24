@@ -644,6 +644,30 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             ),
             "tournaments": TournConfig.aib_and_site,
         },
+        "METAC_GPT_6_SOL_HIGH": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost * 3,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-6-sol",
+                    reasoning_effort="high",
+                    temperature=None,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GPT_6_LUNA_HIGH": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost * 0.35,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-6-luna",
+                    reasoning_effort="high",
+                    temperature=None,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         "METAC_GEMINI_3_8_FLASH": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 0.21,
             "bot": create_bot(
@@ -861,7 +885,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gpt_5_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 24th 2026: outpaced by GPT-6 Luna
         },
         "METAC_GPT_5_6_TERRA": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 1.5,
@@ -872,7 +896,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gpt_5_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Sep 24th 2026: outpaced by GPT-6 Sol
         },
         "METAC_GPT_5_6_SOL_HIGH": {
             "estimated_cost_per_question": roughly_gpt_5_high_cost * 3,
