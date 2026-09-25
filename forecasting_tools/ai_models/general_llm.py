@@ -4,6 +4,7 @@ import asyncio
 import inspect
 import logging
 import os
+import re
 from typing import Any, Literal
 
 import litellm
@@ -400,6 +401,7 @@ class GeneralLlm(
         serving_provider = typeguard.check_type(
             (response.model_extra or {}).get("provider"), str | None
         )
+        self._error_if_not_served_by_pinned_provider(serving_provider)
         if serving_provider is None:
             return None
         model_and_provider = (self.model, serving_provider)
@@ -409,6 +411,31 @@ class GeneralLlm(
                 f"{self.model} is being served by provider '{serving_provider}'"
             )
         return serving_provider
+
+    def _error_if_not_served_by_pinned_provider(
+        self, serving_provider: str | None
+    ) -> None:
+        provider_routing = (self.litellm_kwargs.get("extra_body") or {}).get(
+            "provider", {}
+        )
+        pinned_slugs: list[str] = provider_routing.get("order", [])
+        if provider_routing.get("allow_fallbacks", True) or not pinned_slugs:
+            return
+        pinned_providers = {
+            self._normalize_provider_name(slug.split("/")[0]) for slug in pinned_slugs
+        }
+        if (
+            serving_provider is None
+            or self._normalize_provider_name(serving_provider) not in pinned_providers
+        ):
+            raise RuntimeError(
+                f"{self.model} is pinned to {pinned_slugs} with fallbacks disabled, "
+                f"but was served by provider '{serving_provider}'"
+            )
+
+    @staticmethod
+    def _normalize_provider_name(name: str) -> str:
+        return re.sub(r"[^a-z0-9]", "", name.lower())
 
     def _answer_from_reasoning_content(self, message: Message) -> str | None:
         reasoning_content = getattr(message, "reasoning_content", None)

@@ -1,5 +1,4 @@
 import logging
-import re
 
 import pytest
 
@@ -30,10 +29,6 @@ def _pinned_llms_of_active_bots() -> list[GeneralLlm]:
     return list(unique_llms.values())
 
 
-def _normalize_provider_name(name: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", name.lower())
-
-
 @pytest.mark.parametrize(
     "llm",
     _pinned_llms_of_active_bots(),
@@ -55,6 +50,3 @@ async def test_active_bot_llm_is_served_by_its_pinned_openrouter_host(
     )
 
     assert response.serving_provider is not None
-    assert _normalize_provider_name(
-        response.serving_provider
-    ) == _normalize_provider_name(pinned_slug.split("/")[0])
