@@ -4,6 +4,7 @@ import asyncio
 import inspect
 import logging
 import os
+import re
 from typing import Any, Literal
 
 import litellm
@@ -56,6 +57,8 @@ class GeneralLlm(
 
     Litellm support every model, most every parameter, and acts as one interface for every provider.
     """
+
+    _logged_model_provider_pairs: set[tuple[str, str]] = set()
 
     _defaults: dict[str, Any] = {
         # The lowest matching model substring is used as default (default 60s timeout)
@@ -318,6 +321,7 @@ class GeneralLlm(
         ModelTracker.give_cost_tracking_warning_if_needed(
             self._litellm_model, observed_no_cost=observed_no_cost
         )
+        serving_provider = self._get_checked_serving_provider(response)
 
         if self.populate_citations:
             citations = self._extract_citations(response, choices)
@@ -341,6 +345,7 @@ class GeneralLlm(
             total_tokens_used=total_tokens,
             model=self.model,
             cost=direct_cost,
+            serving_provider=serving_provider,
         )
 
         return response
@@ -389,6 +394,58 @@ class GeneralLlm(
             or "does not support" in message
         )
         return mentions_temperature and is_unsupported
+
+    def _get_checked_serving_provider(self, response: ModelResponse) -> str | None:
+        serving_provider = typeguard.check_type(
+            (response.model_extra or {}).get("provider"), str | None
+        )
+        self._error_if_not_served_by_pinned_provider(serving_provider)
+        if serving_provider is None:
+            return None
+        model_and_provider = (self.model, serving_provider)
+        if model_and_provider not in GeneralLlm._logged_model_provider_pairs:
+            GeneralLlm._logged_model_provider_pairs.add(model_and_provider)
+            logger.info(
+                f"{self.model} is being served by provider '{serving_provider}'"
+            )
+        return serving_provider
+
+    def _get_pinned_provider_slugs(self) -> list[str]:
+        provider_routing = (self.litellm_kwargs.get("extra_body") or {}).get(
+            "provider"
+        ) or {}
+        if provider_routing.get("allow_fallbacks", True) is not False:
+            return []
+        return provider_routing.get("order", [])
+
+    def _error_if_not_served_by_pinned_provider(
+        self, serving_provider: str | None
+    ) -> None:
+        pinned_slugs = self._get_pinned_provider_slugs()
+        if not pinned_slugs:
+            return
+        if serving_provider is None or not any(
+            self._provider_name_matches_slug(serving_provider, slug)
+            for slug in pinned_slugs
+        ):
+            raise RuntimeError(
+                f"{self.model} is pinned to {pinned_slugs} with fallbacks disabled, "
+                f"but was served by provider '{serving_provider}'"
+            )
+
+    @staticmethod
+    def _provider_name_matches_slug(provider_name: str, endpoint_slug: str) -> bool:
+        """
+        OpenRouter reports display names that can be shorter or longer than the slug
+        (e.g. "Google" for "google-vertex", "Mancer 2" for "mancer"), so match on prefix.
+        """
+        normalized_name = re.sub(r"[^a-z0-9]", "", provider_name.lower())
+        normalized_slug = re.sub(r"[^a-z0-9]", "", endpoint_slug.split("/")[0].lower())
+        if not normalized_name or not normalized_slug:
+            return False
+        return normalized_slug.startswith(
+            normalized_name
+        ) or normalized_name.startswith(normalized_slug)
 
     def _answer_from_reasoning_content(self, message: Message) -> str | None:
         reasoning_content = getattr(message, "reasoning_content", None)
