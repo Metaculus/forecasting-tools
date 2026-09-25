@@ -473,7 +473,7 @@ def make_openrouter_provider_pin(endpoint_slug: str) -> dict:
     """
     OpenRouter serves open-weight models from many hosts at different quantizations, so an unpinned
     bot's quality shifts between runs. Pin to the lab's own endpoint, else the highest declared precision
-    host (see https://openrouter.ai/api/v1/models/{model}/endpoints). Bots were first pinned Sep 24th 2026.
+    host (see https://openrouter.ai/api/v1/models/{model}/endpoints).
     """
     return {
         "extra_body": {
@@ -562,6 +562,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         model="openrouter/deepseek/deepseek-r1",
         temperature=default_temperature,
         timeout=60 * 6,
+        # pinned to provider Sept 25th 2026
         **make_openrouter_provider_pin("novita/fp8"),
     )
     grok_4_search_llm = GeneralLlm(
@@ -582,6 +583,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     deepseek_r1_exa_online_llm = GeneralLlm(
         model="openrouter/deepseek/deepseek-r1:online",
         timeout=60 * 6,
+        # pinned to provider Sept 25th 2026
         **make_openrouter_provider_pin("novita/fp8"),
     )
     o4_mini_deep_research_llm = GeneralLlm(
@@ -626,6 +628,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 model="openrouter/deepseek/deepseek-r1",
                 temperature=default_temperature,
                 timeout=60 * 6,
+                # pinned to provider Sept 25th 2026
                 **make_openrouter_provider_pin("novita/fp8"),
             ),
         ),
@@ -636,6 +639,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             GeneralLlm(
                 model="openrouter/deepseek/deepseek-chat-v3.1",
                 temperature=default_temperature,
+                # pinned to provider Sept 25th 2026
                 **make_openrouter_provider_pin("coreweave/fp8"),
             ),
         ),
@@ -748,6 +752,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/z-ai/glm-5.3-flash",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("z-ai/fp8"),
                 ),
             ),
@@ -759,6 +764,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/z-ai/glm-5.3",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("z-ai/fp8"),
                 ),
             ),
@@ -791,6 +797,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/nvidia/nemotron-3.5-lightning",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
+                    # CoreWeave over DeepInfra since DeepInfra's shared pool kept rate limiting on Sep 24th 2026
                     **make_openrouter_provider_pin("coreweave/bf16"),
                 ),
             ),
@@ -802,6 +810,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/meta/muse-glimmer-30b",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("deepinfra/bf16"),
                 ),
             ),
@@ -833,6 +842,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/thinkingmachines/inkling-small",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("deepinfra/fp8"),
                 ),
             ),
@@ -845,6 +855,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/deepseek/deepseek-v4-flash-0731",
                     temperature=default_temperature,
                     timeout=5 * 60,
+                    # pinned to provider Sept 25th 2026
+                    # CoreWeave over DeepInfra since DeepInfra's shared pool kept rate limiting on Sep 24th 2026
                     **make_openrouter_provider_pin("coreweave/fp8"),
                 ),
             ),
@@ -889,6 +901,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/thinkingmachines/inkling",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("deepinfra/fp8"),
                 ),
             ),
@@ -911,6 +924,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/moonshotai/kimi-k3",
                     temperature=None,  # Moonshot's endpoint doesn't support temperature
                     timeout=kimi_k2_timeout,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("moonshotai/mxfp4"),
                 ),
             ),
@@ -1046,6 +1060,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/z-ai/glm-5.2",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("z-ai/fp8"),
                 ),
             ),
@@ -1072,7 +1087,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/nvidia/nemotron-3-ultra-550b-a55b",
                     temperature=default_temperature,
                     timeout=kimi_k2_timeout,
-                    # Only fp8 host (Venice) was down and DeepInfra's fp4 caps output at 16k tokens
+                    # pinned to provider Sept 25th 2026
+                    # Venice (only fp8 host) was down/unreliable on Sep 24th 2026 and DeepInfra's fp4 caps output at 16k tokens
                     **make_openrouter_provider_pin("baseten/fp4"),
                 ),
             ),
@@ -1094,6 +1110,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/minimax/minimax-m3",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("minimax/fp8"),
                 ),
             ),
@@ -1186,6 +1203,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/google/gemma-4-31b-it",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("crusoe/bf16"),
                 ),
             ),
@@ -1197,6 +1215,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/z-ai/glm-5.1",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("z-ai/fp8"),
                 ),
             ),
@@ -1229,6 +1248,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/moonshotai/kimi-k2.6",
                     temperature=None,  # Moonshot's endpoint doesn't support temperature
                     timeout=kimi_k2_timeout,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("moonshotai/int4"),
                 ),
             ),
@@ -1244,7 +1264,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                         "effort": "high",
                     },
                     timeout=5 * 60,
-                    **make_openrouter_provider_pin("alibaba/fp8"),
+                    # pinned to provider Sept 25th 2026
+                    **make_openrouter_provider_pin("novita/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1362,6 +1383,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/minimax/minimax-m2.7",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("minimax/fp8"),
                 ),
             ),
@@ -1641,6 +1663,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                         "enabled": True,
                     },
                     timeout=5 * 60,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("novita/fp8"),
                 ),
             ),
@@ -1786,6 +1809,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/openai/gpt-oss-120b",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("deepinfra/bf16"),
                 ),
             ),
@@ -1814,6 +1838,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                         "enabled": True,
                     },
                     timeout=6 * 60,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("coreweave/fp8"),
                 ),
             ),
@@ -2404,6 +2429,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/meta-llama/llama-4-maverick",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     **make_openrouter_provider_pin("deepinfra/base"),
                 ),
             ),
@@ -2429,6 +2455,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/deepseek/deepseek-chat",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
                     # StreamLake doesn't declare its quantization, but the only other host is fp4
                     **make_openrouter_provider_pin("streamlake"),
                 ),
