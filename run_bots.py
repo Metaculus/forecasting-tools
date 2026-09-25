@@ -787,6 +787,9 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/x-ai/grok-4.6",
                     temperature=default_temperature,
+                    # pinned to provider Sept 25th 2026
+                    # xai/zdr: standard-price xAI endpoint; plain "xai" also matches xAI's 2x-price priority endpoints
+                    **make_openrouter_provider_pin("xai/zdr"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1204,7 +1207,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/google/gemma-4-31b-it",
                     temperature=default_temperature,
                     # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("crusoe/bf16"),
+                    # using parasail for reliability despite having lower precision
+                    **make_openrouter_provider_pin("parasail/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
