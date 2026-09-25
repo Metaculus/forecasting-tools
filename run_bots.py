@@ -469,16 +469,17 @@ def make_claude_adaptive_thinking_settings(
     }
 
 
-def make_openrouter_provider_pin(endpoint_slug: str) -> dict:
+def make_openrouter_provider_pin(*endpoint_slugs: str) -> dict:
     """
     OpenRouter serves open-weight models from many hosts at different quantizations, so an unpinned
     bot's quality shifts between runs. Pin to the lab's own endpoint, else the highest declared precision
-    host (see https://openrouter.ai/api/v1/models/{model}/endpoints).
+    host (see https://openrouter.ai/api/v1/models/{model}/endpoints). Extra slugs are tried in order as
+    backups, so only list hosts with the same precision.
     """
     return {
         "extra_body": {
             "provider": {
-                "order": [endpoint_slug],
+                "order": list(endpoint_slugs),
                 "allow_fallbacks": False,
                 "require_parameters": True,
             }
@@ -1814,7 +1815,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/openai/gpt-oss-120b",
                     temperature=default_temperature,
                     # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("deepinfra/bf16"),
+                    # two bf16 hosts since each alone rate-limited under 5-question bursts
+                    **make_openrouter_provider_pin("akashml/bf16", "deepinfra/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,

@@ -119,6 +119,32 @@ async def test_pinned_llm_errors_when_not_served_by_pinned_provider(
         )
 
 
+@pytest.mark.parametrize(
+    "served_by, is_allowed",
+    [("AkashML", True), ("DeepInfra", True), ("Crusoe", False)],
+)
+async def test_llm_pinned_to_multiple_hosts_accepts_only_those_hosts(
+    mocker: Mock, served_by: str, is_allowed: bool
+) -> None:
+    mock_litellm_response(mocker, served_by)
+    llm = GeneralLlm(
+        model="openrouter/openai/gpt-oss-120b",
+        extra_body={
+            "provider": {
+                "order": ["akashml/bf16", "deepinfra/bf16"],
+                "allow_fallbacks": False,
+            }
+        },
+    )
+
+    if is_allowed:
+        response = await llm._mockable_direct_call_to_model("Hi")
+        assert response.serving_provider == served_by
+    else:
+        with pytest.raises(RuntimeError, match="pinned to"):
+            await llm._mockable_direct_call_to_model("Hi")
+
+
 @pytest.mark.parametrize("allow_fallbacks", [True, None])
 async def test_llm_with_fallbacks_allowed_accepts_any_provider(
     mocker: Mock, allow_fallbacks: bool | None
