@@ -663,8 +663,13 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_opus_4_5_cost * 1.6,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="anthropic/claude-opus-5-5",
-                    **claude_adaptive_thinking_settings_high,
+                    model="openrouter/anthropic/claude-opus-5.5",
+                    reasoning_effort="high",  # OpenRouter maps this to adaptive thinking with output_config.effort
+                    temperature=None,  # Anthropic's OpenRouter endpoint doesn't support temperature
+                    max_tokens=64000,
+                    timeout=160,
+                    # Moved from direct Anthropic API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("anthropic"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -673,10 +678,12 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_5_high_cost * 5,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="openai/gpt-6-astra",
+                    model="openrouter/openai/gpt-6-astra",
                     reasoning_effort="high",
                     temperature=None,
                     timeout=gpt_5_timeout,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -685,10 +692,12 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_5_high_cost * 3,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="openai/gpt-6-sol",
+                    model="openrouter/openai/gpt-6-sol",
                     reasoning_effort="high",
                     temperature=None,
                     timeout=gpt_5_timeout,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -697,10 +706,12 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_5_high_cost * 0.35,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="openai/gpt-6-luna",
+                    model="openrouter/openai/gpt-6-luna",
                     reasoning_effort="high",
                     temperature=None,
                     timeout=gpt_5_timeout,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -730,8 +741,11 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_opus_4_5_cost * 2,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="anthropic/claude-fable-5-1",
+                    model="openrouter/anthropic/claude-fable-5.1",
                     temperature=None,
+                    max_tokens=128000,  # litellm's default when this bot called Anthropic directly
+                    # Moved from direct Anthropic API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("anthropic"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -983,8 +997,11 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_opus_4_5_cost * 1.5,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="anthropic/claude-sonnet-5",
+                    model="openrouter/anthropic/claude-sonnet-5",
                     temperature=None,
+                    max_tokens=128000,  # litellm's default when this bot called Anthropic directly
+                    # Moved from direct Anthropic API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("anthropic"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1364,8 +1381,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="openai/gpt-5.4-mini",
-                    temperature=default_temperature,
+                    model="openrouter/openai/gpt-5.4-mini",
+                    temperature=None,  # OpenAI's OpenRouter endpoint doesn't support temperature (was 0.3 when called directly)
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1374,8 +1393,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost / 2,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="openai/gpt-5.4-nano",
-                    temperature=default_temperature,
+                    model="openrouter/openai/gpt-5.4-nano",
+                    temperature=None,  # OpenAI's OpenRouter endpoint doesn't support temperature (was 0.3 when called directly)
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1419,8 +1440,11 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
             "bot": create_bot(
                 llm=GeneralLlm(
-                    model="anthropic/claude-haiku-4-5",
+                    model="openrouter/anthropic/claude-haiku-4.5",
                     temperature=default_temperature,
+                    max_tokens=64000,  # litellm's default when this bot called Anthropic directly
+                    # Moved from direct Anthropic API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("anthropic"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -2005,9 +2029,11 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": 0.13871,
             "bot": create_bot(
                 GeneralLlm(
-                    model="openai/gpt-4.1",
+                    model="openrouter/openai/gpt-4.1",
                     temperature=default_temperature,
                     timeout=60 * 5,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
                 bot_type="gpt_4_1_optimized",
             ),
@@ -2017,9 +2043,11 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
             "bot": create_bot(
                 GeneralLlm(
-                    model="openai/gpt-4.1-nano",
+                    model="openrouter/openai/gpt-4.1-nano",
                     temperature=default_temperature,
                     timeout=60 * 5,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
                 bot_type="gpt_4_1_optimized",
             ),
@@ -2087,7 +2115,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 default_research_comparison_forecast_llm,
                 researcher=GeneralLlm(
-                    model="perplexity/sonar-pro",
+                    model="openrouter/perplexity/sonar-pro",  # Moved from direct Perplexity API to OpenRouter Sept 26th 2026
                     **default_perplexity_settings,
                 ),
             ),
@@ -2098,7 +2126,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 default_research_comparison_forecast_llm,
                 researcher=GeneralLlm(
-                    model="perplexity/sonar",
+                    model="openrouter/perplexity/sonar",  # Moved from direct Perplexity API to OpenRouter Sept 26th 2026
                     **default_perplexity_settings,
                 ),
             ),
@@ -2118,7 +2146,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "bot": create_bot(
                 default_research_comparison_forecast_llm,
                 researcher=GeneralLlm(
-                    model="perplexity/sonar-reasoning-pro",
+                    model="openrouter/perplexity/sonar-reasoning-pro",  # Moved from direct Perplexity API to OpenRouter Sept 26th 2026
                     **default_perplexity_settings,
                 ),
             ),
@@ -2243,7 +2271,12 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         "METAC_4_1_TOKEN": {
             "estimated_cost_per_question": 0.07,
             "bot": create_bot(
-                GeneralLlm(model="gpt-4.1", temperature=default_temperature),
+                GeneralLlm(
+                    model="openrouter/openai/gpt-4.1",
+                    temperature=default_temperature,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
+                ),
             ),
             "tournaments": TournConfig.aib_and_site,
         },
@@ -2251,8 +2284,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": 0.015,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gpt-4.1-mini",
+                    model="openrouter/openai/gpt-4.1-mini",
                     temperature=default_temperature,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -2261,8 +2296,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gpt-4.1-nano",
+                    model="openrouter/openai/gpt-4.1-nano",
                     temperature=default_temperature,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -2336,8 +2373,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_4o_cost,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gpt-4o-2024-08-06",  # NOTE: This bot used to be just "gpt-4o" in q2 2025 and before so changed between the 3 versions as the API Updated
+                    model="openrouter/openai/gpt-4o-2024-08-06",  # NOTE: This bot used to be just "gpt-4o" in q2 2025 and before so changed between the 3 versions as the API Updated
                     temperature=default_temperature,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -2346,8 +2385,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gpt-4o-mini",
+                    model="openrouter/openai/gpt-4o-mini",
                     temperature=default_temperature,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -2356,8 +2397,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
             "bot": create_bot(
                 GeneralLlm(
-                    model="gpt-3.5-turbo",
+                    model="openrouter/openai/gpt-3.5-turbo",
                     temperature=default_temperature,
+                    # Moved from direct OpenAI API to OpenRouter (pinned) Sept 26th 2026
+                    **make_openrouter_provider_pin("openai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -2509,9 +2552,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
             if "only" in mode.lower():
                 researcher = bot.get_llm("default", "llm")
 
-            researcher_is_perplexity = researcher.model.startswith("perplexity/")
+            perplexity_prefixes = ("perplexity/", "openrouter/perplexity/")
+            researcher_is_perplexity = researcher.model.startswith(perplexity_prefixes)
             forecaster_is_perplexity = bot.get_llm("default", "llm").model.startswith(
-                "perplexity/"
+                perplexity_prefixes
             )
 
             assert researcher_is_perplexity or forecaster_is_perplexity

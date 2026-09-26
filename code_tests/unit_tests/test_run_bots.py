@@ -7,6 +7,7 @@ import time_machine
 
 from code_tests.unit_tests.forecasting_test_manager import ForecastingTestManager
 from forecasting_tools import MetaculusClient
+from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.questions import MetaculusQuestion
 from forecasting_tools.forecast_bots.official_bots.uniform_probability_bot import (
     UniformProbabilityBot,
@@ -16,6 +17,7 @@ from run_bots import (
     RunBotConfig,
     ScheduleConfig,
     TournConfig,
+    get_default_bot_dict,
     get_questions_for_config,
 )
 
@@ -201,3 +203,23 @@ async def test_basic_get_questions(
             max_questions=1000,
         )
         assert len(questions) == expected_num_questions
+
+
+def test_active_bots_route_llm_calls_through_openrouter() -> None:
+    llms_not_on_openrouter: list[str] = []
+    for bot_name, config in get_default_bot_dict().items():
+        # The uniform bot makes no LLM calls, and its default llms depend on which API keys are set
+        if (
+            not config.tournaments
+            or config.bot is None
+            or isinstance(config.bot, UniformProbabilityBot)
+        ):
+            continue
+        for purpose, llm in config.bot._llms.items():
+            model = llm.model if isinstance(llm, GeneralLlm) else llm
+            if model is None or model == "no_research":
+                continue
+            if not model.startswith(("openrouter/", "asknews/", "exa/")):
+                llms_not_on_openrouter.append(f"{bot_name} {purpose}: {model}")
+
+    assert not llms_not_on_openrouter, llms_not_on_openrouter

@@ -314,7 +314,14 @@ class GeneralLlm(
                 f"Litellm direct cost {direct_cost} and callback cost {call_back_cost} are different."
             )
 
-        if call_back_cost == 0 and direct_cost == 0:
+        byok_provider_cost = self._get_openrouter_byok_provider_cost(usage)
+        if byok_provider_cost > 0:
+            MonetaryCostManager.increase_current_usage_in_parent_managers(
+                byok_provider_cost
+            )
+        total_cost = direct_cost + byok_provider_cost
+
+        if call_back_cost == 0 and total_cost == 0:
             observed_no_cost = True
         else:
             observed_no_cost = False
@@ -344,11 +351,24 @@ class GeneralLlm(
             completion_tokens_used=completion_tokens,
             total_tokens_used=total_tokens,
             model=self.model,
-            cost=direct_cost,
+            cost=total_cost,
             serving_provider=serving_provider,
         )
 
         return response
+
+    @staticmethod
+    def _get_openrouter_byok_provider_cost(usage: Usage) -> float:
+        """
+        For BYOK requests OpenRouter's `cost` is only its own fee, so the provider's charge
+        to the BYOK key has to be read from `cost_details.upstream_inference_cost`.
+        """
+        if not getattr(usage, "is_byok", False):
+            return 0
+        cost_details = typeguard.check_type(getattr(usage, "cost_details", None), dict)
+        return typeguard.check_type(
+            cost_details.get("upstream_inference_cost"), float | int
+        )
 
     async def _call_litellm_dropping_deprecated_temperature(
         self, prompt: ModelInputType

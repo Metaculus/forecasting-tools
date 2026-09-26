@@ -6,6 +6,9 @@ from litellm.types.utils import Choices, Message, ModelResponse, Usage
 from typeguard import TypeCheckError
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
 
 
 def make_litellm_response(serving_provider: str | dict | None) -> ModelResponse:
@@ -169,3 +172,71 @@ async def test_llm_with_empty_provider_routing_accepts_any_provider(
     response = await llm._mockable_direct_call_to_model("Hi")
 
     assert response.serving_provider == "Novita"
+
+
+def mock_openrouter_usage(
+    mocker: Mock, usage: Usage, cost_reported_by_litellm: float
+) -> None:
+    response = make_litellm_response("Anthropic")
+    response.usage = usage
+    response._hidden_params = {"response_cost": cost_reported_by_litellm}
+    mocker.patch(
+        "forecasting_tools.ai_models.general_llm.acompletion",
+        AsyncMock(return_value=response),
+    )
+
+
+@pytest.mark.parametrize(
+    "is_byok, upstream_inference_cost, expected_cost",
+    [
+        (True, 0.0123, 0.0128),  # BYOK `cost` is only OpenRouter's fee
+        (False, 0.0005, 0.0005),  # Non-BYOK `cost` already includes the upstream cost
+    ],
+)
+async def test_openrouter_byok_provider_cost_is_added_to_openrouter_cost(
+    mocker: Mock,
+    is_byok: bool,
+    upstream_inference_cost: float,
+    expected_cost: float,
+) -> None:
+    openrouter_reported_cost = 0.0005
+    mock_openrouter_usage(
+        mocker,
+        Usage(
+            prompt_tokens=1,
+            completion_tokens=1,
+            total_tokens=2,
+            cost=openrouter_reported_cost,
+            is_byok=is_byok,
+            cost_details={"upstream_inference_cost": upstream_inference_cost},
+        ),
+        cost_reported_by_litellm=openrouter_reported_cost,
+    )
+    llm = GeneralLlm(model="openrouter/anthropic/claude-test-model")
+
+    with MonetaryCostManager(10) as cost_manager:
+        response = await llm._mockable_direct_call_to_model("Hi")
+
+    assert response.cost == pytest.approx(expected_cost)
+    assert cost_manager.current_usage == pytest.approx(expected_cost)
+
+
+async def test_openrouter_byok_response_without_upstream_cost_errors(
+    mocker: Mock,
+) -> None:
+    mock_openrouter_usage(
+        mocker,
+        Usage(
+            prompt_tokens=1,
+            completion_tokens=1,
+            total_tokens=2,
+            cost=0,
+            is_byok=True,
+            cost_details={},
+        ),
+        cost_reported_by_litellm=0,
+    )
+    llm = GeneralLlm(model="openrouter/anthropic/claude-test-model")
+
+    with pytest.raises(TypeCheckError):
+        await llm._mockable_direct_call_to_model("Hi")
