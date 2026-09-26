@@ -169,3 +169,38 @@ async def test_llm_with_empty_provider_routing_accepts_any_provider(
     response = await llm._mockable_direct_call_to_model("Hi")
 
     assert response.serving_provider == "Novita"
+
+
+FAKE_CREDENTIAL = "fake-credential-value"
+
+
+@pytest.mark.parametrize(
+    "model, credential_env_var",
+    [("exa/exa", "EXA_API_KEY"), ("metaculus/gpt-4o", "METACULUS_TOKEN")],
+)
+def test_to_dict_excludes_credential_loaded_from_env(
+    monkeypatch: pytest.MonkeyPatch, model: str, credential_env_var: str
+) -> None:
+    monkeypatch.setenv(credential_env_var, FAKE_CREDENTIAL)
+    llm = GeneralLlm(model=model)
+
+    assert FAKE_CREDENTIAL in str(llm.litellm_kwargs)
+    assert FAKE_CREDENTIAL not in str(llm.to_dict())
+
+
+@pytest.mark.parametrize(
+    "credential_kwarg, credential_value",
+    [
+        ("api_key", FAKE_CREDENTIAL),
+        ("extra_headers", {"Authorization": f"Bearer {FAKE_CREDENTIAL}"}),
+        ("aws_secret_access_key", FAKE_CREDENTIAL),
+        ("vertex_credentials", FAKE_CREDENTIAL),
+    ],
+)
+def test_to_dict_excludes_explicitly_passed_credential(
+    credential_kwarg: str, credential_value: str | dict[str, str]
+) -> None:
+    llm = GeneralLlm(model="openai/gpt-4o-mini", **{credential_kwarg: credential_value})
+
+    assert FAKE_CREDENTIAL in str(llm.litellm_kwargs)
+    assert FAKE_CREDENTIAL not in str(llm.to_dict())

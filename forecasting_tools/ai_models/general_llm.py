@@ -60,6 +60,23 @@ class GeneralLlm(
 
     _logged_model_provider_pairs: set[tuple[str, str]] = set()
 
+    _CREDENTIAL_KWARGS: frozenset[str] = frozenset(
+        {
+            "api_key",
+            "extra_headers",
+            "headers",
+            "model_list",
+            "aws_access_key_id",
+            "aws_secret_access_key",
+            "aws_session_token",
+            "aws_web_identity_token",
+            "vertex_credentials",
+            "azure_ad_token",
+            "azure_password",
+            "client_secret",
+        }
+    )
+
     _defaults: dict[str, Any] = {
         # The lowest matching model substring is used as default (default 60s timeout)
         "gpt-4o": {
@@ -677,7 +694,11 @@ class GeneralLlm(
         return {
             "original_model": self.model,
             "allowed_tries": self.allowed_tries,
-            **{k: v for k, v in self.litellm_kwargs.items()},
+            **{
+                key: value
+                for key, value in self.litellm_kwargs.items()
+                if key not in self._CREDENTIAL_KWARGS
+            },
         }
 
     @classmethod
