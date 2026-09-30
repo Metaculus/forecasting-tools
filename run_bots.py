@@ -1668,8 +1668,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                         "enabled": True,
                     },
                     timeout=5 * 60,
-                    # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("novita/fp8"),
+                    # pinned to provider Sept 30th 2026 (novita/fp8 stopped serving this model)
+                    **make_openrouter_provider_pin("siliconflow/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,

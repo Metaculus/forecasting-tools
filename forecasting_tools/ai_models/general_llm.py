@@ -568,6 +568,7 @@ class GeneralLlm(
         setattr(model_response, "choices", choices)
 
         model_response.model = self.model
+        model_response._hidden_params = raw_response._hidden_params
 
         setattr(
             model_response,

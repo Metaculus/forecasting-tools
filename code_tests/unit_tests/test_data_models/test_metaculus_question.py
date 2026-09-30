@@ -4,6 +4,7 @@ import os
 from code_tests.utilities_for_tests.misc_utils import replace_tzinfo_in_string
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.data_models.questions import (
+    BinaryQuestion,
     DateQuestion,
     DiscreteQuestion,
     MetaculusQuestion,
@@ -77,3 +78,32 @@ def _assert_correct_number_of_questions(questions: list[MetaculusQuestion]) -> N
             elif type(question) is DiscreteQuestion:
                 assert question.cdf_size is not None
                 assert question.cdf_size < 201
+
+
+def test_binary_previous_forecasts_parsed_when_community_prediction_hidden() -> None:
+    post_json = {
+        "id": 1,
+        "question": {
+            "id": 2,
+            "title": "Will it happen?",
+            "type": "binary",
+            "status": "open",
+            "aggregations": {"recency_weighted": {"latest": None, "history": None}},
+            "my_forecasts": {
+                "history": [
+                    {
+                        "start_time": 1760000000.0,
+                        "end_time": None,
+                        "forecast_values": [0.3, 0.7],
+                    }
+                ]
+            },
+        },
+    }
+
+    question = BinaryQuestion.from_metaculus_api_json(post_json)
+
+    assert question.community_prediction_at_access_time is None
+    assert question.previous_forecasts is not None
+    assert len(question.previous_forecasts) == 1
+    assert question.previous_forecasts[0].prediction_in_decimal == 0.7
