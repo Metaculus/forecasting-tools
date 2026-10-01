@@ -647,6 +647,29 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        ############################ Bots started in October 2026 ############################
+        "METAC_GPT_6_1_SOL_HIGH": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost * 3,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openai/gpt-6.1-sol",
+                    reasoning_effort="high",
+                    temperature=None,
+                    timeout=gpt_5_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_CLAUDE_SONNET_5_5_HIGH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 0.8,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-sonnet-5-5",
+                    **claude_adaptive_thinking_settings_high,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ Bots started in September 2026 ############################
         "METAC_GROK_4_7_HIGH": {
             "estimated_cost_per_question": 5 * roughly_one_call_to_grok_4_5_llm * 0.8,
