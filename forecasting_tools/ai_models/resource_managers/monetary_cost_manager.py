@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 
 import litellm
 from litellm.integrations.custom_logger import CustomLogger as LitellmCustomLogger
@@ -36,6 +39,23 @@ class LitellmCostTracker(LitellmCustomLogger):
     """
 
     _initialized = False
+    _caller_tracks_cost: ContextVar[bool] = ContextVar(
+        "_caller_tracks_cost", default=False
+    )
+
+    @classmethod
+    @contextmanager
+    def caller_tracks_cost(cls) -> Iterator[None]:
+        """
+        The success callback skips litellm calls made in this block, so the caller must
+        add their cost itself. Litellm runs the callback in a copy of the calling
+        context, so this holds however late the callback fires.
+        """
+        token = cls._caller_tracks_cost.set(True)
+        try:
+            yield
+        finally:
+            cls._caller_tracks_cost.reset(token)
 
     @staticmethod
     def initialize_cost_tracking() -> None:
@@ -79,6 +99,8 @@ class LitellmCostTracker(LitellmCustomLogger):
         self._track_cost(kwargs, response_obj)
 
     def _track_cost(self, kwargs: dict, response_obj) -> None:  # NOSONAR
+        if self._caller_tracks_cost.get():
+            return
         tracked_cost = 0
         kwarg_cost = self.extract_cost_from_hidden_params(kwargs)
         obj_cost = self.extract_cost_from_response_obj(response_obj)
