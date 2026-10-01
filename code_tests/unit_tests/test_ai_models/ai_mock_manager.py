@@ -1,7 +1,10 @@
 import asyncio
 import logging
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
+from litellm.types.utils import Choices, Message, ModelResponse, Usage
+
+from forecasting_tools.ai_models.ai_utils.response_types import TextTokenCostResponse
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
 from forecasting_tools.ai_models.model_interfaces.request_limited_model import (
     RequestLimitedModel,
@@ -91,6 +94,34 @@ class AiModelMockManager:
         mock_function = mocker.patch(full_function_path)
         mock_function.return_value = value
         return mock_function
+
+    @staticmethod
+    def mock_general_llm_litellm_call_with_value(
+        mocker: Mock, value: TextTokenCostResponse
+    ) -> Mock:
+        """
+        GeneralLlm counts a call's cost inside its direct call, so cost tracking for models
+        built on GeneralLlm is tested by mocking the litellm call underneath it instead.
+        """
+        litellm_response = ModelResponse(
+            choices=[
+                Choices(
+                    message=Message(role="assistant", content=value.data),
+                    finish_reason="stop",
+                    index=0,
+                )
+            ],
+            usage=Usage(
+                prompt_tokens=value.prompt_tokens_used,
+                completion_tokens=value.completion_tokens_used,
+                total_tokens=value.total_tokens_used,
+            ),
+        )
+        litellm_response._hidden_params = {"response_cost": value.cost}
+        return mocker.patch(
+            "forecasting_tools.ai_models.general_llm.acompletion",
+            AsyncMock(return_value=litellm_response),
+        )
 
     @staticmethod
     def mock_ai_model_direct_call_with_only_errors(

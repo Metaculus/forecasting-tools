@@ -80,7 +80,6 @@ class CombinedLlmArchetype(
         response: TextTokenCostResponse = await self._mockable_direct_call_to_model(
             prompt
         )
-        MonetaryCostManager.increase_current_usage_in_parent_managers(response.cost)
         return response.data
 
     @classmethod

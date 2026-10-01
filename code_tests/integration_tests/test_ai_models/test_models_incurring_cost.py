@@ -59,6 +59,18 @@ def find_number_of_calls_to_make(subclass: type[AiModel]) -> int:
     return 10
 
 
+def mock_call_with_predefined_mock_value(mocker: Mock, subclass: type[AiModel]) -> None:
+    if issubclass(subclass, CombinedLlmArchetype):
+        AiModelMockManager.mock_general_llm_litellm_call_with_value(
+            mocker,
+            subclass._get_mock_return_for_direct_call_to_model_using_cheap_input(),
+        )
+    else:
+        AiModelMockManager.mock_ai_model_direct_call_with_predefined_mock_value(
+            mocker, subclass
+        )
+
+
 async def find_number_of_hard_limit_exceptions_in_run(
     mocker: Mock,
     subclass: type[AiModel],
@@ -66,9 +78,7 @@ async def find_number_of_hard_limit_exceptions_in_run(
     number_of_calls_to_make: int,
     number_of_expected_exceptions: int,
 ) -> int:
-    AiModelMockManager.mock_ai_model_direct_call_with_predefined_mock_value(
-        mocker, subclass
-    )
+    mock_call_with_predefined_mock_value(mocker, subclass)
 
     coroutines = [
         async_run_cheap_invoke(subclass) for _ in range(number_of_calls_to_make)
@@ -134,9 +144,7 @@ def test_error_thrown_when_limit_reached(mocker: Mock, subclass: type[AiModel]) 
     if not issubclass(subclass, IncursCost):
         raise ValueError(NOT_INCURS_COST_ERROR_MESSAGE)
 
-    AiModelMockManager.mock_ai_model_direct_call_with_predefined_mock_value(
-        mocker, subclass
-    )
+    mock_call_with_predefined_mock_value(mocker, subclass)
     max_cost = 0.0000000000001
     with MonetaryCostManager(max_cost):
         with pytest.raises(HardLimitExceededError):
