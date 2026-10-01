@@ -129,7 +129,7 @@ async def test_conditional_forecasts() -> None:
     )
     url_question1 = typeguard.check_type(url_question1, MetaculusQuestion)
 
-    url2 = "https://www.metaculus.com/questions/27182/cts-ai-extinction-before-2100/"
+    url2 = "https://www.metaculus.com/questions/27188/"
     url_question2 = MetaculusClient().get_question_by_url(
         url2, group_question_mode="unpack_subquestions"
     )

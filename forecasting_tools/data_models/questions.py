@@ -340,6 +340,10 @@ class BinaryQuestion(MetaculusQuestion):
                 q2_center_community_prediction = aggregations["unweighted"]["latest"]["centers"]  # type: ignore
             assert len(q2_center_community_prediction) == 1
             community_prediction_at_access_time = q2_center_community_prediction[0]
+        except (KeyError, TypeError):
+            community_prediction_at_access_time = None
+
+        try:
             history = api_json["question"]["my_forecasts"]["history"]
             previous_forecasts = None
             if history:
@@ -360,7 +364,6 @@ class BinaryQuestion(MetaculusQuestion):
                     for forecast in history
                 ]
         except (KeyError, TypeError):
-            community_prediction_at_access_time = None
             previous_forecasts = None
         return BinaryQuestion(
             community_prediction_at_access_time=community_prediction_at_access_time,
