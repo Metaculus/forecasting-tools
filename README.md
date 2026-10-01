@@ -145,7 +145,7 @@ Note: You'll need to have your environment variables set up (see the section bel
 
 ## Customizing the Bot
 ### General Customization
-Generally all you have to do to make your own bot is inherit from the TemplateBot and override any combination of the 3 forecasting methods and the 1 research method. This saves you the headache of interacting with the Metaculus API, implementing aggregation of predictions, creating benchmarking interfaces, etc. Below is an example. It may also be helpful to look at the `TemplateBot` code (`forecasting_tools/forecast_bots/template_bot.py`) for a more complete example.
+Generally all you have to do to make your own bot is inherit from the TemplateBot and override any combination of the 3 forecasting methods and the 1 research method. This saves you the headache of interacting with the Metaculus API, implementing aggregation of predictions, etc. Below is an example. It may also be helpful to look at the `TemplateBot` code (`forecasting_tools/forecast_bots/template_bot.py`) for a more complete example.
 
 
 ```python
@@ -318,11 +318,6 @@ file_path = "temp/questions.json"
 DataOrganizer.save_questions_to_file_path(questions, file_path) # Overwrites the file if it already exists
 questions = DataOrganizer.load_questions_from_file_path(file_path)
 
-benchmark_questions = metaculus_client.get_benchmark_questions(
-    num_of_questions_to_return=20
-)
-print(f"Num benchmark questions: {len(benchmark_questions)}")
-
 metaculus_client.post_binary_question_prediction(
     question_id=578, # Note that the question ID is not always the same as the post ID
     prediction_in_decimal=0.012,  # Must be between 0.001 and 0.999
@@ -340,7 +335,6 @@ print("Posted comment")
     Question found with url: https://www.metaculus.com/questions/578
     Num tournament questions: 11
     Num filtered questions: 50
-    Num benchmark questions: 20
     Posted prediction
     Posted comment
 
@@ -351,7 +345,7 @@ Several of the methods above accept a `group_question_mode` parameter that contr
 - `"exclude"` — drop group questions from the result.
 - `"unpack_subquestions"` — turn each subquestion into a separate normal question.
 
-For backwards compatibility, the default is `"exclude"` for `get_question_by_post_id`, `get_question_by_url`, `ApiFilter` (used by `get_questions_matching_filter`), and `get_benchmark_questions` — so group questions don't get overweighted in benchmarks. The exception is `get_all_open_questions_from_tournament`, which defaults to `"unpack_subquestions"` so all subquestions are forecasted as normal questions.
+For backwards compatibility, the default is `"exclude"` for `get_question_by_post_id`, `get_question_by_url`, and `ApiFilter` (used by `get_questions_matching_filter`). The exception is `get_all_open_questions_from_tournament`, which defaults to `"unpack_subquestions"` so all subquestions are forecasted as normal questions.
 
 ```python
 from forecasting_tools import MetaculusClient, ApiFilter
@@ -510,8 +504,8 @@ Some features need heavier dependencies that a bot does not, so they are opt-in.
 
 | Extra | You need it for |
 | --- | --- |
-| `agents` | Anything built on the agent SDK: `QuestionDecomposer`, `QuestionOperationalizer`, `TopicGenerator`, `DataAnalyzer`, `Benchmarker`, `BenchmarkForBot`, `BotOptimizer`, `CustomizableBot`, `ComputerUse` (browser-driving agent), and the AI Congress tools |
-| `front-end` | The Streamlit app in `forecasting_tools/front_end/` and `run_benchmark_streamlit_page` |
+| `agents` | Anything built on the agent SDK: `QuestionDecomposer`, `QuestionOperationalizer`, `TopicGenerator`, `DataAnalyzer`, `BotOptimizer`, `CustomizableBot`, `ComputerUse` (browser-driving agent), and the AI Congress tools |
+| `front-end` | The Streamlit app in `forecasting_tools/front_end/` |
 | `stats` | `forecasting_tools.util.stats` and the calibration adjusters in `forecasting_tools/calibration_adjustment/` |
 | `all` | Everything above |
 
@@ -562,7 +556,7 @@ If you choose not to run Docker, you can use poetry to set up a local virtual en
 
 
 ## Installing dependencies
-Local development uses the optional extras (the tests cover the front end, the agent tools, and benchmarking), so install with:
+Local development uses the optional extras (the tests cover the front end and the agent tools), so install with:
 
 ```bash
 poetry install --all-extras
