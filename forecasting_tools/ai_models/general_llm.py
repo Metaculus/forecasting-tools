@@ -278,6 +278,7 @@ class GeneralLlm(
     async def _mockable_direct_call_to_model(
         self, prompt: ModelInputType
     ) -> TextTokenCostResponse:
+        MonetaryCostManager.raise_error_if_limit_would_be_reached()
         self._everything_special_to_call_before_direct_call()
         assert self._litellm_model is not None
 
