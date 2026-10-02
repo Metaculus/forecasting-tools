@@ -53,6 +53,7 @@ def test_public_api_imports() -> None:
         "run_benchmark_streamlit_page",
         "Benchmarker",
         "ApiFilter",
+        "AuthorMismatchError",
         "MetaculusApi",
         "PredictionExtractor",
         "SmartSearcher",
