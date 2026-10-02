@@ -172,6 +172,9 @@ from forecasting_tools.helpers.asknews_searcher import (
 from forecasting_tools.helpers.metaculus_api import MetaculusApi as MetaculusApi
 from forecasting_tools.helpers.metaculus_api import MetaculusClient as MetaculusClient
 from forecasting_tools.helpers.metaculus_client import ApiFilter as ApiFilter
+from forecasting_tools.helpers.metaculus_client import (
+    AuthorMismatchError as AuthorMismatchError,
+)
 from forecasting_tools.helpers.prediction_extractor import (
     PredictionExtractor as PredictionExtractor,
 )

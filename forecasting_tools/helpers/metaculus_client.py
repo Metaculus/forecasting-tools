@@ -101,6 +101,10 @@ class ApiFilter(BaseModel):
         return add_timezone_to_dates_in_base_model(self)
 
 
+class AuthorMismatchError(ValueError):
+    pass
+
+
 class MetaculusClient:
     """
     Documentation for the API can be found at https://www.metaculus.com/api/
@@ -1212,8 +1216,14 @@ class MetaculusClient:
         logger.info(f"Unresolved question ID {question_id}")
 
     @retry_with_exponential_backoff()
-    def create_question(self, question: MetaculusQuestion) -> MetaculusQuestion:
-        question_data = self._get_post_create_data(question)
+    def create_question(
+        self, question: MetaculusQuestion, author_username: str | None = None
+    ) -> MetaculusQuestion:
+        """
+        Setting author_username creates the post as that user, which requires
+        the API token to belong to a Metaculus superuser.
+        """
+        question_data = self._get_post_create_data(question, author_username)
         self._sleep_between_requests()
         response = requests.post(
             f"{self.base_url}/posts/create/",
@@ -1240,6 +1250,16 @@ class MetaculusClient:
         full_created_question = self.get_question_by_post_id(
             single_created_question.id_of_post
         )
+
+        if author_username is not None:
+            actual_author = full_created_question.api_json.get("author_username")
+            if actual_author != author_username:
+                raise AuthorMismatchError(
+                    f"Post {full_created_question.id_of_post} was created with author "
+                    f"{actual_author!r} instead of {author_username!r} and has not been "
+                    "approved. Either the API token is not a superuser or the server "
+                    "ignored the author override."
+                )
 
         return full_created_question
 
@@ -1286,11 +1306,19 @@ class MetaculusClient:
         logger.info(f"Approved question {question.page_url}")
 
     @staticmethod
-    def _get_post_create_data(question: MetaculusQuestion) -> dict:
+    def _get_post_create_data(
+        question: MetaculusQuestion, author_username: str | None = None
+    ) -> dict:
         if question.published_time is None:
             publish_time = question.open_time
         else:
             publish_time = question.published_time
+
+        author_override_fields = (
+            {"author_username": author_username, "is_staff_override": True}
+            if author_username is not None
+            else {}
+        )
 
         return {
             "title": question.question_text,
@@ -1355,4 +1383,5 @@ class MetaculusClient:
                 "fine_print": question.fine_print or "",
                 "group_rank": None,  # only group questions
             },
+            **author_override_fields,
         }
