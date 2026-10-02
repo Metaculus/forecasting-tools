@@ -268,6 +268,28 @@ class NotepadBot(TemplateBot):
         )
 ```
 
+### Keyless research with Parallel Search MCP
+
+Install `pip install 'forecasting-tools[parallel-search]'` and select the researcher explicitly:
+
+```python
+bot = TemplateBot(llms={"researcher": "parallel/search"})
+research = await bot.run_research(BinaryQuestion(
+    question_text="Will a major Atlantic hurricane make landfall this year?",
+))
+print(research)
+```
+
+This researcher uses the free, anonymous [Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp)
+endpoint over Streamable HTTP. It needs no search API key and returns source titles,
+links, publication dates when available, and relevant excerpts as the bot's research.
+It does not synthesize an answer or produce a forecast. Anonymous service limits
+apply; service errors and timeouts are raised to the caller. Forecasting and optional
+research summarization still need the credentials for your configured LLMs.
+Existing automatic researcher selection is unchanged. This option is supported by
+`TemplateBot` (the Fall 2026 template); older seasonal templates keep their own
+research implementations.
+
 ## Join the Metaculus tournament using this package
 You can create your own custom bot through the package in your own repo. An example can be found [at this repo](https://github.com/Metaculus/metac-bot-template) which you can fork and edit.
 
@@ -504,6 +526,7 @@ Some features need heavier dependencies that a bot does not, so they are opt-in.
 
 | Extra | You need it for |
 | --- | --- |
+| `parallel-search` | The opt-in `parallel/search` researcher in `TemplateBot` |
 | `agents` | Anything built on the agent SDK: `QuestionDecomposer`, `QuestionOperationalizer`, `TopicGenerator`, `DataAnalyzer`, `BotOptimizer`, `CustomizableBot`, `ComputerUse` (browser-driving agent), and the AI Congress tools |
 | `front-end` | The Streamlit app in `forecasting_tools/front_end/` |
 | `stats` | `forecasting_tools.util.stats` and the calibration adjusters in `forecasting_tools/calibration_adjustment/` |
