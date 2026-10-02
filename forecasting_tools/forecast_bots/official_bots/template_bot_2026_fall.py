@@ -137,6 +137,12 @@ class FallTemplateBot2026(ForecastBot):
                 research = await AskNewsSearcher().call_preconfigured_version(
                     researcher, prompt
                 )
+            elif researcher == "parallel/search":
+                from forecasting_tools.helpers.parallel_searcher import ParallelSearcher
+
+                research = await ParallelSearcher().invoke(
+                    prompt, search_queries=[question.question_text]
+                )
             elif researcher.startswith("smart-searcher"):
                 model_name = researcher.removeprefix("smart-searcher/")
                 searcher = SmartSearcher(
