@@ -23,20 +23,21 @@ def _make_question() -> BinaryQuestion:
     )
 
 
-def _created_question_with_author(author: str) -> BinaryQuestion:
+def _created_question_with_author(author: str, author_id: int = 42) -> BinaryQuestion:
     created = _make_question()
     created.id_of_post = 123
-    created.api_json = {"author_username": author}
+    created.api_json = {"author_username": author, "author_id": author_id}
     return created
 
 
 def _create_with_mocked_api(
     question: BinaryQuestion,
-    author_username: str | None,
+    acting_user: str | int | None,
     server_author: str,
+    server_author_id: int = 42,
 ) -> tuple[BinaryQuestion, MagicMock]:
     client = MetaculusClient(base_url="http://x", token="t")
-    created = _created_question_with_author(server_author)
+    created = _created_question_with_author(server_author, server_author_id)
     response = MagicMock(status_code=201, content=b"{}")
     with (
         patch(
@@ -51,70 +52,87 @@ def _create_with_mocked_api(
         ),
         patch.object(client, "get_question_by_post_id", return_value=created),
     ):
-        result = client.create_question(question, author_username=author_username)
+        result = client.create_question(question, acting_user=acting_user)
     return result, post_mock
 
 
-def test_post_create_data_includes_staff_override_when_author_given() -> None:
+def test_post_create_data_includes_acting_user_when_given() -> None:
     question = _make_question()
-    data = MetaculusClient._get_post_create_data(
-        question, author_username="johnnycaffeine"
-    )
-    assert data["author_username"] == "johnnycaffeine"
-    assert data["is_staff_override"] is True
-
-    data_without_override = {
-        key: value
-        for key, value in data.items()
-        if key not in ("author_username", "is_staff_override")
-    }
-    assert data_without_override == MetaculusClient._get_post_create_data(question)
-
-
-def test_post_create_data_has_no_override_fields_without_author() -> None:
-    data = MetaculusClient._get_post_create_data(_make_question())
-    assert "author_username" not in data
+    data = MetaculusClient._get_post_create_data(question, acting_user="johnnycaffeine")
+    assert data["acting_user"] == "johnnycaffeine"
     assert "is_staff_override" not in data
+    assert "author_username" not in data
+
+    data_without_acting_user = {
+        key: value for key, value in data.items() if key != "acting_user"
+    }
+    assert data_without_acting_user == MetaculusClient._get_post_create_data(question)
 
 
-def test_create_question_sends_override_fields_to_the_api() -> None:
+def test_post_create_data_has_no_acting_user_without_one() -> None:
+    data = MetaculusClient._get_post_create_data(_make_question())
+    assert "acting_user" not in data
+
+
+def test_create_question_sends_acting_user_to_the_api() -> None:
     _, post_mock = _create_with_mocked_api(
-        _make_question(), author_username="BenWilson", server_author="BenWilson"
+        _make_question(), acting_user="BenWilson", server_author="BenWilson"
     )
     sent_payload = post_mock.call_args.kwargs["json"]
-    assert sent_payload["author_username"] == "BenWilson"
-    assert sent_payload["is_staff_override"] is True
+    assert sent_payload["acting_user"] == "BenWilson"
 
 
-def test_create_question_sends_no_override_fields_without_author() -> None:
+def test_create_question_sends_no_acting_user_without_one() -> None:
     _, post_mock = _create_with_mocked_api(
-        _make_question(), author_username=None, server_author="BenWilson"
+        _make_question(), acting_user=None, server_author="BenWilson"
     )
     sent_payload = post_mock.call_args.kwargs["json"]
-    assert "author_username" not in sent_payload
-    assert "is_staff_override" not in sent_payload
+    assert "acting_user" not in sent_payload
 
 
-def test_create_question_returns_when_author_matches() -> None:
+def test_create_question_returns_when_author_matches_username() -> None:
     created, _ = _create_with_mocked_api(
-        _make_question(), author_username="BenWilson", server_author="BenWilson"
+        _make_question(), acting_user="BenWilson", server_author="BenWilson"
     )
     assert created.id_of_post == 123
 
 
-def test_create_question_raises_when_server_ignored_author() -> None:
+@pytest.mark.parametrize("acting_user", [7, "7"])
+def test_create_question_returns_when_author_matches_user_id(
+    acting_user: str | int,
+) -> None:
+    created, _ = _create_with_mocked_api(
+        _make_question(),
+        acting_user=acting_user,
+        server_author="BenWilson",
+        server_author_id=7,
+    )
+    assert created.id_of_post == 123
+
+
+def test_create_question_raises_when_server_ignored_username() -> None:
     with pytest.raises(
         AuthorMismatchError, match="'johnnycaffeine' instead of 'BenWilson'"
     ):
         _create_with_mocked_api(
             _make_question(),
-            author_username="BenWilson",
+            acting_user="BenWilson",
             server_author="johnnycaffeine",
         )
 
 
-def test_create_question_skips_author_check_without_author() -> None:
+def test_create_question_raises_when_server_ignored_user_id() -> None:
+    with pytest.raises(AuthorMismatchError, match="42 instead of 7"):
+        _create_with_mocked_api(
+            _make_question(),
+            acting_user=7,
+            server_author="johnnycaffeine",
+            server_author_id=42,
+        )
+
+
+def test_create_question_skips_author_check_without_acting_user() -> None:
     created, _ = _create_with_mocked_api(
-        _make_question(), author_username=None, server_author="johnnycaffeine"
+        _make_question(), acting_user=None, server_author="johnnycaffeine"
     )
     assert created.id_of_post == 123
