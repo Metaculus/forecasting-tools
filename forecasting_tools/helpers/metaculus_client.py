@@ -1217,13 +1217,14 @@ class MetaculusClient:
 
     @retry_with_exponential_backoff()
     def create_question(
-        self, question: MetaculusQuestion, author_username: str | None = None
+        self, question: MetaculusQuestion, acting_user: str | int | None = None
     ) -> MetaculusQuestion:
         """
-        Setting author_username creates the post as that user, which requires
-        the API token to belong to a Metaculus superuser.
+        Setting acting_user (a username or user id) creates the post with that user
+        as author. The API token must own that bot, be allowed to act as metac bots,
+        or belong to a superuser.
         """
-        question_data = self._get_post_create_data(question, author_username)
+        question_data = self._get_post_create_data(question, acting_user)
         self._sleep_between_requests()
         response = requests.post(
             f"{self.base_url}/posts/create/",
@@ -1251,15 +1252,8 @@ class MetaculusClient:
             single_created_question.id_of_post
         )
 
-        if author_username is not None:
-            actual_author = full_created_question.api_json.get("author_username")
-            if actual_author != author_username:
-                raise AuthorMismatchError(
-                    f"Post {full_created_question.id_of_post} was created with author "
-                    f"{actual_author!r} instead of {author_username!r} and has not been "
-                    "approved. Either the API token is not a superuser or the server "
-                    "ignored the author override."
-                )
+        if acting_user is not None:
+            self._raise_if_author_is_not_acting_user(full_created_question, acting_user)
 
         return full_created_question
 
@@ -1306,18 +1300,33 @@ class MetaculusClient:
         logger.info(f"Approved question {question.page_url}")
 
     @staticmethod
+    def _raise_if_author_is_not_acting_user(
+        question: MetaculusQuestion, acting_user: str | int
+    ) -> None:
+        if str(acting_user).isdigit():
+            actual_author = question.api_json.get("author_id")
+            expected_author = int(acting_user)
+        else:
+            actual_author = question.api_json.get("author_username")
+            expected_author = acting_user
+        if actual_author != expected_author:
+            raise AuthorMismatchError(
+                f"Post {question.id_of_post} was created with author "
+                f"{actual_author!r} instead of {expected_author!r} and has not been "
+                "approved. The server likely ignored the acting_user field."
+            )
+
+    @staticmethod
     def _get_post_create_data(
-        question: MetaculusQuestion, author_username: str | None = None
+        question: MetaculusQuestion, acting_user: str | int | None = None
     ) -> dict:
         if question.published_time is None:
             publish_time = question.open_time
         else:
             publish_time = question.published_time
 
-        author_override_fields = (
-            {"author_username": author_username, "is_staff_override": True}
-            if author_username is not None
-            else {}
+        acting_user_fields = (
+            {"acting_user": acting_user} if acting_user is not None else {}
         )
 
         return {
@@ -1383,5 +1392,5 @@ class MetaculusClient:
                 "fine_print": question.fine_print or "",
                 "group_rank": None,  # only group questions
             },
-            **author_override_fields,
+            **acting_user_fields,
         }
