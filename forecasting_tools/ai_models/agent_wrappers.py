@@ -1,15 +1,21 @@
 import asyncio
 import logging
+from collections.abc import AsyncIterator
+from typing import Any
 
 import nest_asyncio
 
 from forecasting_tools.ai_models.model_tracker import ModelTracker
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    MonetaryCostManager,
+)
 from forecasting_tools.util.optional_imports import missing_optional_package_error
 
 try:
     from agents import Agent, CodeInterpreterTool, FunctionTool, Runner
     from agents import function_tool as ft
     from agents.extensions.models.litellm_model import LitellmModel
+    from agents.items import TResponseStreamEvent
     from agents.stream_events import StreamEvent
 except ImportError as e:
     raise missing_optional_package_error("openai-agents", "agents") from e
@@ -26,12 +32,20 @@ class AgentSdkLlm(LitellmModel):
     """
 
     async def get_response(self, *args, **kwargs):  # NOSONAR
+        MonetaryCostManager.raise_error_if_limit_would_be_reached()
         ModelTracker.give_cost_tracking_warning_if_needed(self.model)
         response = await super().get_response(*args, **kwargs)
         await asyncio.sleep(
             0.0001
         )  # For whatever reason, it seems you need to await a coroutine to get the litellm cost callback to work
         return response
+
+    async def stream_response(
+        self, *args: Any, **kwargs: Any
+    ) -> AsyncIterator[TResponseStreamEvent]:
+        MonetaryCostManager.raise_error_if_limit_would_be_reached()
+        async for event in super().stream_response(*args, **kwargs):
+            yield event
 
 
 AgentRunner = Runner  # Alias for Runner for later extension

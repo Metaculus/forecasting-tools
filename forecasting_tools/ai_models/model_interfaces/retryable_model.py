@@ -5,11 +5,19 @@ from abc import ABC
 from typing import Any, Callable, Coroutine, TypeVar
 
 from forecasting_tools.ai_models.model_interfaces.ai_model import AiModel
+from forecasting_tools.ai_models.resource_managers.hard_limit_manager import (
+    HardLimitExceededError,
+)
 
 logger = logging.getLogger(__name__)
 import functools
 
-from tenacity import retry, stop_after_attempt, wait_random_exponential
+from tenacity import (
+    retry,
+    retry_if_not_exception_type,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
 T = TypeVar("T")
 
@@ -48,6 +56,7 @@ class RetryableModel(AiModel, ABC):
                 wait=wait_random_exponential(
                     exp_base=2, multiplier=10, min=5, max=60
                 ),  # Waits random number between 0 and exp_base^current_attempt * multiplier (with min and max override as needed)
+                retry=retry_if_not_exception_type(HardLimitExceededError),
                 reraise=True,
                 stop=stop_after_attempt(self.allowed_tries),
             )
