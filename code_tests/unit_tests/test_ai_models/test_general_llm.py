@@ -1,11 +1,20 @@
+import asyncio
+import contextvars
 import logging
+from collections.abc import Awaitable, Callable
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from litellm import ResponsesAPIResponse
 from litellm.types.utils import Choices, Message, ModelResponse, Usage
 from typeguard import TypeCheckError
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
+from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
+    LitellmCostTracker,
+    MonetaryCostManager,
+)
 
 
 def make_litellm_response(serving_provider: str | dict | None) -> ModelResponse:
@@ -204,3 +213,115 @@ def test_to_dict_excludes_explicitly_passed_credential(
 
     assert FAKE_CREDENTIAL in str(llm.litellm_kwargs)
     assert FAKE_CREDENTIAL not in str(llm.to_dict())
+
+
+CALL_COST = 0.0005
+
+
+def mock_litellm_call_with_late_success_callback(
+    mocker: Mock,
+    litellm_function_name: str,
+    response: ModelResponse | ResponsesAPIResponse,
+) -> Callable[[], Awaitable[None]]:
+    """
+    Like litellm's logging worker, the returned function runs the success callback in the
+    context captured when each call finished, after the call has already returned.
+    """
+    response._hidden_params = {"response_cost": CALL_COST}
+    contexts_at_call_end: list[contextvars.Context] = []
+
+    async def litellm_call(**kwargs: Any) -> ModelResponse | ResponsesAPIResponse:
+        contexts_at_call_end.append(contextvars.copy_context())
+        return response
+
+    async def fire_success_callbacks() -> None:
+        for context in contexts_at_call_end:
+            await context.run(
+                asyncio.create_task,
+                LitellmCostTracker().async_log_success_event(
+                    {"response_cost": CALL_COST}, response, None, None
+                ),
+            )
+
+    mocker.patch(
+        f"forecasting_tools.ai_models.general_llm.{litellm_function_name}",
+        litellm_call,
+    )
+    return fire_success_callbacks
+
+
+async def test_cost_is_counted_once_when_litellm_callback_fires_after_call_returns(
+    mocker: Mock,
+) -> None:
+    fire_success_callbacks = mock_litellm_call_with_late_success_callback(
+        mocker, "acompletion", make_litellm_response("OpenAI")
+    )
+    llm = GeneralLlm(model="openrouter/openai/gpt-4.1-nano")
+
+    with MonetaryCostManager(10) as cost_manager:
+        responses = await asyncio.gather(
+            llm._mockable_direct_call_to_model("Hi"),
+            llm._mockable_direct_call_to_model("Hi"),
+        )
+        await fire_success_callbacks()
+
+    assert [response.cost for response in responses] == pytest.approx(
+        [CALL_COST, CALL_COST]
+    )
+    assert cost_manager.current_usage == pytest.approx(2 * CALL_COST)
+
+
+async def test_cost_of_response_rejected_by_provider_pin_is_counted_once(
+    mocker: Mock,
+) -> None:
+    fire_success_callbacks = mock_litellm_call_with_late_success_callback(
+        mocker, "acompletion", make_litellm_response("Novita")
+    )
+    llm = make_pinned_llm(allow_fallbacks=False)
+
+    with MonetaryCostManager(10) as cost_manager:
+        with pytest.raises(RuntimeError, match="pinned to"):
+            await llm._mockable_direct_call_to_model("Hi")
+        await fire_success_callbacks()
+
+    assert cost_manager.current_usage == pytest.approx(CALL_COST)
+
+
+async def test_cost_of_incomplete_responses_api_response_is_counted_once(
+    mocker: Mock,
+) -> None:
+    incomplete_response = ResponsesAPIResponse(
+        id="resp_test",
+        created_at=0,
+        output=[],
+        incomplete_details={"reason": "max_output_tokens"},
+    )
+    fire_success_callbacks = mock_litellm_call_with_late_success_callback(
+        mocker, "aresponses", incomplete_response
+    )
+    llm = GeneralLlm(model="openai/o4-mini-deep-research", responses_api=True)
+
+    with MonetaryCostManager(10) as cost_manager:
+        with pytest.raises(ValueError, match="unable to complete request"):
+            await llm._mockable_direct_call_to_model("Hi")
+        await fire_success_callbacks()
+
+    assert cost_manager.current_usage == pytest.approx(CALL_COST)
+
+
+async def test_litellm_callback_still_counts_calls_made_outside_general_llm(
+    mocker: Mock,
+) -> None:
+    fire_success_callbacks = mock_litellm_call_with_late_success_callback(
+        mocker, "acompletion", make_litellm_response("OpenAI")
+    )
+    llm = GeneralLlm(model="openrouter/openai/gpt-4.1-nano")
+
+    with MonetaryCostManager(10) as cost_manager:
+        await llm._mockable_direct_call_to_model("Hi")
+        await LitellmCostTracker().async_log_success_event(
+            {"response_cost": CALL_COST}, make_litellm_response(None), None, None
+        )
+        await fire_success_callbacks()
+
+    assert cost_manager.current_usage == pytest.approx(2 * CALL_COST)
