@@ -2480,8 +2480,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/meta-llama/llama-4-maverick",
                     temperature=default_temperature,
-                    # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("deepinfra/base"),
+                    # pinned to provider Oct 10th 2026 (deepinfra/base stopped serving this model)
+                    **make_openrouter_provider_pin("parasail/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
