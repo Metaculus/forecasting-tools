@@ -1713,7 +1713,9 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                         "enabled": True,
                     },
                     timeout=5 * 60,
-                    # pinned to provider Sept 30th 2026 (novita/fp8 stopped serving this model)
+                    # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
+                    # - Sept 25th 2026: pinned to novita/fp8
+                    # - Sept 30th 2026: re-pinned to siliconflow/fp8 (novita/fp8 stopped serving this model)
                     **make_openrouter_provider_pin("siliconflow/fp8"),
                 ),
             ),
@@ -2480,8 +2482,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/meta-llama/llama-4-maverick",
                     temperature=default_temperature,
-                    # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("deepinfra/base"),
+                    # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
+                    # - Sept 25th 2026: pinned to deepinfra/base (fp8)
+                    # - Oct 10th 2026: re-pinned to parasail/fp8 (deepinfra/base stopped serving this model by Oct 4th, failing every call)
+                    **make_openrouter_provider_pin("parasail/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
