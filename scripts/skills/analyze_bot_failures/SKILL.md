@@ -20,14 +20,14 @@ Useful options:
 - `--run-id <id>` to analyze one specific run
 - `--max-runs <n>` cap on runs fetched (default 50)
 
-Output goes to `logs/workflow_failure_analysis/<timestamp>/`:
-- `report.md` — counts by category/bot/question, plus failure groups (deduped by normalized signature) with an example message, traceback, and the deepest repo code frame
-- `failures.json` — every parsed failure with full messages and signatures (machine-readable)
-- `raw_logs/run<id>_<bot>.log` — complete raw log of each failed job
+Output goes to `logs/workflow_failure_analysis/`:
+- `<timestamp>/report.md` — counts by category/question, a per-bot table (failed jobs / jobs in analyzed runs, failed questions / questions attempted), plus failure groups (deduped by normalized signature) with an example message and full error or traceback
+- `<timestamp>/failures.json` — every parsed failure with full messages and signatures (machine-readable)
+- `raw_logs/run<id>_job<job id>_<bot>.log` — complete raw log of each failed job. Shared across analyses: rerunning with the same `--output-dir` (e.g. after a crash) reuses these instead of downloading again
 
 ## Step 2: Read the report, then verify against raw logs
 
-Read `report.md` first. The parser extracts full tracebacks when present (falling back to `❌ Exception: ... | Message: ...` summary lines, then to the raw log tail), so each failure group usually includes a "deepest repo frame" — the last traceback frame inside this repo rather than a dependency — which is the first place to look in the code. Still **spot-check 2-3 raw logs** for the most frequent signatures to see surrounding context (retry attempts, which LLM call failed). Failures of type `UnparsedFailure` mean nothing parseable was found — the job likely failed at the infrastructure level (poetry install failures, token resolution, job-level timeout at 55 min, cancellation) — read their raw logs directly.
+Read `report.md` first. Each failed question is one event, taken from its `Error while processing question url: ...` log line and grouped by the innermost (leaf) errors nested in it, e.g. a litellm `NotFoundError` or a `NumericDistribution` `ValidationError`. A group's "Leaf errors" line shows the mix when one question's predictions failed in different ways. Only jobs with no per-question error lines fall back to tracebacks (with a "deepest repo frame", the last traceback frame inside this repo), then `❌ Exception: ... | Message: ...` summary lines, then the raw log tail. Still **spot-check 2-3 raw logs** for the most frequent signatures to see surrounding context (retry attempts, which LLM call failed). Failures of type `UnparsedFailure` mean nothing parseable was found — the job likely failed at the infrastructure level (poetry install failures, token resolution, job-level timeout at 55 min, cancellation) — read their raw logs directly. Jobs listed as "Could not download log" with a 404 had no logs (usually jobs that failed to be acquired by a runner).
 
 ## Step 3: Triage — transient noise vs real bug
 
@@ -36,7 +36,7 @@ Likely transient (usually not worth fixing, just note frequency):
 - Occasional timeouts that succeeded on the in-run retry (`run_bots.py` retries reports whose error contains "TimeoutError")
 
 Likely real bugs (investigate the code):
-- The same bot failing across most runs (config/model-name/credentials issue in its `RunBotConfig` in `run_bots.py`)
+- The same bot failing across most runs, i.e. a high failed-jobs ratio in the per-bot table (config/model-name/credentials issue in its `RunBotConfig` in `run_bots.py`). A high failed-questions ratio means the bot fails on most questions rather than one bad question
 - Structured-output or validation errors clustering on one question type (binary/MC/numeric/group) — points at parsing or prompt code
 - Prediction validation errors (probabilities out of bounds, CDF/percentile issues) — points at report data models
 - The same question ID recurring across bots/runs — candidate for `POST_IDS_TO_SKIP` or `POST_IDS_TO_NOT_RAISE_ERRORS_FOR` in `run_bots.py`
