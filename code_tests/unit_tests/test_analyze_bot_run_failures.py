@@ -363,11 +363,127 @@ def test_bot_summary_reports_job_and_question_ratios(tmp_path: Path) -> None:
         questions_attempted=3,
     )
     report_path = build_report(
-        [job_with_two_failures, job_with_one_failure], {"bot_a": 4}, tmp_path
+        [job_with_two_failures, job_with_one_failure],
+        {"bot_a": 2},
+        {"bot_a": 4},
+        tmp_path,
     )
     report_text = Path(report_path).read_text(encoding="utf-8")
     assert "| bot_a | 2/4 (50%) | 3/8 (38%) | 0 |" in report_text
     assert "[3x] NotFoundError" in report_text
+
+
+def test_analyze_runs_counts_jobs_without_logs_and_skips_unfinished_jobs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    jobs_by_run_id = {
+        1: [
+            {
+                "id": 11,
+                "name": "bot_a / run_bot",
+                "status": "completed",
+                "conclusion": "failure",
+                "html_url": "http://job-11",
+            },
+            {
+                "id": 12,
+                "name": "bot_b / run_bot",
+                "status": "completed",
+                "conclusion": "failure",
+                "html_url": "http://job-12",
+            },
+            {
+                "id": 13,
+                "name": "bot_c / run_bot",
+                "status": "completed",
+                "conclusion": "failure",
+                "html_url": "http://job-13",
+            },
+        ],
+        2: [
+            {
+                "id": 21,
+                "name": "bot_a / run_bot",
+                "status": "completed",
+                "conclusion": "success",
+                "html_url": "http://job-21",
+            },
+            {
+                "id": 22,
+                "name": "bot_b / run_bot",
+                "status": "in_progress",
+                "conclusion": None,
+                "html_url": "http://job-22",
+            },
+            {
+                "id": 23,
+                "name": "bot_c / run_bot",
+                "status": "completed",
+                "conclusion": "failure",
+                "html_url": "http://job-23",
+            },
+        ],
+    }
+    downloaded_log_paths: list[Path] = []
+
+    def fake_load_or_download(
+        repo: str, job_id: int, token: str, log_path: Path
+    ) -> str:
+        if job_id != 11:
+            raise requests.HTTPError(
+                "404 Client Error: The specified blob does not exist."
+            )
+        downloaded_log_paths.append(log_path)
+        return make_log(
+            "2026-06-11 17:13:40,100 - __main__ - INFO - Running bot METAC_BOT_A with 3 questions",
+            make_question_error_line(
+                QUESTION_URL, leaf_list_message("NotFoundError: No endpoints")
+            ),
+        )
+
+    monkeypatch.setattr(
+        analyze_bot_run_failures, "resolve_github_token", lambda: "token"
+    )
+    monkeypatch.setattr(
+        analyze_bot_run_failures,
+        "list_workflow_runs",
+        lambda repo, workflow, token, since, max_runs: [
+            {
+                "id": 1,
+                "created_at": "t1",
+                "status": "completed",
+                "conclusion": "failure",
+            },
+            {
+                "id": 2,
+                "created_at": "t2",
+                "status": "completed",
+                "conclusion": "failure",
+            },
+        ],
+    )
+    monkeypatch.setattr(
+        analyze_bot_run_failures,
+        "list_run_jobs",
+        lambda repo, run_id, token: jobs_by_run_id[run_id],
+    )
+    monkeypatch.setattr(
+        analyze_bot_run_failures, "load_or_download_job_log", fake_load_or_download
+    )
+
+    report_path = analyze_bot_run_failures.analyze_runs(
+        repo="owner/repo",
+        workflow="workflow.yaml",
+        since="1d",
+        max_runs=10,
+        output_dir=tmp_path,
+    )
+
+    report_text = Path(report_path).read_text(encoding="utf-8")
+    assert downloaded_log_paths == [tmp_path / "raw_logs" / "run1_job11_bot_a.log"]
+    assert "| bot_c | 2/2 (100%) | 0/unknown | 0 |" in report_text
+    assert "| bot_a | 1/2 (50%) | 1/3 (33%) | 0 |" in report_text
+    assert "| bot_b | 1/1 (100%) | 0/unknown | 0 |" in report_text
 
 
 def test_github_get_retries_network_errors_and_decodes_logs_as_utf8(

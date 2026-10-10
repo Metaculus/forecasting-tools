@@ -448,7 +448,7 @@ def parse_question_failure_events(
 ) -> list[FailureEvent]:
     """
     One event per question report that ended in failure. Error lines alone can
-    over-count (run_bots retries timeouts), so when the report summary was logged
+    over-count when a question is retried, so when the report summary was logged
     its ❌ lines set how many failures each URL had, and the latest that many error
     lines are kept. Counting is per URL occurrence because group subquestions share
     a URL. Without a summary (e.g. job cancelled) every error line counts.
@@ -651,10 +651,7 @@ def sanitize_filename(name: str) -> str:
 
 
 def count_by(items: list[str]) -> list[tuple[str, int]]:
-    counts: dict[str, int] = {}
-    for item in items:
-        counts[item] = counts.get(item, 0) + 1
-    return sorted(counts.items(), key=lambda pair: -pair[1])
+    return Counter(items).most_common()
 
 
 def truncate_text(text: str, max_length: int) -> str:
@@ -702,7 +699,9 @@ def format_ratio(numerator: int, denominator: int) -> str:
 
 
 def build_bot_summary_lines(
-    job_analyses: list[JobAnalysis], total_jobs_by_bot: dict[str, int]
+    job_analyses: list[JobAnalysis],
+    failed_jobs_by_bot: dict[str, int],
+    total_jobs_by_bot: dict[str, int],
 ) -> list[str]:
     analyses_by_bot: dict[str, list[JobAnalysis]] = {}
     for analysis in job_analyses:
@@ -711,7 +710,9 @@ def build_bot_summary_lines(
     summary_lines = [
         "\n## Failures by bot\n",
         "- **Failed jobs / jobs in analyzed runs**: analyzed runs are those with at "
-        "least one failed job, so runs where every bot passed are not counted.",
+        "least one failed job, so runs where every bot passed are not counted. Only "
+        "completed jobs count, and failed jobs include ones whose log could not be "
+        "downloaded.",
         "- **Failed questions / questions attempted**: only failed jobs are "
         "downloaded, so this is the share of questions that failed *within failed "
         "jobs* (low = one bad question, high = bot broken), not the bot's overall "
@@ -722,9 +723,10 @@ def build_bot_summary_lines(
         "|---|---|---|---|",
     ]
     sorted_bots = sorted(
-        analyses_by_bot.items(), key=lambda bot_item: (-len(bot_item[1]), bot_item[0])
+        failed_jobs_by_bot.items(), key=lambda bot_item: (-bot_item[1], bot_item[0])
     )
-    for bot_name, bot_analyses in sorted_bots:
+    for bot_name, failed_job_count in sorted_bots:
+        bot_analyses = analyses_by_bot.get(bot_name, [])
         analyses_with_known_attempts = [
             analysis
             for analysis in bot_analyses
@@ -742,7 +744,7 @@ def build_bot_summary_lines(
         )
         summary_lines.append(
             f"| {bot_name} "
-            f"| {format_ratio(len(bot_analyses), total_jobs_by_bot.get(bot_name, 0))} "
+            f"| {format_ratio(failed_job_count, total_jobs_by_bot.get(bot_name, 0))} "
             f"| {format_ratio(failed_questions, questions_attempted)} "
             f"| {jobs_without_question_errors} |"
         )
@@ -751,6 +753,7 @@ def build_bot_summary_lines(
 
 def build_report(
     job_analyses: list[JobAnalysis],
+    failed_jobs_by_bot: dict[str, int],
     total_jobs_by_bot: dict[str, int],
     report_dir: Path,
 ) -> str:
@@ -775,7 +778,9 @@ def build_report(
     for category, count in count_by(category_occurrences):
         report_lines.append(f"- {category}: {count}")
 
-    report_lines.extend(build_bot_summary_lines(job_analyses, total_jobs_by_bot))
+    report_lines.extend(
+        build_bot_summary_lines(job_analyses, failed_jobs_by_bot, total_jobs_by_bot)
+    )
 
     question_urls = [event.question_url for event in all_events if event.question_url]
     if question_urls:
@@ -920,12 +925,18 @@ def analyze_runs(
     raw_logs_dir.mkdir(parents=True, exist_ok=True)
 
     job_analyses: list[JobAnalysis] = []
+    failed_jobs_by_bot: Counter[str] = Counter()
     total_jobs_by_bot: Counter[str] = Counter()
     for run_index, run in enumerate(runs, start=1):
         assert isinstance(run, dict)
         jobs = list_run_jobs(repo, run["id"], token)
-        total_jobs_by_bot.update(extract_bot_name(job["name"]) for job in jobs)
+        total_jobs_by_bot.update(
+            extract_bot_name(job["name"])
+            for job in jobs
+            if job.get("status") == "completed"
+        )
         failed_jobs = [job for job in jobs if job.get("conclusion") == "failure"]
+        failed_jobs_by_bot.update(extract_bot_name(job["name"]) for job in failed_jobs)
         logger.info(
             f"[{run_index}/{len(runs)}] Run {run['id']} ({run['created_at']}): "
             f"{len(failed_jobs)} of {len(jobs)} jobs failed"
@@ -937,7 +948,9 @@ def analyze_runs(
     if not job_analyses:
         logger.info("No failed jobs found in the selected window.")
 
-    report_path = build_report(job_analyses, total_jobs_by_bot, report_dir)
+    report_path = build_report(
+        job_analyses, failed_jobs_by_bot, total_jobs_by_bot, report_dir
+    )
     logger.info(f"Report written to {report_path}")
     logger.info(f"Raw logs cached under {raw_logs_dir}")
     return report_path
