@@ -137,8 +137,8 @@ def test_clamping_of_probabilities() -> None:
             PredictedOption(option_name="Option B", probability=1),
         ],
     )
-    assert predicted_option_list.predicted_options[0].probability == 0.01
-    assert predicted_option_list.predicted_options[1].probability == 0.99
+    assert predicted_option_list.predicted_options[0].probability == 0.001
+    assert predicted_option_list.predicted_options[1].probability == 0.999
 
     predicted_option_list = PredictedOptionList(
         predicted_options=[
@@ -147,9 +147,11 @@ def test_clamping_of_probabilities() -> None:
             PredictedOption(option_name="Option C", probability=0),
         ],
     )
-    assert predicted_option_list.predicted_options[0].probability != 0.001
-    assert predicted_option_list.predicted_options[1].probability != 1
-    assert predicted_option_list.predicted_options[2].probability != 0
+    assert predicted_option_list.predicted_options[0].probability == 0.001
+    assert predicted_option_list.predicted_options[1].probability == pytest.approx(
+        0.998
+    )
+    assert predicted_option_list.predicted_options[2].probability == 0.001
 
     predicted_option_list = PredictedOptionList(
         predicted_options=[
@@ -165,3 +167,60 @@ def test_clamping_of_probabilities() -> None:
     assert predicted_option_list.predicted_options[2].probability != 0
     assert predicted_option_list.predicted_options[3].probability != 0
     assert predicted_option_list.predicted_options[4].probability != 0
+
+
+def test_probabilities_between_api_minimum_and_one_percent_are_kept() -> None:
+    predicted_option_list = PredictedOptionList(
+        predicted_options=[
+            PredictedOption(option_name="Option A", probability=0.003),
+            PredictedOption(option_name="Option B", probability=0.992),
+            PredictedOption(option_name="Option C", probability=0.005),
+        ],
+    )
+    assert predicted_option_list.to_dict() == pytest.approx(
+        {"Option A": 0.003, "Option B": 0.992, "Option C": 0.005}
+    )
+
+
+def test_many_options_below_one_percent_do_not_raise() -> None:
+    small_options = [
+        PredictedOption(option_name=f"Option {index}", probability=0.005)
+        for index in range(39)
+    ]
+    predicted_option_list = PredictedOptionList(
+        predicted_options=[
+            PredictedOption(option_name="Main Option", probability=0.805),
+            *small_options,
+        ],
+    )
+    assert predicted_option_list.predicted_options[0].probability == pytest.approx(
+        0.805
+    )
+    for option in predicted_option_list.predicted_options[1:]:
+        assert option.probability == pytest.approx(0.005)
+
+
+@pytest.mark.parametrize(
+    "probabilities",
+    [
+        [0.0, 1.0, 0.0, 0.0, 0.0],
+        [0.0005, 0.9995, 0.0005, 0.0],
+        [0.6, 0.3, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0009, 0.0009, 0.0009, 0.497, 0.497],
+        [0.0] * 40 + [1.0],
+    ],
+)
+def test_normalized_probabilities_stay_within_api_bounds(
+    probabilities: list[float],
+) -> None:
+    predicted_option_list = PredictedOptionList(
+        predicted_options=[
+            PredictedOption(option_name=f"Option {index}", probability=probability)
+            for index, probability in enumerate(probabilities)
+        ],
+    )
+    normalized = [
+        option.probability for option in predicted_option_list.predicted_options
+    ]
+    assert sum(normalized) == pytest.approx(1)
+    assert all(0.001 <= probability <= 0.999 for probability in normalized)
