@@ -942,7 +942,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     timeout=gemini_default_timeout,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 12th 2026
         },
         "METAC_INKLING": {
             "estimated_cost_per_question": roughly_gpt_5_cost * 0.405,
