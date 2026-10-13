@@ -137,8 +137,12 @@ def test_clamping_of_probabilities() -> None:
             PredictedOption(option_name="Option B", probability=1),
         ],
     )
-    assert predicted_option_list.predicted_options[0].probability == 0.01
-    assert predicted_option_list.predicted_options[1].probability == 0.99
+    assert predicted_option_list.predicted_options[0].probability == pytest.approx(
+        0.001
+    )
+    assert predicted_option_list.predicted_options[1].probability == pytest.approx(
+        0.999
+    )
 
     predicted_option_list = PredictedOptionList(
         predicted_options=[

@@ -39,8 +39,8 @@ class PredictedOptionList(BaseModel):
         )
 
         # Step 1: Clamp values
-        max_clamped_prob = 0.99
-        min_clamped_prob = 0.01
+        max_clamped_prob = 0.999
+        min_clamped_prob = 0.001
         clamped_list = [
             max(min(x.probability, max_clamped_prob), min_clamped_prob)
             for x in self.predicted_options
