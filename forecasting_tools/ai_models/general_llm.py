@@ -288,9 +288,16 @@ class GeneralLlm(
 
         litellm.drop_params = True
 
-        with MonetaryCostManager(1) as cost_manager:
+        with LitellmCostTracker.caller_tracks_cost():
             response = await self._call_litellm_dropping_deprecated_temperature(prompt)
-            call_back_cost = cost_manager.current_usage
+        direct_cost = LitellmCostTracker.extract_cost_from_hidden_params(
+            response._hidden_params
+        )
+        # Counted before the response is checked, since rejected responses are still billed
+        MonetaryCostManager.increase_current_usage_in_parent_managers(direct_cost)
+        if isinstance(response, ResponsesAPIResponse):
+            # Simpler method might be just grabbing last message in choices `response.output[-1].content[0].text`
+            response = self._normalize_response(response, ModelResponse())
 
         assert isinstance(response, ModelResponse)
         choices = response.choices
@@ -320,23 +327,8 @@ class GeneralLlm(
                 f"LLM answer is an empty string. The model was {self.model} and the prompt was: {message_prompt}"
             )
 
-        direct_cost = LitellmCostTracker.extract_cost_from_hidden_params(
-            response._hidden_params
-        )
-        if call_back_cost == 0:
-            # NOTE: Prefer defaulting to callback cost since it is logged by other calls to litellm
-            MonetaryCostManager.increase_current_usage_in_parent_managers(direct_cost)
-        elif abs(direct_cost - call_back_cost) > 0.0001:
-            logger.warning(
-                f"Litellm direct cost {direct_cost} and callback cost {call_back_cost} are different."
-            )
-
-        if call_back_cost == 0 and direct_cost == 0:
-            observed_no_cost = True
-        else:
-            observed_no_cost = False
         ModelTracker.give_cost_tracking_warning_if_needed(
-            self._litellm_model, observed_no_cost=observed_no_cost
+            self._litellm_model, observed_no_cost=direct_cost == 0
         )
         serving_provider = self._get_checked_serving_provider(response)
 
@@ -350,10 +342,6 @@ class GeneralLlm(
                     append_unused_as_footer=True,
                 )
             # TODO: Add citation support for Gemini - https://ai.google.dev/gemini-api/docs/google-search#attributing_sources_with_inline_citations
-
-        await asyncio.sleep(
-            0.00001
-        )  # For whatever reason, you need to await a coroutine to get the litellm cost call back to work
 
         response = TextTokenCostResponse(
             data=answer,
@@ -369,7 +357,7 @@ class GeneralLlm(
 
     async def _call_litellm_dropping_deprecated_temperature(
         self, prompt: ModelInputType
-    ) -> ModelResponse:
+    ) -> ModelResponse | ResponsesAPIResponse:
         try:
             return await self._call_litellm(prompt)
         except litellm.BadRequestError as error:
@@ -384,15 +372,16 @@ class GeneralLlm(
             self.litellm_kwargs.pop("temperature", None)
             return await self._call_litellm(prompt)
 
-    async def _call_litellm(self, prompt: ModelInputType) -> ModelResponse:
+    async def _call_litellm(
+        self, prompt: ModelInputType
+    ) -> ModelResponse | ResponsesAPIResponse:
         if self.responses_api:
             original_response = await aresponses(
                 input=self.model_input_to_message(prompt),  # type: ignore # NOTE: This might only accept the last message in the list?
                 **self.litellm_kwargs,
             )
             assert isinstance(original_response, ResponsesAPIResponse)
-            # Simpler method might be just grabbing last message in choices `response.output[-1].content[0].text`
-            return self._normalize_response(original_response, ModelResponse())
+            return original_response
         response = await acompletion(
             messages=self.model_input_to_message(prompt),
             **self.litellm_kwargs,
