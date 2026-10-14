@@ -210,6 +210,8 @@ def test_many_options_below_one_percent_do_not_raise() -> None:
         [0.6, 0.3, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         [0.0009, 0.0009, 0.0009, 0.497, 0.497],
         [0.0] * 40 + [1.0],
+        [0.0005245095586030892, 0.9904266597797196],
+        [5.199386370047876e-05, 0.9901402836987023],
     ],
 )
 def test_normalized_probabilities_stay_within_api_bounds(

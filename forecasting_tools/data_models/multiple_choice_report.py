@@ -112,7 +112,11 @@ class PredictedOptionList(BaseModel):
             ]
 
         largest_index = normalized.index(max(normalized))
-        normalized[largest_index] += 1.0 - sum(normalized)
+        normalized[largest_index] = 1.0 - sum(
+            probability
+            for index, probability in enumerate(normalized)
+            if index != largest_index
+        )
         return normalized
 
     def to_dict(self) -> dict[str, float]:
