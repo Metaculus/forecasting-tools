@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field, model_validator
@@ -33,29 +34,16 @@ class PredictedOptionList(BaseModel):
                 "too far from 1 to be confident that normalization will deliver an "
                 "intended prediction."
             )
-        logger.warning(
-            f"Sum of option probabilities {sum_of_probabilities} is not 1, but is close to 1. "
-            "Normalizing the probabilities."
+        if not math.isclose(sum_of_probabilities, 1):
+            logger.warning(
+                f"Sum of option probabilities {sum_of_probabilities} is not 1, but is close to 1. "
+                "Normalizing the probabilities."
+            )
+
+        normalized_option_probabilities = self._normalize_with_minimum(
+            [option.probability for option in self.predicted_options],
+            minimum_probability=0.001,
         )
-
-        # Step 1: Clamp values
-        max_clamped_prob = 0.99
-        min_clamped_prob = 0.01
-        clamped_list = [
-            max(min(x.probability, max_clamped_prob), min_clamped_prob)
-            for x in self.predicted_options
-        ]
-
-        # Step 2: Calculate the sum of all elements
-        total_sum_decimal = sum(clamped_list)
-
-        # Step 3: Normalize the list so that all elements add up to 1
-        normalized_list = [x / total_sum_decimal for x in clamped_list]
-
-        # Step 4: Adjust for any small floating-point errors
-        adjustment = 1.0 - sum(normalized_list)
-        normalized_list[-1] += adjustment
-        normalized_option_probabilities = normalized_list
 
         new_sum = sum(normalized_option_probabilities)
         assert (
@@ -80,6 +68,56 @@ class PredictedOptionList(BaseModel):
             )
         ]
         return self
+
+    @staticmethod
+    def _normalize_with_minimum(
+        probabilities: list[float], minimum_probability: float
+    ) -> list[float]:
+        """
+        Normalizes to sum to 1 while keeping every option at or above the minimum.
+        Options below the minimum are pinned to it and the excess is taken
+        proportionally from the remaining options, so with 2+ options no option
+        can exceed 1 - minimum_probability.
+        """
+        if minimum_probability * len(probabilities) >= 1:
+            raise ValueError(
+                f"Cannot give all {len(probabilities)} options a probability of at least {minimum_probability}"
+            )
+        total = sum(probabilities)
+        unadjusted = [probability / total for probability in probabilities]
+        normalized = unadjusted
+        pinned_indices: set[int] = set()
+        while True:
+            newly_pinned_indices = {
+                index
+                for index, probability in enumerate(normalized)
+                if probability < minimum_probability and index not in pinned_indices
+            }
+            if not newly_pinned_indices:
+                break
+            pinned_indices |= newly_pinned_indices
+            unpinned_mass = 1 - minimum_probability * len(pinned_indices)
+            unpinned_total = sum(
+                probability
+                for index, probability in enumerate(unadjusted)
+                if index not in pinned_indices
+            )
+            normalized = [
+                (
+                    minimum_probability
+                    if index in pinned_indices
+                    else probability * unpinned_mass / unpinned_total
+                )
+                for index, probability in enumerate(unadjusted)
+            ]
+
+        largest_index = normalized.index(max(normalized))
+        normalized[largest_index] = 1.0 - sum(
+            probability
+            for index, probability in enumerate(normalized)
+            if index != largest_index
+        )
+        return normalized
 
     def to_dict(self) -> dict[str, float]:
         return {
