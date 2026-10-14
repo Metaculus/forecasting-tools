@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from pydantic import ValidationError
 
@@ -224,3 +226,27 @@ def test_normalized_probabilities_stay_within_api_bounds(
     ]
     assert sum(normalized) == pytest.approx(1)
     assert all(0.001 <= probability <= 0.999 for probability in normalized)
+
+
+@pytest.mark.parametrize(
+    "probabilities, should_warn",
+    [
+        ([0.3, 0.5, 0.2], False),
+        ([0.1] * 10, False),
+        ([0.3, 0.5, 0.205], True),
+    ],
+)
+def test_sum_warning_only_logged_when_sum_is_not_one(
+    probabilities: list[float], should_warn: bool, caplog: pytest.LogCaptureFixture
+) -> None:
+    with caplog.at_level(logging.WARNING):
+        PredictedOptionList(
+            predicted_options=[
+                PredictedOption(option_name=f"Option {index}", probability=probability)
+                for index, probability in enumerate(probabilities)
+            ],
+        )
+    warned = any(
+        "Sum of option probabilities" in record.message for record in caplog.records
+    )
+    assert warned == should_warn

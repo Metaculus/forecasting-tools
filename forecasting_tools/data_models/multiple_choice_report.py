@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field, model_validator
@@ -33,10 +34,11 @@ class PredictedOptionList(BaseModel):
                 "too far from 1 to be confident that normalization will deliver an "
                 "intended prediction."
             )
-        logger.warning(
-            f"Sum of option probabilities {sum_of_probabilities} is not 1, but is close to 1. "
-            "Normalizing the probabilities."
-        )
+        if not math.isclose(sum_of_probabilities, 1):
+            logger.warning(
+                f"Sum of option probabilities {sum_of_probabilities} is not 1, but is close to 1. "
+                "Normalizing the probabilities."
+            )
 
         normalized_option_probabilities = self._normalize_with_minimum(
             [option.probability for option in self.predicted_options],
