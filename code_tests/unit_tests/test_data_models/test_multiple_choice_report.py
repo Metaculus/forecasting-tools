@@ -252,3 +252,16 @@ def test_sum_warning_only_logged_when_sum_is_not_one(
         "Sum of option probabilities" in record.message for record in caplog.records
     )
     assert warned == should_warn
+
+
+@pytest.mark.parametrize("option_count", [1000, 1001])
+def test_too_many_options_for_minimum_raises(option_count: int) -> None:
+    with pytest.raises(ValidationError):
+        PredictedOptionList(
+            predicted_options=[
+                PredictedOption(
+                    option_name=f"Option {index}", probability=1 / option_count
+                )
+                for index in range(option_count)
+            ],
+        )

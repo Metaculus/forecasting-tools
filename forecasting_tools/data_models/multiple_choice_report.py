@@ -79,7 +79,7 @@ class PredictedOptionList(BaseModel):
         proportionally from the remaining options, so with 2+ options no option
         can exceed 1 - minimum_probability.
         """
-        if minimum_probability * len(probabilities) > 1:
+        if minimum_probability * len(probabilities) >= 1:
             raise ValueError(
                 f"Cannot give all {len(probabilities)} options a probability of at least {minimum_probability}"
             )
