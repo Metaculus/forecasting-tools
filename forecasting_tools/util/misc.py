@@ -46,7 +46,14 @@ def raise_for_status_with_additional_info(
             f"Response JSON: {response_json}."
         )
         logger.error(error_message)
-        raise requests.exceptions.HTTPError(error_message) from e
+        raise requests.exceptions.HTTPError(error_message, response=response) from e
+
+
+def _is_permanent_client_error(error: Exception) -> bool:
+    if not isinstance(error, requests.exceptions.HTTPError) or error.response is None:
+        return False
+    status_code = error.response.status_code
+    return 400 <= status_code < 500 and status_code != 429
 
 
 def retry_with_exponential_backoff(
@@ -82,6 +89,11 @@ def retry_with_exponential_backoff(
                 try:
                     return func(*args, **kwargs)
                 except retry_on_exceptions as e:
+                    if _is_permanent_client_error(e):
+                        logger.warning(
+                            f"Not retrying {func.__name__} since 4xx errors (other than 429) are not transient. Error: {e}"
+                        )
+                        raise
                     retries += 1
                     if retries > max_retries:
                         logger.error(
