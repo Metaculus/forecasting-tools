@@ -10,7 +10,7 @@ from forecasting_tools.util.misc import clean_indents
 T = TypeVar("T")
 
 DEFAULT_STRUCTURE_OUTPUT_MODEL = GeneralLlm(
-    "openrouter/openai/gpt-4.1-mini", temperature=0.5
+    "openrouter/anthropic/claude-haiku-5.5", temperature=0.5
 )
 
 
