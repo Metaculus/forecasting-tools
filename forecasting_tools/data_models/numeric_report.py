@@ -585,9 +585,20 @@ class NumericDistribution(BaseModel):
             return float(cap_pmf(scale).sum())
 
         # find the appropriate scale search space
+        # An increasing CDF needs at most ~46 expansions (scale <= cap / min bin = 3800), so hitting
+        # the limit means no scale works (e.g. negative bins from a non-increasing CDF)
+        max_scale_expansions = 100
         lo = hi = scale = 1.0
+        expansions = 0
         while capped_sum(hi) < 1.0:
+            if expansions >= max_scale_expansions:
+                raise ValueError(
+                    "Could not standardize CDF: no scale makes the capped probability mass sum to 1. "
+                    f"Smallest in-range bin probability is {pmf[1:-1].min():.3g} "
+                    "(negative means the CDF is not increasing)."
+                )
             hi *= 1.2
+            expansions += 1
         # hone in on scale value that makes capped sum 1
         for _ in range(100):
             scale = 0.5 * (lo + hi)
