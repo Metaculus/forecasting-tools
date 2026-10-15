@@ -45,6 +45,9 @@ default_for_skipping_questions = False
 default_for_publish_to_metaculus = True
 default_for_using_summary = False
 default_num_forecasts_for_research_only_bot = 3
+# Parser history (shared by all bots):
+# - Sept 5th 2025: openrouter/openai/gpt-4.1-mini
+# - Oct 15th 2026: openrouter/anthropic/claude-haiku-5.5 (OpenAI retires gpt-4.1-mini Jan 14th 2027)
 structure_output_model = DEFAULT_STRUCTURE_OUTPUT_MODEL
 default_metaculus_client = MetaculusClient()
 POST_IDS_TO_SKIP = [
@@ -383,7 +386,10 @@ def create_bot(
         "template", "gpt_4_1_optimized", "research_only", "no_research_one_shot"
     ] = "template",
 ) -> ForecastBot:
-    default_summarizer = "openrouter/openai/gpt-4.1-mini"
+    # Summarizer history (summaries are only shown in comments, not used to forecast):
+    # - Aug 31st 2025: openrouter/openai/gpt-4.1-mini
+    # - Oct 15th 2026: openrouter/anthropic/claude-haiku-5.5 (OpenAI retires gpt-4.1-mini Jan 14th 2027)
+    default_summarizer = "openrouter/anthropic/claude-haiku-5.5"
 
     if bot_type == "no_research_one_shot":
         return NoResearchOneShotBot(
