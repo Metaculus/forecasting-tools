@@ -88,6 +88,48 @@ jobs:
 
   #################################### October 2026 new bots ####################################
 
+  bot_nemotron_3_5_super_vl_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_NEMOTRON_3_5_SUPER_VL_HIGH"
+      metac_name: "metac-nemotron-3-5-super-vl-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_gemini_4_argon_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_GEMINI_4_ARGON_HIGH"
+      metac_name: "metac-gemini-4-argon-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
+  bot_muse_wonder_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_MUSE_WONDER_HIGH"
+      metac_name: "metac-muse-wonder-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+
   bot_claude_haiku_5_5_high:
     needs: precache_asknews
     uses: ./.github/workflows/run-bot-launcher.yaml

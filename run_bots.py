@@ -648,6 +648,41 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
 
     mode_base_bot_mapping = {
         ############################ Bots started in October 2026 ############################
+        "METAC_NEMOTRON_3_5_SUPER_VL_HIGH": {
+            "estimated_cost_per_question": roughly_deepseek_r1_cost * 0.3,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/nvidia/nemotron-3.5-super-vl",
+                    reasoning_effort="high",
+                    temperature=default_temperature,
+                    **make_openrouter_provider_pin("crusoe/bf16"),
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_GEMINI_4_ARGON_HIGH": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost,
+            "bot": create_bot(
+                GeneralLlm(
+                    model="openrouter/google/gemini-4-argon",
+                    reasoning_effort="high",
+                    temperature=None,
+                    timeout=gemini_default_timeout,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
+        "METAC_MUSE_WONDER_HIGH": {
+            "estimated_cost_per_question": roughly_gpt_5_high_cost * 2,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="openrouter/meta/muse-wonder",
+                    reasoning_effort="high",
+                    temperature=default_temperature,
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         "METAC_CLAUDE_HAIKU_5_5_HIGH": {
             "estimated_cost_per_question": roughly_opus_4_5_cost * 0.04,
             "bot": create_bot(
