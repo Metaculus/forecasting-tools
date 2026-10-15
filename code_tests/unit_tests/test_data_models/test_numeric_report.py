@@ -442,6 +442,12 @@ def test_log_scale_distribution_repeated_value() -> None:
     [
         # https://www.metaculus.com/questions/6142/ forecast from Oct 2026 that failed aggregation
         (3.0, 10.0, [4.0, 4.5, 5.0, 6.0]),
+        # https://www.metaculus.com/questions/45961/ forecast from Oct 2026 that raised ZeroDivisionError
+        (
+            110000000.0,
+            130000000.0,
+            [112500000.0, 114500000.0, 118000000.0, 125000000.0],
+        ),
         # Date question (timestamps) where the repeated-value nudge is lost to float precision
         (
             1735689600.0,
