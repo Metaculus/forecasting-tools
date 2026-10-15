@@ -513,25 +513,50 @@ class NumericDistribution(BaseModel):
             height = percentile.percentile
             location = self._nominal_location_to_cdf_location(percentile.value)
             cdf_location_to_percentile_mapping.append((location, height))
-        previous = cdf_location_to_percentile_mapping[0]
-        for i in range(1, len(cdf_location_to_percentile_mapping)):
-            current = cdf_location_to_percentile_mapping[i]
-            epsilon = 1e-10
+        previous, current = self._find_segment_containing(
+            cdf_location_to_percentile_mapping, cdf_location
+        )
+        segment_width = current[0] - previous[0]
+        if segment_width == 0:
+            return current[1]
+        fraction_along_segment = np.clip(
+            (cdf_location - previous[0]) / segment_width, 0, 1
+        )
+        result = previous[1] + (current[1] - previous[1]) * float(
+            fraction_along_segment
+        )
+        if np.isnan(result):
+            raise ValueError(f"Result is NaN for cdf location {cdf_location}")
+        return result
+
+    @staticmethod
+    def _find_segment_containing(
+        cdf_location_to_percentile_mapping: list[tuple[float, float]],
+        cdf_location: float,
+    ) -> tuple[tuple[float, float], tuple[float, float]]:
+        """
+        The float tolerance only extends to segments wider than the tolerance. Values repeated at a
+        bound become near- or zero-width segments, and matching one of those by tolerance gives the
+        wrong height ahead of the segment that actually contains the location.
+        """
+        epsilon = 1e-10
+        segments = list(
+            zip(
+                cdf_location_to_percentile_mapping,
+                cdf_location_to_percentile_mapping[1:],
+            )
+        )
+        for previous, current in segments:
+            width = current[0] - previous[0]
+            strictly_contains = width > 0 and previous[0] <= cdf_location <= current[0]
+            within_tolerance = (
+                previous[0] - epsilon <= cdf_location <= current[0] + epsilon
+            )
+            if strictly_contains or (within_tolerance and width > 2 * epsilon):
+                return previous, current
+        for previous, current in segments:
             if previous[0] - epsilon <= cdf_location <= current[0] + epsilon:
-                segment_width = current[0] - previous[0]
-                if segment_width == 0:
-                    return current[1]
-                # Clipped so the epsilon tolerance can't extrapolate along a near-vertical segment
-                fraction_along_segment = np.clip(
-                    (cdf_location - previous[0]) / segment_width, 0, 1
-                )
-                result = previous[1] + (current[1] - previous[1]) * float(
-                    fraction_along_segment
-                )
-                if np.isnan(result):
-                    raise ValueError(f"Result is NaN for cdf location {cdf_location}")
-                return result
-            previous = current
+                return previous, current
         raise ValueError(f"CDF location Input {cdf_location} cannot be found")
 
     def _standardize_cdf(self, cdf: list[float] | np.ndarray) -> list[float]:

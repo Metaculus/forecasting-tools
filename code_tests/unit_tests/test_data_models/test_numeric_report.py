@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from typing import Literal
 
 import pytest
@@ -435,55 +436,169 @@ def test_log_scale_distribution_repeated_value() -> None:
     ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.19"
 
 
-@pytest.mark.parametrize("open_upper_bound", [True, False])
-@pytest.mark.parametrize("cdf_size", [9, 201])
-@pytest.mark.parametrize(
-    "lower_bound, upper_bound, in_range_values",
-    [
-        # https://www.metaculus.com/questions/6142/ forecast from Oct 2026 that failed aggregation
-        (3.0, 10.0, [4.0, 4.5, 5.0, 6.0]),
-        # https://www.metaculus.com/questions/45961/ forecast from Oct 2026 that raised ZeroDivisionError
-        (
-            110000000.0,
-            130000000.0,
-            [112500000.0, 114500000.0, 118000000.0, 125000000.0],
+STANDARD_HEIGHTS = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
+
+
+@dataclass
+class RepeatedValueCase:
+    values: list[float]
+    lower_bound: float
+    upper_bound: float
+    open_lower_bound: bool
+    open_upper_bound: bool
+    expected_first_height: float | None = None
+    expected_last_height: float | None = None
+    zero_point: float | None = None
+    cdf_size: int | None = None
+    is_date: bool = False
+
+
+REPEATED_VALUE_CASES = [
+    # https://www.metaculus.com/questions/6142/ forecast from Oct 2026 that failed aggregation
+    pytest.param(
+        RepeatedValueCase([3, 3, 4, 4.5, 5, 6], 3, 10, True, True, 0.2),
+        id="q6142_two_at_open_lower",
+    ),
+    # https://www.metaculus.com/questions/45961/ forecast from Oct 2026 that raised ZeroDivisionError
+    pytest.param(
+        RepeatedValueCase(
+            [110e6, 110e6, 112.5e6, 114.5e6, 118e6, 125e6],
+            110e6,
+            125e6,
+            True,
+            True,
+            0.2,
         ),
-        # Date question (timestamps) where the repeated-value nudge is lost to float precision
-        (
-            1735689600.0,
-            1798761600.0,
-            [1750000000.0, 1760000000.0, 1770000000.0, 1780000000.0],
+        id="q45961_two_at_open_lower_large_values",
+    ),
+    pytest.param(
+        RepeatedValueCase(
+            [1735689600, 1735689600, 1750000000, 1760000000, 1770000000, 1780000000],
+            1735689600,
+            1798761600,
+            True,
+            True,
+            0.2,
+            is_date=True,
         ),
-    ],
-)
-def test_repeated_values_at_open_lower_bound_give_increasing_cdf(
-    lower_bound: float,
-    upper_bound: float,
-    in_range_values: list[float],
-    cdf_size: int,
-    open_upper_bound: bool,
-) -> None:
+        id="date_two_at_open_lower",
+    ),
+    pytest.param(
+        RepeatedValueCase(
+            [1e4, 1e4, 1.2e4, 1.4e4, 1.6e4, 1.8e4], 1e4, 2e4, True, True, 0.2
+        ),
+        id="two_at_open_lower_cdf_extrapolated_above_one",
+    ),
+    pytest.param(
+        RepeatedValueCase([3, 3, 3, 4.5, 5, 6], 3, 10, True, True, 0.4),
+        id="three_at_open_lower",
+    ),
+    pytest.param(
+        RepeatedValueCase([3, 3, 3, 3, 3, 3], 3, 10, True, True, 0.9),
+        id="all_at_open_lower",
+    ),
+    pytest.param(
+        RepeatedValueCase([2, 2, 4, 4.5, 5, 6], 3, 10, True, True, 0.2),
+        id="two_below_open_lower",
+    ),
+    pytest.param(
+        RepeatedValueCase([0, 0, 1, 2, 3, 4], 0, 10, True, False, 0.2),
+        id="two_at_open_lower_of_zero",
+    ),
+    pytest.param(
+        RepeatedValueCase(
+            [1, 1, 5, 20, 100, 500], 1, 1000, True, False, 0.2, zero_point=0
+        ),
+        id="log_scale_two_at_open_lower",
+    ),
+    pytest.param(
+        RepeatedValueCase(
+            [2.5, 2.5, 4, 5, 6, 7], 2.5, 10.5, True, False, 0.2, cdf_size=9
+        ),
+        id="discrete_two_at_open_lower",
+    ),
+    pytest.param(
+        RepeatedValueCase([0, 0, 0.1, 0.2, 0.3, 0.4], 0, 0.5, True, True, 0.2),
+        id="tiny_range_two_at_open_lower",
+    ),
+    pytest.param(
+        RepeatedValueCase(
+            [4, 5, 6, 7, 10, 10], 3, 10, False, True, expected_last_height=0.8
+        ),
+        id="two_at_open_upper",
+    ),
+    pytest.param(
+        RepeatedValueCase(
+            [112e6, 114e6, 116e6, 118e6, 130e6, 130e6],
+            110e6,
+            130e6,
+            False,
+            True,
+            expected_last_height=0.8,
+        ),
+        id="two_at_open_upper_large_values",
+    ),
+    pytest.param(
+        RepeatedValueCase([3, 3, 4, 4.5, 5, 6], 3, 10, False, True, 0.0),
+        id="two_at_closed_lower",
+    ),
+    pytest.param(
+        RepeatedValueCase(
+            [4, 5, 6, 7, 10, 10], 3, 10, False, False, expected_last_height=1.0
+        ),
+        id="two_at_closed_upper",
+    ),
+    pytest.param(
+        RepeatedValueCase([4, 5, 5, 5, 6, 7], 3, 10, True, True),
+        id="three_repeated_in_range",
+    ),
+    pytest.param(
+        RepeatedValueCase([4, 4.5, 5, 6, 7, 8], 3, 10, True, True),
+        id="no_repeats",
+    ),
+]
+
+
+@pytest.mark.parametrize("case", REPEATED_VALUE_CASES)
+def test_repeated_values_at_bounds_give_valid_cdf(case: RepeatedValueCase) -> None:
     distribution = NumericDistribution(
         declared_percentiles=[
-            Percentile(value=lower_bound, percentile=0.1),
-            Percentile(value=lower_bound, percentile=0.2),
-            Percentile(value=in_range_values[0], percentile=0.4),
-            Percentile(value=in_range_values[1], percentile=0.6),
-            Percentile(value=in_range_values[2], percentile=0.8),
-            Percentile(value=in_range_values[3], percentile=0.9),
+            Percentile(value=value, percentile=height)
+            for value, height in zip(case.values, STANDARD_HEIGHTS)
         ],
-        open_upper_bound=open_upper_bound,
-        open_lower_bound=True,
-        upper_bound=upper_bound,
-        lower_bound=lower_bound,
-        zero_point=None,
-        cdf_size=cdf_size,
+        open_upper_bound=case.open_upper_bound,
+        open_lower_bound=case.open_lower_bound,
+        upper_bound=case.upper_bound,
+        lower_bound=case.lower_bound,
+        zero_point=case.zero_point,
+        cdf_size=case.cdf_size,
+        is_date=case.is_date,
     )
-    cdf = distribution.get_cdf()
+    heights = [point.percentile for point in distribution.get_cdf()]
 
-    assert cdf[0].percentile == pytest.approx(0.2, abs=0.01)
-    for i in range(len(cdf) - 1):
-        assert cdf[i + 1].percentile > cdf[i].percentile
+    assert all(later > earlier for earlier, later in zip(heights, heights[1:]))
+    if case.expected_first_height is not None:
+        assert heights[0] == pytest.approx(case.expected_first_height, abs=0.02)
+    if case.expected_last_height is not None:
+        assert heights[-1] == pytest.approx(case.expected_last_height, abs=0.02)
+
+
+def test_repeated_values_at_open_lower_bound_are_scale_invariant() -> None:
+    def get_cdf_heights(scale: float) -> list[float]:
+        distribution = NumericDistribution(
+            declared_percentiles=[
+                Percentile(value=value * scale, percentile=height)
+                for value, height in zip([3, 3, 4, 4.5, 5, 6], STANDARD_HEIGHTS)
+            ],
+            open_upper_bound=True,
+            open_lower_bound=True,
+            upper_bound=10 * scale,
+            lower_bound=3 * scale,
+            zero_point=None,
+        )
+        return [point.percentile for point in distribution.get_cdf()]
+
+    assert get_cdf_heights(1e8) == pytest.approx(get_cdf_heights(1), abs=1e-9)
 
 
 def _get_and_log_pmf_diffs(distribution: NumericDistribution) -> list[float]:
