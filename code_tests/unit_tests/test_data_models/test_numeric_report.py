@@ -435,6 +435,51 @@ def test_log_scale_distribution_repeated_value() -> None:
     ), "Not enough probability in bucket (10.96, 12.02]. Should be at least 0.19"
 
 
+@pytest.mark.parametrize("open_upper_bound", [True, False])
+@pytest.mark.parametrize("cdf_size", [9, 201])
+@pytest.mark.parametrize(
+    "lower_bound, upper_bound, in_range_values",
+    [
+        # https://www.metaculus.com/questions/6142/ forecast from Oct 2026 that failed aggregation
+        (3.0, 10.0, [4.0, 4.5, 5.0, 6.0]),
+        # Date question (timestamps) where the repeated-value nudge is lost to float precision
+        (
+            1735689600.0,
+            1798761600.0,
+            [1750000000.0, 1760000000.0, 1770000000.0, 1780000000.0],
+        ),
+    ],
+)
+def test_repeated_values_at_open_lower_bound_give_increasing_cdf(
+    lower_bound: float,
+    upper_bound: float,
+    in_range_values: list[float],
+    cdf_size: int,
+    open_upper_bound: bool,
+) -> None:
+    distribution = NumericDistribution(
+        declared_percentiles=[
+            Percentile(value=lower_bound, percentile=0.1),
+            Percentile(value=lower_bound, percentile=0.2),
+            Percentile(value=in_range_values[0], percentile=0.4),
+            Percentile(value=in_range_values[1], percentile=0.6),
+            Percentile(value=in_range_values[2], percentile=0.8),
+            Percentile(value=in_range_values[3], percentile=0.9),
+        ],
+        open_upper_bound=open_upper_bound,
+        open_lower_bound=True,
+        upper_bound=upper_bound,
+        lower_bound=lower_bound,
+        zero_point=None,
+        cdf_size=cdf_size,
+    )
+    cdf = distribution.get_cdf()
+
+    assert cdf[0].percentile == pytest.approx(0.2, abs=0.01)
+    for i in range(len(cdf) - 1):
+        assert cdf[i + 1].percentile > cdf[i].percentile
+
+
 def _get_and_log_pmf_diffs(distribution: NumericDistribution) -> list[float]:
     cdf = distribution.get_cdf()
     pmf_diffs = []
