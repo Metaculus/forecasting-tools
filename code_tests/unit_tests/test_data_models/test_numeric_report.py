@@ -338,6 +338,27 @@ def test_error_on_too_little_probability_assigned_in_range() -> None:
         prediction.get_cdf()
 
 
+@pytest.mark.parametrize("open_upper_bound", [True, False])
+def test_standardize_cdf_raises_instead_of_looping_on_non_increasing_cdf(
+    open_upper_bound: bool,
+) -> None:
+    distribution = NumericDistribution(
+        declared_percentiles=[
+            Percentile(value=value, percentile=height)
+            for value, height in zip([4, 5, 6, 7, 8, 9], [0.1, 0.2, 0.4, 0.6, 0.8, 0.9])
+        ],
+        open_upper_bound=open_upper_bound,
+        open_lower_bound=True,
+        upper_bound=10,
+        lower_bound=0,
+        zero_point=None,
+    )
+    non_increasing_cdf = [1.0] + [0.03] * 100 + [0.5] * 100
+
+    with pytest.raises(ValueError, match="Could not standardize CDF"):
+        distribution._standardize_cdf(non_increasing_cdf)
+
+
 def test_numeric_edge_of_bin_edge_case() -> None:
     """
     If all of the probability is assigned to 12, we want to make sure that if it resolves "12"
