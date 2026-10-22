@@ -108,6 +108,16 @@ class AuthorMismatchError(ValueError):
 class MetaculusClient:
     """
     Documentation for the API can be found at https://www.metaculus.com/api/
+
+    Setting acting_user (a username or user id) makes the client forecast,
+    comment, create questions, and read "my forecasts" as that account while
+    authenticating with the token. The token must belong to the acting user's
+    bot owner, an account allowed to act as metac bots, or a superuser.
+    Getting a question by post id is done fully as the acting user, but
+    question lists are still fetched as the token's account, so a question only
+    the acting user can see will not be listed. Public comments and other
+    endpoints (e.g. coherence links, bot management) are not supported for the
+    acting user and act as the token's account or raise.
     """
 
     # NOTE: The tourament slug can be used for ID as well (e.g. "aibq2" or "quarterly-cup" instead of 32721 or 32630)
@@ -174,6 +184,7 @@ class MetaculusClient:
         sleep_seconds_between_requests: float = 3.5,
         sleep_jitter_seconds: float = 1,
         token: str | None = None,
+        acting_user: str | int | None = None,
     ):
         default_base_url = "https://www.metaculus.com/api"
         self.base_url = (
@@ -188,6 +199,7 @@ class MetaculusClient:
             logger.warning(
                 "METACULUS_TOKEN environment variable and/or token field not set"
             )
+        self.acting_user = acting_user
 
     @retry_with_exponential_backoff()
     def get_user_bots(self) -> list[UserResponse]:
@@ -250,15 +262,27 @@ class MetaculusClient:
         is_private: bool = True,
         included_forecast: bool = True,
     ) -> None:
+        comment = {
+            "on_post": post_id,
+            "text": comment_text,
+            "is_private": is_private,
+            "included_forecast": included_forecast,
+        }
+        if self.acting_user is not None:
+            if not is_private:
+                raise ValueError(
+                    "Public comments cannot be posted with acting_user set: the "
+                    "bulk endpoint that supports acting_user only accepts private "
+                    "comments."
+                )
+            self._post_bulk_forecasts_and_comments(comments=[comment])
+            logger.info(f"Posted comment on post {post_id} as {self.acting_user}")
+            return
+
         self._sleep_between_requests()
         response = requests.post(
             f"{self.base_url}/comments/create/",
-            json={
-                "on_post": post_id,
-                "text": comment_text,
-                "is_private": is_private,
-                "included_forecast": included_forecast,
-            },
+            json=comment,
             **self._get_auth_headers(),  # type: ignore
             timeout=self.timeout,
         )
@@ -371,6 +395,7 @@ class MetaculusClient:
         headers = self._get_auth_headers()
         response = requests.get(
             url,
+            params={"acting_user": self.acting_user},
             **headers,  # type: ignore
             timeout=self.timeout,
         )
@@ -614,6 +639,15 @@ class MetaculusClient:
     def _post_question_prediction(
         self, question_id: int, forecast_payload: dict
     ) -> None:
+        if self.acting_user is not None:
+            self._post_bulk_forecasts_and_comments(
+                forecasts=[{"question": question_id, **forecast_payload}]
+            )
+            logger.info(
+                f"Posted prediction on question {question_id} as {self.acting_user}"
+            )
+            return
+
         url = f"{self.base_url}/questions/forecast/"
         self._sleep_between_requests()
         response = requests.post(
@@ -630,6 +664,96 @@ class MetaculusClient:
         )
         logger.info(f"Posted prediction on question {question_id}")
         raise_for_status_with_additional_info(response)
+
+    def _post_bulk_forecasts_and_comments(
+        self,
+        forecasts: list[dict] | None = None,
+        comments: list[dict] | None = None,
+    ) -> None:
+        """
+        Not retried here since callers are already wrapped in
+        retry_with_exponential_backoff.
+        """
+        self._sleep_between_requests()
+        response = requests.post(
+            f"{self.base_url}/questions/bulk-forecast-comment/",
+            json={
+                "acting_user": self.acting_user,
+                "forecasts": forecasts or [],
+                "comments": comments or [],
+            },
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        raise_for_status_with_additional_info(response)
+
+    def _get_acting_user_forecasts(
+        self, question_ids: list[int]
+    ) -> dict[int, list[dict]]:
+        """
+        Returns the acting user's forecasts (oldest first) keyed by question id.
+        Questions the acting user cannot view are left out. Not retried here
+        since callers are already wrapped in retry_with_exponential_backoff.
+        """
+        self._sleep_between_requests()
+        response = requests.post(
+            f"{self.base_url}/questions/bulk-forecast-read/",
+            json={"acting_user": self.acting_user, "question_ids": question_ids},
+            **self._get_auth_headers(),  # type: ignore
+            timeout=self.timeout,
+        )
+        raise_for_status_with_additional_info(response)
+        results: list[dict] = json.loads(response.content)["results"]
+        return {result["question_id"]: result["forecasts"] for result in results}
+
+    def _set_my_forecasts_field_to_acting_users(self, post_jsons: list[dict]) -> None:
+        """
+        The posts list endpoint fills the "my_forecasts" field with the token
+        account's forecasts and, unlike the post detail endpoint, doesn't take
+        acting_user. With an acting user, this overwrites that field in the
+        given jsons with the acting user's forecasts so that
+        already_forecasted, previous_forecasts, etc. describe the acting user.
+        Score data is not available this way and is left empty.
+        """
+        if self.acting_user is None:
+            return
+        question_jsons = [
+            question_json
+            for post_json in post_jsons
+            for question_json in self._get_question_jsons_in_post(post_json)
+        ]
+        if not question_jsons:
+            return
+        forecasts_by_question = self._get_acting_user_forecasts(
+            sorted({question_json["id"] for question_json in question_jsons})
+        )
+        for question_json in question_jsons:
+            history = forecasts_by_question.get(question_json["id"], [])
+            question_json["my_forecasts"] = {
+                "history": history,
+                "latest": history[-1] if history else None,
+                "score_data": {},
+            }
+
+    @staticmethod
+    def _get_question_jsons_in_post(post_json: dict) -> list[dict]:
+        if "group_of_questions" in post_json:
+            return list(post_json["group_of_questions"]["questions"])
+        if "conditional" in post_json:
+            conditional: dict = post_json["conditional"]
+            return [
+                conditional[key]
+                for key in (
+                    "condition",
+                    "condition_child",
+                    "question_yes",
+                    "question_no",
+                )
+                if conditional.get(key)
+            ]
+        if post_json.get("question"):
+            return [post_json["question"]]
+        return []
 
     @retry_with_exponential_backoff()
     def _get_questions_from_api(
@@ -653,6 +777,7 @@ class MetaculusClient:
                 f"Removed {len(removed_posts)} posts that "
                 "are not supported (e.g. notebook or conditional question)"
             )
+        self._set_my_forecasts_field_to_acting_users(supported_posts)
 
         questions: list[MetaculusQuestion] = []
         for q in supported_posts:
@@ -885,7 +1010,9 @@ class MetaculusClient:
         if api_filter.allowed_tournaments:
             url_params["tournaments"] = api_filter.allowed_tournaments
 
-        if api_filter.is_previously_forecasted_by_user:
+        # The server only allows forecaster_id to be the token's own account,
+        # so for an acting user this is filtered locally instead
+        if api_filter.is_previously_forecasted_by_user and self.acting_user is None:
             user_id = self.get_current_user_id()
             if user_id:
                 url_params["forecaster_id"] = user_id
@@ -960,6 +1087,11 @@ class MetaculusClient:
                 api_filter.cp_reveal_time_gt,
                 api_filter.cp_reveal_time_lt,
             )
+
+        if api_filter.is_previously_forecasted_by_user and self.acting_user is not None:
+            questions = [
+                question for question in questions if question.already_forecasted
+            ]
 
         return questions
 
@@ -1222,8 +1354,10 @@ class MetaculusClient:
         """
         Setting acting_user (a username or user id) creates the post with that user
         as author. The API token must own that bot, be allowed to act as metac bots,
-        or belong to a superuser.
+        or belong to a superuser. Defaults to the client's acting_user.
         """
+        if acting_user is None:
+            acting_user = self.acting_user
         question_data = self._get_post_create_data(question, acting_user)
         self._sleep_between_requests()
         response = requests.post(
