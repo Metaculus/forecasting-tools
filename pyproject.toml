@@ -63,13 +63,15 @@ pymupdf4llm = {version = ">=0.0.17,<1.0.0", optional = true}
 # the minor deliberately. The pip wheel is light (httpx + playwright); the
 # ~200MB patched Chromium downloads at first launch, not at install.
 cloakbrowser = {version = ">=0.3.31,<0.4.0", optional = true}
+mcp = {version = ">=1.10,<2", optional = true}
 
 [tool.poetry.extras]
+parallel-search = ["mcp"]
 source-archive = ["boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser", "hyperbrowser"]
 agents = ["openai-agents", "hyperbrowser", "faker"]
 front-end = ["streamlit", "plotly", "pandas", "scipy", "openai-agents", "hyperbrowser", "faker"]
 stats = ["scipy", "scikit-learn", "pandas"]
-all = ["openai-agents", "hyperbrowser", "faker", "streamlit", "plotly", "pandas", "scikit-learn", "scipy", "boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser"]
+all = ["mcp", "openai-agents", "hyperbrowser", "faker", "streamlit", "plotly", "pandas", "scikit-learn", "scipy", "boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser"]
 
 [tool.poetry.scripts]
 source-archive = "forecasting_tools.agents_and_tools.source_archive.cli:main"
