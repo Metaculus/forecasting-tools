@@ -706,11 +706,12 @@ class MetaculusClient:
         results: list[dict] = json.loads(response.content)["results"]
         return {result["question_id"]: result["forecasts"] for result in results}
 
-    def _replace_my_forecasts_with_acting_users(self, post_jsons: list[dict]) -> None:
+    def _set_my_forecasts_field_to_acting_users(self, post_jsons: list[dict]) -> None:
         """
-        The posts list endpoint fills my_forecasts for the token's account and,
-        unlike the post detail endpoint, doesn't take acting_user. With an
-        acting user, swap in the acting user's forecasts (in place) so that
+        The posts list endpoint fills the "my_forecasts" field with the token
+        account's forecasts and, unlike the post detail endpoint, doesn't take
+        acting_user. With an acting user, this overwrites that field in the
+        given jsons with the acting user's forecasts so that
         already_forecasted, previous_forecasts, etc. describe the acting user.
         Score data is not available this way and is left empty.
         """
@@ -776,7 +777,7 @@ class MetaculusClient:
                 f"Removed {len(removed_posts)} posts that "
                 "are not supported (e.g. notebook or conditional question)"
             )
-        self._replace_my_forecasts_with_acting_users(supported_posts)
+        self._set_my_forecasts_field_to_acting_users(supported_posts)
 
         questions: list[MetaculusQuestion] = []
         for q in supported_posts:

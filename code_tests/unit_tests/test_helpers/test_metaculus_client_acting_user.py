@@ -146,7 +146,7 @@ def test_question_by_post_id_without_acting_user_sends_no_acting_user() -> None:
     assert question.already_forecasted is True
 
 
-def test_my_forecasts_replaced_on_group_and_conditional_subquestions() -> None:
+def test_my_forecasts_field_set_on_group_and_conditional_subquestions() -> None:
     group_post = {
         "id": 1,
         "group_of_questions": {"questions": [{"id": 10}, {"id": 11}]},
@@ -166,7 +166,7 @@ def test_my_forecasts_replaced_on_group_and_conditional_subquestions() -> None:
         "_get_acting_user_forecasts",
         return_value={11: [A_FORECAST], 22: [A_FORECAST]},
     ) as read_mock:
-        client._replace_my_forecasts_with_acting_users([group_post, conditional_post])
+        client._set_my_forecasts_field_to_acting_users([group_post, conditional_post])
 
     read_mock.assert_called_once_with([10, 11, 20, 21, 22, 23])
     group_questions = group_post["group_of_questions"]["questions"]
