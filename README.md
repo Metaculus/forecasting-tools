@@ -9,8 +9,6 @@
 # Quick Start
 Install this package with `pip install forecasting-tools`
 
-Demo website: https://forecasting-tools.streamlit.app/
-
 Demo repo (get a Metaculus bot running in 30min): https://github.com/Metaculus/metac-bot-template
 
 # Overview
@@ -25,7 +23,7 @@ Here are the tools most likely to be useful to you:
 Here are some other features of the project (not all are documented yet):
 - **General LLM Wrapper:** A unified interface around litellm with retry logic, the Metaculus proxy, structured outputs, and cost tracking
 - **Monetary Cost Manager:** for tracking AI and API expenses
-- **Other experimental tools:** See the demo site for other AI forecasting tools that this project supports (not all are documented). Also see the `scripts` folder for other common workflows and entry points into the code.
+- **Other experimental tools:** See the Streamlit front end in `forecasting_tools/front_end/` (see "Running the Front End" below) for other AI forecasting tools that this project supports (not all are documented). Also see the `scripts` folder for other common workflows and entry points into the code.
 
 All the examples below are in a Jupyter Notebook called `README.ipynb` which you can run locally to test the package (make sure to run the first cell though).
 
