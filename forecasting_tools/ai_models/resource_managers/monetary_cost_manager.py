@@ -21,6 +21,10 @@ class MonetaryCostManager(HardLimitManager):
     For instance if you run 50 coroutines in parallel that cost 10c, and your limit is $1,
     all 50 will be let through (not 10).
     The cost will not register until the coroutines finish.
+
+    Limits are enforced by calling raise_error_if_limit_would_be_reached() before each
+    model call. Code that calls a model some other way (e.g. litellm directly) has its
+    cost tracked but is not stopped by the limit.
     """
 
     def __enter__(self) -> MonetaryCostManager:
@@ -33,6 +37,9 @@ class LitellmCostTracker(LitellmCustomLogger):
     """
     A callback handler for litellm cost tracking.
     See LitellmCustomLogger for more callback functions (on failure, post/pre API call, etc)
+
+    Hard limits are not checked in a pre-call hook here, since litellm catches and logs
+    exceptions raised in those hooks instead of stopping the call.
     """
 
     _initialized = False
@@ -58,12 +65,6 @@ class LitellmCostTracker(LitellmCustomLogger):
         custom_handler = LitellmCostTracker()
         litellm.callbacks.append(custom_handler)
         LitellmCostTracker._initialized = True
-
-    def log_pre_api_call(self, model, messages, kwargs):  # NOSONAR
-        MonetaryCostManager.raise_error_if_limit_would_be_reached()
-
-    async def async_log_pre_api_call(self, model, messages, kwargs):  # NOSONAR
-        MonetaryCostManager.raise_error_if_limit_would_be_reached()
 
     def log_success_event(
         self, kwargs: dict, response_obj, start_time, end_time  # NOSONAR
