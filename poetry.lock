@@ -8335,4 +8335,4 @@ stats = ["pandas", "scikit-learn", "scipy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "967a482117f6922dd3de11d2e7cfd1010e643d7e0b643f06f7a8215386ed4e3a"
+content-hash = "bb659edaed4b0b54c8d8d1c607d383fa893c80cef909b49c8149549ce7bd8348"
