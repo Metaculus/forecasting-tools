@@ -1,0 +1,44 @@
+name: Check OpenRouter Provider Pins
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "27 */6 * * *" # every 6 hours, avoiding peak traffic (at top of hour)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  check_pins:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+      - id: setup-python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          installer-parallel: true
+          virtualenvs-in-project: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v5
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+      - name: Call each active bot's pinned OpenRouter host
+        # --tb=short keeps pytest from printing frame arguments, which include the request's auth header
+        run: poetry run pytest code_tests/integration_tests/test_run_bots_live.py -rfEs --tb=short
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
