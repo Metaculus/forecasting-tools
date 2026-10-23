@@ -222,7 +222,7 @@ class AskNewsSearcher:
             from asknews_sdk.dto.deepnews import CreateDeepNewsResponse
         except ImportError:
             raise ImportError(
-                "Most recent version of asknews package not installed, deep research will not work. Run `poetry add asknews@0.14.2`"
+                "Most recent version of asknews package not installed, deep research will not work. Run `uv add asknews==0.14.2`"
             )
         async with AsyncAskNewsSDK(
             client_id=self.client_id,

@@ -12,7 +12,7 @@ Workflow for diagnosing failures in the `run-bot-aib-tournament.yaml` GitHub Act
 A GitHub token is required (the job-log API rejects unauthenticated requests). Check `GITHUB_TOKEN` env var or `gh auth token`; if neither works, ask the user to run `gh auth login`.
 
 ```bash
-poetry run python scripts/skills/analyze_bot_failures/analyze_bot_run_failures.py --since 1d
+uv run python scripts/skills/analyze_bot_failures/analyze_bot_run_failures.py --since 1d
 ```
 
 Useful options:
@@ -27,7 +27,7 @@ Output goes to `logs/workflow_failure_analysis/<timestamp>/`:
 
 ## Step 2: Read the report, then verify against raw logs
 
-Read `report.md` first. The parser extracts full tracebacks when present (falling back to `❌ Exception: ... | Message: ...` summary lines, then to the raw log tail), so each failure group usually includes a "deepest repo frame" — the last traceback frame inside this repo rather than a dependency — which is the first place to look in the code. Still **spot-check 2-3 raw logs** for the most frequent signatures to see surrounding context (retry attempts, which LLM call failed). Failures of type `UnparsedFailure` mean nothing parseable was found — the job likely failed at the infrastructure level (poetry install failures, token resolution, job-level timeout at 55 min, cancellation) — read their raw logs directly.
+Read `report.md` first. The parser extracts full tracebacks when present (falling back to `❌ Exception: ... | Message: ...` summary lines, then to the raw log tail), so each failure group usually includes a "deepest repo frame" — the last traceback frame inside this repo rather than a dependency — which is the first place to look in the code. Still **spot-check 2-3 raw logs** for the most frequent signatures to see surrounding context (retry attempts, which LLM call failed). Failures of type `UnparsedFailure` mean nothing parseable was found — the job likely failed at the infrastructure level (uv install failures, token resolution, job-level timeout at 55 min, cancellation) — read their raw logs directly.
 
 ## Step 3: Triage — transient noise vs real bug
 

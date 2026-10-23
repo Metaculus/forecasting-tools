@@ -7,8 +7,8 @@ unauthenticated requests even on public repos). The token is resolved from the
 GITHUB_TOKEN env var, then from `gh auth token`.
 
 Example usage:
-    poetry run python scripts/skills/analyze_bot_failures/analyze_bot_run_failures.py --since 2d
-    poetry run python scripts/skills/analyze_bot_failures/analyze_bot_run_failures.py --run-id 27362307940
+    uv run python scripts/skills/analyze_bot_failures/analyze_bot_run_failures.py --since 2d
+    uv run python scripts/skills/analyze_bot_failures/analyze_bot_run_failures.py --run-id 27362307940
 """
 
 import argparse

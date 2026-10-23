@@ -1,92 +1,130 @@
-[tool.poetry]
+[project]
 name = "forecasting-tools"
 version = "0.3.5"
 description = "AI forecasting and research tools to help humans reason about and forecast the future"
-authors = ["Benjamin Wilson <ben@metaculus.com>"]
+authors = [{name = "Benjamin Wilson", email = "ben@metaculus.com"}]
 license = "MIT"
+license-files = ["LICENSE"]
 readme = "README.md"
 keywords = ["ai", "forecasting", "research", "metaculus", "prediction", "future", "market"]
-repository = "https://github.com/Metaculus/forecasting-tools"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Natural Language :: English",
     "Operating System :: OS Independent"
 ]
-packages = [{include = "forecasting_tools"}]
-include = [
-    "forecasting_tools/**/*.json",
-    "forecasting_tools/**/*.jsonl",
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.51.0,<4.0.0",
+    "tiktoken>=0.8.0,<0.20.0",
+    "aiofiles>=24.1.0,<26.0.0",
+    "aiohttp>=3.9.3,<4.0.0",
+    "aiolimiter>=1.1.0,<2.0.0",
+    "asyncio>=3.0.0,<5.0.0",
+    "nest-asyncio>=1.5.8,<2.0.0",
+    "requests>=2.32.3,<3.0.0",
+    "pydantic>=2.9.2,<3.0.0",
+    "python-dotenv>=1.0.0,<2.0.0",
+    "tenacity>=8.0.0,<10.0.0",
+    "pillow>=9.0.0,<13.0.0",
+    "typeguard>=4.3.0,<5.0.0",
+    "litellm>=1.59.1,<2.0.0,!=1.76.*,!=1.77.*,!=1.82.7,!=1.82.8,!=1.107.*,!=1.108.*,!=1.109.*",
+    "numpy>=1.26.0,<3.0.0",
+    "exceptiongroup>=1.2.2,<2.0.0",
+    "asknews>=0.9.1,<0.15.0",
+    "unidecode>=1.4.0,<2.0.0",
+    "pendulum>=3.1.0,<4.0.0",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-openai = ">=1.51.0,<4.0.0"
-tiktoken = ">=0.8.0,<0.20.0"
-aiofiles = ">=24.1.0,<26.0.0"
-aiohttp = "^3.9.3"
-aiolimiter = "^1.1.0"
-asyncio = ">=3.0.0,<5.0.0"
-nest-asyncio = "^1.5.8"
-requests = "^2.32.3"
-pydantic = "^2.9.2"
-python-dotenv = "^1.0.0"
-tenacity = ">=8.0.0,<10.0.0"
-pillow = ">=9.0.0,<13.0.0"
-typeguard = "^4.3.0"
-scikit-learn = {version = "^1.5.2", optional = true}
-scipy = {version = ">=1.10.0,<2.0.0", optional = true}
-litellm = ">=1.59.1,<2.0.0,!=1.76.*,!=1.77.*,!=1.82.7,!=1.82.8,!=1.107.*,!=1.108.*,!=1.109.*"
-numpy = ">=1.26.0,<3.0.0"
-exceptiongroup = "^1.2.2"
-faker = {version = ">=37.0.0,<41.0.0", optional = true}
-plotly = {version = ">=5.24.1,<8.0.0", optional = true}
-pandas = {version = ">=2.2.3,<4.0.0", optional = true}
-streamlit = {version = "^1.20.0", optional = true}
-asknews = ">=0.9.1,<0.15.0"
-unidecode = "^1.4.0"
-hyperbrowser = {version = ">=0.53.0,<2.0.0", optional = true}
-pendulum = "^3.1.0"
-openai-agents = {extras = ["litellm"], version = ">=0.2.0,<0.23.0", optional = true}
-
+[project.optional-dependencies]
 # Optional backends for the source archive (agents_and_tools/source_archive).
 # Install with: pip install forecasting-tools[source-archive]
-boto3 = {version = ">=1.34,<2.0.0", optional = true}
-playwright = {version = ">=1.44,<2.0.0", optional = true}
-firecrawl-py = {version = ">=4.0,<5.0.0", optional = true}
-trafilatura = {version = ">=1.9,<3.0.0", optional = true}
-pymupdf4llm = {version = ">=0.0.17,<1.0.0", optional = true}
-# Self-hosted anti-bot backend (CloakBrowser). Pinned tight to 0.3.x: it's a
+# cloakbrowser (self-hosted anti-bot backend) is pinned tight to 0.3.x: it's a
 # young, fast-moving 0.x package whose launch() API changed recently, so bump
 # the minor deliberately. The pip wheel is light (httpx + playwright); the
 # ~200MB patched Chromium downloads at first launch, not at install.
-cloakbrowser = {version = ">=0.3.31,<0.4.0", optional = true}
+source-archive = [
+    "boto3>=1.34,<2.0.0",
+    "playwright>=1.44,<2.0.0",
+    "firecrawl-py>=4.0,<5.0.0",
+    "trafilatura>=1.9,<3.0.0",
+    "pymupdf4llm>=0.0.17,<1.0.0",
+    "cloakbrowser>=0.3.31,<0.4.0",
+    "hyperbrowser>=0.53.0,<2.0.0",
+]
+agents = [
+    "openai-agents[litellm]>=0.2.0,<0.23.0",
+    "hyperbrowser>=0.53.0,<2.0.0",
+    "faker>=37.0.0,<41.0.0",
+]
+front-end = [
+    "streamlit>=1.20.0,<2.0.0",
+    "plotly>=5.24.1,<8.0.0",
+    "pandas>=2.2.3,<4.0.0",
+    "scipy>=1.10.0,<2.0.0",
+    "openai-agents[litellm]>=0.2.0,<0.23.0",
+    "hyperbrowser>=0.53.0,<2.0.0",
+    "faker>=37.0.0,<41.0.0",
+]
+stats = [
+    "scipy>=1.10.0,<2.0.0",
+    "scikit-learn>=1.5.2,<2.0.0",
+    "pandas>=2.2.3,<4.0.0",
+]
+all = [
+    "openai-agents[litellm]>=0.2.0,<0.23.0",
+    "hyperbrowser>=0.53.0,<2.0.0",
+    "faker>=37.0.0,<41.0.0",
+    "streamlit>=1.20.0,<2.0.0",
+    "plotly>=5.24.1,<8.0.0",
+    "pandas>=2.2.3,<4.0.0",
+    "scikit-learn>=1.5.2,<2.0.0",
+    "scipy>=1.10.0,<2.0.0",
+    "boto3>=1.34,<2.0.0",
+    "playwright>=1.44,<2.0.0",
+    "firecrawl-py>=4.0,<5.0.0",
+    "trafilatura>=1.9,<3.0.0",
+    "pymupdf4llm>=0.0.17,<1.0.0",
+    "cloakbrowser>=0.3.31,<0.4.0",
+]
 
-[tool.poetry.extras]
-source-archive = ["boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser", "hyperbrowser"]
-agents = ["openai-agents", "hyperbrowser", "faker"]
-front-end = ["streamlit", "plotly", "pandas", "scipy", "openai-agents", "hyperbrowser", "faker"]
-stats = ["scipy", "scikit-learn", "pandas"]
-all = ["openai-agents", "hyperbrowser", "faker", "streamlit", "plotly", "pandas", "scikit-learn", "scipy", "boto3", "playwright", "firecrawl-py", "trafilatura", "pymupdf4llm", "cloakbrowser"]
+[project.urls]
+Repository = "https://github.com/Metaculus/forecasting-tools"
 
-[tool.poetry.scripts]
+[project.scripts]
 source-archive = "forecasting_tools.agents_and_tools.source_archive.cli:main"
 
-[tool.poetry.group.dev.dependencies]
-time-machine = ">=2.19.0,<4.0.0"
-pre-commit = "^4.0.1"
-matplotlib = "^3.9.2"
-ipykernel = ">=6.29.5,<8.0.0"
-notebook = "^7.2.2"
-pytest = ">=8.3.2,<10.0.0"
-pytest-xdist = "^3.3.1"
-pytest-mock = "^3.14.0"
-pytest-asyncio = ">=0.25.0,<2.0.0"
-pypistats = "^1.7.0"
-tox = "^4.26.0"
+[dependency-groups]
+dev = [
+    "time-machine>=2.19.0,<4.0.0",
+    "pre-commit>=4.0.1,<5.0.0",
+    "matplotlib>=3.9.2,<4.0.0",
+    "ipykernel>=6.29.5,<8.0.0",
+    "notebook>=7.2.2,<8.0.0",
+    "pytest>=8.3.2,<10.0.0",
+    "pytest-xdist>=3.3.1,<4.0.0",
+    "pytest-mock>=3.14.0,<4.0.0",
+    "pytest-asyncio>=0.25.0,<2.0.0",
+    "pypistats>=1.7.0,<2.0.0",
+    "tox>=4.26.0,<5.0.0",
+]
+
+[tool.uv]
+# Supply-chain cooldown: only resolve to package files uploaded at least 7 days ago.
+exclude-newer = "7 days"
+
+[tool.hatch.build.targets.wheel]
+packages = ["forecasting_tools"]
+
+[tool.hatch.build.targets.sdist]
+include = ["forecasting_tools"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
