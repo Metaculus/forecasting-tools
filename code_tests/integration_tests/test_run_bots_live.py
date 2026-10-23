@@ -1,5 +1,6 @@
 import logging
 
+import litellm
 import pytest
 
 from forecasting_tools.ai_models.general_llm import GeneralLlm
@@ -31,9 +32,16 @@ async def test_active_bot_llm_is_served_by_its_pinned_openrouter_host(
     llm: GeneralLlm,
 ) -> None:
     with MonetaryCostManager(1) as cost_manager:
-        response = await llm._invoke_with_request_cost_time_and_token_limits_and_retry(
-            "Reply with only the word 'OK'."
-        )
+        try:
+            response = (
+                await llm._invoke_with_request_cost_time_and_token_limits_and_retry(
+                    "Reply with only the word 'OK'."
+                )
+            )
+        except litellm.RateLimitError as error:
+            pytest.skip(
+                f"Pinned host is rate limiting (still routed, so not an outage): {error}"
+            )
     logger.info(
         f"{llm.model} pinned to {llm._get_pinned_provider_slugs()} was served by "
         f"{response.serving_provider} for ${cost_manager.current_usage:.5f}"
