@@ -1730,19 +1730,19 @@ jobs:
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
-  bot_deepseek_r1_variance_test:
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_DEEPSEEK_R1_VARIANCE_TEST"
-      metac_name: "metac-deepseek-r1+asknews(variance-test)"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_VARIANCE_TEST }}
-      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+  # bot_deepseek_r1_variance_test:
+  #   needs: precache_asknews
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: "METAC_DEEPSEEK_R1_VARIANCE_TEST"
+  #     metac_name: "metac-deepseek-r1+asknews(variance-test)"
+  #     cache_key: asknews-cache-${{ github.run_id }}
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_VARIANCE_TEST }}
+  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+  #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
   bot_gpt_oss_120b:
     needs: precache_asknews
@@ -1933,31 +1933,31 @@ jobs:
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-  bot_deepseek_r1_exa_online_research_only:
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY"
-      metac_name: "metac-deepseek-r1-exa-online[research-only-bot]"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY }}
-      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  # bot_deepseek_r1_exa_online_research_only:
+  #   needs: precache_asknews
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: "METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY"
+  #     metac_name: "metac-deepseek-r1-exa-online[research-only-bot]"
+  #     cache_key: asknews-cache-${{ github.run_id }}
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY }}
+  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   ### Deepseek research variant bots
-  bot_deepseek_r1_plus_exa_online:
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_DEEPSEEK_R1_PLUS_EXA_ONLINE"
-      metac_name: "metac-deepseek-r1+deepseek-r1-exa-online"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_PLUS_EXA_ONLINE }}
-      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+  # bot_deepseek_r1_plus_exa_online:
+  #   needs: precache_asknews
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: "METAC_DEEPSEEK_R1_PLUS_EXA_ONLINE"
+  #     metac_name: "metac-deepseek-r1+deepseek-r1-exa-online"
+  #     cache_key: asknews-cache-${{ github.run_id }}
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_PLUS_EXA_ONLINE }}
+  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
 
   # bot_deepseek_r1_sonnet_4_search:
   #   needs: precache_asknews
@@ -1992,17 +1992,17 @@ jobs:
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-  bot_deepseek_r1_no_research:
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_DEEPSEEK_R1_NO_RESEARCH"
-      metac_name: "metac-deepseek-r1+no-research"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_NO_RESEARCH }}
-      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  # bot_deepseek_r1_no_research:
+  #   needs: precache_asknews
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: "METAC_DEEPSEEK_R1_NO_RESEARCH"
+  #     metac_name: "metac-deepseek-r1+no-research"
+  #     cache_key: asknews-cache-${{ github.run_id }}
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_NO_RESEARCH }}
+  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   ### Special bots
   bot_gpt_4_1_optimized_prompt:
@@ -2106,31 +2106,31 @@ jobs:
   #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-  bot_deepseek_r1_sonar_pro:
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_DEEPSEEK_R1_SONAR_PRO"
-      metac_name: "metac-deepseek-r1+sonar-pro"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_PRO }}
-      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+  # bot_deepseek_r1_sonar_pro:
+  #   needs: precache_asknews
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: "METAC_DEEPSEEK_R1_SONAR_PRO"
+  #     metac_name: "metac-deepseek-r1+sonar-pro"
+  #     cache_key: asknews-cache-${{ github.run_id }}
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_PRO }}
+  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
-  bot_deepseek_r1_sonar:
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_DEEPSEEK_R1_SONAR"
-      metac_name: "metac-deepseek-r1+sonar"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR }}
-      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+  # bot_deepseek_r1_sonar:
+  #   needs: precache_asknews
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: "METAC_DEEPSEEK_R1_SONAR"
+  #     metac_name: "metac-deepseek-r1+sonar"
+  #     cache_key: asknews-cache-${{ github.run_id }}
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR }}
+  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
   # bot_deepseek_r1_sonar_deep_research:
   #   needs: precache_asknews
@@ -2143,18 +2143,18 @@ jobs:
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
-  bot_deepseek_r1_sonar_reasoning_pro:
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_DEEPSEEK_R1_SONAR_REASONING_PRO"
-      metac_name: "metac-deepseek-r1+sonar-reasoning-pro"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_REASONING_PRO }}
-      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+  # bot_deepseek_r1_sonar_reasoning_pro:
+  #   needs: precache_asknews
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: "METAC_DEEPSEEK_R1_SONAR_REASONING_PRO"
+  #     metac_name: "metac-deepseek-r1+sonar-reasoning-pro"
+  #     cache_key: asknews-cache-${{ github.run_id }}
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_REASONING_PRO }}
+  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
   # NOTE: No longer available (model deprecated by Perplexity Dec 15th, 2025)
   # bot_deepseek_r1_sonar_reasoning:
@@ -2216,18 +2216,18 @@ jobs:
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
 
-  bot_deepseek_r1_ask_exa_pro:
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_DEEPSEEK_R1_ASK_EXA_PRO"
-      metac_name: "metac-deepseek-r1+exa-answer"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_ASK_EXA_PRO }}
-      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+  # bot_deepseek_r1_ask_exa_pro:
+  #   needs: precache_asknews
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: "METAC_DEEPSEEK_R1_ASK_EXA_PRO"
+  #     metac_name: "metac-deepseek-r1+exa-answer"
+  #     cache_key: asknews-cache-${{ github.run_id }}
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_ASK_EXA_PRO }}
+  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
 
   # bot_deepseek_r1_deepnews:
   #   needs: precache_asknews
@@ -2576,19 +2576,19 @@ jobs:
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
-  bot_deepseek_r1:
-    needs: precache_asknews
-    uses: ./.github/workflows/run-bot-launcher.yaml
-    with:
-      bot_name: "METAC_DEEPSEEK_R1_TOKEN"
-      metac_name: "metac-deepseek-r1+asknews"
-      cache_key: asknews-cache-${{ github.run_id }}
-    secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_TOKEN }}
-      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
-      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+  # bot_deepseek_r1:
+  #   needs: precache_asknews
+  #   uses: ./.github/workflows/run-bot-launcher.yaml
+  #   with:
+  #     bot_name: "METAC_DEEPSEEK_R1_TOKEN"
+  #     metac_name: "metac-deepseek-r1+asknews"
+  #     cache_key: asknews-cache-${{ github.run_id }}
+  #   secrets:
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_TOKEN }}
+  #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+  #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+  #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
 
   bot_deepseek_v3:
     needs: precache_asknews
