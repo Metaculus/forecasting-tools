@@ -985,8 +985,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/thinkingmachines/inkling",
                     temperature=default_temperature,
-                    # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("deepinfra/fp8"),
+                    # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
+                    # - Sept 25th 2026: pinned to deepinfra/fp8
+                    # - Oct 22nd 2026: re-pinned to together (precision not declared on OpenRouter; deepinfra/fp8 stopped serving this model on Oct 22nd, failing every call, and together was the only remaining paid host)
+                    **make_openrouter_provider_pin("together"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1888,7 +1890,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         },
         "METAC_DEEPSEEK_R1_VARIANCE_TEST": {
             **deepseek_r1_bot,
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 22nd 2026: OpenRouter stopped serving deepseek/deepseek-r1 on Oct 19th 2026
         },  # See METAC_DEEPSEEK_R1_TOKEN below
         "METAC_GPT_OSS_120B": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost,
@@ -2038,7 +2040,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=deepseek_r1_exa_online_llm,
                 bot_type="research_only",
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 22nd 2026: OpenRouter stopped serving deepseek/deepseek-r1 on Oct 19th 2026
         },
         ### DeepSeek Research Bots
         "METAC_DEEPSEEK_R1_PLUS_EXA_ONLINE": {
@@ -2047,7 +2049,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=default_research_comparison_forecast_llm,
                 researcher=deepseek_r1_exa_online_llm,
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 22nd 2026: OpenRouter stopped serving deepseek/deepseek-r1 on Oct 19th 2026
         },
         "METAC_DEEPSEEK_R1_SONNET_4_SEARCH": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -2080,7 +2082,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=default_research_comparison_forecast_llm,
                 researcher="no_research",
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 22nd 2026: OpenRouter stopped serving deepseek/deepseek-r1 on Oct 19th 2026
         },
         ### Specialized Bots
         "METAC_GPT_4_1_OPTIMIZED_PROMPT": {
@@ -2173,7 +2175,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **default_perplexity_settings,
                 ),
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 22nd 2026: OpenRouter stopped serving deepseek/deepseek-r1 on Oct 19th 2026
         },
         "METAC_DEEPSEEK_R1_SONAR": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -2184,7 +2186,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **default_perplexity_settings,
                 ),
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 22nd 2026: OpenRouter stopped serving deepseek/deepseek-r1 on Oct 19th 2026
         },
         "METAC_DEEPSEEK_R1_SONAR_DEEP_RESEARCH": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search
@@ -2204,7 +2206,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     **default_perplexity_settings,
                 ),
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 22nd 2026: OpenRouter stopped serving deepseek/deepseek-r1 on Oct 19th 2026
         },
         "METAC_DEEPSEEK_R1_SONAR_REASONING": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -2262,7 +2264,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="exa/exa"
                 ),  # Used to be "exa-pro" till this got deprecated
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 22nd 2026: OpenRouter stopped serving deepseek/deepseek-r1 on Oct 19th 2026
         },
         "METAC_DEEPSEEK_R1_DEEPNEWS": {
             "estimated_cost_per_question": guess_at_deepseek_plus_search,
@@ -2537,7 +2539,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
         },
         "METAC_DEEPSEEK_R1_TOKEN": {
             **deepseek_r1_bot,
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 22nd 2026: OpenRouter stopped serving deepseek/deepseek-r1 on Oct 19th 2026
         },
         "METAC_DEEPSEEK_V3_TOKEN": {
             "estimated_cost_per_question": roughly_gpt_4o_mini_cost,
