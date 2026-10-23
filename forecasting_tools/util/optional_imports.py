@@ -7,7 +7,7 @@ _INSTALL_MESSAGE = (
     "Install it with:\n"
     "    pip install 'forecasting-tools[{extra}]'\n"
     "or, if you are developing on this repo:\n"
-    "    poetry install --all-extras"
+    "    uv sync --all-extras"
 )
 
 

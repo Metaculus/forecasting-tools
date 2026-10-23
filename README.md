@@ -522,7 +522,7 @@ If you use one of these features without its extra installed, you get an error t
 The environment variables you need can be found in ```.env.template```. Copy this template as ```.env``` and fill it in.
 
 ## Docker Dev Container
-Dev containers are reliable ways to make sure environments work on everyone's machine the first try and so you don't have to spend hours setting up your environment (especially if you have Docker already installed). If you would rather just use poetry, without the dev container, you can skip to "Alternatives to Docker". Otherwise, to get your development environment up and running, you need to have Docker Engine installed and running. Once you do, you can use the VSCode dev container pop-up to automatically set up everything for you.
+Dev containers are reliable ways to make sure environments work on everyone's machine the first try and so you don't have to spend hours setting up your environment (especially if you have Docker already installed). If you would rather just use uv, without the dev container, you can skip to "Alternatives to Docker". Otherwise, to get your development environment up and running, you need to have Docker Engine installed and running. Once you do, you can use the VSCode dev container pop-up to automatically set up everything for you.
 
 ### Install Docker
 For Windows and Mac, you will download Docker Desktop. For Linux, you will download Docker Engine. (NOTE: These instructions might be outdated).
@@ -540,7 +540,7 @@ Once Docker is installed, when you open up the project folder in VSCode, you wil
 
 If the Docker process times out in the middle of installing python packages you can run the `.devcontiner/postinstall.sh` manually. You may need to have the VSCode Docker extension and/or devcontainer extension downloaded in order for the pop up to appear.
 
-Once you are in the container, poetry should have already installed a virtual environment. For VSCode features to use this environment, you will need to select the correct python interpreter. You can do this by pressing `Ctrl + Shift + P` and then typing `Python: Select Interpreter`. Then select the interpreter that starts with `.venv`.
+Once you are in the container, uv should have already installed a virtual environment. For VSCode features to use this environment, you will need to select the correct python interpreter. You can do this by pressing `Ctrl + Shift + P` and then typing `Python: Select Interpreter`. Then select the interpreter that starts with `.venv`.
 
 A number of vscode extensions are installed automatically (e.g. linting). You may need to wait a little while and then reload the window (once for things to install, and a second for needed reload after installation). You can install personal vscode extensions in the dev environment.
 
@@ -550,20 +550,22 @@ There are many ways to manager Docker containers, but generally if you download 
 
 
 ### Alternatives to Docker
-If you choose not to run Docker, you can use poetry to set up a local virtual environment. If you are on Ubuntu, you should be able to just read through and then run `.devcontainer/postinstall.sh`. If you aren't on Ubuntu, check out the links in the postinstall file for where install instructions for dependencies were originally found. You may also want to take a look at VSCode extensions that would be installed (see the list in the `.devcontainer/devcontainer.json` file) so that some VSCode workplace settings work out of the box (e.g. automatic Black Formatting).
+If you choose not to run Docker, you can use [uv](https://docs.astral.sh/uv/getting-started/installation/) to set up a local virtual environment. If you are on Ubuntu, you should be able to just read through and then run `.devcontainer/postinstall.sh`. If you aren't on Ubuntu, check out the links in the postinstall file for where install instructions for dependencies were originally found. You may also want to take a look at VSCode extensions that would be installed (see the list in the `.devcontainer/devcontainer.json` file) so that some VSCode workplace settings work out of the box (e.g. automatic Black Formatting).
 
 
 ## Installing dependencies
 Local development uses the optional extras (the tests cover the front end and the agent tools), so install with:
 
 ```bash
-poetry install --all-extras
+uv sync --all-extras
 ```
 
-A plain `poetry install` gives you only the base dependencies. That is what the bot-running GitHub workflows use, which keeps them honest about the template bot not needing the extras — but it is not enough to run the full unit test suite.
+A plain `uv sync` gives you only the base dependencies. That is what the bot-running GitHub workflows use, which keeps them honest about the template bot not needing the extras — but it is not enough to run the full unit test suite.
+
+uv only resolves package files uploaded at least 7 days ago (`exclude-newer` in `pyproject.toml`), so a brand-new release won't be picked up by `uv lock` or `uv add` until it is a week old.
 
 ## Running the Front End
-You can run any front end folder in the front_end directory by executing `streamlit run front_end/Home.py`. This will start a development server for you that you can run. Streamlit makes it very easy to publish demos. This needs the `front-end` extra (included in `poetry install --all-extras`).
+You can run any front end folder in the front_end directory by executing `streamlit run front_end/Home.py`. This will start a development server for you that you can run. Streamlit makes it very easy to publish demos. This needs the `front-end` extra (included in `uv sync --all-extras`).
 
 ## Testing
 This repository uses pytest tests are subdivided into folders 'unit_tests', 'integration'. Unit tests should always pass. You can run `pytest code_tests/unit_tests` or just `pytest` to run all of these

@@ -4,17 +4,14 @@
 sudo apt update -y
 sudo apt install -y pipx ripgrep
 
-# Install poetry using pipx (https://python-poetry.org/docs/#installation)
-pipx install poetry
+# Install uv using pipx (https://docs.astral.sh/uv/getting-started/installation/)
+pipx install uv
 
-# Configure poetry to create virtualenvs in project directory
-poetry config virtualenvs.in-project true
-
-# Install python dependencies
-poetry install --no-interaction --all-extras
+# Install python dependencies (uv creates the virtualenv at .venv in the project directory)
+uv sync --all-extras
 
 # Install pre-commit hooks
-poetry run pre-commit install
+uv run pre-commit install
 
 # Install playwright
 # playwright install

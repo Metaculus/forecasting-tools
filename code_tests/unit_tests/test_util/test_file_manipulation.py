@@ -111,11 +111,10 @@ def test_add_to_jsonl_file_and_load_json_and_jsonl() -> None:
     test_data3 = {"a": 5, "b": 6}
     test_list = [test_data1, test_data2, test_data3]
 
-    with tempfile.NamedTemporaryFile(
-        suffix=".jsonl", delete=True
-    ) as temp_jsonl, tempfile.NamedTemporaryFile(
-        suffix=".json", delete=True
-    ) as temp_json:
+    with (
+        tempfile.NamedTemporaryFile(suffix=".jsonl", delete=True) as temp_jsonl,
+        tempfile.NamedTemporaryFile(suffix=".json", delete=True) as temp_json,
+    ):
         temp_jsonl_path = temp_jsonl.name
         temp_json_path = temp_json.name
 
