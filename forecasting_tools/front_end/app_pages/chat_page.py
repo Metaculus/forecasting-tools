@@ -75,8 +75,7 @@ MODEL_CHOICES: list[str] = [
     "openrouter/anthropic/claude-sonnet-4",
     "openai/o3",
     "openai/o4-mini",
-    "openai/gpt-4.1",
-    "gpt-4o",
+    "openai/gpt-6-sol",
     "openrouter/google/gemini-3-pro-preview",
     "openrouter/google/gemini-2.5-pro-preview",
 ]

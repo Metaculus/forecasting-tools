@@ -76,14 +76,14 @@ class FallTemplateBot2026(ForecastBot):
         ...
         llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
             "default": GeneralLlm(
-                model="openrouter/openai/gpt-4o", # "anthropic/claude-sonnet-4-20250514", etc (see docs for litellm)
+                model="openrouter/openai/gpt-6-sol", # "anthropic/claude-sonnet-4-20250514", etc (see docs for litellm)
                 temperature=0.3,
-                timeout=40,
+                timeout=160,
                 allowed_tries=2,
             ),
-            "summarizer": "openai/gpt-4o-mini",
+            "summarizer": "openai/gpt-6-luna",
             "researcher": "asknews/news-summaries",
-            "parser": "openai/gpt-4o-mini",
+            "parser": "openai/gpt-6-luna",
         },
     )
     ```
@@ -713,14 +713,14 @@ if __name__ == "__main__":
         extra_metadata_in_explanation=True,
         # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
         #     "default": GeneralLlm(
-        #         model="openrouter/openai/gpt-4o", # "anthropic/claude-sonnet-4-20250514", etc (see docs for litellm)
+        #         model="openrouter/openai/gpt-6-sol", # "anthropic/claude-sonnet-4-20250514", etc (see docs for litellm)
         #         temperature=0.3,
-        #         timeout=40,
+        #         timeout=160,
         #         allowed_tries=2,
         #     ),
-        #     "summarizer": "openai/gpt-4o-mini",
+        #     "summarizer": "openai/gpt-6-luna",
         #     "researcher": "asknews/news-summaries",
-        #     "parser": "openai/gpt-4o-mini",
+        #     "parser": "openai/gpt-6-luna",
         # },
     )
 

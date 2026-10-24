@@ -87,7 +87,7 @@ async def resolve_qualitative_forecast(
 ) -> InterventionForecast:
     if resolution_model is None:
         resolution_model = GeneralLlm(
-            "openrouter/openai/gpt-4.1-mini",
+            "openrouter/anthropic/claude-haiku-5.5",
             temperature=0.1,
             timeout=120,
         )

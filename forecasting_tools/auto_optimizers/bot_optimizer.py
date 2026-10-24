@@ -26,7 +26,7 @@ class BotOptimizer:
     @classmethod
     async def optimize_a_combined_research_and_reasoning_prompt(  # NOSONAR
         cls,
-        research_agent_llm_name: str,  # e.g. "openai/gpt-4.1"
+        research_agent_llm_name: str,  # e.g. "openai/gpt-6-sol"
         reasoning_llm: GeneralLlm,
         ideation_llm_name: str,
         research_tools_bot_can_use: list[ResearchTool],

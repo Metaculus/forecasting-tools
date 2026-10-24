@@ -25,7 +25,7 @@ class AvailableFile(BaseModel):
 
 class DataAnalyzer:
 
-    def __init__(self, model: str = "gpt-4.1") -> None:
+    def __init__(self, model: str = "gpt-6-sol") -> None:
         self.model = model
 
     async def run_data_analysis(

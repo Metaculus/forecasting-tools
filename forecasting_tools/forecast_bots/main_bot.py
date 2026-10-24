@@ -49,5 +49,7 @@ class MainBot(Q2TemplateBot2025):
                 max_tokens=64000,
                 timeout=160,
             ),
-            "summarizer": GeneralLlm(model="openai/gpt-4o", temperature=0),
+            "summarizer": GeneralLlm(
+                model="openrouter/anthropic/claude-haiku-5.5", temperature=0
+            ),
         }

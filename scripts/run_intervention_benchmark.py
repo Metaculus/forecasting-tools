@@ -184,7 +184,7 @@ def main() -> None:
         required=True,
         help=(
             "Comma-separated list of model identifiers. "
-            "Example: 'openrouter/anthropic/claude-sonnet-4,openrouter/openai/gpt-4.1'"
+            "Example: 'openrouter/anthropic/claude-sonnet-4,openrouter/openai/gpt-6-sol'"
         ),
     )
     parser.add_argument(

@@ -43,7 +43,7 @@ class TopicGenerator:
     @classmethod
     async def generate_random_topic(
         cls,
-        model: GeneralLlm | SmartSearcher | str = "openrouter/openai/gpt-4o",
+        model: GeneralLlm | SmartSearcher | str = "openrouter/openai/gpt-6-sol",
         number_of_topics: int = 10,
         additional_instructions: str = "",
     ) -> list[str]:
@@ -132,7 +132,7 @@ class TopicGenerator:
     @classmethod
     async def generate_random_news_items(
         cls,
-        model: GeneralLlm | str = "openrouter/openai/gpt-4o",
+        model: GeneralLlm | str = "openrouter/openai/gpt-6-sol",
         number_of_items: int = 10,
     ) -> list[str]:
         num_topics = 2
@@ -172,7 +172,7 @@ class TopicGenerator:
         cls,
         topic: str,
         number_of_items: int = 5,
-        model: GeneralLlm | str = "openrouter/openai/gpt-4o",
+        model: GeneralLlm | str = "openrouter/openai/gpt-6-sol",
     ) -> list[str]:
         if isinstance(model, str):
             model = GeneralLlm(model=model, temperature=1, timeout=40)
@@ -215,7 +215,7 @@ class TopicGenerator:
     @classmethod
     async def get_news_on_random_company(
         cls,
-        model: GeneralLlm | str = "gpt-4o",
+        model: GeneralLlm | str = "gpt-6-sol",
         search_model: GeneralLlm | str = "openrouter/perplexity/sonar-pro",
     ) -> tuple[OrgInfo, list[str]]:
         require_optional_package("faker", "faker", "agents")

@@ -29,7 +29,7 @@ class InterventionPolicyAgent:
         self.model_name = model_name
         self.timeout = timeout
         self.structure_output_model = structure_output_model or GeneralLlm(
-            "openrouter/openai/gpt-4.1-mini",
+            "openrouter/anthropic/claude-haiku-5.5",
             temperature=0.2,
             timeout=self.timeout,
         )
