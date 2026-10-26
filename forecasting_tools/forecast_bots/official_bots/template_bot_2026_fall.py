@@ -76,7 +76,7 @@ class FallTemplateBot2026(ForecastBot):
         ...
         llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
             "default": GeneralLlm(
-                model="openrouter/openai/gpt-6-sol", # "anthropic/claude-sonnet-4-20250514", etc (see docs for litellm)
+                model="openrouter/anthropic/claude-opus-5.5", # "openai/gpt-6-sol", etc (see docs for litellm)
                 temperature=0.3,
                 timeout=160,
                 allowed_tries=2,
@@ -713,7 +713,7 @@ if __name__ == "__main__":
         extra_metadata_in_explanation=True,
         # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
         #     "default": GeneralLlm(
-        #         model="openrouter/openai/gpt-6-sol", # "anthropic/claude-sonnet-4-20250514", etc (see docs for litellm)
+        #         model="openrouter/anthropic/claude-opus-5.5", # "openai/gpt-6-sol", etc (see docs for litellm)
         #         temperature=0.3,
         #         timeout=160,
         #         allowed_tries=2,

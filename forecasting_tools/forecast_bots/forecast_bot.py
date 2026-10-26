@@ -957,16 +957,18 @@ class ForecastBot(ABC):
         - etc.
         """
 
-        if os.getenv("OPENAI_API_KEY"):
-            main_default_llm = GeneralLlm(model="gpt-6-sol", temperature=None)
-        elif os.getenv("ANTHROPIC_API_KEY"):
+        if os.getenv("ANTHROPIC_API_KEY"):
             main_default_llm = GeneralLlm(
-                model="anthropic/claude-sonnet-5-5", temperature=0.3
+                model="anthropic/claude-opus-5-5", temperature=0.3, timeout=160
             )
         elif os.getenv("OPENROUTER_API_KEY"):
             main_default_llm = GeneralLlm(
-                model="openrouter/openai/gpt-6-sol", temperature=None
+                model="openrouter/anthropic/claude-opus-5.5",
+                temperature=0.3,
+                timeout=160,
             )
+        elif os.getenv("OPENAI_API_KEY"):
+            main_default_llm = GeneralLlm(model="gpt-6-sol", temperature=None)
         elif os.getenv("METACULUS_TOKEN"):
             main_default_llm = GeneralLlm(model="metaculus/gpt-6-sol", temperature=None)
         else:
