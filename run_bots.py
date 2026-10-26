@@ -1016,8 +1016,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/moonshotai/kimi-k3",
                     temperature=None,  # Moonshot's endpoint doesn't support temperature
                     timeout=kimi_k2_timeout,
-                    # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("moonshotai/mxfp4"),
+                    # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
+                    # - Sept 25th 2026: pinned to moonshotai/mxfp4
+                    # - Oct 26th 2026: re-pinned to moonshotai (precision not declared on OpenRouter; the moonshotai/mxfp4 endpoint no longer exists as of Oct 26th, failing every call, and moonshotai is Moonshot's own endpoint)
+                    **make_openrouter_provider_pin("moonshotai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1202,8 +1204,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/minimax/minimax-m3",
                     temperature=default_temperature,
-                    # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("minimax/fp8"),
+                    # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
+                    # - Sept 25th 2026: pinned to minimax/fp8
+                    # - Oct 26th 2026: re-pinned to minimax (precision not declared on OpenRouter; the minimax/fp8 endpoint no longer exists as of Oct 26th, failing every call, and minimax is MiniMax's own endpoint)
+                    **make_openrouter_provider_pin("minimax"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1341,8 +1345,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/moonshotai/kimi-k2.6",
                     temperature=None,  # Moonshot's endpoint doesn't support temperature
                     timeout=kimi_k2_timeout,
-                    # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("moonshotai/int4"),
+                    # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
+                    # - Sept 25th 2026: pinned to moonshotai/int4
+                    # - Oct 26th 2026: re-pinned to moonshotai (precision not declared on OpenRouter; the moonshotai/int4 endpoint no longer exists as of Oct 26th, failing every call, and moonshotai is Moonshot's own endpoint)
+                    **make_openrouter_provider_pin("moonshotai"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1476,8 +1482,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 GeneralLlm(
                     model="openrouter/minimax/minimax-m2.7",
                     temperature=default_temperature,
-                    # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("minimax/fp8"),
+                    # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
+                    # - Sept 25th 2026: pinned to minimax/fp8
+                    # - Oct 26th 2026: re-pinned to minimax (precision not declared on OpenRouter; the minimax/fp8 endpoint no longer exists as of Oct 26th, failing every call, and minimax is MiniMax's own endpoint)
+                    **make_openrouter_provider_pin("minimax"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
