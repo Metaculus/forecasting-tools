@@ -31,7 +31,7 @@ class SmartSearcher(OutputsText, AiModel):
         use_brackets_around_citations: bool = False,
         num_searches_to_run: int = 2,
         num_sites_per_search: int = 10,
-        model: str | GeneralLlm = "gpt-4.1",
+        model: str | GeneralLlm = "gpt-6-sol",
         temperature: float | None = None,
         use_advanced_filters: bool = False,
     ) -> None:

@@ -58,7 +58,7 @@ bot = TemplateBot(
     skip_previously_forecasted_questions=False,
     llms={ # LLM models to use for different tasks. Will use default llms if not specified. Requires the relevant provider environment variables to be set.
         "default": GeneralLlm(model="openrouter/google/gemini-2.5-pro", temperature=0),
-        "summarizer": "openai/gpt-4o-mini",
+        "summarizer": "openai/gpt-6-luna",
     }
 )
 
@@ -187,7 +187,7 @@ class MyCustomBot(TemplateBot):
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
         prompt = f"Please make a prediction on the following question: {question.question_text}. The last thing you write is your final answer as: 'Probability: ZZ%', 0-100"
-        reasoning = await GeneralLlm(model="metaculus/gpt-4o", temperature=0).invoke(prompt)
+        reasoning = await GeneralLlm(model="metaculus/gpt-6-sol", temperature=0).invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0
         )
@@ -251,7 +251,7 @@ class NotepadBot(TemplateBot):
         notepad = await self._get_notepad(question)
 
         if notepad.total_predictions_attempted % 2 == 0:
-            model = "openrouter/openai/gpt-4o"
+            model = "openrouter/openai/gpt-6-sol"
         else:
             model = "anthropic/claude-3-5-sonnet-20240620"
 
@@ -370,7 +370,7 @@ The `GeneralLlm` class is a wrapper around litellm's acompletion function that a
 
 ```python
 prompt = "What is the weather in Tokyo?"
-result = await GeneralLlm(model="gpt-4o").invoke(prompt)
+result = await GeneralLlm(model="gpt-6-sol").invoke(prompt)
 result = await GeneralLlm(model="claude-3-5-sonnet-20241022").invoke(prompt)
 result = await GeneralLlm(model="metaculus/claude-3-5-sonnet-20241022").invoke(prompt) # Adding 'metaculus' Calls the Metaculus proxy
 result = await GeneralLlm(model="gemini/gemini-pro").invoke(prompt)
@@ -398,7 +398,7 @@ class President(BaseModel):
     age_at_death: int
     biggest_accomplishment: str
 
-model = GeneralLlm(model="gpt-4o")
+model = GeneralLlm(model="gpt-6-sol")
 pydantic_model_explanation = model.get_schema_format_instructions_for_pydantic_type(President)
 prompt = clean_indents(f"""
     You are a historian helping with a presidential research project. Please answer the following question:
@@ -437,7 +437,7 @@ You can also do some basic code execution.
 ```python
 from forecasting_tools import GeneralLlm, clean_indents
 
-model = GeneralLlm(model="gpt-4o")
+model = GeneralLlm(model="gpt-6-sol")
 
 code = clean_indents("""
     Please run a fermi estimate for the number of books published worldwide each year.
@@ -489,7 +489,7 @@ max_cost = 5.00
 
 with MonetaryCostManager(max_cost) as cost_manager:
     prompt = "What is the weather in Tokyo?"
-    result = await GeneralLlm(model="gpt-4o").invoke(prompt)
+    result = await GeneralLlm(model="gpt-6-sol").invoke(prompt)
     result = await ExaSearcher().invoke(prompt)
     # ... etc ...
 

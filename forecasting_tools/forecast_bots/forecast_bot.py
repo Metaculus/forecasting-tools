@@ -958,34 +958,32 @@ class ForecastBot(ABC):
         """
 
         if os.getenv("OPENAI_API_KEY"):
-            main_default_llm = GeneralLlm(model="gpt-4o", temperature=0.3)
+            main_default_llm = GeneralLlm(model="gpt-6-sol", temperature=None)
         elif os.getenv("ANTHROPIC_API_KEY"):
             main_default_llm = GeneralLlm(
-                model="claude-3-7-sonnet-latest", temperature=0.3
+                model="anthropic/claude-sonnet-5-5", temperature=0.3
             )
         elif os.getenv("OPENROUTER_API_KEY"):
             main_default_llm = GeneralLlm(
-                model="openrouter/openai/gpt-4o", temperature=0.3
+                model="openrouter/openai/gpt-6-sol", temperature=None
             )
         elif os.getenv("METACULUS_TOKEN"):
-            main_default_llm = GeneralLlm(model="metaculus/gpt-4o", temperature=0.3)
+            main_default_llm = GeneralLlm(model="metaculus/gpt-6-sol", temperature=None)
         else:
-            main_default_llm = GeneralLlm(model="gpt-4o", temperature=0.3)
+            main_default_llm = GeneralLlm(model="gpt-6-sol", temperature=None)
 
         if os.getenv("OPENAI_API_KEY"):
-            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+            summarizer = GeneralLlm(model="gpt-6-luna", temperature=None)
         elif os.getenv("OPENROUTER_API_KEY"):
             summarizer = GeneralLlm(
-                model="openrouter/openai/gpt-4o-mini", temperature=0.3
+                model="openrouter/anthropic/claude-haiku-5.5", temperature=0.3
             )
         elif os.getenv("ANTHROPIC_API_KEY"):
-            summarizer = GeneralLlm(
-                model="anthropic/claude-3-5-sonnet-20241022", temperature=0.3
-            )
+            summarizer = GeneralLlm(model="anthropic/claude-haiku-5-5", temperature=0.3)
         elif os.getenv("METACULUS_TOKEN"):
-            summarizer = GeneralLlm(model="metaculus/gpt-4o-mini", temperature=0.3)
+            summarizer = GeneralLlm(model="metaculus/gpt-6-luna", temperature=None)
         else:
-            summarizer = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+            summarizer = GeneralLlm(model="gpt-6-luna", temperature=None)
 
         if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
             researcher = "asknews/news-summaries"
@@ -995,40 +993,38 @@ class ForecastBot(ABC):
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
         elif os.getenv("OPENROUTER_API_KEY"):
             researcher = GeneralLlm(
-                model="openrouter/openai/gpt-4o-search-preview", temperature=0.1
+                model="openrouter/perplexity/sonar-pro", temperature=0.1
             )
         elif os.getenv("EXA_API_KEY"):
             researcher = f"smart-searcher/{main_default_llm.model}"
         elif os.getenv("OPENAI_API_KEY"):
-            researcher = GeneralLlm(
-                model="openai/gpt-4o-search-preview", temperature=0.1
-            )
+            researcher = GeneralLlm(model="openai/gpt-5-search-api", temperature=None)
         elif os.getenv("METACULUS_TOKEN"):
             researcher = GeneralLlm(
-                model="metaculus/gpt-4o-search-preview", temperature=0.1
+                model="metaculus/gpt-5-search-api", temperature=None
             )
         else:
             researcher = GeneralLlm(model="perplexity/sonar-pro", temperature=0.1)
 
         if os.getenv("OPENAI_API_KEY"):
-            parser = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+            parser = GeneralLlm(model="gpt-6-luna", temperature=None)
         elif os.getenv("OPENROUTER_API_KEY"):
-            parser = GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.3)
-        elif os.getenv("ANTHROPIC_API_KEY"):
             parser = GeneralLlm(
-                model="anthropic/claude-3-5-sonnet-20241022", temperature=0.3
+                model="openrouter/anthropic/claude-haiku-5.5", temperature=0.3
             )
+        elif os.getenv("ANTHROPIC_API_KEY"):
+            parser = GeneralLlm(model="anthropic/claude-haiku-5-5", temperature=0.3)
         elif os.getenv("METACULUS_TOKEN"):
-            parser = GeneralLlm(model="metaculus/gpt-4o-mini", temperature=0.3)
+            parser = GeneralLlm(model="metaculus/gpt-6-luna", temperature=None)
         else:
-            parser = GeneralLlm(model="gpt-4o-mini", temperature=0.3)
+            parser = GeneralLlm(model="gpt-6-luna", temperature=None)
 
-        if researcher == "openai/gpt-4o-search-preview" or (
+        if researcher == "openai/gpt-5-search-api" or (
             isinstance(researcher, GeneralLlm)
-            and researcher.model == "openai/gpt-4o-search-preview"
+            and researcher.model == "openai/gpt-5-search-api"
         ):
             logger.warning(
-                "Using gpt-4o-search-preview as default researcher. This can be expensive, it is recommended you explicitlyset the researcher yourself to a different model."
+                "Using gpt-5-search-api as default researcher. This can be expensive, it is recommended you explicitlyset the researcher yourself to a different model."
             )
 
         return {

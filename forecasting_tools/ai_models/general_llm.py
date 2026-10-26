@@ -97,6 +97,9 @@ class GeneralLlm(
         "gpt-5": {
             "timeout": 120,
         },
+        "gpt-6": {
+            "timeout": 120,
+        },
         "grok-4": {
             "timeout": 240,
         },
@@ -838,5 +841,5 @@ class GeneralLlm(
 
 
 if __name__ == "__main__":
-    llm = GeneralLlm(model="openai/gpt-4o-mini", temperature=None)
+    llm = GeneralLlm(model="openai/gpt-6-luna", temperature=None)
     print(asyncio.run(llm.invoke("What is the capital of France?")))
