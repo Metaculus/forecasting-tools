@@ -2113,7 +2113,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 ),
                 bot_type="gpt_4_1_optimized",
             ),
-            "tournaments": TournConfig.aib_only,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 27th 2026: OpenAI shut down gpt-4.1-nano on Oct 23rd 2026
         },
         "METAC_GROK_4_TOOLS": {
             "estimated_cost_per_question": None,
@@ -2355,7 +2355,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 27th 2026: OpenAI shut down gpt-4.1-nano on Oct 23rd 2026
         },
         "METAC_GEMINI_2_5_FLASH_PREVIEW_TOKEN": {
             "estimated_cost_per_question": 0.03,
@@ -2450,7 +2450,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     temperature=default_temperature,
                 ),
             ),
-            "tournaments": TournConfig.aib_and_site,
+            "tournaments": TournConfig.NONE,  # Deprecated Oct 27th 2026: OpenAI shut down gpt-3.5-turbo on Oct 23rd 2026
         },
         "METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN": {
             "estimated_cost_per_question": 0.37,
