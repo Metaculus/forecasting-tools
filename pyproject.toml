@@ -1,6 +1,6 @@
 [project]
 name = "forecasting-tools"
-version = "0.3.5"
+version = "0.3.6"
 description = "AI forecasting and research tools to help humans reason about and forecast the future"
 authors = [{name = "Benjamin Wilson", email = "ben@metaculus.com"}]
 license = "MIT"
@@ -32,7 +32,7 @@ dependencies = [
     "pydantic>=2.9.2,<3.0.0",
     "python-dotenv>=1.0.0,<2.0.0",
     "tenacity>=8.0.0,<10.0.0",
-    "pillow>=9.0.0,<13.0.0",
+    "pillow>=9.0.0,<14.0.0",
     "typeguard>=4.3.0,<5.0.0",
     "litellm>=1.59.1,<2.0.0,!=1.76.*,!=1.77.*,!=1.82.7,!=1.82.8,!=1.107.*,!=1.108.*,!=1.109.*",
     "numpy>=1.26.0,<3.0.0",
