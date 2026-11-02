@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from pathlib import Path
@@ -73,10 +72,10 @@ class SimulatorPage(AppPage):
 
         situation: Situation | None = st.session_state.get("sim_situation")
         if situation is None:
-            cls._display_setup_panel()
+            await cls._display_setup_panel()
             return
 
-        cls._display_controls(situation)
+        await cls._display_controls(situation)
 
         steps: list[SimulationStep] = st.session_state.get("sim_steps", [])
         state: SimulationState | None = st.session_state.get("sim_state")
@@ -105,7 +104,7 @@ class SimulatorPage(AppPage):
     # --- Setup Panel ---
 
     @classmethod
-    def _display_setup_panel(cls) -> None:
+    async def _display_setup_panel(cls) -> None:
         st.header("Load or Generate a Situation")
 
         tab_example, tab_upload, tab_resume, tab_generate = st.tabs(
@@ -127,7 +126,7 @@ class SimulatorPage(AppPage):
             cls._display_resume_loader()
 
         with tab_generate:
-            cls._display_generator()
+            await cls._display_generator()
 
     @classmethod
     def _display_example_loader(cls) -> None:
@@ -167,7 +166,7 @@ class SimulatorPage(AppPage):
                 st.error(f"Failed to parse situation: {e}")
 
     @classmethod
-    def _display_generator(cls) -> None:
+    async def _display_generator(cls) -> None:
         prompt = st.text_area(
             "Describe the simulation you want:",
             placeholder="Simulate a startup incubator where 4 founders compete for limited investor funding...",
@@ -178,7 +177,7 @@ class SimulatorPage(AppPage):
             with st.spinner("Generating situation..."):
                 generator = SituationGenerator()
                 with MonetaryCostManager(100):
-                    situation = asyncio.run(generator.generate(prompt))
+                    situation = await generator.generate(prompt)
                 cls._set_situation(situation)
                 st.success(f"Generated: {situation.name}")
                 st.rerun()
@@ -401,12 +400,12 @@ class SimulatorPage(AppPage):
     # --- Controls ---
 
     @classmethod
-    def _display_controls(cls, situation: Situation) -> None:
+    async def _display_controls(cls, situation: Situation) -> None:
         col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
             if st.button("▶ Run Step", key="run_step_btn"):
-                cls._run_one_step(situation)
+                await cls._run_one_step(situation)
                 st.rerun()
 
         with col2:
@@ -414,7 +413,7 @@ class SimulatorPage(AppPage):
                 "Steps", min_value=1, max_value=50, value=3, key="run_n_steps"
             )
             if st.button("⏩ Run Multiple", key="run_n_btn"):
-                cls._run_n_steps(situation, int(max_steps))
+                await cls._run_n_steps(situation, int(max_steps))
                 st.rerun()
 
         with col3:
@@ -966,7 +965,7 @@ class SimulatorPage(AppPage):
         return run_dir
 
     @classmethod
-    def _run_one_step(cls, situation: Situation) -> None:
+    async def _run_one_step(cls, situation: Situation) -> None:
         state = st.session_state.get("sim_state")
         simulator = Simulator(situation)
         if state is None:
@@ -976,7 +975,7 @@ class SimulatorPage(AppPage):
 
         with st.spinner(f"Running step {state.step_number + 1}..."):
             with MonetaryCostManager(100) as cost_manager:
-                step = asyncio.run(simulator.run_step_and_update_state(state))
+                step = await simulator.run_step_and_update_state(state)
             st.session_state["sim_total_cost"] += cost_manager.current_usage
 
         save_step_to_file(run_dir, step)
@@ -987,7 +986,7 @@ class SimulatorPage(AppPage):
         st.session_state["sim_state"] = state
 
     @classmethod
-    def _run_n_steps(cls, situation: Situation, n: int) -> None:
+    async def _run_n_steps(cls, situation: Situation, n: int) -> None:
         state = st.session_state.get("sim_state")
         simulator = Simulator(situation)
         if state is None:
@@ -1002,7 +1001,7 @@ class SimulatorPage(AppPage):
                 progress.progress(
                     (i + 1) / n, f"Running step {state.step_number + 1}..."
                 )
-                step = asyncio.run(simulator.run_step_and_update_state(state))
+                step = await simulator.run_step_and_update_state(state)
                 steps.append(step)
                 save_step_to_file(run_dir, step)
         st.session_state["sim_total_cost"] += cost_manager.current_usage

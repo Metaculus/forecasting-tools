@@ -292,7 +292,7 @@ question = metaculus_client.get_question_by_url(
 )
 print(f"Question found with url: {question.page_url}")
 
-questions = metaculus_client.get_all_open_questions_from_tournament(
+questions = await metaculus_client.get_all_open_questions_from_tournament_async(
     tournament_id=MetaculusClient.CURRENT_METACULUS_CUP_ID
 )
 print(f"Num tournament questions: {len(questions)}")

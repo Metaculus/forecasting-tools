@@ -10,6 +10,7 @@ from forecasting_tools.ai_models.agent_wrappers import agent_tool
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.helpers.structure_output import structure_output
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 from forecasting_tools.util.misc import clean_indents
 from forecasting_tools.util.optional_imports import require_optional_package
 
@@ -257,7 +258,7 @@ class TopicGenerator:
         Output: List of 10 topics that include links to the source.
         """
         number_of_items = 10
-        topics = asyncio.run(
+        topics = run_coroutine_synchronously(
             TopicGenerator.generate_random_news_items(number_of_items=number_of_items)
         )
         topic_list = ""
@@ -271,7 +272,9 @@ class TopicGenerator:
         """
         By picking a randomly generated Ticker symbol, finds a list of news items on a company.
         """
-        company, topics = asyncio.run(TopicGenerator.get_news_on_random_company())
+        company, topics = run_coroutine_synchronously(
+            TopicGenerator.get_news_on_random_company()
+        )
         company_info = f"Company: {company.name} ({company.symbol})\n"
         company_info += f"Overview: {company.overview}\n"
         company_info += f"URL: {company.url}\n"

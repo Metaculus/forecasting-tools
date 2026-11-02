@@ -83,8 +83,10 @@ class Benchmarker:
             assert (
                 self.number_of_questions_to_use is not None
             ), "number_of_questions_to_use must be provided if questions_to_use is not provided"
-            chosen_questions = MetaculusApi.get_benchmark_questions(
-                self.number_of_questions_to_use,
+            chosen_questions = (
+                await MetaculusApi.METACULUS_CLIENT.get_benchmark_questions_async(
+                    self.number_of_questions_to_use,
+                )
             )
         else:
             chosen_questions = self.questions_to_use

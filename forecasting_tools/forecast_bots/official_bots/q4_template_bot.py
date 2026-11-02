@@ -11,5 +11,5 @@ class Q4TemplateBot2024(Q3TemplateBot2024):
     """
 
     async def run_research(self, question: MetaculusQuestion) -> str:
-        news = AskNewsSearcher().get_formatted_news(question.question_text)
+        news = await AskNewsSearcher().get_formatted_news_async(question.question_text)
         return news
