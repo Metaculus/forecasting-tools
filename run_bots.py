@@ -64,9 +64,13 @@ POST_IDS_TO_SKIP = [
     27552,  # https://www.metaculus.com/questions/27552/ is rejected the best value is way out of bounds (date question closes 2026-12-31)
     7055,  # https://www.metaculus.com/questions/7055/ is rejected since bots treat the 0-1 range as percent points and fail numeric validation
     42727,  # https://www.metaculus.com/questions/42727/ is rejected since too many MC options
+    44553,  # https://www.metaculus.com/questions/44553/ is rejected since bot research reports a Sept 2026 NBS figure of 14.63%, so bots treat it as resolved and the parser refuses every forecast
+    44882,  # https://www.metaculus.com/questions/44882/ is rejected since its Sept 24th 2026 deadline passed while the question stays open, so the parser refuses forecasts from several top bots
 ]
 POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     # 43335,  # https://www.metaculus.com/questions/43335/ is still forecasted but should not fail the workflow if it errors
+    4922,  # https://www.metaculus.com/questions/4922/ gets None content from z-ai GLM models and content filter 400s from Moonshot Kimi models
+    41139,  # https://www.metaculus.com/questions/41139/ gets None content from z-ai GLM models
 ]
 
 
@@ -1075,6 +1079,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="anthropic/claude-sonnet-5",
                     temperature=None,
+                    timeout=160,  # Default 60s timed out long main-site responses (Oct 30th and Nov 2nd 2026)
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
