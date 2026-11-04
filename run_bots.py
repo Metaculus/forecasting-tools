@@ -665,7 +665,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/nvidia/nemotron-3.5-super-vl",
                     reasoning_effort="high",
                     temperature=default_temperature,
-                    **make_openrouter_provider_pin("crusoe/bf16"),
+                    # Provider history:
+                    # - Oct 15th 2026: pinned to crusoe/bf16
+                    # - Nov 4th 2026: added nebius/bf16 as backup (crusoe/bf16's shared pool rate limited nearly every call Nov 3rd-4th, so 21 AIB questions closed unforecasted)
+                    **make_openrouter_provider_pin("crusoe/bf16", "nebius/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
