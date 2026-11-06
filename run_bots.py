@@ -2,6 +2,9 @@
 This is the main file used to run the bots in the Metaulus AI Competition.
 
 It is run by workflows in the .github/workflows directory.
+
+All bots authenticate with one token (METACULUS_TOKEN) from an account allowed to
+act as metac bots, and each run publishes as the bot in METACULUS_ACTING_USER.
 """
 
 import argparse
@@ -49,7 +52,9 @@ default_num_forecasts_for_research_only_bot = 3
 # - Sept 5th 2025: openrouter/openai/gpt-4.1-mini
 # - Oct 15th 2026: openrouter/anthropic/claude-haiku-5.5 (OpenAI retires gpt-4.1-mini Jan 14th 2027)
 structure_output_model = DEFAULT_STRUCTURE_OUTPUT_MODEL
-default_metaculus_client = MetaculusClient()
+default_metaculus_client = MetaculusClient(
+    acting_user=os.getenv("METACULUS_ACTING_USER") or None
+)
 POST_IDS_TO_SKIP = [
     31653,  # https://www.metaculus.com/questions/31653/ is rejected by qwen3-max and is causing noisy workflow errors
     39009,  # https://www.metaculus.com/questions/39009/ is rejected since too many MC options
@@ -175,6 +180,14 @@ async def configure_and_run_bot(
     printable_base_url = " ".join(list(base_url))
     logger.info(f"Using Metaculus API base URL: {printable_base_url}")
 
+    if default_metaculus_client.acting_user is None:
+        raise ValueError(
+            "METACULUS_ACTING_USER environment variable is not set. Please set it "
+            "to the username of the bot to publish as. Without it, forecasts would "
+            "be published as the account that owns the shared token."
+        )
+    logger.info(f"Publishing as {default_metaculus_client.acting_user}")
+
     bot_config = get_default_bot_dict()[mode]
     questions = await get_questions_for_config(
         bot_config, max_questions=max_questions_for_run
@@ -185,6 +198,7 @@ async def configure_and_run_bot(
     assert isinstance(
         bot, ForecastBot
     ), f"Bot {mode} is not a ForecastBot, it is a {type(bot)}"
+    bot.metaculus_client = default_metaculus_client
     logger.info(f"LLMs for bot are: {bot.make_llm_dict()}")
     all_reports = []
     batches = [
