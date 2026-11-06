@@ -1,5 +1,7 @@
+import importlib.util
 from datetime import datetime
-from unittest.mock import Mock
+from pathlib import Path
+from unittest.mock import MagicMock, Mock
 
 import pendulum
 import pytest
@@ -16,6 +18,7 @@ from run_bots import (
     RunBotConfig,
     ScheduleConfig,
     TournConfig,
+    configure_and_run_bot,
     get_questions_for_config,
 )
 
@@ -201,3 +204,87 @@ async def test_basic_get_questions(
             max_questions=1000,
         )
         assert len(questions) == expected_num_questions
+
+
+@pytest.fixture
+def base_url_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("METACULUS_API_BASE_URL", "http://x")
+
+
+async def test_bot_publishes_as_the_acting_user(
+    mocker: Mock, base_url_env: None
+) -> None:
+    question = ForecastingTestManager.get_fake_binary_question()
+    question.id_of_question = 5
+    question.id_of_post = 9
+    bot = UniformProbabilityBot(publish_reports_to_metaculus=True)
+    mocker.patch(
+        "run_bots.default_metaculus_client",
+        MetaculusClient(
+            base_url="http://x",
+            token="t",
+            acting_user="metac-bot",
+            sleep_seconds_between_requests=0,
+            sleep_jitter_seconds=0,
+        ),
+    )
+    mocker.patch(
+        "run_bots.get_default_bot_dict",
+        return_value={
+            "mock": RunBotConfig(
+                mode="mock",
+                bot=bot,
+                estimated_cost_per_question=0.00,
+                tournaments=[],
+            )
+        },
+    )
+    mocker.patch("run_bots.get_questions_for_config", return_value=[question])
+    post_mock = mocker.patch(
+        "forecasting_tools.helpers.metaculus_client.requests.post",
+        return_value=MagicMock(status_code=201, content=b"{}"),
+    )
+
+    await configure_and_run_bot("mock")
+
+    calls = post_mock.call_args_list
+    assert {call.args[0] for call in calls} == {
+        "http://x/questions/bulk-forecast-comment/"
+    }
+    payloads = [call.kwargs["json"] for call in calls]
+    assert {payload["acting_user"] for payload in payloads} == {"metac-bot"}
+    assert payloads[0]["forecasts"][0]["question"] == 5
+    assert payloads[1]["comments"][0]["on_post"] == 9
+
+
+async def test_run_without_acting_user_raises_before_doing_anything(
+    mocker: Mock, base_url_env: None
+) -> None:
+    mocker.patch("run_bots.default_metaculus_client", MetaculusClient(token="t"))
+    get_bots_mock = mocker.patch("run_bots.get_default_bot_dict")
+
+    with pytest.raises(ValueError, match="METACULUS_ACTING_USER"):
+        await configure_and_run_bot("mock")
+
+    get_bots_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "env_value, expected_acting_user",
+    [("metac-bot+asknews", "metac-bot+asknews"), ("", None)],
+)
+def test_default_client_reads_acting_user_from_env(
+    monkeypatch: pytest.MonkeyPatch,
+    env_value: str,
+    expected_acting_user: str | None,
+) -> None:
+    monkeypatch.setenv("METACULUS_ACTING_USER", env_value)
+    # A separate copy of the module, since the client is created at import time
+    spec = importlib.util.spec_from_file_location(
+        "run_bots_copy", Path(__file__).parents[2] / "run_bots.py"
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    assert module.default_metaculus_client.acting_user == expected_acting_user
