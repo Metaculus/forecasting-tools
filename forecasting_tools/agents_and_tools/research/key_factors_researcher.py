@@ -102,7 +102,7 @@ class KeyFactorsResearcher:
             cls.__find_key_factors_for_question(question) for question in questions
         ]
         key_factors, _ = (
-            async_batching.run_coroutines_while_removing_and_logging_exceptions(
+            await async_batching.run_coroutines_while_removing_and_logging_exceptions_async(
                 key_factor_tasks
             )
         )
@@ -197,7 +197,7 @@ class KeyFactorsResearcher:
             for factor in key_factors
         ]
         scored_factors, _ = (
-            async_batching.run_coroutines_while_removing_and_logging_exceptions(
+            await async_batching.run_coroutines_while_removing_and_logging_exceptions_async(
                 scoring_coroutines
             )
         )

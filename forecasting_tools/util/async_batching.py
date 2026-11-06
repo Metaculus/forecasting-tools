@@ -2,15 +2,14 @@ import asyncio
 import logging
 from typing import Any, Callable, Coroutine, TypeVar
 
-import nest_asyncio
 from aiolimiter import AsyncLimiter
+
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 T2 = TypeVar("T2")
-
-nest_asyncio.apply()  # Make sure asyncio can be nested inside of other asyncio calls
 
 
 def wrap_coroutines_with_rate_limit(
@@ -93,15 +92,10 @@ def wrap_coroutines_with_limit_timeout_and_returning_exceptions(
 
 
 def run_coroutines(coroutines: list[Coroutine[Any, Any, T]]) -> list[T]:
-    async def run_coroutines(coroutines: list[Coroutine[Any, Any, T]]) -> list[T]:
-        tasks = []
-        for coroutine in coroutines:
-            tasks.append(loop.create_task(coroutine))
-        results = await asyncio.gather(*tasks)
-        return results
+    async def gather_coroutines() -> list[T]:
+        return list(await asyncio.gather(*coroutines))
 
-    loop = asyncio.get_event_loop()
-    return loop.run_until_complete(run_coroutines(coroutines))
+    return run_coroutine_synchronously(gather_coroutines())
 
 
 def run_coroutines_while_removing_and_logging_exceptions(
@@ -114,6 +108,18 @@ def run_coroutines_while_removing_and_logging_exceptions(
     A list of "None" is returned as the corresponding input if no matching_inputs are provided.
     A default log message is given on the case of an exception. You can switch out this with a custom function if desired.
     """
+    return run_coroutine_synchronously(
+        run_coroutines_while_removing_and_logging_exceptions_async(
+            coroutines, matching_inputs, action_on_exception
+        )
+    )
+
+
+async def run_coroutines_while_removing_and_logging_exceptions_async(
+    coroutines: list[Coroutine[Any, Any, T]],
+    matching_inputs: list[T2] | T2 = None,
+    action_on_exception: Callable[[Exception, T2], None] | None = None,
+) -> tuple[list[T], list[T2]]:
     if matching_inputs is None:
         modified_inputs = [None] * len(coroutines)
     elif not isinstance(matching_inputs, list):
@@ -128,7 +134,7 @@ def run_coroutines_while_removing_and_logging_exceptions(
     exception_wrapped_coroutines = wrap_coroutines_to_return_not_raise_exceptions(
         coroutines
     )
-    results = run_coroutines(exception_wrapped_coroutines)
+    results = await asyncio.gather(*exception_wrapped_coroutines)
 
     results_that_did_not_error: list[T] = []
     inputs_that_did_not_error: list[T2] = []

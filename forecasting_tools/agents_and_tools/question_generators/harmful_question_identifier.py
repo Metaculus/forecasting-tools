@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 from enum import Enum
 
@@ -7,6 +6,7 @@ from pydantic import BaseModel
 from forecasting_tools.ai_models.agent_wrappers import agent_tool
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.helpers.structure_output import structure_output
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 from forecasting_tools.util.misc import clean_indents
 
 
@@ -208,7 +208,7 @@ class HarmfulQuestionIdentifier:
             other_question_info: Any other information about specific aspects of the question including background information, research, resolution criteria, who is asking the question, and why they are asking the question
             additional_context: Any extra context or special instructions
         """
-        result = asyncio.run(
+        result = run_coroutine_synchronously(
             HarmfulQuestionIdentifier().identify(
                 question_text,
                 other_question_info,

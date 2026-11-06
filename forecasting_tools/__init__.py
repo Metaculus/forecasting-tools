@@ -2,8 +2,6 @@ import importlib.util
 import types
 from typing import TYPE_CHECKING, Any
 
-import nest_asyncio
-
 from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
     BaseRateResearcher as BaseRateResearcher,
 )
@@ -263,5 +261,3 @@ __all__ = sorted(
     }
     | set(_LAZY_EXPORTS)
 )
-
-nest_asyncio.apply()

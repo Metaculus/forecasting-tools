@@ -163,8 +163,10 @@ class ForecastBot(ABC):
         tournament_id: int | str,
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
-        questions = self.metaculus_client.get_all_open_questions_from_tournament(
-            tournament_id
+        questions = (
+            await self.metaculus_client.get_all_open_questions_from_tournament_async(
+                tournament_id
+            )
         )
         return await self.forecast_questions(questions, return_exceptions)
 
