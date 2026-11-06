@@ -71,6 +71,17 @@ POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     # 43335,  # https://www.metaculus.com/questions/43335/ is still forecasted but should not fail the workflow if it errors
     4922,  # https://www.metaculus.com/questions/4922/ gets None content from z-ai GLM models and content filter 400s from Moonshot Kimi models
     41139,  # https://www.metaculus.com/questions/41139/ gets None content from z-ai GLM models
+    20845,  # https://www.metaculus.com/questions/20845/ gets forecasts entirely past its 2027 upper bound from DeepSeek 3.2 reasoning and Inkling, which fail the out-of-range check
+    45463,  # https://www.metaculus.com/questions/45463/ is treated as already resolved by Qwen 3.7 Plus, so the parser refuses its forecasts
+    6142,  # https://www.metaculus.com/questions/6142/ gets repeated percentile values at its open lower bound from Muse Wonder, which make a non-increasing CDF that fails standardization
+    # US-China and Russia questions that get content filter 400s from Moonshot Kimi models (Nov 4th 2026)
+    43119,  # https://www.metaculus.com/questions/43119/
+    44880,  # https://www.metaculus.com/questions/44880/
+    44883,  # https://www.metaculus.com/questions/44883/
+    45414,  # https://www.metaculus.com/questions/45414/
+    45415,  # https://www.metaculus.com/questions/45415/
+    45876,  # https://www.metaculus.com/questions/45876/
+    46442,  # https://www.metaculus.com/questions/46442/
 ]
 
 
