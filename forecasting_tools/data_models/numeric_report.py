@@ -518,12 +518,9 @@ class NumericDistribution(BaseModel):
             current = cdf_location_to_percentile_mapping[i]
             epsilon = 1e-10
             if previous[0] - epsilon <= cdf_location <= current[0] + epsilon:
-                fraction_of_segment = (cdf_location - previous[0]) / (
-                    current[0] - previous[0]
-                )
-                # Segments shorter than epsilon would otherwise extrapolate far past their endpoints
-                fraction_of_segment = min(max(fraction_of_segment, 0.0), 1.0)
-                result = previous[1] + (current[1] - previous[1]) * fraction_of_segment
+                result = previous[1] + (current[1] - previous[1]) * (
+                    cdf_location - previous[0]
+                ) / (current[0] - previous[0])
                 if np.isnan(result):
                     raise ValueError(f"Result is NaN for cdf location {cdf_location}")
                 return result

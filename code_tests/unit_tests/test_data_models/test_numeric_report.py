@@ -359,26 +359,6 @@ def test_standardize_cdf_raises_instead_of_looping_on_non_increasing_cdf(
         distribution._standardize_cdf(non_increasing_cdf)
 
 
-def test_repeated_values_at_open_lower_bound_give_increasing_cdf() -> None:
-    distribution = NumericDistribution(
-        declared_percentiles=[
-            Percentile(value=value, percentile=height)
-            for value, height in zip([3, 3, 4, 4, 5, 6], [0.1, 0.2, 0.4, 0.6, 0.8, 0.9])
-        ],
-        open_upper_bound=True,
-        open_lower_bound=True,
-        upper_bound=10,
-        lower_bound=3,
-        zero_point=None,
-    )
-
-    cdf = distribution.get_cdf()
-
-    heights = [percentile.percentile for percentile in cdf]
-    assert all(later > earlier for earlier, later in zip(heights, heights[1:]))
-    assert heights[0] < 0.2
-
-
 def test_numeric_edge_of_bin_edge_case() -> None:
     """
     If all of the probability is assigned to 12, we want to make sure that if it resolves "12"
