@@ -11,26 +11,43 @@ from logging.handlers import RotatingFileHandler
 from forecasting_tools.util import file_manipulation
 
 
-# Define the filter class
 class HttpApiKeyFilter(logging.Filter):
-    """A filter to prevent logging API keys in HTTP requests."""
+    """
+    Redacts secret query parameters (API keys, tokens, secrets) from URLs in every log
+    record, including exception text. Any logger can print a request URL (e.g. an HTTP
+    error message), so this is not limited to httpx.
+    """
 
-    # Compile regex for efficiency - matches http(s) URLs containing 'key='
-    API_KEY_PATTERN = re.compile(r"https?://.*key=")
+    SECRET_QUERY_PARAMETER_PATTERN = re.compile(
+        r"([?&](?:[\w-]*(?:key|token|secret|signature)|password)=)[^&\s'\"#]+",
+        re.IGNORECASE,
+    )
+    REDACTED_VALUE = "REDACTED"
 
     def filter(self, record: logging.LogRecord) -> bool:
-        """
-        Filters out log records from httpx containing API keys in URLs.
-
-        Returns False if the record should be dropped, True otherwise.
-        """
-        # Check if the log record is from httpx
-        if record.name == "httpx":
+        try:
             message = record.getMessage()
-            # Check if the pattern is present in the log message
-            if self.API_KEY_PATTERN.search(message):
-                return False  # Discard the log record
-        return True  # Keep the log record
+        except Exception:
+            # Filters run outside Handler.handleError, so let emit() report the bad format
+            return True
+        redacted_message = self.redact(message)
+        if redacted_message != message:
+            record.msg = redacted_message
+            record.args = None
+        exception_text = record.exc_text
+        if record.exc_info and not exception_text:
+            exception_text = logging.Formatter().formatException(record.exc_info)
+        if exception_text:
+            redacted_exception_text = self.redact(exception_text)
+            if redacted_exception_text != exception_text:
+                record.exc_text = redacted_exception_text
+        if record.stack_info:
+            record.stack_info = self.redact(record.stack_info)
+        return True
+
+    @classmethod
+    def redact(cls, text: str) -> str:
+        return cls.SECRET_QUERY_PARAMETER_PATTERN.sub(rf"\1{cls.REDACTED_VALUE}", text)
 
 
 class CustomLogger:
