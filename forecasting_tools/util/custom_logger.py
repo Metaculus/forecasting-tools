@@ -25,15 +25,22 @@ class HttpApiKeyFilter(logging.Filter):
     REDACTED_VALUE = "REDACTED"
 
     def filter(self, record: logging.LogRecord) -> bool:
-        message = record.getMessage()
+        try:
+            message = record.getMessage()
+        except Exception:
+            # Filters run outside Handler.handleError, so let emit() report the bad format
+            return True
         redacted_message = self.redact(message)
         if redacted_message != message:
             record.msg = redacted_message
             record.args = None
-        if record.exc_info and not record.exc_text:
-            record.exc_text = logging.Formatter().formatException(record.exc_info)
-        if record.exc_text:
-            record.exc_text = self.redact(record.exc_text)
+        exception_text = record.exc_text
+        if record.exc_info and not exception_text:
+            exception_text = logging.Formatter().formatException(record.exc_info)
+        if exception_text:
+            redacted_exception_text = self.redact(exception_text)
+            if redacted_exception_text != exception_text:
+                record.exc_text = redacted_exception_text
         if record.stack_info:
             record.stack_info = self.redact(record.stack_info)
         return True

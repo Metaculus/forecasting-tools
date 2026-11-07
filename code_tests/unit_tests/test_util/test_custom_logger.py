@@ -1,5 +1,6 @@
 import io
 import logging
+import sys
 from collections.abc import Iterator
 
 import httpx
@@ -22,11 +23,14 @@ def captured_log() -> Iterator[tuple[logging.Logger, io.StringIO]]:
     handler.setFormatter(logging.Formatter("%(name)s - %(message)s"))
     handler.addFilter(HttpApiKeyFilter())
     logger = logging.getLogger("metaculus_ai_sdk.seed.sources.google_trends")
+    original_level, original_propagate = logger.level, logger.propagate
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
     yield logger, stream
     logger.removeHandler(handler)
+    logger.setLevel(original_level)
+    logger.propagate = original_propagate
 
 
 def test_key_in_a_non_httpx_warning_is_redacted(
@@ -104,3 +108,21 @@ def test_token_and_secret_parameters_are_redacted() -> None:
     assert "tok_123.456" not in redacted
     assert "deadbeef" not in redacted
     assert "client_id=abc" in redacted
+
+
+def test_malformed_format_arguments_do_not_raise_from_the_filter() -> None:
+    record = logging.LogRecord(
+        "some.library", logging.INFO, __file__, 1, "value %s %s", ("only-one",), None
+    )
+    assert HttpApiKeyFilter().filter(record) is True
+
+
+def test_traceback_without_secrets_is_left_for_the_handler_to_format() -> None:
+    try:
+        raise ValueError("no secrets here")
+    except ValueError:
+        record = logging.LogRecord(
+            "some.library", logging.ERROR, __file__, 1, "failed", None, sys.exc_info()
+        )
+    HttpApiKeyFilter().filter(record)
+    assert record.exc_text is None
