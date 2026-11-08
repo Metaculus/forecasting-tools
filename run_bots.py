@@ -1504,7 +1504,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
                     # - Sept 25th 2026: pinned to minimax/fp8
                     # - Oct 27th 2026: re-pinned to minimax (same MiniMax endpoint; on Oct 26th OpenRouter renamed it and stopped declaring its precision, so the old slug failed every call). The bare slug can also route to MiniMax's minimax/highspeed priority endpoint (same model, 2x price)
-                    **make_openrouter_provider_pin("minimax"),
+                    # - Nov 7th 2026: re-pinned to novita/fp8 with gmicloud/fp8 as backup (MiniMax stopped serving this model on OpenRouter on Nov 5th, so every call failed with "No endpoints found")
+                    **make_openrouter_provider_pin("novita/fp8", "gmicloud/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
