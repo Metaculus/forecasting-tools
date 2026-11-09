@@ -74,6 +74,7 @@ POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     20845,  # https://www.metaculus.com/questions/20845/ gets forecasts entirely past its 2027 upper bound from DeepSeek 3.2 reasoning and Inkling, which fail the out-of-range check
     45463,  # https://www.metaculus.com/questions/45463/ is treated as already resolved by Qwen 3.7 Plus, so the parser refuses its forecasts
     6142,  # https://www.metaculus.com/questions/6142/ gets repeated percentile values at its open lower bound from Muse Wonder, which make a non-increasing CDF that fails standardization
+    46016,  # https://www.metaculus.com/questions/46016/ gets forecasts entirely below its range from GPT-5.4 nano, which fail the out-of-range check
     # US-China and Russia questions that get content filter 400s from Moonshot Kimi models (Nov 4th 2026)
     43119,  # https://www.metaculus.com/questions/43119/
     44880,  # https://www.metaculus.com/questions/44880/
@@ -82,6 +83,9 @@ POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     45415,  # https://www.metaculus.com/questions/45415/
     45876,  # https://www.metaculus.com/questions/45876/
     46442,  # https://www.metaculus.com/questions/46442/
+    # US arms control and Russia questions that get content filter 400s from Moonshot Kimi models (Nov 9th 2026)
+    41365,  # https://www.metaculus.com/questions/41365/
+    46451,  # https://www.metaculus.com/questions/46451/
 ]
 
 
