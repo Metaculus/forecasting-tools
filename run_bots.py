@@ -672,6 +672,21 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        ############################ Bots started in November 2026 ############################
+        "METAC_CLAUDE_FABLE_5_2_HIGH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 1.6,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-fable-5-2",
+                    **{
+                        k: v
+                        for k, v in claude_adaptive_thinking_settings_high.items()
+                        if k != "temperature"
+                    },
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ Bots started in October 2026 ############################
         "METAC_NEMOTRON_3_5_SUPER_VL_HIGH": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost * 0.3,
