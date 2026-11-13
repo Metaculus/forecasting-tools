@@ -30,11 +30,9 @@ logger = logging.getLogger(__name__)
 DEFAULT_MODEL: str = "openrouter/google/gemini-2.5-pro"
 MODEL_CHOICES: list[str] = [
     DEFAULT_MODEL,
-    "openai/gpt-5",
     "openrouter/x-ai/grok-4",
     "openrouter/anthropic/claude-opus-4.1",
     "openrouter/anthropic/claude-sonnet-4",
-    "openai/o3",
     "openai/o4-mini",
     "openai/gpt-6-sol",
     "openrouter/google/gemini-2.5-pro-preview",
