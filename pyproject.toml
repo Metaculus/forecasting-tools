@@ -123,7 +123,7 @@ exclude-newer = "7 days"
 packages = ["forecasting_tools"]
 
 [tool.hatch.build.targets.sdist]
-include = ["forecasting_tools"]
+include = ["/forecasting_tools"]
 
 [build-system]
 requires = ["hatchling"]
