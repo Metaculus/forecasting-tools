@@ -1967,6 +1967,9 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     reasoning={
                         "enabled": True,
                     },
+                    # Provider history (unpinned before Nov 12th 2026; Z.AI fp8 was its only OpenRouter host on Sept 24th and Nov 12th 2026):
+                    # - Nov 12th 2026: pinned to z-ai/fp8 so a newly listed host can't change what serves this bot
+                    **make_openrouter_provider_pin("z-ai/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
