@@ -64,9 +64,28 @@ POST_IDS_TO_SKIP = [
     27552,  # https://www.metaculus.com/questions/27552/ is rejected the best value is way out of bounds (date question closes 2026-12-31)
     7055,  # https://www.metaculus.com/questions/7055/ is rejected since bots treat the 0-1 range as percent points and fail numeric validation
     42727,  # https://www.metaculus.com/questions/42727/ is rejected since too many MC options
+    44553,  # https://www.metaculus.com/questions/44553/ is rejected since bot research reports a Sept 2026 NBS figure of 14.63%, so bots treat it as resolved and the parser refuses every forecast
+    44882,  # https://www.metaculus.com/questions/44882/ is rejected since its Sept 24th 2026 deadline passed while the question stays open, so the parser refuses forecasts from several top bots
 ]
 POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     # 43335,  # https://www.metaculus.com/questions/43335/ is still forecasted but should not fail the workflow if it errors
+    4922,  # https://www.metaculus.com/questions/4922/ gets None content from z-ai GLM models and content filter 400s from Moonshot Kimi models
+    41139,  # https://www.metaculus.com/questions/41139/ gets None content from z-ai GLM models
+    20845,  # https://www.metaculus.com/questions/20845/ gets forecasts entirely past its 2027 upper bound from DeepSeek 3.2 reasoning and Inkling, which fail the out-of-range check
+    45463,  # https://www.metaculus.com/questions/45463/ is treated as already resolved by Qwen 3.7 Plus, so the parser refuses its forecasts
+    6142,  # https://www.metaculus.com/questions/6142/ gets repeated percentile values at its open lower bound from Muse Wonder, which make a non-increasing CDF that fails standardization
+    46016,  # https://www.metaculus.com/questions/46016/ gets forecasts entirely below its range from GPT-5.4 nano, which fail the out-of-range check
+    # US-China and Russia questions that get content filter 400s from Moonshot Kimi models (Nov 4th 2026)
+    43119,  # https://www.metaculus.com/questions/43119/
+    44880,  # https://www.metaculus.com/questions/44880/
+    44883,  # https://www.metaculus.com/questions/44883/
+    45414,  # https://www.metaculus.com/questions/45414/
+    45415,  # https://www.metaculus.com/questions/45415/
+    45876,  # https://www.metaculus.com/questions/45876/
+    46442,  # https://www.metaculus.com/questions/46442/
+    # US arms control and Russia questions that get content filter 400s from Moonshot Kimi models (Nov 9th 2026)
+    41365,  # https://www.metaculus.com/questions/41365/
+    46451,  # https://www.metaculus.com/questions/46451/
 ]
 
 
@@ -655,6 +674,21 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
     }
 
     mode_base_bot_mapping = {
+        ############################ Bots started in November 2026 ############################
+        "METAC_CLAUDE_FABLE_5_2_HIGH": {
+            "estimated_cost_per_question": roughly_opus_4_5_cost * 1.6,
+            "bot": create_bot(
+                llm=GeneralLlm(
+                    model="anthropic/claude-fable-5-2",
+                    **{
+                        k: v
+                        for k, v in claude_adaptive_thinking_settings_high.items()
+                        if k != "temperature"
+                    },
+                ),
+            ),
+            "tournaments": TournConfig.aib_and_site,
+        },
         ############################ Bots started in October 2026 ############################
         "METAC_NEMOTRON_3_5_SUPER_VL_HIGH": {
             "estimated_cost_per_question": roughly_deepseek_r1_cost * 0.3,
@@ -663,7 +697,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     model="openrouter/nvidia/nemotron-3.5-super-vl",
                     reasoning_effort="high",
                     temperature=default_temperature,
-                    **make_openrouter_provider_pin("crusoe/bf16"),
+                    # Provider history:
+                    # - Oct 15th 2026: pinned to crusoe/bf16
+                    # - Nov 4th 2026: added nebius/bf16 as backup (crusoe/bf16's shared pool rate limited nearly every call Nov 3rd-4th, so 21 AIB questions closed unforecasted)
+                    **make_openrouter_provider_pin("crusoe/bf16", "nebius/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1077,6 +1114,7 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="anthropic/claude-sonnet-5",
                     temperature=None,
+                    timeout=160,  # Default 60s timed out long main-site responses (Oct 30th and Nov 2nd 2026)
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1487,7 +1525,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
                     # - Sept 25th 2026: pinned to minimax/fp8
                     # - Oct 27th 2026: re-pinned to minimax (same MiniMax endpoint; on Oct 26th OpenRouter renamed it and stopped declaring its precision, so the old slug failed every call). The bare slug can also route to MiniMax's minimax/highspeed priority endpoint (same model, 2x price)
-                    **make_openrouter_provider_pin("minimax"),
+                    # - Nov 7th 2026: re-pinned to novita/fp8 with gmicloud/fp8 as backup (MiniMax stopped serving this model on OpenRouter on Nov 5th, so every call failed with "No endpoints found")
+                    **make_openrouter_provider_pin("novita/fp8", "gmicloud/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,

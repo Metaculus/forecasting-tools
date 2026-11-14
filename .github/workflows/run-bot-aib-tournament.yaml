@@ -10,6 +10,9 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 # Daily job to run the forecast bot
 jobs:
   precache_asknews:
@@ -55,6 +58,23 @@ jobs:
           key: asknews-cache-${{ github.run_id }}
 
   # NOTE: don't remove any of the open source models, since these are the best option for a long term baseline (other models get deprecated)
+
+  #################################### November 2026 new bots ####################################
+
+  bot_claude_fable_5_2_high:
+    needs: precache_asknews
+    uses: ./.github/workflows/run-bot-launcher.yaml
+    with:
+      bot_name: "METAC_CLAUDE_FABLE_5_2_HIGH"
+      metac_name: "metac-claude-fable-5-2-high+asknews"
+      cache_key: asknews-cache-${{ github.run_id }}
+    secrets:
+      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
+      INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
   #################################### October 2026 new bots ####################################
 
