@@ -8,5 +8,7 @@ from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 class Q3TemplateWithAskNews(Q3TemplateBot2024):
 
     async def run_research(self, question: MetaculusQuestion) -> str:
-        response = AskNewsSearcher().get_formatted_news(question.question_text)
+        response = await AskNewsSearcher().get_formatted_news_async(
+            question.question_text
+        )
         return response

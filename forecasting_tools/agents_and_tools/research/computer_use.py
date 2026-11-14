@@ -4,6 +4,7 @@ import os
 
 from pydantic import BaseModel
 
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 from forecasting_tools.util.misc import clean_indents
 from forecasting_tools.util.optional_imports import require_optional_package
 
@@ -165,5 +166,5 @@ class ComputerUse:
         Include any relevant URLs in the prompt and try to give a detailed plan of what you want the agent to do. Links and Hosted file IDs of downloaded data will be returned automatically with the answer (so don't ask for file paths). This tool can take 10+ minutes to run.
         """
         computer_use = ComputerUse()
-        result = asyncio.run(computer_use.answer_prompt(prompt))
+        result = run_coroutine_synchronously(computer_use.answer_prompt(prompt))
         return result.as_string

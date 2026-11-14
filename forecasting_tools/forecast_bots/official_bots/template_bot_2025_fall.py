@@ -12,7 +12,10 @@ from forecasting_tools.data_models.conditional_models import (
     PredictionAffirmed,
 )
 from forecasting_tools.data_models.data_organizer import PredictionTypes
-from forecasting_tools.data_models.forecast_report import ReasonedPrediction
+from forecasting_tools.data_models.forecast_report import (
+    ForecastReport,
+    ReasonedPrediction,
+)
 from forecasting_tools.data_models.multiple_choice_report import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import (
     DatePercentile,
@@ -736,17 +739,21 @@ if __name__ == "__main__":
     )
 
     if run_mode == "tournament":
-        seasonal_tournament_reports = asyncio.run(
-            template_bot.forecast_on_tournament(
+
+        async def forecast_on_seasonal_tournament_and_minibench() -> (
+            list[ForecastReport | BaseException]
+        ):
+            seasonal_tournament_reports = await template_bot.forecast_on_tournament(
                 MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True
             )
-        )
-        minibench_reports = asyncio.run(
-            template_bot.forecast_on_tournament(
+            minibench_reports = await template_bot.forecast_on_tournament(
                 MetaculusApi.CURRENT_MINIBENCH_ID, return_exceptions=True
             )
-        )
-        forecast_reports = seasonal_tournament_reports + minibench_reports
+            return seasonal_tournament_reports + minibench_reports
+
+        # One event loop for both: asyncio primitives like _concurrency_limiter
+        # can't be reused across separate asyncio.run calls
+        forecast_reports = asyncio.run(forecast_on_seasonal_tournament_and_minibench())
     elif run_mode == "metaculus_cup":
         # The Metaculus cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564 or AI_2027_TOURNAMENT_ID = "ai-2027"
         # The Metaculus cup may not be initialized near the beginning of a season (i.e. January, May, September)

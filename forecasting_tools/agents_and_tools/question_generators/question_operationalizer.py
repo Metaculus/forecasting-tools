@@ -1,4 +1,3 @@
-import asyncio
 import random
 
 from forecasting_tools.agents_and_tools.question_generators.simple_question import (
@@ -8,6 +7,7 @@ from forecasting_tools.ai_models.agent_wrappers import agent_tool
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.data_models.data_organizer import DataOrganizer
 from forecasting_tools.helpers.structure_output import structure_output
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 from forecasting_tools.util.misc import clean_indents
 
 
@@ -102,7 +102,7 @@ class QuestionOperationalizer:
             related_research: Include as much research as possible to help make a good question (especially include possible resolution sources)
         """
 
-        result = asyncio.run(
+        result = run_coroutine_synchronously(
             QuestionOperationalizer().operationalize_question(
                 question_title,
                 related_research,

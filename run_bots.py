@@ -280,10 +280,10 @@ async def get_questions_for_allowed_tournaments(
 
     questions: list[MetaculusQuestion] = []
     for tournament in aib_tourns:
-        questions.extend(_get_aib_questions(tournament, reforecast_aib_questions))
+        questions.extend(await _get_aib_questions(tournament, reforecast_aib_questions))
 
     if should_forecast_on__every_x_days__questions:
-        questions.extend(_get__every_x_days__questions(regularly_forecast_tourns))
+        questions.extend(await _get__every_x_days__questions(regularly_forecast_tourns))
 
     if should_forecast_on_main_site:
         main_site_questions = await _get_questions_for_main_site(main_site_tourns)
@@ -299,11 +299,13 @@ async def get_questions_for_allowed_tournaments(
     return questions_to_forecast
 
 
-def _get_aib_questions(
+async def _get_aib_questions(
     tournament: AllowedTourn, reforecast_aib_questions: bool
 ) -> list[MetaculusQuestion]:
-    aib_questions = default_metaculus_client.get_all_open_questions_from_tournament(
-        tournament.value
+    aib_questions = (
+        await default_metaculus_client.get_all_open_questions_from_tournament_async(
+            tournament.value
+        )
     )
     filtered_questions = []
     already_forecasted_skip_count = 0
@@ -318,13 +320,13 @@ def _get_aib_questions(
     return filtered_questions
 
 
-def _get__every_x_days__questions(
+async def _get__every_x_days__questions(
     tournaments: list[AllowedTourn],
 ) -> list[MetaculusQuestion]:
     tournament_questions: list[MetaculusQuestion] = []
     for tournament in tournaments:
         tournament_questions += (
-            default_metaculus_client.get_all_open_questions_from_tournament(
+            await default_metaculus_client.get_all_open_questions_from_tournament_async(
                 tournament.value
             )
         )
@@ -367,7 +369,7 @@ async def _get_questions_for_main_site(
     other_tourns = [t for t in main_site_tourns if t != AllowedTourn.MAIN_SITE]
     for tournament in other_tourns:
         site_questions += (
-            default_metaculus_client.get_all_open_questions_from_tournament(
+            await default_metaculus_client.get_all_open_questions_from_tournament_async(
                 tournament.value,
                 group_question_mode="unpack_subquestions",
             )
