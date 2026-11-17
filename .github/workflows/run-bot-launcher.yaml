@@ -4,19 +4,16 @@ on:
       bot_name:
         required: true
         type: string
-      metac_name:
-        required: false
+      metac_name: # The username of the metac bot account to publish as
+        required: true
         type: string
-        default: ""
       cache_key:
         required: false
         type: string
         default: ""
     secrets:
-      INPUT_METACULUS_TOKEN:
-        required: false
-      INPUT_METACULUS_TOKENS:
-        required: false
+      INPUT_METACULUS_TOKEN: # Must belong to an account that can act as metac bots
+        required: true
       INPUT_METACULUS_API_BASE_URL:
         required: false
       INPUT_OPENAI_API_KEY:
@@ -82,29 +79,12 @@ jobs:
             echo "WARNING: Cache was not restored."
           fi
 
-      - name: Resolve METACULUS_TOKEN
-        run: |
-          if [ -n "$RAW_TOKEN" ]; then
-            echo "::add-mask::$RAW_TOKEN"
-            echo "METACULUS_TOKEN=$RAW_TOKEN" >> $GITHUB_ENV
-          else
-            TOKEN=$(echo "$METACULUS_TOKENS" | jq -r --arg key "$METAC_NAME" '.[$key] // empty')
-            if [ -z "$TOKEN" ]; then
-              echo "ERROR: No token found for $METAC_NAME in METACULUS_TOKENS" >&2
-              exit 1
-            fi
-            echo "::add-mask::$TOKEN"
-            echo "METACULUS_TOKEN=$TOKEN" >> $GITHUB_ENV
-          fi
-        env:
-          RAW_TOKEN: ${{ secrets.INPUT_METACULUS_TOKEN }}
-          METACULUS_TOKENS: ${{ secrets.INPUT_METACULUS_TOKENS }}
-          METAC_NAME: ${{ inputs.metac_name }}
-
       - name: Run bot
         run: |
           uv run --no-sync python run_bots.py ${{ inputs.bot_name }}
         env:
+          METACULUS_TOKEN: ${{ secrets.INPUT_METACULUS_TOKEN }}
+          METACULUS_ACTING_USER: ${{ inputs.metac_name }}
           METACULUS_API_BASE_URL: ${{ secrets.INPUT_METACULUS_API_BASE_URL }}
           ASKNEWS_CLIENT_ID: ${{ secrets.INPUT_ASKNEWS_CLIENT_ID }}
           ASKNEWS_SECRET: ${{ secrets.INPUT_ASKNEWS_SECRET }}
