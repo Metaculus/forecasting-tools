@@ -48,9 +48,10 @@ def collect_provider_pins() -> list[ProviderPin]:
             llm = config.bot.get_llm(purpose)
             if not isinstance(llm, GeneralLlm):
                 continue
-            provider = llm.litellm_kwargs.get("extra_body", {}).get("provider", {})
+            extra_body = llm.litellm_kwargs.get("extra_body") or {}
+            provider = extra_body.get("provider") or {}
             endpoint_slugs = provider.get("order")
-            if not endpoint_slugs:
+            if not endpoint_slugs or provider.get("allow_fallbacks", True):
                 continue
             if not llm.model.startswith(OPENROUTER_MODEL_PREFIX):
                 raise ValueError(
