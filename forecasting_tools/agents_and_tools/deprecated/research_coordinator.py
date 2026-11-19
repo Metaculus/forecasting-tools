@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from forecasting_tools.agents_and_tools.base_rates.base_rate_researcher import (
@@ -61,12 +62,15 @@ class ResearchCoordinator:
         base_rate_questions = await self.brainstorm_base_rate_questions(
             number_of_base_rate_reports, background_markdown
         )
-        base_rate_tasks = [
-            BaseRateResearcher(question).make_base_rate_report()
+        base_rate_researchers = [
+            await asyncio.to_thread(BaseRateResearcher, question)
             for question in base_rate_questions
         ]
+        base_rate_tasks = [
+            researcher.make_base_rate_report() for researcher in base_rate_researchers
+        ]
         base_rate_reports, _ = (
-            async_batching.run_coroutines_while_removing_and_logging_exceptions(
+            await async_batching.run_coroutines_while_removing_and_logging_exceptions_async(
                 base_rate_tasks
             )
         )
@@ -312,8 +316,8 @@ class ResearchCoordinator:
                 answering_question_coroutines
             )
         )
-        unverified_answers: list[str | Exception] = async_batching.run_coroutines(
-            exception_handled_coroutines
+        unverified_answers: list[str | Exception] = await asyncio.gather(
+            *exception_handled_coroutines
         )
         verified_answers = []
         for question, answer in zip(questions, unverified_answers):

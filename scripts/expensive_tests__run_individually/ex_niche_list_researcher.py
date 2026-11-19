@@ -191,11 +191,9 @@ async def test_exhaustive_list_generation(
     things_to_generate: str, expected_items: list[str]
 ) -> None:
     with MonetaryCostManager() as cost_manager:
-        all_items_including_incorrect = asyncio.run(
-            NicheListResearcher(
-                type_of_thing_to_generate=things_to_generate
-            ).research_niche_reference_class(return_invalid_items=True)
-        )
+        all_items_including_incorrect = await NicheListResearcher(
+            type_of_thing_to_generate=things_to_generate
+        ).research_niche_reference_class(return_invalid_items=True)
     list_markdown = FactCheckedItem.make_markdown_with_valid_and_invalid_lists(
         all_items_including_incorrect
     )

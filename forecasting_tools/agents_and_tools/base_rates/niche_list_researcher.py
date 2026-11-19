@@ -247,7 +247,7 @@ class NicheListResearcher:
         ]
         ask_ai_coroutines = regular_calls + internet_calls
         non_errored_responses, _ = (
-            async_batching.run_coroutines_while_removing_and_logging_exceptions(
+            await async_batching.run_coroutines_while_removing_and_logging_exceptions_async(
                 ask_ai_coroutines
             )
         )

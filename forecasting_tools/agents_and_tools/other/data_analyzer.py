@@ -13,6 +13,7 @@ from forecasting_tools.ai_models.agent_wrappers import (
     agent_tool,
     event_to_tool_message,
 )
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
@@ -110,7 +111,7 @@ class DataAnalyzer:
         """
         data_analysis = DataAnalyzer()
         available_files = list(files) if files else []
-        return asyncio.run(
+        return run_coroutine_synchronously(
             data_analysis.run_data_analysis(
                 instruction, additional_context, available_files
             )

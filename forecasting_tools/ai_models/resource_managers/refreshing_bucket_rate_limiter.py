@@ -6,6 +6,8 @@ import asyncio
 from enum import Enum
 from typing import Final
 
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
+
 
 class LimitReachedResponse(Enum):
     RAISE_EXCEPTION = 1
@@ -69,12 +71,14 @@ class RefreshingBucketRateLimiter:
         self.__fill_the_bucket_mode = False
 
     def refresh_and_then_get_available_resources(self) -> float:
-        asyncio.run(self._refresh_resource_count())
+        run_coroutine_synchronously(self._refresh_resource_count())
         return self._available_resources
 
     def zero_out_resources(self) -> None:
         self._available_resources = 0
-        asyncio.run(self.__update_fill_the_bucket_mode(resources_ran_out=True))
+        run_coroutine_synchronously(
+            self.__update_fill_the_bucket_mode(resources_ran_out=True)
+        )
 
     @property
     def _available_resources(self) -> float:

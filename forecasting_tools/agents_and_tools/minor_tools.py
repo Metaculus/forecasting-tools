@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import random
 
@@ -12,6 +11,7 @@ from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.helpers.metaculus_api import MetaculusApi, MetaculusQuestion
 from forecasting_tools.helpers.structure_output import structure_output
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 from forecasting_tools.util.misc import clean_indents, get_schema_of_base_model
 
 logger = logging.getLogger(__name__)
@@ -160,7 +160,7 @@ def create_tool_for_forecasting_bot(
     @agent_tool(description_override=description)
     def forecast_question_tool(question: str) -> str:
         logger.info(f"TOOL: Forecasting question: {question}")
-        question_object = asyncio.run(
+        question_object = run_coroutine_synchronously(
             structure_output(
                 question,
                 SimpleQuestion,
@@ -176,7 +176,7 @@ def create_tool_for_forecasting_bot(
             [question_object]
         )[0]
         task = bot.forecast_question(metaculus_question)
-        report = asyncio.run(task)
+        report = run_coroutine_synchronously(task)
         return report.explanation
 
     return forecast_question_tool

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import sys
@@ -62,7 +63,10 @@ class BaseRatePage(ToolPage):
     @classmethod
     async def _run_tool(cls, input: BaseRateInput) -> BaseRateReport:
         with st.spinner("Analyzing... This may take a minute or two..."):
-            return await BaseRateResearcher(input.question_text).make_base_rate_report()
+            researcher = await asyncio.to_thread(
+                BaseRateResearcher, input.question_text
+            )
+            return await researcher.make_base_rate_report()
 
     @classmethod
     async def _save_run_to_coda(

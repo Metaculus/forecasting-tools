@@ -20,6 +20,7 @@ from forecasting_tools.data_models.questions import (
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
 from forecasting_tools.helpers.forecast_database_manager import ForecastDatabaseManager
 from forecasting_tools.helpers.metaculus_api import MetaculusApi
+from forecasting_tools.helpers.metaculus_client import MetaculusClient
 
 T = TypeVar("T", bound=MetaculusQuestion)
 
@@ -113,7 +114,7 @@ class ForecastingTestManager:
     @staticmethod
     def mock_getting_benchmark_questions(mocker: Mock) -> Mock:
         mock_function = mocker.patch(
-            f"{MetaculusApi.get_benchmark_questions.__module__}.{MetaculusApi.get_benchmark_questions.__qualname__}"
+            f"{MetaculusClient.get_benchmark_questions_async.__module__}.{MetaculusClient.get_benchmark_questions_async.__qualname__}"
         )
         mock_function.return_value = [ForecastingTestManager.get_fake_binary_question()]
         return mock_function

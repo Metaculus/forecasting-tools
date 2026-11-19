@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 from datetime import datetime
 
@@ -18,6 +17,7 @@ from forecasting_tools.ai_models.agent_wrappers import (
 )
 from forecasting_tools.ai_models.general_llm import GeneralLlm
 from forecasting_tools.helpers.structure_output import structure_output
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
@@ -261,7 +261,7 @@ class QuestionDecomposer:
             additional_context=additional_criteria_or_context_from_user,
             related_research=related_research,
         )
-        return asyncio.run(task)
+        return run_coroutine_synchronously(task)
 
 
 # V11: Works well with claude 3.7 thinking but not gpt-4.1
