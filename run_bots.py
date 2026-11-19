@@ -494,17 +494,17 @@ def make_claude_adaptive_thinking_settings(
     }
 
 
-def make_openrouter_provider_pin(*endpoint_slugs: str) -> dict:
+def make_openrouter_provider_pin(endpoint_slug: str) -> dict:
     """
     OpenRouter serves open-weight models from many hosts at different quantizations, so an unpinned
     bot's quality shifts between runs. Pin to the lab's own endpoint, else the highest declared precision
-    host (see https://openrouter.ai/api/v1/models/{model}/endpoints). Extra slugs are tried in order as
-    backups, so only list hosts with the same precision.
+    host (see https://openrouter.ai/api/v1/models/{model}/endpoints). Hosts with the same declared precision
+    can still serve different outputs, so each bot gets exactly one host and no backups.
     """
     return {
         "extra_body": {
             "provider": {
-                "order": list(endpoint_slugs),
+                "order": [endpoint_slug],
                 "allow_fallbacks": False,
                 "require_parameters": True,
             }
@@ -1955,12 +1955,11 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/openai/gpt-oss-120b",
                     temperature=default_temperature,
-                    # Provider history (several bf16 hosts since each alone rate-limited under 5-question bursts):
-                    # - Sept 25th 2026: pinned to akashml/bf16 with deepinfra/bf16 as backup
+                    # Provider history:
+                    # - Sept 25th 2026: pinned to akashml/bf16 with deepinfra/bf16 as backup (each alone rate-limited under 5-question bursts)
                     # - Nov 17th 2026: re-pinned to crusoe/bf16 and dekallm/bf16, keeping deepinfra/bf16 as last backup (OpenRouter stopped listing akashml/bf16, so deepinfra/bf16 alone rate limited most calls from Nov 16th, then went down on Nov 17th and failed every call)
-                    **make_openrouter_provider_pin(
-                        "crusoe/bf16", "dekallm/bf16", "deepinfra/bf16"
-                    ),
+                    # - Nov 19th 2026: dropped the dekallm/bf16 and deepinfra/bf16 backups so one host serves every call (hosts with the same declared precision can still differ)
+                    **make_openrouter_provider_pin("crusoe/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
