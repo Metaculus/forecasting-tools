@@ -698,7 +698,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # Provider history:
                     # - Oct 15th 2026: pinned to crusoe/bf16
                     # - Nov 4th 2026: added nebius/bf16 as backup (crusoe/bf16's shared pool rate limited nearly every call Nov 3rd-4th, so 21 AIB questions closed unforecasted)
-                    **make_openrouter_provider_pin("crusoe/bf16", "nebius/bf16"),
+                    # - Nov 17th 2026: dropped nebius/bf16 (OpenRouter no longer lists it; Nebius now serves this model only at fp4, and crusoe/bf16 is the only bf16 host left)
+                    **make_openrouter_provider_pin("crusoe/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -969,8 +970,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/thinkingmachines/inkling-small",
                     temperature=default_temperature,
-                    # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("deepinfra/fp8"),
+                    # Provider history:
+                    # - Sept 25th 2026: pinned to deepinfra/fp8
+                    # - Nov 17th 2026: re-pinned to deepinfra/fp4 (OpenRouter stopped listing deepinfra/fp8, so every call failed with "No endpoints found" from Nov 13th, and deepinfra/fp4 is the only remaining host)
+                    **make_openrouter_provider_pin("deepinfra/fp4"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1524,7 +1527,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # - Sept 25th 2026: pinned to minimax/fp8
                     # - Oct 27th 2026: re-pinned to minimax (same MiniMax endpoint; on Oct 26th OpenRouter renamed it and stopped declaring its precision, so the old slug failed every call). The bare slug can also route to MiniMax's minimax/highspeed priority endpoint (same model, 2x price)
                     # - Nov 7th 2026: re-pinned to novita/fp8 with gmicloud/fp8 as backup (MiniMax stopped serving this model on OpenRouter on Nov 5th, so every call failed with "No endpoints found")
-                    **make_openrouter_provider_pin("novita/fp8", "gmicloud/fp8"),
+                    # - Nov 17th 2026: dropped novita/fp8 (OpenRouter no longer lists it; gmicloud/fp8 is the only fp8 host left)
+                    **make_openrouter_provider_pin("gmicloud/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1951,9 +1955,12 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/openai/gpt-oss-120b",
                     temperature=default_temperature,
-                    # pinned to provider Sept 25th 2026
-                    # two bf16 hosts since each alone rate-limited under 5-question bursts
-                    **make_openrouter_provider_pin("akashml/bf16", "deepinfra/bf16"),
+                    # Provider history (several bf16 hosts since each alone rate-limited under 5-question bursts):
+                    # - Sept 25th 2026: pinned to akashml/bf16 with deepinfra/bf16 as backup
+                    # - Nov 17th 2026: re-pinned to crusoe/bf16 and dekallm/bf16, keeping deepinfra/bf16 as last backup (OpenRouter stopped listing akashml/bf16, so deepinfra/bf16 alone rate limited most calls from Nov 16th, then went down on Nov 17th and failed every call)
+                    **make_openrouter_provider_pin(
+                        "crusoe/bf16", "dekallm/bf16", "deepinfra/bf16"
+                    ),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
