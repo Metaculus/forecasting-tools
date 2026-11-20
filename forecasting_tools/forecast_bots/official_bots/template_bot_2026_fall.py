@@ -28,6 +28,7 @@ from forecasting_tools.data_models.questions import (
     NumericQuestion,
 )
 from forecasting_tools.forecast_bots.forecast_bot import ForecastBot
+from forecasting_tools.ai_models.keenable_searcher import KeenableSearcher
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.helpers.metaculus_client import MetaculusClient
 from forecasting_tools.helpers.structure_output import structure_output
@@ -147,6 +148,10 @@ class FallTemplateBot2026(ForecastBot):
                     use_advanced_filters=False,
                 )
                 research = await searcher.invoke(prompt)
+            elif researcher == "keenable" or (
+                isinstance(researcher, str) and researcher.startswith("keenable/")
+            ):
+                research = await KeenableSearcher().invoke(question.question_text)
             elif not researcher or researcher == "None" or researcher == "no_research":
                 research = ""
             else:
