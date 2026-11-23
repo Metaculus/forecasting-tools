@@ -338,6 +338,54 @@ def test_error_on_too_little_probability_assigned_in_range() -> None:
         prediction.get_cdf()
 
 
+@pytest.mark.parametrize(
+    "values, open_lower_bound, open_upper_bound, should_raise",
+    [
+        # Mostly or entirely past an open upper bound is allowed
+        ([12.0, 14.0, 20.0, 80.0, 500.0], False, True, False),
+        ([30.0, 50.0, 100.0, 300.0, 1000.0], False, True, False),
+        # Mostly or entirely past an open lower bound is allowed
+        ([-1000.0, -300.0, -100.0, -50.0, -30.0], True, False, False),
+        # Same forecasts past a closed bound are still rejected
+        ([12.0, 14.0, 20.0, 80.0, 500.0], False, False, True),
+        ([30.0, 50.0, 100.0, 300.0, 1000.0], True, False, True),
+        ([-1000.0, -300.0, -100.0, -50.0, -30.0], False, True, True),
+    ],
+)
+def test_too_far_from_bounds_only_restricts_closed_bounds(
+    values: list[float],
+    open_lower_bound: bool,
+    open_upper_bound: bool,
+    should_raise: bool,
+) -> None:
+    def make_distribution() -> NumericDistribution:
+        return NumericDistribution(
+            declared_percentiles=[
+                Percentile(percentile=p, value=v)
+                for p, v in zip([0.1, 0.25, 0.5, 0.75, 0.9], values)
+            ],
+            lower_bound=0.0,
+            upper_bound=10.0,
+            zero_point=None,
+            open_lower_bound=open_lower_bound,
+            open_upper_bound=open_upper_bound,
+            cdf_size=201,
+        )
+
+    if should_raise:
+        with pytest.raises(ValueError):
+            make_distribution()
+        return
+
+    cdf = [percentile.percentile for percentile in make_distribution().get_cdf()]
+    assert len(cdf) == 201
+    assert all(b - a >= 5e-05 for a, b in zip(cdf, cdf[1:]))
+    if open_upper_bound:
+        assert cdf[-1] < 0.5
+    if open_lower_bound:
+        assert cdf[0] > 0.5
+
+
 @pytest.mark.parametrize("open_upper_bound", [True, False])
 def test_standardize_cdf_raises_instead_of_looping_on_non_increasing_cdf(
     open_upper_bound: bool,

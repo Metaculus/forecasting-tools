@@ -201,23 +201,31 @@ class NumericDistribution(BaseModel):
         return final_percentiles
 
     def _check_too_far_from_bounds(self, percentiles: list[Percentile]) -> None:
+        """
+        Catches likely parsing/unit errors by rejecting percentiles far past a
+        closed bound. Percentiles past an open bound are always allowed, since
+        forecasters may legitimately put most of their mass out of bounds there.
+        """
         max_to_min_range = self.upper_bound - self.lower_bound
+
+        def is_within(percentile: Percentile, buffer: float) -> bool:
+            above_upper_limit = (
+                not self.open_upper_bound
+                and percentile.value > self.upper_bound + buffer
+            )
+            below_lower_limit = (
+                not self.open_lower_bound
+                and percentile.value < self.lower_bound - buffer
+            )
+            return not above_upper_limit and not below_lower_limit
 
         # TODO: Better handle log scaled questions (a fixed wiggle room percentage doesn't work well for them)
         wiggle_percent = 0.25
         wiggle_room = max_to_min_range * wiggle_percent
-        upper_bound_plus_wiggle_room = self.upper_bound + wiggle_room
-        lower_bound_minus_wiggle_room = self.lower_bound - wiggle_room
-        percentiles_within_bounds_plus_wiggle_room = [
-            percentile
-            for percentile in percentiles
-            if lower_bound_minus_wiggle_room
-            <= percentile.value
-            <= upper_bound_plus_wiggle_room
-        ]
-        if len(percentiles_within_bounds_plus_wiggle_room) == 0:
+        if not any(is_within(percentile, wiggle_room) for percentile in percentiles):
             raise ValueError(
-                f"No declared percentiles are within the range of the question +/- {wiggle_percent * 100}%. "
+                f"No declared percentiles are within the range of the question +/- {wiggle_percent * 100}% "
+                "(or past an open bound). "
                 f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
                 f"Percentiles: {percentiles}"
             )
@@ -226,12 +234,11 @@ class NumericDistribution(BaseModel):
         percentiles_far_exceeding_bounds = [
             percentile
             for percentile in percentiles
-            if percentile.value < self.lower_bound - max_to_min_range_buffer
-            or percentile.value > self.upper_bound + max_to_min_range_buffer
+            if not is_within(percentile, max_to_min_range_buffer)
         ]
         if len(percentiles_far_exceeding_bounds) > 0:
             raise ValueError(
-                "Some declared percentiles are far exceeding the bounds of the question. "
+                "Some declared percentiles are far exceeding the closed bounds of the question. "
                 f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
                 f"Percentiles: {percentiles_far_exceeding_bounds}"
             )
