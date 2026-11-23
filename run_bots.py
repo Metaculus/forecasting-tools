@@ -75,6 +75,11 @@ POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     45463,  # https://www.metaculus.com/questions/45463/ is treated as already resolved by Qwen 3.7 Plus, so the parser refuses its forecasts
     6142,  # https://www.metaculus.com/questions/6142/ gets repeated percentile values at its open lower bound from Muse Wonder, which make a non-increasing CDF that fails standardization
     46016,  # https://www.metaculus.com/questions/46016/ gets forecasts entirely below its range from GPT-5.4 nano, which fail the out-of-range check
+    42728,  # https://www.metaculus.com/questions/42728/ gets forecasts far past its open 2027 upper bound from Claude Fable 5.2, GPT-6 Sol and Grok 4.7, which fail the out-of-range check
+    45869,  # https://www.metaculus.com/questions/45869/ gets forecasts entirely below its range from GPT-4o, GPT-4.1 mini, Claude Haiku 4.5 and Llama 4 Maverick, which fail the out-of-range check
+    45729,  # https://www.metaculus.com/questions/45729/ gets option probabilities summing to ~1.18 from GPT-5.4 nano and mini, which fail validation
+    8600,  # https://www.metaculus.com/questions/8600/ is treated as already resolved by Claude Fable 5.2, so the parser refuses its forecasts
+    46108,  # https://www.metaculus.com/questions/46108/ gets no parsable forecast from GLM 5.3 Flash
     # US-China and Russia questions that get content filter 400s from Moonshot Kimi models (Nov 4th 2026)
     43119,  # https://www.metaculus.com/questions/43119/
     44880,  # https://www.metaculus.com/questions/44880/
@@ -86,6 +91,12 @@ POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     # US arms control and Russia questions that get content filter 400s from Moonshot Kimi models (Nov 9th 2026)
     41365,  # https://www.metaculus.com/questions/41365/
     46451,  # https://www.metaculus.com/questions/46451/
+    # US politics, US-China, Russia and AI lab questions that get content filter 400s from Moonshot Kimi models (Nov 23rd 2026)
+    40543,  # https://www.metaculus.com/questions/40543/
+    40963,  # https://www.metaculus.com/questions/40963/
+    45689,  # https://www.metaculus.com/questions/45689/
+    46082,  # https://www.metaculus.com/questions/46082/
+    46652,  # https://www.metaculus.com/questions/46652/
 ]
 
 
@@ -494,17 +505,17 @@ def make_claude_adaptive_thinking_settings(
     }
 
 
-def make_openrouter_provider_pin(*endpoint_slugs: str) -> dict:
+def make_openrouter_provider_pin(endpoint_slug: str) -> dict:
     """
     OpenRouter serves open-weight models from many hosts at different quantizations, so an unpinned
     bot's quality shifts between runs. Pin to the lab's own endpoint, else the highest declared precision
-    host (see https://openrouter.ai/api/v1/models/{model}/endpoints). Extra slugs are tried in order as
-    backups, so only list hosts with the same precision.
+    host (see https://openrouter.ai/api/v1/models/{model}/endpoints). Hosts with the same declared precision
+    can still serve different outputs, so each bot gets exactly one host and no backups.
     """
     return {
         "extra_body": {
             "provider": {
-                "order": list(endpoint_slugs),
+                "order": [endpoint_slug],
                 "allow_fallbacks": False,
                 "require_parameters": True,
             }
@@ -698,7 +709,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # Provider history:
                     # - Oct 15th 2026: pinned to crusoe/bf16
                     # - Nov 4th 2026: added nebius/bf16 as backup (crusoe/bf16's shared pool rate limited nearly every call Nov 3rd-4th, so 21 AIB questions closed unforecasted)
-                    **make_openrouter_provider_pin("crusoe/bf16", "nebius/bf16"),
+                    # - Nov 17th 2026: dropped nebius/bf16 (OpenRouter no longer lists it; Nebius now serves this model only at fp4, and crusoe/bf16 is the only bf16 host left)
+                    **make_openrouter_provider_pin("crusoe/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -969,8 +981,10 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/thinkingmachines/inkling-small",
                     temperature=default_temperature,
-                    # pinned to provider Sept 25th 2026
-                    **make_openrouter_provider_pin("deepinfra/fp8"),
+                    # Provider history:
+                    # - Sept 25th 2026: pinned to deepinfra/fp8
+                    # - Nov 17th 2026: re-pinned to deepinfra/fp4 (OpenRouter stopped listing deepinfra/fp8, so every call failed with "No endpoints found" from Nov 13th, and deepinfra/fp4 is the only remaining host)
+                    **make_openrouter_provider_pin("deepinfra/fp4"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1245,7 +1259,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
                     # - Sept 25th 2026: pinned to minimax/fp8
                     # - Oct 27th 2026: re-pinned to minimax (same MiniMax endpoint; on Oct 26th OpenRouter renamed it and stopped declaring its precision, so the old slug failed every call)
-                    **make_openrouter_provider_pin("minimax"),
+                    # - Nov 23rd 2026: re-pinned to parasail/fp8 (from Nov 21st OpenRouter only routes MiniMax's own endpoint for accounts with their own MiniMax key, so every call failed with "No endpoints found")
+                    **make_openrouter_provider_pin("parasail/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1524,7 +1539,9 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # - Sept 25th 2026: pinned to minimax/fp8
                     # - Oct 27th 2026: re-pinned to minimax (same MiniMax endpoint; on Oct 26th OpenRouter renamed it and stopped declaring its precision, so the old slug failed every call). The bare slug can also route to MiniMax's minimax/highspeed priority endpoint (same model, 2x price)
                     # - Nov 7th 2026: re-pinned to novita/fp8 with gmicloud/fp8 as backup (MiniMax stopped serving this model on OpenRouter on Nov 5th, so every call failed with "No endpoints found")
-                    **make_openrouter_provider_pin("novita/fp8", "gmicloud/fp8"),
+                    # - Nov 17th 2026: dropped novita/fp8 (OpenRouter no longer lists it; gmicloud/fp8 is the only fp8 host left)
+                    # - Nov 23rd 2026: re-pinned to groq, the only host left, which doesn't declare its precision (OpenRouter stopped listing gmicloud/fp8 on Nov 20th, so every call failed with "No endpoints found")
+                    **make_openrouter_provider_pin("groq"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1951,9 +1968,11 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                 llm=GeneralLlm(
                     model="openrouter/openai/gpt-oss-120b",
                     temperature=default_temperature,
-                    # pinned to provider Sept 25th 2026
-                    # two bf16 hosts since each alone rate-limited under 5-question bursts
-                    **make_openrouter_provider_pin("akashml/bf16", "deepinfra/bf16"),
+                    # Provider history:
+                    # - Sept 25th 2026: pinned to akashml/bf16 with deepinfra/bf16 as backup (each alone rate-limited under 5-question bursts)
+                    # - Nov 17th 2026: re-pinned to crusoe/bf16 and dekallm/bf16, keeping deepinfra/bf16 as last backup (OpenRouter stopped listing akashml/bf16, so deepinfra/bf16 alone rate limited most calls from Nov 16th, then went down on Nov 17th and failed every call)
+                    # - Nov 19th 2026: dropped the dekallm/bf16 and deepinfra/bf16 backups so one host serves every call (hosts with the same declared precision can still differ)
+                    **make_openrouter_provider_pin("crusoe/bf16"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,

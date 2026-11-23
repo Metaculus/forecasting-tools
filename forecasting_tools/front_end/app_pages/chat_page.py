@@ -69,11 +69,9 @@ MODEL_CHOICES: list[str] = [
     "openai/gpt-5.2",
     "xai/grok-4.20",
     "openrouter/anthropic/claude-sonnet-4.5",
-    "openai/gpt-5",
     "openrouter/x-ai/grok-4",
     "openrouter/anthropic/claude-opus-4.1",
     "openrouter/anthropic/claude-sonnet-4",
-    "openai/o3",
     "openai/o4-mini",
     "openai/gpt-6-sol",
     "openrouter/google/gemini-3-pro-preview",
@@ -132,6 +130,11 @@ class ChatPage(AppPage):
         if "model_choice" not in st.session_state.keys():
             st.session_state["model_choice"] = DEFAULT_MODEL
         model_name: str = st.session_state["model_choice"]
+        if model_name not in MODEL_CHOICES:
+            message = f"Model '{model_name}' is no longer offered, switched to '{DEFAULT_MODEL}'"
+            logger.warning(message)
+            st.sidebar.warning(message)
+            model_name = DEFAULT_MODEL
         model_choice = st.sidebar.selectbox(
             "Choose your model (used for chat, not tools)",
             MODEL_CHOICES,

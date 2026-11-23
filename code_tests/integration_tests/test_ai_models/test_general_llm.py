@@ -73,7 +73,7 @@ def _all_tests() -> list[ModelTest]:
         ),
         ModelTest(
             GeneralLlm(
-                model="openai/gpt-5",
+                model="openai/gpt-6-sol",
                 responses_api=True,
                 tools=[{"type": "web_search"}],
             ),
@@ -81,7 +81,7 @@ def _all_tests() -> list[ModelTest]:
         ),
         ModelTest(
             GeneralLlm(
-                model="openai/gpt-5",
+                model="openai/gpt-6-sol",
             ),
             test_data.get_cheap_user_message(),
         ),
