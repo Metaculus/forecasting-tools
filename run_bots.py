@@ -1248,7 +1248,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # Provider history (unpinned mix of OpenRouter hosts before Sept 25th 2026):
                     # - Sept 25th 2026: pinned to minimax/fp8
                     # - Oct 27th 2026: re-pinned to minimax (same MiniMax endpoint; on Oct 26th OpenRouter renamed it and stopped declaring its precision, so the old slug failed every call)
-                    **make_openrouter_provider_pin("minimax"),
+                    # - Nov 23rd 2026: re-pinned to parasail/fp8 (from Nov 21st OpenRouter only routes MiniMax's own endpoint for accounts with their own MiniMax key, so every call failed with "No endpoints found")
+                    **make_openrouter_provider_pin("parasail/fp8"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
@@ -1528,7 +1529,8 @@ def get_default_bot_dict() -> dict[str, RunBotConfig]:  # NOSONAR
                     # - Oct 27th 2026: re-pinned to minimax (same MiniMax endpoint; on Oct 26th OpenRouter renamed it and stopped declaring its precision, so the old slug failed every call). The bare slug can also route to MiniMax's minimax/highspeed priority endpoint (same model, 2x price)
                     # - Nov 7th 2026: re-pinned to novita/fp8 with gmicloud/fp8 as backup (MiniMax stopped serving this model on OpenRouter on Nov 5th, so every call failed with "No endpoints found")
                     # - Nov 17th 2026: dropped novita/fp8 (OpenRouter no longer lists it; gmicloud/fp8 is the only fp8 host left)
-                    **make_openrouter_provider_pin("gmicloud/fp8"),
+                    # - Nov 23rd 2026: re-pinned to groq, the only host left, which doesn't declare its precision (OpenRouter stopped listing gmicloud/fp8 on Nov 20th, so every call failed with "No endpoints found")
+                    **make_openrouter_provider_pin("groq"),
                 ),
             ),
             "tournaments": TournConfig.aib_and_site,
