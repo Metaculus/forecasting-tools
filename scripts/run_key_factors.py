@@ -58,8 +58,10 @@ async def run_key_factors_on_tournament(
     if tournament_id is None:
         questions = post_id_or_string_question
     else:
-        tournament_questions = MetaculusClient().get_all_open_questions_from_tournament(
-            tournament_id,
+        tournament_questions = (
+            await MetaculusClient().get_all_open_questions_from_tournament_async(
+                tournament_id,
+            )
         )
         open_questions = [
             question
@@ -72,7 +74,7 @@ async def run_key_factors_on_tournament(
 
     results = []
     for question in questions:
-        result = asyncio.run(_process_question(question))
+        result = await _process_question(question)
         results.append(result)
         logger.info(f"Processed question {question}\n{result}")
 

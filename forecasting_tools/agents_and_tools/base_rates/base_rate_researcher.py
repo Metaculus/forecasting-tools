@@ -22,6 +22,7 @@ from forecasting_tools.agents_and_tools.deprecated.question_responder import (
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
 )
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 from forecasting_tools.util.jsonable import Jsonable
 from forecasting_tools.util.misc import clean_indents
 
@@ -41,7 +42,7 @@ class BaseRateResearcher(QuestionResponder):
 
     def __init__(self, question: str) -> None:
         super().__init__(question)
-        is_valid = asyncio.run(self.__is_valid_question())
+        is_valid = run_coroutine_synchronously(self.__is_valid_question())
         if not is_valid:
             raise ValueError(
                 f"The question doesn't seem to be about base rates: {question}"

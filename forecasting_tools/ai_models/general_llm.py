@@ -8,7 +8,6 @@ import re
 from typing import Any, Literal
 
 import litellm
-import nest_asyncio
 import typeguard
 from litellm import ResponsesAPIResponse, acompletion, aresponses, model_cost
 from litellm.files.main import ModelResponse
@@ -39,8 +38,6 @@ from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import 
 )
 from forecasting_tools.helpers.asknews_searcher import AskNewsSearcher
 from forecasting_tools.util.misc import fill_in_citations
-
-nest_asyncio.apply()
 
 logger = logging.getLogger(__name__)
 ModelInputType = str | VisionMessageData | list[dict[str, str]]

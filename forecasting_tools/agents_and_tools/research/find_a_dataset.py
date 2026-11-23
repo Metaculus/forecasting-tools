@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 from pydantic import BaseModel
@@ -15,6 +14,7 @@ from forecasting_tools.ai_models.agent_wrappers import (
     agent_tool,
     event_to_tool_message,
 )
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 from forecasting_tools.util.misc import clean_indents
 
 logger = logging.getLogger(__name__)
@@ -118,5 +118,7 @@ class DatasetFinder:
         - Questions that can be answered with numerical data or graphs/visuals
         """
         data_crawler = DatasetFinder()
-        result = asyncio.run(data_crawler.find_and_analyze_data_set(query))
+        result = run_coroutine_synchronously(
+            data_crawler.find_and_analyze_data_set(query)
+        )
         return result.as_string

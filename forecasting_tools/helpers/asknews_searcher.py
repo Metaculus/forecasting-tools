@@ -19,6 +19,7 @@ except ImportError:
     pass
 
 from forecasting_tools.helpers.asknews_cache import AskNewsCache
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 
 # NOTE: More information available here:
 # https://docs.asknews.app/en/news
@@ -74,7 +75,7 @@ class AskNewsSearcher:
         self.cache = AskNewsCache(cache_mode=cache_mode)
 
     def get_formatted_news(self, query: str) -> str:
-        return asyncio.run(self.get_formatted_news_async(query))
+        return run_coroutine_synchronously(self.get_formatted_news_async(query))
 
     async def get_formatted_news_async(self, query: str) -> str:
         """

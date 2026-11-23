@@ -3,8 +3,6 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-import nest_asyncio
-
 from forecasting_tools.ai_models.model_tracker import ModelTracker
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager,
@@ -21,9 +19,6 @@ except ImportError as e:
     raise missing_optional_package_error("openai-agents", "agents") from e
 
 logger = logging.getLogger(__name__)
-
-
-nest_asyncio.apply()
 
 
 class AgentSdkLlm(LitellmModel):

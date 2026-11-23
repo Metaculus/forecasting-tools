@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import copy
 import json
 import logging
@@ -35,6 +34,7 @@ from forecasting_tools.data_models.user_response import (
     TokenUserResponse,
     UserResponse,
 )
+from forecasting_tools.util.event_loops import run_coroutine_synchronously
 from forecasting_tools.util.misc import (
     add_timezone_to_dates_in_base_model,
     raise_for_status_with_additional_info,
@@ -462,19 +462,50 @@ class MetaculusClient:
         tournament_id: int | str,
         group_question_mode: GroupQuestionMode = "unpack_subquestions",
     ) -> list[MetaculusQuestion]:
+        return run_coroutine_synchronously(
+            self.get_all_open_questions_from_tournament_async(
+                tournament_id, group_question_mode
+            )
+        )
+
+    async def get_all_open_questions_from_tournament_async(
+        self,
+        tournament_id: int | str,
+        group_question_mode: GroupQuestionMode = "unpack_subquestions",
+    ) -> list[MetaculusQuestion]:
         logger.info(f"Retrieving questions from tournament {tournament_id}")
         api_filter = ApiFilter(
             allowed_tournaments=[tournament_id],
             allowed_statuses=["open"],
             group_question_mode=group_question_mode,
         )
-        questions = asyncio.run(self.get_questions_matching_filter(api_filter))
+        questions = await self.get_questions_matching_filter(api_filter)
         logger.info(
             f"Retrieved {len(questions)} questions from tournament {tournament_id}"
         )
         return questions
 
     def get_benchmark_questions(
+        self,
+        num_of_questions_to_return: int,
+        days_to_resolve_in: int | None = None,
+        max_days_since_opening: int | None = 365,
+        num_forecasters_gte: int = 30,
+        error_if_question_target_missed: bool = True,
+        group_question_mode: GroupQuestionMode = "exclude",
+    ) -> list[BinaryQuestion]:
+        return run_coroutine_synchronously(
+            self.get_benchmark_questions_async(
+                num_of_questions_to_return,
+                days_to_resolve_in,
+                max_days_since_opening,
+                num_forecasters_gte,
+                error_if_question_target_missed,
+                group_question_mode,
+            )
+        )
+
+    async def get_benchmark_questions_async(
         self,
         num_of_questions_to_return: int,
         days_to_resolve_in: int | None = None,
@@ -504,13 +535,11 @@ class MetaculusClient:
             open_time_gt=date_into_past,
             group_question_mode=group_question_mode,
         )
-        questions = asyncio.run(
-            self.get_questions_matching_filter(
-                api_filter,
-                num_questions=num_of_questions_to_return,
-                randomly_sample=True,
-                error_if_question_target_missed=error_if_question_target_missed,
-            )
+        questions = await self.get_questions_matching_filter(
+            api_filter,
+            num_questions=num_of_questions_to_return,
+            randomly_sample=True,
+            error_if_question_target_missed=error_if_question_target_missed,
         )
         questions = typeguard.check_type(questions, list[BinaryQuestion])
         return questions
