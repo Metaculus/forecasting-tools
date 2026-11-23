@@ -75,6 +75,11 @@ POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     45463,  # https://www.metaculus.com/questions/45463/ is treated as already resolved by Qwen 3.7 Plus, so the parser refuses its forecasts
     6142,  # https://www.metaculus.com/questions/6142/ gets repeated percentile values at its open lower bound from Muse Wonder, which make a non-increasing CDF that fails standardization
     46016,  # https://www.metaculus.com/questions/46016/ gets forecasts entirely below its range from GPT-5.4 nano, which fail the out-of-range check
+    42728,  # https://www.metaculus.com/questions/42728/ gets forecasts far past its open 2027 upper bound from Claude Fable 5.2, GPT-6 Sol and Grok 4.7, which fail the out-of-range check
+    45869,  # https://www.metaculus.com/questions/45869/ gets forecasts entirely below its range from GPT-4o, GPT-4.1 mini, Claude Haiku 4.5 and Llama 4 Maverick, which fail the out-of-range check
+    45729,  # https://www.metaculus.com/questions/45729/ gets option probabilities summing to ~1.18 from GPT-5.4 nano and mini, which fail validation
+    8600,  # https://www.metaculus.com/questions/8600/ is treated as already resolved by Claude Fable 5.2, so the parser refuses its forecasts
+    46108,  # https://www.metaculus.com/questions/46108/ gets no parsable forecast from GLM 5.3 Flash
     # US-China and Russia questions that get content filter 400s from Moonshot Kimi models (Nov 4th 2026)
     43119,  # https://www.metaculus.com/questions/43119/
     44880,  # https://www.metaculus.com/questions/44880/
@@ -86,6 +91,12 @@ POST_IDS_TO_NOT_RAISE_ERRORS_FOR = [
     # US arms control and Russia questions that get content filter 400s from Moonshot Kimi models (Nov 9th 2026)
     41365,  # https://www.metaculus.com/questions/41365/
     46451,  # https://www.metaculus.com/questions/46451/
+    # US politics, US-China, Russia and AI lab questions that get content filter 400s from Moonshot Kimi models (Nov 23rd 2026)
+    40543,  # https://www.metaculus.com/questions/40543/
+    40963,  # https://www.metaculus.com/questions/40963/
+    45689,  # https://www.metaculus.com/questions/45689/
+    46082,  # https://www.metaculus.com/questions/46082/
+    46652,  # https://www.metaculus.com/questions/46652/
 ]
 
 
