@@ -48,6 +48,9 @@ from forecasting_tools.ai_models.deprecated_model_classes.perplexity import (
     Perplexity as Perplexity,
 )
 from forecasting_tools.ai_models.exa_searcher import ExaSearcher as ExaSearcher
+from forecasting_tools.ai_models.keenable_searcher import (
+    KeenableSearcher as KeenableSearcher,
+)
 from forecasting_tools.ai_models.general_llm import GeneralLlm as GeneralLlm
 from forecasting_tools.ai_models.resource_managers.monetary_cost_manager import (
     MonetaryCostManager as MonetaryCostManager,
