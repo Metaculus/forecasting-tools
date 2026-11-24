@@ -41,7 +41,7 @@ jobs:
         run: |
           uv run --no-sync python .github/scripts/precache_asknews.py
         env:
-          METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_HIGH }}
+          METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
           ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
           ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
           PYTHONPATH: .
@@ -86,7 +86,7 @@ jobs:
       metac_name: "metac-nemotron-3-5-super-vl-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -100,7 +100,7 @@ jobs:
       metac_name: "metac-gemini-4-argon-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -114,7 +114,7 @@ jobs:
       metac_name: "metac-muse-wonder-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -128,7 +128,7 @@ jobs:
       metac_name: "metac-claude-haiku-5-5-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -143,7 +143,7 @@ jobs:
       metac_name: "metac-mistral-large-4-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -157,7 +157,7 @@ jobs:
       metac_name: "metac-gpt-6-1-sol-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -172,7 +172,7 @@ jobs:
       metac_name: "metac-claude-sonnet-5-5-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -189,7 +189,7 @@ jobs:
       metac_name: "metac-grok-4-7-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -204,7 +204,7 @@ jobs:
       metac_name: "metac-claude-opus-5-5-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -219,7 +219,7 @@ jobs:
       metac_name: "metac-gpt-6-astra-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -234,7 +234,7 @@ jobs:
       metac_name: "metac-gpt-6-sol-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -249,7 +249,7 @@ jobs:
       metac_name: "metac-gpt-6-luna-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -264,7 +264,7 @@ jobs:
       metac_name: "metac-gemini-3-8-flash+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -278,7 +278,7 @@ jobs:
       metac_name: "metac-muse-spark-1-3+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -292,7 +292,7 @@ jobs:
       metac_name: "metac-claude-fable-5-1-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -309,7 +309,7 @@ jobs:
       metac_name: "metac-qwen-3-8-flash+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -323,7 +323,7 @@ jobs:
       metac_name: "metac-glm-5-3-flash+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -337,7 +337,7 @@ jobs:
       metac_name: "metac-glm-5-3+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -351,7 +351,7 @@ jobs:
   #     metac_name: "metac-gemini-3-7-flash+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -365,7 +365,7 @@ jobs:
       metac_name: "metac-grok-4-6+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -380,7 +380,7 @@ jobs:
       metac_name: "metac-nemotron-3-5-lightning+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -394,7 +394,7 @@ jobs:
       metac_name: "metac-muse-glimmer-30b+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -408,7 +408,7 @@ jobs:
   #     metac_name: "metac-muse-spark-1-2+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -422,7 +422,7 @@ jobs:
       metac_name: "metac-qwen-3-8-max+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -436,7 +436,7 @@ jobs:
       metac_name: "metac-inkling-small+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -450,7 +450,7 @@ jobs:
       metac_name: "metac-deepseek-v4-flash+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -466,7 +466,7 @@ jobs:
   #     metac_name: "metac-claude-opus-5+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -481,7 +481,7 @@ jobs:
   #     metac_name: "metac-gemini-3-6-flash+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -495,7 +495,7 @@ jobs:
   #     metac_name: "metac-gemini-3-5-flash-lite+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -509,7 +509,7 @@ jobs:
       metac_name: "metac-inkling+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -523,7 +523,7 @@ jobs:
   #     metac_name: "metac-muse-spark-1-1+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -537,7 +537,7 @@ jobs:
       metac_name: "metac-kimi-k3+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -551,7 +551,7 @@ jobs:
   #     metac_name: "metac-gpt-5-6-luna+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -566,7 +566,7 @@ jobs:
   #     metac_name: "metac-gpt-5-6-terra+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -581,7 +581,7 @@ jobs:
   #     metac_name: "metac-gpt-5-6-sol-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -596,7 +596,7 @@ jobs:
   #     metac_name: "metac-grok-4-5-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -611,7 +611,7 @@ jobs:
       metac_name: "metac-claude-sonnet-5+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -628,7 +628,7 @@ jobs:
   #     metac_name: "metac-gpt-5-5-no-research-one-shot"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -641,7 +641,7 @@ jobs:
   #     metac_name: "metac-gemini-3-1-pro-no-research-one-shot"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -653,7 +653,7 @@ jobs:
   #     metac_name: "metac-claude-fable-5-no-research-one-shot"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -666,7 +666,7 @@ jobs:
   #     metac_name: "metac-grok-4-3-no-research-one-shot"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -681,7 +681,7 @@ jobs:
       metac_name: "metac-openrouter-fusion-general-budget"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -693,7 +693,7 @@ jobs:
       metac_name: "metac-glm-5-2+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -707,7 +707,7 @@ jobs:
   #     metac_name: "metac-claude-fable-5-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -722,7 +722,7 @@ jobs:
       metac_name: "metac-nemotron-3-ultra+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -736,7 +736,7 @@ jobs:
       metac_name: "metac-qwen-3-7-plus+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -750,7 +750,7 @@ jobs:
       metac_name: "metac-minimax-m3+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -766,7 +766,7 @@ jobs:
   #     metac_name: "metac-gemini-3-5-flash+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -780,7 +780,7 @@ jobs:
   #     metac_name: "metac-gpt-5-5-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -795,7 +795,7 @@ jobs:
   #     metac_name: "metac-gpt-5-5-instant+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -810,7 +810,7 @@ jobs:
   #     metac_name: "metac-gpt-5-4-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -825,7 +825,7 @@ jobs:
       metac_name: "metac-gemini-3-1-pro-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -839,7 +839,7 @@ jobs:
       metac_name: "metac-gemini-3-1-flash-lite+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -853,7 +853,7 @@ jobs:
       metac_name: "metac-qwen-3-6-plus+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -867,7 +867,7 @@ jobs:
       metac_name: "metac-gemma-4-26b+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -881,7 +881,7 @@ jobs:
       metac_name: "metac-glm-5-1+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -895,7 +895,7 @@ jobs:
   #     metac_name: "metac-claude-opus-4-7-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -910,7 +910,7 @@ jobs:
   #     metac_name: "metac-claude-opus-4-8-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -925,7 +925,7 @@ jobs:
       metac_name: "metac-kimi-k2-6+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -939,7 +939,7 @@ jobs:
       metac_name: "metac-deepseek-v4-pro-high+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -953,7 +953,7 @@ jobs:
   #     metac_name: "metac-grok-4-3-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -968,7 +968,7 @@ jobs:
   #     metac_name: "metac-grok-4-20+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -983,7 +983,7 @@ jobs:
   #     metac_name: "metac-grok-4-20-multi-agent+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -1000,7 +1000,7 @@ jobs:
   #     metac_name: "metac-claude-sonnet-4-6+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1015,7 +1015,7 @@ jobs:
   #     metac_name: "metac-qwen-3-5+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1029,7 +1029,7 @@ jobs:
       metac_name: "metac-gemini-3-1-pro+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1043,7 +1043,7 @@ jobs:
   #     metac_name: "metac-gpt-5-5+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -1058,7 +1058,7 @@ jobs:
   #     metac_name: "metac-gpt-5-4+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1072,7 +1072,7 @@ jobs:
       metac_name: "metac-gpt-5-4-mini+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -1087,7 +1087,7 @@ jobs:
       metac_name: "metac-gpt-5-4-nano+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -1102,7 +1102,7 @@ jobs:
   #     metac_name: "metac-gpt-5-3+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1116,7 +1116,7 @@ jobs:
   #     metac_name: "metac-gpt-5-3-instant+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1130,7 +1130,7 @@ jobs:
       metac_name: "metac-minimax-m2-7+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1146,7 +1146,7 @@ jobs:
   #     metac_name: "metac-claude-opus-4-6-high-32k+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_OPUS_4_6_HIGH_32K }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1160,7 +1160,7 @@ jobs:
   #     bot_name: 'METAC_CLAUDE_OPUS_4_6'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_OPUS_4_6 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1175,7 +1175,7 @@ jobs:
       metac_name: "metac-claude-haiku-4-5+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_HAIKU_4_5 }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1190,7 +1190,7 @@ jobs:
   #     metac_name: "metac-qwen3-max-thinking+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_QWEN3_MAX_THINKING }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1203,7 +1203,7 @@ jobs:
   #     bot_name: 'METAC_MINIMAX_M2_5'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_MINIMAX_M2_5 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1217,7 +1217,7 @@ jobs:
   #     metac_name: "metac-kimi-k2-5+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_KIMI_K2_5_HIGH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1231,7 +1231,7 @@ jobs:
   #     metac_name: "metac-glm-5+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GLM_5 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1247,7 +1247,7 @@ jobs:
   #     metac_name: "metac-claude-opus-4-5-high-32k+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_OPUS_4_5_HIGH_32K }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1262,7 +1262,7 @@ jobs:
   #     metac_name: "metac-claude-opus-4-5+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_OPUS_4_5 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1277,7 +1277,7 @@ jobs:
   #     metac_name: "metac-gpt-5-2-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_2_HIGH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1292,7 +1292,7 @@ jobs:
   #     metac_name: "metac-gpt-5-2+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_2 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1306,7 +1306,7 @@ jobs:
   #     bot_name: 'METAC_LLAMA_3_1_NEMOTRON_ULTRA_253B'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_LLAMA_3_1_NEMOTRON_ULTRA_253B }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1320,7 +1320,7 @@ jobs:
   #     metac_name: "metac-gemini-3-flash+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_3_FLASH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -1335,7 +1335,7 @@ jobs:
   #     metac_name: "metac-glm-4-6+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GLM_4_6 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1348,7 +1348,7 @@ jobs:
   #     bot_name: 'METAC_LLAMA_3_1_405B_INSTRUCT'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_LLAMA_3_1_405B_INSTRUCT }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1363,7 +1363,7 @@ jobs:
   #     metac_name: "metac-kimi-k2-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_KIMI_K2_HIGH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1377,7 +1377,7 @@ jobs:
   #     metac_name: "metac-gpt-5-1-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_1_HIGH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1392,7 +1392,7 @@ jobs:
   #     metac_name: "metac-gpt-5-1+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_1 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1406,7 +1406,7 @@ jobs:
   #     bot_name: 'METAC_GEMINI_3_PRO_HIGH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_3_PRO_HIGH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1419,7 +1419,7 @@ jobs:
   #     bot_name: 'METAC_GEMINI_3_PRO'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_3_PRO }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -1434,7 +1434,7 @@ jobs:
   #     metac_name: "metac-grok-4-1-fast-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_1_FAST_HIGH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -1449,7 +1449,7 @@ jobs:
   #     metac_name: "metac-grok-4-1-fast+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_1_FAST }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -1463,7 +1463,7 @@ jobs:
   #     bot_name: 'METAC_QWEN_3_MAX_HIGH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_QWEN_3_MAX_HIGH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1475,7 +1475,7 @@ jobs:
   #     bot_name: 'METAC_DEEPSEEK_R1_CP_ENABLED'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_CP_ENABLED }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1490,7 +1490,7 @@ jobs:
   #     metac_name: "metac-claude-4-5-sonnet-high-32k+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_4_5_SONNET_HIGH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1505,7 +1505,7 @@ jobs:
   #     metac_name: "metac-claude-4-5-sonnet+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_4_5_SONNET }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1520,7 +1520,7 @@ jobs:
   #     metac_name: "metac-qwen-3-max+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_QWEN_3_MAX }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1534,7 +1534,7 @@ jobs:
       metac_name: "metac-deepseek-3-2-reasoning+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_3_2_REASONING }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1547,7 +1547,7 @@ jobs:
   #     bot_name: 'METAC_DEEPSEEK_3_2'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_3_2 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1560,7 +1560,7 @@ jobs:
   #     metac_name: "metac-grok-4-fast-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_FAST_HIGH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -1574,7 +1574,7 @@ jobs:
   #     bot_name: 'METAC_GROK_4_FAST'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_FAST }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1590,7 +1590,7 @@ jobs:
   #     bot_name: 'METAC_GPT_5_HIGH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_HIGH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1603,7 +1603,7 @@ jobs:
   #     bot_name: 'METAC_GPT_5'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1617,7 +1617,7 @@ jobs:
   #     metac_name: "metac-gpt-5-mini+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_MINI }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1632,7 +1632,7 @@ jobs:
   #     metac_name: "metac-gpt-5-nano+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_NANO }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1646,7 +1646,7 @@ jobs:
   #     bot_name: 'METAC_CLAUDE_4_SONNET_HIGH_16K'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_4_SONNET_HIGH_16K }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1659,7 +1659,7 @@ jobs:
   #     bot_name: 'METAC_CLAUDE_4_SONNET'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_4_SONNET }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1672,7 +1672,7 @@ jobs:
   #     bot_name: 'METAC_CLAUDE_4_1_OPUS_HIGH_16K'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_4_1_OPUS_HIGH_16K }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1686,7 +1686,7 @@ jobs:
   #     metac_name: "metac-grok-4+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1701,7 +1701,7 @@ jobs:
   #     metac_name: "metac-kimi-k2+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_KIMI_K2 }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1715,7 +1715,7 @@ jobs:
   #     bot_name: 'METAC_KIMI_K2_VARIANCE_TEST'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_KIMI_K2_VARIANCE_TEST }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1728,7 +1728,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1+asknews(variance-test)"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_VARIANCE_TEST }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1742,7 +1742,7 @@ jobs:
       metac_name: "metac-gpt-oss-120b+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_OSS_120B }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1756,7 +1756,7 @@ jobs:
       metac_name: "metac-zai-glm-4-5+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_ZAI_GLM_4_5 }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1770,7 +1770,7 @@ jobs:
       metac_name: "metac-deepseek-v3-1-reasoning+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_V3_1_REASONING }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1784,7 +1784,7 @@ jobs:
       metac_name: "metac-deepseek-v3-1+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_V3_1 }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1798,7 +1798,7 @@ jobs:
       metac_name: "metac-deepseek-v3-1+asknews(variance-test-1)"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_V3_1_VARIANCE_TEST_1 }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1812,7 +1812,7 @@ jobs:
       metac_name: "metac-deepseek-v3-1+asknews(variance-test-2)"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_V3_1_VARIANCE_TEST_2 }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -1826,7 +1826,7 @@ jobs:
   #     bot_name: 'METAC_O4_MINI_DEEP_RESEARCH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O4_MINI_DEEP_RESEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -1837,7 +1837,7 @@ jobs:
   #     bot_name: 'METAC_O3_DEEP_RESEARCH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O3_DEEP_RESEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -1848,7 +1848,7 @@ jobs:
   #     bot_name: 'METAC_SONAR_DEEP_RESEARCH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_SONAR_DEEP_RESEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -1859,7 +1859,7 @@ jobs:
   #     bot_name: 'METAC_EXA_RESEARCH_PRO'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_EXA_RESEARCH_PRO }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -1871,7 +1871,7 @@ jobs:
   #     metac_name: "metac-gemini-2-5-pro-grounding[research-only]"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_PRO_GROUNDING }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -1884,7 +1884,7 @@ jobs:
       metac_name: "metac-asknews-deepnews[research-only]"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_ASKNEWS_DEEPNEWS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -1897,7 +1897,7 @@ jobs:
   #     bot_name: 'METAC_GPT_5_SEARCH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_SEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -1908,7 +1908,7 @@ jobs:
   #     bot_name: 'METAC_GROK_4_LIVE_SEARCH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_LIVE_SEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -1919,7 +1919,7 @@ jobs:
   #     bot_name: 'METAC_SONNET_4_SEARCH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_SONNET_4_SEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -1931,7 +1931,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1-exa-online[research-only-bot]"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_EXA_ONLINE_RESEARCH_ONLY }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -1944,7 +1944,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1+deepseek-r1-exa-online"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_PLUS_EXA_ONLINE }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
@@ -1956,7 +1956,7 @@ jobs:
   #     bot_name: 'METAC_DEEPSEEK_R1_SONNET_4_SEARCH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONNET_4_SEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
@@ -1967,7 +1967,7 @@ jobs:
   #     bot_name: 'METAC_DEEPSEEK_R1_XAI_LIVESEARCH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_XAI_LIVESEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
 
@@ -1978,7 +1978,7 @@ jobs:
   #     bot_name: 'METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_O4_MINI_DEEP_RESEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
@@ -1990,7 +1990,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1+no-research"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_NO_RESEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -2003,7 +2003,7 @@ jobs:
       metac_name: "metac-gpt-4-1+asknews[optimized-prompt]"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_4_1_OPTIMIZED_PROMPT }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2018,7 +2018,7 @@ jobs:
   #     metac_name: "metac-gpt-4-1-nano+asknews[optimized-prompt]"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_4_1_NANO_OPTIMIZED_PROMPT }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2032,7 +2032,7 @@ jobs:
   #     bot_name: 'METAC_GROK_4_TOOLS'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_4_TOOLS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
 
   # bot_gpt_5_high_tools:
@@ -2042,7 +2042,7 @@ jobs:
   #     bot_name: 'METAC_GPT_5_HIGH_TOOLS'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_5_HIGH_TOOLS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
   # bot_sonnet_4_high_tools:
@@ -2052,7 +2052,7 @@ jobs:
   #     bot_name: 'METAC_SONNET_4_HIGH_TOOLS'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_SONNET_4_HIGH_TOOLS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
   #################################### Q2 2025 and earlier bots ####################################
@@ -2066,7 +2066,7 @@ jobs:
   #     bot_name: 'METAC_GEMINI_2_5_PRO_GEMINI_2_5_PRO_GROUNDING'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_PRO_GEMINI_2_5_PRO_GROUNDING }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2079,7 +2079,7 @@ jobs:
   #     bot_name: 'METAC_GEMINI_2_5_PRO_SONAR_REASONING_PRO'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_PRO_SONAR_REASONING_PRO }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -2091,7 +2091,7 @@ jobs:
   #     bot_name: 'METAC_GEMINI_2_5_EXA_PRO'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_EXA_PRO }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -2104,7 +2104,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1+sonar-pro"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_PRO }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
@@ -2117,7 +2117,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1+sonar"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
@@ -2129,7 +2129,7 @@ jobs:
   #     bot_name: 'METAC_DEEPSEEK_R1_SONAR_DEEP_RESEARCH'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_DEEP_RESEARCH }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
@@ -2141,7 +2141,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1+sonar-reasoning-pro"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_REASONING_PRO }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
@@ -2154,7 +2154,7 @@ jobs:
   #     bot_name: 'METAC_DEEPSEEK_R1_SONAR_REASONING'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_SONAR_REASONING }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
@@ -2165,7 +2165,7 @@ jobs:
   #     bot_name: 'METAC_ONLY_SONAR_REASONING_PRO'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_ONLY_SONAR_REASONING_PRO }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
 
@@ -2177,7 +2177,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1+gpt-4o-search-preview"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_GPT_4O_SEARCH_PREVIEW }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -2190,7 +2190,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1+gemini-2-5-pro-grounding"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_GEMINI_2_5_PRO_GROUNDING }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -2202,7 +2202,7 @@ jobs:
   #     bot_name: 'METAC_DEEPSEEK_R1_EXA_SMART_SEARCHER'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_EXA_SMART_SEARCHER }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
 
@@ -2214,7 +2214,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1+exa-answer"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_ASK_EXA_PRO }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
@@ -2226,7 +2226,7 @@ jobs:
   #     bot_name: 'METAC_DEEPSEEK_R1_DEEPNEWS'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_DEEPNEWS }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2239,7 +2239,7 @@ jobs:
   #     bot_name: 'METAC_O3_HIGH_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O3_HIGH_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2253,7 +2253,7 @@ jobs:
   #     metac_name: "metac-o3+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O3_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2268,7 +2268,7 @@ jobs:
   #     metac_name: "metac-o4-mini-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O4_MINI_HIGH_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2283,7 +2283,7 @@ jobs:
   #     metac_name: "metac-o4-mini+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O4_MINI_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2298,7 +2298,7 @@ jobs:
       metac_name: "metac-gpt-4-1+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_4_1_TOKEN }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2313,7 +2313,7 @@ jobs:
       metac_name: "metac-gpt-4-1-mini+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_4_1_MINI_TOKEN }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2328,7 +2328,7 @@ jobs:
   #     metac_name: "metac-gpt-4-1-nano+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_4_1_NANO_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2343,7 +2343,7 @@ jobs:
   #     metac_name: "metac-gemini-2-5-flash+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_FLASH_PREVIEW_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -2357,7 +2357,7 @@ jobs:
   #     bot_name: 'METAC_O1_HIGH_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O1_HIGH_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2370,7 +2370,7 @@ jobs:
   #     bot_name: 'METAC_O1_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O1_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2383,7 +2383,7 @@ jobs:
   #     bot_name: 'METAC_O1_MINI_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O1_MINI_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2396,7 +2396,7 @@ jobs:
   #     bot_name: 'METAC_O3_MINI_HIGH_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O3_MINI_HIGH_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2409,7 +2409,7 @@ jobs:
   #     bot_name: 'METAC_O3_MINI_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_O3_MINI_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2423,7 +2423,7 @@ jobs:
       metac_name: "metac-gpt-4o+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_4O_TOKEN }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2438,7 +2438,7 @@ jobs:
       metac_name: "metac-gpt-4o-mini+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_4O_MINI_TOKEN }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2453,7 +2453,7 @@ jobs:
   #     metac_name: "metac-gpt-3-5-turbo+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GPT_3_5_TURBO_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2467,7 +2467,7 @@ jobs:
   #     bot_name: 'METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_3_7_SONNET_LATEST_THINKING_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2480,7 +2480,7 @@ jobs:
   #     bot_name: 'METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_3_7_SONNET_LATEST_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2493,7 +2493,7 @@ jobs:
   #     bot_name: 'METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_3_5_SONNET_LATEST_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2506,7 +2506,7 @@ jobs:
   #     bot_name: 'METAC_CLAUDE_3_5_SONNET_20240620_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_CLAUDE_3_5_SONNET_20240620_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
   #     INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
@@ -2519,7 +2519,7 @@ jobs:
   #     bot_name: 'METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_5_PRO_PREVIEW_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2532,7 +2532,7 @@ jobs:
   #     bot_name: 'METAC_GEMINI_2_0_FLASH_TOKEN'
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GEMINI_2_0_FLASH_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2546,7 +2546,7 @@ jobs:
       metac_name: "metac-llama-4-maverick-17b+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_LLAMA_4_MAVERICK_17B_TOKEN }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2560,7 +2560,7 @@ jobs:
   #     metac_name: "metac-qwen-2-5-max+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_QWEN_2_5_MAX_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2574,7 +2574,7 @@ jobs:
   #     metac_name: "metac-deepseek-r1+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_R1_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
   #     INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2588,7 +2588,7 @@ jobs:
       metac_name: "metac-deepseek-v3+asknews"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKEN: ${{ secrets.METAC_DEEPSEEK_V3_TOKEN }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -2602,7 +2602,7 @@ jobs:
   #     metac_name: "metac-grok-3+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_3_LATEST_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -2617,7 +2617,7 @@ jobs:
   #     metac_name: "metac-grok-3-mini-high+asknews"
   #     cache_key: asknews-cache-${{ github.run_id }}
   #   secrets:
-  #     INPUT_METACULUS_TOKEN: ${{ secrets.METAC_GROK_3_MINI_LATEST_HIGH_TOKEN }}
+  #     INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
   #     INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
   #     INPUT_XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
   #     INPUT_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -2633,7 +2633,7 @@ jobs:
       metac_name: "metac-uniform-probability-bot"
       cache_key: asknews-cache-${{ github.run_id }}
     secrets:
-      INPUT_METACULUS_TOKENS: ${{ secrets.METACULUS_TOKENS }}
+      INPUT_METACULUS_TOKEN: ${{ secrets.METACULUS_ACTING_TOKEN }}
       INPUT_METACULUS_API_BASE_URL: ${{ secrets.METACULUS_API_BASE_URL }}
       INPUT_ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
       INPUT_ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
